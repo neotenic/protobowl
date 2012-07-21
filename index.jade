@@ -1,0 +1,52 @@
+doctype 5
+html(lang="en")
+	head
+		title ProtoBowl
+		meta(charset="utf8")
+		style
+			body {
+				font-family: sans-serif;
+			}
+			a#new {
+				text-decoration: none
+			}
+			#unread {
+				visibility: hidden;
+			}
+			#name, .title {
+				display: inline;
+			}
+			#question {
+				-webkit-user-select: none;
+				user-select: none;
+				-moz-user-select: none;
+				cursor: default;
+				margin-left: 40px;
+			}
+			.warning {
+				font-style: italic;
+			}
+			hr {
+				border-style: solid;
+				border-top-width: 0;
+			}
+		script(src="/socket.io/socket.io.js")
+		script
+			channel_name = '#{name}'
+		script(src="client.js")
+	body
+		a#new(href="/")
+			h1.title Prototype Quizbowl Application
+		
+		h2#name= name
+		p.warning 
+			strong press enter to buzz 
+			| and please excuse the hideous interface
+
+		hr 
+
+		p#question
+			span#visible
+			span#unread
+
+		hr
