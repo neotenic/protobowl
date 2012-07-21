@@ -32,7 +32,8 @@ html(lang="en")
 			}
 		script(src="/socket.io/socket.io.js")
 		script
-			channel_name = '#{name}'
+			channel_name = '!{name}'
+			initial_sync = !{initial}
 		script(src="client.js")
 	body
 		a#new(href="/")

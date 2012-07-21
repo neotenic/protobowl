@@ -65,18 +65,23 @@ Channel = (function() {
     this.timeFreeze = 0;
     this.question = questions[Math.floor(questions.length * Math.random())];
     this.lastTime = this.getTime();
-    timeDelta = this.question.question.split(" ").length * 1000 * 60 / 600;
+    timeDelta = this.question.question.split(" ").length * 1000 * 60 / 300;
     this.nextTime = this.lastTime + timeDelta;
     this.revealTime = this.nextTime + 1000 * 10;
     return this.ns.emit("sync", this.synchronize());
   };
 
-  Channel.prototype.buzz = function(data) {
-    this.timeFreeze = this.getTime();
-    return this.ns.emit("buzz", {
-      time: this.timeFreeze,
-      user: data.user
-    });
+  Channel.prototype.buzz = function(data, callback) {
+    if (this.timeFreeze) {
+      return callback("you lost the game!");
+    } else {
+      this.timeFreeze = this.getTime();
+      this.ns.emit("buzz", {
+        time: this.timeFreeze,
+        user: data.user
+      });
+      return callback("who's awesome? you are!");
+    }
   };
 
   Channel.prototype.addUser = function(sock) {
@@ -86,15 +91,17 @@ Channel = (function() {
     sock.on('disconnect', function() {
       return console.log("user disconnected");
     });
-    sock.on('buzz', function(data) {
+    sock.on('buzz', function(data, callback) {
       console.log("buzz");
-      return _this.buzz(data);
+      return _this.buzz(data, callback);
     });
     return sock.on('unbuzz', function() {
-      _this.timeOffset += _this.getTime() - _this.timeFreeze;
-      _this.timeFreeze = 0;
-      _this.ns.emit("sync", _this.synchronize());
-      return console.log("time circuits", _this.timeOffset);
+      if (_this.timeFreeze) {
+        _this.timeOffset += _this.getTime() - _this.timeFreeze;
+        _this.timeFreeze = 0;
+        _this.ns.emit("sync", _this.synchronize());
+        return console.log("time circuits", _this.timeOffset);
+      }
     });
   };
 
@@ -139,7 +146,8 @@ app.get('/:channel', function(req, res) {
   name = "/" + req.params.channel;
   init_channel(name);
   return res.render('index.jade', {
-    name: name
+    name: name,
+    initial: JSON.stringify(active_channels[name].synchronize())
   });
 });
 
