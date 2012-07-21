@@ -7,6 +7,11 @@ app = express.createServer(express.logger());
 
 io = require('socket.io').listen(app);
 
+io.configure(function() {
+  io.set("transports", ["xhr-polling"]);
+  return io.set("polling duration", 10);
+});
+
 fs = require('fs');
 
 questions = [];
