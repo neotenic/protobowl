@@ -9,7 +9,8 @@ io = require('socket.io').listen(app);
 
 io.configure(function() {
   io.set("transports", ["xhr-polling"]);
-  return io.set("polling duration", 10);
+  io.set("polling duration", 10);
+  return io.set("log level", 2);
 });
 
 fs = require('fs');
@@ -72,22 +73,20 @@ Channel = (function() {
   }
 
   Channel.prototype.onTime = function(time, callback) {
-    var _this = this;
     this.timeCallbacks.push([this.getTime() + time, callback]);
-    return setTimeout(function() {
-      return _this.checkTime();
-    }, time);
+    return this.checkTime();
   };
 
   Channel.prototype.checkTime = function() {
-    var continuing, fn, time, _i, _len, _ref, _ref1,
+    var continuing, execution_queue, fn, time, _i, _j, _len, _len1, _ref, _ref1, _results,
       _this = this;
     continuing = [];
+    execution_queue = [];
     _ref = this.timeCallbacks;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       _ref1 = _ref[_i], time = _ref1[0], fn = _ref1[1];
-      if (time < this.getTime()) {
-        fn();
+      if (time <= this.getTime()) {
+        execution_queue.push(fn);
       } else {
         setTimeout(function() {
           return _this.checkTime();
@@ -95,7 +94,13 @@ Channel = (function() {
         continuing.push([time, fn]);
       }
     }
-    return this.timeCallbacks = continuing;
+    this.timeCallbacks = continuing;
+    _results = [];
+    for (_j = 0, _len1 = execution_queue.length; _j < _len1; _j++) {
+      fn = execution_queue[_j];
+      _results.push(fn());
+    }
+    return _results;
   };
 
   Channel.prototype.getTime = function() {
@@ -136,11 +141,12 @@ Channel = (function() {
     this.question.timing = this.getTiming();
     this.lastTime = this.getTime();
     _ref = this.question.timing, list = _ref.list, rate = _ref.rate;
-    this.onTime(cumsum(list, rate).slice(-1)[0] + this.revealDelay, function() {
-      _this.nextQuestion();
-      return _this.ns.emit("sync", _this.synchronize(true));
+    this.ns.emit("sync", this.synchronize(true));
+    return this.onTime(cumsum(list, rate).slice(-1)[0] + this.revealDelay, function() {
+      return setTimeout(function() {
+        return _this.nextQuestion();
+      }, 2000);
     });
-    return this.ns.emit("sync", this.synchronize());
   };
 
   Channel.prototype.buzz = function(data, callback, sock) {
@@ -173,6 +179,7 @@ Channel = (function() {
       clearTimeout(this.freezeTimeout);
       this.timeOffset = new Date - this.timeFreeze;
       this.timeFreeze = 0;
+      this.tableOwner = null;
       this.countDuration = 0;
       this.ns.emit("sync", this.synchronize());
       console.log("time circuits", this.timeOffset);

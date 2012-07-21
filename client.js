@@ -48,39 +48,38 @@ cumsum = function(list, rate) {
   return _results;
 };
 
-interpolateQuestion = function(question, time) {
-  var cumulative, endTimes, index, list, rate, reveal, timeDelta, words, _ref;
-  timeDelta = time - lastTime;
-  words = question.question.split(" ");
-  _ref = question.timing, list = _ref.list, rate = _ref.rate;
-  cumulative = cumsum(list, rate);
-  index = 0;
-  while (timeDelta > cumulative[index]) {
-    index++;
-  }
-  index++;
-  endTimes = cumulative[cumulative.length - 1];
-  if (timeDelta > endTimes) {
-    reveal = endTimes + revealDelay + lastTime - serverTime();
-    document.querySelector('#reveal').style.display = '';
-    document.querySelector('#reveal').innerText = reveal;
-  } else {
-    document.querySelector('#reveal').style.display = 'none';
-  }
-  document.querySelector("#visible").innerText = words.slice(0, index).join(' ') + " ";
-  return document.querySelector("#unread").innerText = words.slice(index).join(' ');
-};
+interpolateQuestion = function(question, time) {};
 
 countDuration = 0;
 
 countStart = 0;
 
 stateUpdater = function() {
-  var countdown, ms;
+  var countdown, cumulative, endTimes, index, list, ms, rate, reveal, timeDelta, words, _ref;
   if (currentQuestion) {
-    interpolateQuestion(currentQuestion, serverTime());
+    timeDelta = serverTime() - lastTime;
+    words = currentQuestion.question.split(" ");
+    _ref = currentQuestion.timing, list = _ref.list, rate = _ref.rate;
+    cumulative = cumsum(list, rate);
+    index = 0;
+    while (timeDelta > cumulative[index]) {
+      index++;
+    }
+    index++;
+    endTimes = cumulative[cumulative.length - 1];
+    reveal = endTimes + revealDelay + lastTime - serverTime();
+    if (reveal < 0) {
+      document.querySelector('#answer').innerText = currentQuestion.answer;
+      document.querySelector('#answer').style.display = '';
+    } else {
+      document.querySelector('#answer').style.display = 'none';
+    }
+    reveal = Math.max(0, reveal);
+    document.querySelector('#reveal').innerText = (reveal / 1000).toFixed(1);
+    document.querySelector("#visible").innerText = words.slice(0, index).join(' ') + " ";
+    document.querySelector("#unread").innerText = words.slice(index).join(' ');
   }
-  ms = countDuration - (new Date - countStart);
+  ms = Math.max(0, countDuration - (new Date - countStart));
   countdown = (ms / 1000).toFixed(1);
   if (countDuration > 0) {
     document.querySelector('#countdown').style.display = '';

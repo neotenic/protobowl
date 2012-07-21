@@ -17,11 +17,13 @@ html(lang="en")
 				display: inline;
 			}
 			#question {
+				margin-left: 40px;
+			}
+			.unselectable {
 				-webkit-user-select: none;
 				user-select: none;
 				-moz-user-select: none;
 				cursor: default;
-				margin-left: 40px;
 			}
 			.warning {
 				font-style: italic;
@@ -38,6 +40,16 @@ html(lang="en")
 			#countdown {
 				font-weight: bold;
 				color: red;
+				float: right;
+			}
+
+			#disco {
+				display: none;
+			}
+
+			#answer {
+				text-align: right;
+				font-style: italic;
 			}
 		script(src="/socket.io/socket.io.js")
 		script
@@ -47,6 +59,9 @@ html(lang="en")
 		a#new(href="/")
 			h1.title Prototype Quizbowl Application
 		
+		div#disco
+			| Hmm, it looks like you got disconnected. Try reloading.
+
 		h2#name= name
 		p.warning 
 			strong press enter to buzz 
@@ -57,6 +72,8 @@ html(lang="en")
 		p#question
 			span#visible
 			span#unread
+
+		p#answer
 
 		hr
 
