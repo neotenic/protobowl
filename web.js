@@ -229,6 +229,9 @@ Channel = (function() {
     var _this = this;
     console.log("Adding a new user to the channel");
     sock.emit('sync', this.synchronize(true));
+    sock.on('echo', function(data, callback) {
+      return callback(+(new Date));
+    });
     sock.on('disconnect', function() {
       return console.log("user disconnected");
     });
