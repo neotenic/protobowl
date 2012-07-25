@@ -162,7 +162,7 @@ Channel = (function() {
         return callback("you lost the game!");
       }
     } else {
-      this.countDuration = 10 * 1000;
+      this.countDuration = 6 * 1000;
       this.countStart = +(new Date);
       sock.name = data.name;
       sock.guess = "";

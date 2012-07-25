@@ -106,7 +106,6 @@ stateUpdater = function() {
 setInterval(stateUpdater, 50);
 
 synchronize = function(data) {
-  console.log("sync", data);
   if (data.question) {
     currentQuestion = data.question;
   }
@@ -193,9 +192,7 @@ document.addEventListener('keyup', function(e) {
       return socket.emit('guess', {
         guess: typing,
         final: false
-      }, function(status) {
-        return console.log("guess", status);
-      });
+      }, function(status) {});
     }
   }
 });
