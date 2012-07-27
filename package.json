@@ -1,14 +1,14 @@
 {
   "name": "protobowl",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "dependencies": {
     "express": "2.5.x",
     "socket.io": "0.9.x",
-    "jade": "0.26.x"
+    "jade": "0.26.x",
+    "less-middleware": "0.3.x"
   },
   "engines": {
     "node": "0.8.x",
-    "npm":  "1.1.x",
-    "less-middleware": "0.3.x"
+    "npm":  "1.1.x"
   }
 }
