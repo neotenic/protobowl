@@ -90,11 +90,14 @@ renderState = ->
 
 
 transitionQuestion = ->
-	$('#history .bundle .readout').first().slideUp()
-	bundle = createBundle().css('display', 'none')
-	$('#history').prepend bundle
-	bundle.slideDown()
+	$('#history .bundle .readout').first().slideUp(1000)
+	bundle = createBundle().width($('#history').width()) #.css('display', 'none')
+	$('#history').prepend bundle.hide()
+	bundle.slideDown(1000)
+	bundle.width('auto')
 
+
+TestingQuestion = {"category": "Trash", "pKey": "His creation is attributed to either Bill Finger or Jerry Robinson, with the distinctive look based partly on the look of actor Conrad Veidt in one film. This man, perhaps originally Red Hood, is cred", "difficulty": "HS", "tournament": "QuAC I", "question": "His creation is attributed to either Bill Finger or Jerry Robinson, with the distinctive look based partly on the look of actor Conrad Veidt in one film. This man, perhaps originally Red Hood, is credited with killing Sarah Gordon and Jason Todd as well as permanently injuring Oracle, while another story sees his psychiatrist Harleen Quinzl falling in love with him and attempting to feed his arch-nemesis to piranhas. In television and movies, he's been played by Cesar Romero and Jack Nicholson. For 10 points name this fictional villain more recently played by Heath Ledger, a nemesis of the Batman.", "accept": null, "question_num": 12, "year": 2008, "answer": "The Joker", "round": "Round1Final.doc"}
 
 createBundle = ->
 	breadcrumb = $('<ul>').addClass('breadcrumb')
@@ -107,9 +110,9 @@ createBundle = ->
 	breadcrumb.append $('<li>').addClass('answer pull-right')
 		.text("Answer: Robot Ponies")
 	readout = $('<div>').addClass('readout')
-	$('<div>').addClass('well').appendTo(readout)
-	readout.append $('<span>').addClass('visible')
-	readout.append $('<span>').addClass('unread')
+	well = $('<div>').addClass('well').appendTo(readout)
+	well.append $('<span>').addClass('visible').text(TestingQuestion.question)
+	well.append $('<span>').addClass('unread')
 	annotations = $('<div>').addClass 'annotations'
 	$('<div>').addClass('bundle')
 		.append(breadcrumb)
@@ -152,3 +155,14 @@ document.addEventListener 'keydown', (e) ->
 $('.leaderboard tbody tr').popover {
 	placement: "left"
 }
+
+# get em out of phase
+n = 0
+setInterval ->
+	if n++ % 4 == 0
+		transitionQuestion()
+	else
+		chatAnnotation('cucumber', 'im a dumb dinosaur')
+, 1000
+
+
