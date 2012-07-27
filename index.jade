@@ -3,94 +3,176 @@ html(lang="en")
 	head
 		title ProtoBowl#{name}
 		meta(charset="utf8")
-		style
-			body {
-				font-family: sans-serif;
-			}
-			a#new {
-				text-decoration: none
-			}
-			#unread {
-				visibility: hidden;
-			}
-			#name, .title {
-				display: inline;
-			}
-			#question {
-				margin-left: 40px;
-			}
-			.unselectable {
-				-webkit-user-select: none;
-				user-select: none;
-				-moz-user-select: none;
-				cursor: default;
-			}
-			.warning {
-				font-style: italic;
-			}
-			hr {
-				border-style: solid;
-				border-top-width: 0;
-			}
-
-			#countdown, #reveal {
-				font-size: 32px;
-				font-family: monospace;
-			}
-			#countdown {
-				font-weight: bold;
-				color: red;
-			}
-			#reveal {
-				float: right;
-			}
-
-			#answer {
-				text-align: right;
-				font-style: italic;
-			}
-
-			#guess {
-				width: 400px;
-				border-style: solid;
-				border-width: 1px;
-				font-size: 32px;
-				margin-left: 20px;
-			}
-
-
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		link(rel='stylesheet', href='less/bootstrap.css')
+		link(rel='stylesheet', href='less/responsive.css')
+		script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
+		script(src="js/bootstrap.js")
 		script(src="/socket.io/socket.io.js")
 		script
 			channel_name = '!{name}'
-			initial_sync = !{initial}
+		style
+			.timer {
+				font-size: 250%;
+				text-align: center;
+				margin-bottom: 10px;
+			}
+			.timer .fraction {
+				font-size: 50%;
+			}
+			.thumbnail {
+				margin: 0;
+				margin-bottom: 18px;
+				overflow: auto;
+			}
+			.thumbnail h5 i {
+				margin-right: 5px;
+			}
+			.breadcrumb {
+				overflow: auto;
+			}
+			.show-touch {
+				display: none;
+			}
+			html.touchscreen .show-touch {
+				display: inherit;
+			}
+			html.touchscreen .show-keyboard {
+				display: none;
+			}
+			.bundle .answer {
+				visibility: hidden;
+			}
+			.bundle .annotations .author {
+				font-weight: bold;
+			}
+	body
+		div.navbar.navbar-top
+			div.navbar-inner
+				div.container
+					a.brand(href="#")
+						strong Proto
+						| Bowl 
+						em.hidden-phone(style="font-size: small")
+							| doing one thing and doing it acceptably well
+						
+					div.pull-right
+						a.btn.btn-primary(href="/") New Room
+					ul.nav.pull-right
+						li
+							a(href="#") About
+						
+		div.container
+
+			div.row
+				div.span9
+					div.row(style="margin-bottom: 10px")
+						div.span9.show-touch
+							div.well.form-horizontal
+								button.btn.btn-info Pause 
+								| 
+								button.btn.btn-warning Skip
+								| 
+								button.btn.pull-right.btn-danger Buzz 
+						div.span6.show-keyboard
+							div
+								input.span9(type='text', placeholder='eventually this might do something')
+						
+					div#history
+						div.bundle
+							ul.breadcrumb
+								li
+									| Category: Pony
+									span.divider /
+								li
+									| Difficulty: Kindergarten
+									span.divider /
+								li
+									| Language: Yiddish
+								li.pull-right.answer
+									| Answer: Waterfowl
+							div.readout
+								div.well
+									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
+									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
+									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
+									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
+									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
+							div.annotations
+								p 
+									span(style='font-weight: bold') hello world 
+									| oh well this is surprising, nto really
+								p Ponies ponies ponies ponies
+
+				div.span3
+					// this part really doesn't matter
+					// so it's perfectly logical to stick
+					// it here so it'll be inaccessible in mobile
+				
+					div.span3.thumbnail
+						h5 
+							i.icon-time
+							| Timer 
+						div.timer
+							| 00:42
+							span.fraction .52
+
+						div.progress.progress-striped
+							div.bar(style="width:30%")
+					div.span3.thumbnail.leaderboard
+						table.table
+							thead
+								tr
+									th #
+									th Name
+									th Interrupts
+									th Score
+							tbody
+								tr(data-content="jdfsoawfjasd", title="mewaofijew")
+									td 1
+									td Robot
+									td 2
+									td 1
+								tr
+									td 2
+									td Adiven
+									td 3
+									td 6
+
+
+					//- div.span3.thumbnail
+					//- 		h5 
+					//- 			i.icon-fire
+					//- 			| Label label label label
+					//- 		p Content content content
+
+					div.span3.thumbnail
+						h5
+							i.icon-wrench
+							| Settings
+						div(style="text-align: center")
+							div.input-prepend
+								span.add-on
+									i.icon-user
+								input.span2(type='text', value='flaming monkey')
+
+								// span.badge(style="margin-left: 10px") 42
+
+					div.span3.thumbnail.show-keyboard
+						h5 
+							i.icon-info-sign
+							| Tips
+						ul
+							li Press space to begin
+							li Press space to buzz
+							li Change settings by hacking the code
+							li Make up tips and don't do anything about them
+
+					div.span3.thumbnail.show-touch
+						h5 
+							i.icon-info-sign
+							| Tips
+						ul
+							li Buttons are fun to press
 
 		script(src="client.js")
-	body
-		a#new(href="/")
-			h1.title Prototype Quizbowl Application
-		h2#name= name
-
-		p#disco(style="display: none")
-			| Hmm, it looks like you got disconnected. Try reloading.
-
-		div#main
-
-			p.warning 
-				strong press enter to buzz 
-				| and please excuse the hideous interface
-
-			hr
-
-
-			p#question
-				span#visible
-				span#unread
-				p#answer
-
-			hr
-			div
-				span#countdown 
-				input#guess(type="text",style="display:none")
-				span#reveal 
-		script
-			synchronize(initial_sync)
