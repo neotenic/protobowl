@@ -90,10 +90,14 @@ renderState = ->
 
 
 transitionQuestion = ->
-	$('#history .bundle .readout').first().slideUp(1000)
+	if $('.bundle').length > 10
+		#remove the old crap when it's really old (and turdy)
+		$('.bundle').last().slideUp 'normal', -> 
+			$(this).remove()
+	$('#history .bundle .readout').first().slideUp('slow')
 	bundle = createBundle().width($('#history').width()) #.css('display', 'none')
 	$('#history').prepend bundle.hide()
-	bundle.slideDown(1000)
+	bundle.slideDown('slow')
 	bundle.width('auto')
 
 
@@ -133,7 +137,7 @@ $('html').toggleClass 'touchscreen', !!('ontouchstart' in window)
 
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
-		$(this).parent().find('.well').slideToggle()
+		$(this).parent().find('.readout').slideToggle()
 
 document.addEventListener 'keydown', (e) ->
 	if e.keyCode is 32 #space = skip
@@ -162,7 +166,7 @@ setInterval ->
 	if n++ % 4 == 0
 		transitionQuestion()
 	else
-		chatAnnotation('cucumber', 'im a dumb dinosaur')
+		chatAnnotation('cucumber', 'im a dumb dinosaur '+ n)
 , 1000
 
 

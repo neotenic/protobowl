@@ -134,10 +134,15 @@ renderState = function() {
 
 transitionQuestion = function() {
   var bundle;
-  $('#history .bundle .readout').first().slideUp(1000);
+  if ($('.bundle').length > 10) {
+    $('.bundle').last().slideUp('normal', function() {
+      return $(this).remove();
+    });
+  }
+  $('#history .bundle .readout').first().slideUp('slow');
   bundle = createBundle().width($('#history').width());
   $('#history').prepend(bundle.hide());
-  bundle.slideDown(1000);
+  bundle.slideDown('slow');
   return bundle.width('auto');
 };
 
@@ -189,7 +194,7 @@ $('html').toggleClass('touchscreen', !!(__indexOf.call(window, 'ontouchstart') >
 
 jQuery('.bundle .breadcrumb').live('click', function() {
   if (!$(this).is(jQuery('.bundle .breadcrumb').first())) {
-    return $(this).parent().find('.well').slideToggle();
+    return $(this).parent().find('.readout').slideToggle();
   }
 });
 
@@ -213,6 +218,6 @@ setInterval(function() {
   if (n++ % 4 === 0) {
     return transitionQuestion();
   } else {
-    return chatAnnotation('cucumber', 'im a dumb dinosaur');
+    return chatAnnotation('cucumber', 'im a dumb dinosaur ' + n);
   }
 }, 1000);
