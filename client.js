@@ -28,6 +28,17 @@ generateName = function() {
 
 public_name = generateName();
 
+$('#username').val(public_name);
+
+$('#username').keydown(function(e) {
+  return e.stopPropagation();
+});
+
+$('#username').keyup(function() {
+  console.log('renaming');
+  return sock.emit('rename', $(this).val());
+});
+
 avg = function(list) {
   var item, sum, _i, _len;
   sum = 0;
@@ -64,6 +75,12 @@ window.onbeforeunload = function() {
 
 sock.on('echo', function(data, fn) {
   return fn('alive');
+});
+
+sock.on('disconnect', function() {
+  return setTimeout(function() {
+    return $('#disco').modal('show');
+  }, 500);
 });
 
 sock.on('connect', function() {
@@ -114,18 +131,31 @@ renderState = function() {
       user.votes = votes.join(', ');
     }
     list = $('.leaderboard tbody');
-    list.find('tr').remove();
     count = 0;
+    list.find('tr').addClass('to_remove');
     _ref2 = sync.users;
     for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
       user = _ref2[_j];
       count++;
-      row = $('<tr>').appendTo(list);
+      row = list.find('.sockid-' + user.id);
+      if (row.length < 1) {
+        console.log('recreating user');
+        row = $('<tr>').appendTo(list);
+      }
+      row.find('td').remove();
+      row.addClass('sockid-' + user.id);
+      row.removeClass('to_remove');
       $('<td>').text(count).appendTo(row);
       $('<td>').text(user.name).appendTo(row);
       $('<td>').text(user.votes || 0).appendTo(row);
       $('<td>').text(7).appendTo(row);
+      row.popover({
+        placement: 'left',
+        title: user.name + "'s stats",
+        content: 'well, they dont exist. sorry. ' + user.id
+      });
     }
+    list.find('tr.to_remove').remove();
   }
   return renderPartial();
 };
@@ -174,6 +204,11 @@ setInterval(renderPartial, 50);
 
 renderTimer = function(ms) {
   var cs, min, pad, sec, sign;
+  if (sync.time_freeze) {
+    $('#pause').fadeIn();
+  } else {
+    $('#pause').fadeOut();
+  }
   $('.progress').toggleClass('progress-warning', !!sync.time_freeze);
   sign = "";
   if (ms < 0) {
@@ -256,17 +291,43 @@ jQuery('.bundle .breadcrumb').live('click', function() {
   }
 });
 
-document.addEventListener('keydown', function(e) {
-  if (e.keyCode === 32) {
-    sock.emit('skip', 'yay');
-    return e.preventDefault();
-  } else if (e.keyCode === 80) {
-    return sock.emit('pause', 'yay');
-  } else if (e.keyCode === 90) {
-    return sock.emit('unpause', 'yay');
+$('.main_input').keydown(function(e) {
+  return e.stopPropagation();
+});
+
+$('.main_input').keyup(function(e) {
+  var mode;
+  mode = $('.main_input').data('mode');
+  if (mode === 'buzz') {
+    if (e.keyCode === 13) {
+      sock.emit('final', $(this).val());
+      return $('.main_input').attr('disabled', true).val('');
+    } else {
+      return sock.emit('guess', $(this).val());
+    }
+  } else if (mode === 'chat') {
+    return $('.main_input').attr('disabled', true).val('');
   }
 });
 
-$('.leaderboard tbody tr').popover({
-  placement: "left"
+$('body').keydown(function(e) {
+  var _ref;
+  if (e.keyCode === 32) {
+    sock.emit('buzz', 'MARP', function(result) {
+      console.log(result);
+      return $('.main_input').attr('disabled', false).focus();
+    });
+    e.preventDefault();
+  } else if (e.keyCode === 83) {
+    sock.emit('skip', 'yay');
+  } else if (e.keyCode === 80) {
+    sock.emit('pause', 'yay');
+  } else if (e.keyCode === 90) {
+    sock.emit('unpause', 'yay');
+  } else if ((_ref = e.keyCode) === 47 || _ref === 111 || _ref === 191) {
+    console.log("slash");
+    e.preventDefault();
+    $('.main_input').attr('disabled', false).val('chat/').focus();
+  }
+  return console.log(e);
 });

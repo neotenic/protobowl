@@ -172,6 +172,10 @@ io.sockets.on 'connection', (sock) ->
 		sock.set 'unfreeze', vote
 		room.sync()
 
+	sock.on 'buzz', (vote, fn) ->
+		fn 'http://www.whosawesome.com/'
+		room.sync()
+
 	sock.on 'disconnect', ->
 		setTimeout ->
 			room.sync(true) if room

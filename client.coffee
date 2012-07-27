@@ -15,6 +15,13 @@ generateName = ->
 	pick(adjective) + " " + pick(animal)
 
 public_name = generateName()
+$('#username').val public_name
+$('#username').keydown (e) ->
+	e.stopPropagation()
+
+$('#username').keyup ->
+	console.log 'renaming'
+	sock.emit 'rename', $(this).val()
 
 avg = (list) ->
 	sum = 0
@@ -36,6 +43,12 @@ window.onbeforeunload = ->
 
 sock.on 'echo', (data, fn) ->
 	fn 'alive'
+
+sock.on 'disconnect', ->
+	# make it so that refreshes dont show disco flash
+	setTimeout ->
+		$('#disco').modal('show')
+	, 500
 
 sock.on 'connect', ->
 	sock.emit 'join', {
@@ -79,15 +92,30 @@ renderState = ->
 			user.votes = votes.join(', ')
 			# user.name + " (" + user.id + ") " + votes.join(", ")
 		list = $('.leaderboard tbody')
-		list.find('tr').remove() #abort all people
+		# list.find('tr').remove() #abort all people
 		count = 0
+		list.find('tr').addClass 'to_remove'
 		for user in sync.users
 			count++
-			row = $('<tr>').appendTo list
+			row = list.find '.sockid-' + user.id
+			if row.length < 1
+				console.log 'recreating user'
+				row = $('<tr>').appendTo list 
+			row.find('td').remove()
+			row.addClass 'sockid-' + user.id
+			row.removeClass 'to_remove'
+
 			$('<td>').text(count).appendTo row
 			$('<td>').text(user.name).appendTo row
 			$('<td>').text(user.votes || 0).appendTo row
 			$('<td>').text(7).appendTo row
+			
+			row.popover {
+				placement: 'left', 
+				title: user.name + "'s stats",
+				content: 'well, they dont exist. sorry. '+ user.id
+			}
+		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
 
@@ -133,7 +161,12 @@ setInterval renderState, 1000
 setInterval renderPartial, 50
 
 renderTimer = (ms) ->
-	
+	# $('#pause').show !!sync.time_freeze
+	if sync.time_freeze
+		$('#pause').fadeIn()
+	else
+		$('#pause').fadeOut()
+
 	$('.progress').toggleClass 'progress-warning', !!sync.time_freeze
 	# $('.progress').toggleClass 'active', ms < 0
 	sign = ""
@@ -210,34 +243,35 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
 		$(this).parent().find('.readout').slideToggle()
 
-document.addEventListener 'keydown', (e) ->
-	if e.keyCode is 32 #space = skip
-		sock.emit 'skip', 'yay'
+$('.main_input').keydown (e) ->
+	e.stopPropagation()
+
+$('.main_input').keyup (e) ->
+	mode = $('.main_input').data('mode')
+	if mode is 'buzz'
+		if e.keyCode is 13
+			sock.emit 'final', $(this).val()	
+			$('.main_input').attr('disabled', true).val('')
+		else
+			sock.emit 'guess', $(this).val()
+	else if mode is 'chat'
+		$('.main_input').attr('disabled', true).val('')
+
+$('body').keydown (e) ->
+	if e.keyCode is 32
+		sock.emit 'buzz', 'MARP', (result) ->
+			console.log result
+			$('.main_input').attr('disabled', false).focus()
 		e.preventDefault()
-	else if e.keyCode is 80
+	else if e.keyCode is 83 # S
+		sock.emit 'skip', 'yay'
+	else if e.keyCode is 80 # P
 		sock.emit 'pause', 'yay'
-	else if e.keyCode is 90
+	else if e.keyCode is 90 # Z
 		sock.emit 'unpause', 'yay'
-
-
-# $('.leaderboard tbody tr').live 'click', ->
-
-# $('.leaderboard').popover {
-# 	placement: "left",
-# 	selector: ".leaderboard tbody tr"
-# }
-
-$('.leaderboard tbody tr').popover {
-	placement: "left"
-}
-
-# get em out of phase
-# n = 0
-# setInterval ->
-# 	if n++ % 4 == 0
-# 		transitionQuestion()
-# 	else
-# 		chatAnnotation('cucumber', 'im a dumb dinosaur '+ n)
-# , 1000
-
-
+	else if e.keyCode in [47, 111, 191] # / (forward slash)
+		console.log "slash"
+		e.preventDefault()
+		$('.main_input').attr('disabled', false).val('chat/').focus()
+	
+	console.log e

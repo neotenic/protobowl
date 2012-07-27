@@ -96,7 +96,7 @@ html(lang="en")
 								button.btn.pull-right.btn-danger Buzz 
 						div.span6.show-keyboard
 							div
-								input.span9(type='text', placeholder='eventually this might do something', disabled)
+								input.main_input.span9(type='text', placeholder='eventually this might do something', disabled)
 						
 					div#history
 				div.span3
@@ -108,12 +108,13 @@ html(lang="en")
 						h5 
 							i.icon-time
 							| Timer 
+							span.label.label-warning#pause Paused
 						div.timer.unselectable
 							span.face 00:00
 							span.fraction .0
 
 						div.progress.progress-striped
-							div.bar(style="width:30%")
+							div.bar(style="width:0%")
 					div.span3.thumbnail.leaderboard
 						table.table
 							thead
@@ -123,16 +124,6 @@ html(lang="en")
 									th Interrupts
 									th Score
 							tbody
-								tr(data-content="jdfsoawfjasd", title="mewaofijew")
-									td 1
-									td Robot
-									td 2
-									td 1
-								tr
-									td 2
-									td Adiven
-									td 3
-									td 6
 
 
 					//- div.span3.thumbnail
@@ -149,7 +140,7 @@ html(lang="en")
 							div.input-prepend
 								span.add-on
 									i.icon-user
-								input.span2(type='text', value='flame monkey')
+								input#username.span2(type='text', value='flame monkey')
 
 								// span.badge(style="margin-left: 10px") 42
 
@@ -170,4 +161,17 @@ html(lang="en")
 						ul
 							li Buttons are fun to press
 
+		div.modal.hide#disco
+			div.modal-header
+				button.close(type="button", data-dismiss="modal") ×
+				h3 YOU GOT DISCONNECTED
+			div.modal-body
+				p Sorry, try reloading.
+				p 
+					| Also, I don't think this is the most user friendly possible
+					| modal disconnection alert window, but fixing that issue is
+					| the problem of future me, or of someone else. 
+			div.modal-footer
+				a.btn(href="#", data-dismiss="modal") Close
+				a.btn.btn-primary(href="") Reload
 		script(src="client.js")

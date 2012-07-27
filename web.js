@@ -231,6 +231,10 @@ io.sockets.on('connection', function(sock) {
     sock.set('unfreeze', vote);
     return room.sync();
   });
+  sock.on('buzz', function(vote, fn) {
+    fn('http://www.whosawesome.com/');
+    return room.sync();
+  });
   return sock.on('disconnect', function() {
     return setTimeout(function() {
       if (room) {
