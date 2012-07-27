@@ -1,7 +1,7 @@
 doctype 5
 html(lang="en")
 	head
-		title ProtoBowl#{name}
+		title #{name} - ProtoBowl 
 		meta(charset="utf8")
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		link(rel='stylesheet', href='less/bootstrap.css')
@@ -40,12 +40,32 @@ html(lang="en")
 			html.touchscreen .show-keyboard {
 				display: none;
 			}
-			.bundle .answer {
-				visibility: hidden;
-			}
 			.bundle .annotations .author {
 				font-weight: bold;
 			}
+			.active .unread {
+				visibility: hidden;
+			}
+			.answer {
+				font-weight: bold;
+			}
+
+			.active .answer {
+				visibility: hidden;
+			}
+			.unselectable {
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				user-select: none;
+			}
+			.progress .bar {
+				-webkit-transition: none;
+				-moz-transition: none;
+				-ms-transition: none;
+				-o-transition: none;
+				transition: none;
+			}​
+
 	body
 		div.navbar.navbar-top
 			div.navbar-inner
@@ -76,34 +96,9 @@ html(lang="en")
 								button.btn.pull-right.btn-danger Buzz 
 						div.span6.show-keyboard
 							div
-								input.span9(type='text', placeholder='eventually this might do something')
+								input.span9(type='text', placeholder='eventually this might do something', disabled)
 						
 					div#history
-						div.bundle
-							ul.breadcrumb
-								li
-									| Category: Pony
-									span.divider /
-								li
-									| Difficulty: Kindergarten
-									span.divider /
-								li
-									| Language: Yiddish
-								li.pull-right.answer
-									| Answer: Waterfowl
-							div.readout
-								div.well
-									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
-									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
-									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
-									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
-									p Buffalo buffalo Buffalo buffalo buffalo buffalo Buffalo buffalo
-							div.annotations
-								p 
-									span(style='font-weight: bold') hello world 
-									| oh well this is surprising, nto really
-								p Ponies ponies ponies ponies
-
 				div.span3
 					// this part really doesn't matter
 					// so it's perfectly logical to stick
@@ -113,9 +108,9 @@ html(lang="en")
 						h5 
 							i.icon-time
 							| Timer 
-						div.timer
-							| 00:42
-							span.fraction .52
+						div.timer.unselectable
+							span.face 00:00
+							span.fraction .0
 
 						div.progress.progress-striped
 							div.bar(style="width:30%")
@@ -154,7 +149,7 @@ html(lang="en")
 							div.input-prepend
 								span.add-on
 									i.icon-user
-								input.span2(type='text', value='flaming monkey')
+								input.span2(type='text', value='flame monkey')
 
 								// span.badge(style="margin-left: 10px") 42
 

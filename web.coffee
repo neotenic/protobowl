@@ -45,6 +45,10 @@ app.use express.static(__dirname)
 # 	null
 
 
+cumsum = (list, rate) ->
+	sum = 0
+	for num in list
+		sum += Math.round(num) * rate #always round!
 
 
 class QuizRoom
@@ -66,6 +70,7 @@ class QuizRoom
 			@time_freeze = 0
 
 	new_question: ->
+		answer_time = 1000 * 5
 		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
 		@info = {
@@ -77,14 +82,19 @@ class QuizRoom
 			round: question.round
 		}
 		@question = question.question
-		.replace(/FTP/g, 'For 10 points')
-		.replace(/^\[.*?\]/, '')
-		.replace(/\n/g, ' ')
+			.replace(/FTP/g, 'For 10 points')
+			.replace(/^\[.*?\]/, '')
+			.replace(/\n/g, ' ')
 		@answer = question.answer
+			.replace(/\<\w\w\>/g, '')
+			.replace(/\[\w\w\]/g, '')
 		@timing = {
 			list: syllables(word) for word in @question.split(" "),
 			rate: 1000 * 60 / 2 / 300
 		}
+		{list, rate} = @timing
+		cumulative = cumsum list, rate
+		@end_time = @begin_time + cumulative[cumulative.length - 1] + answer_time
 		@sync(true)
 
 	skip: ->

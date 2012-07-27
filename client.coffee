@@ -3,9 +3,12 @@ sync = {}
 sync_offsets = []
 sync_offset = 0
 
+is_touch = !!('ontouchstart' in window)
+$('html').toggleClass 'touchscreen', is_touch
+
 generateName = ->
-	adjective = 'aberrant,agressive,warty,hoary,breezy,dapper,edgy,feisty,gutsy,hardy,intrepid,jaunty,karmic,lucid,maverick,natty,oneric,precise,quantal,quizzical,curious,derisive,bodacious,nefarious'
-	animal = 'axolotl,warthog,hedgehog,badger,drake,fawn,gibbon,heron,ibex,jackalope,koala,lynx,meerkat,narwhal,ocelot,penguin,quetzal,kodiak,cheetah,puma,jaguar,panther,tiger,leopard,lion,neandertal'
+	adjective = 'flaming,aberrant,agressive,warty,hoary,breezy,dapper,edgy,feisty,gutsy,hardy,intrepid,jaunty,karmic,lucid,maverick,natty,oneric,precise,quantal,quizzical,curious,derisive,bodacious,nefarious'
+	animal = 'monkey,axolotl,warthog,hedgehog,badger,drake,fawn,gibbon,heron,ibex,jackalope,koala,lynx,meerkat,narwhal,ocelot,penguin,quetzal,kodiak,cheetah,puma,jaguar,panther,tiger,leopard,lion,neandertal'
 	pick = (list) -> 
 		n = list.split(',')
 		n[Math.floor(n.length * Math.random())]
@@ -41,10 +44,9 @@ sock.on 'connect', ->
 		public_name: public_name
 	}
 
-
 sock.on 'sync', (data) ->
 	#here is the rather complicated code to calculate
-	#the offsets of the time synchronization stuff
+	#then offsets of the time synchronization stuff
 	#it's totally not necessary to do this, but whatever
 	#it might make the stuff work better when on an
 	#apple iOS device where screen drags pause the
@@ -61,62 +63,131 @@ sock.on 'sync', (data) ->
 	console.log 'sync', data
 	for attr of data
 		sync[attr] = data[attr]
-	# renderState()
+	renderState()
+
+
+last_question = null
 
 renderState = ->
 	# render the user list and that stuff
 	if sync.users
-		users = for user in sync.users
+		for user in sync.users
 			votes = []
 			for action of sync.voting
 				if user.id in sync.voting[action]
 					votes.push action
-			user.name + " (" + user.id + ") " + votes.join(", ")
-		document.querySelector('#users').innerText = users.join(', ')
+			user.votes = votes.join(', ')
+			# user.name + " (" + user.id + ") " + votes.join(", ")
+		list = $('.leaderboard tbody')
+		list.find('tr').remove() #abort all people
+		count = 0
+		for user in sync.users
+			count++
+			row = $('<tr>').appendTo list
+			$('<td>').text(count).appendTo row
+			$('<td>').text(user.name).appendTo row
+			$('<td>').text(user.votes || 0).appendTo row
+			$('<td>').text(7).appendTo row
+		# console.log users.join ', '
+		# document.querySelector('#users').innerText = users.join(', ')
 
+	renderPartial()
+
+renderPartial = ->
+	return unless sync.question and sync.timing
+	
 	#render the question 
-	if sync.question
-		timeDelta = time() - sync.begin_time
-		words = sync.question.split ' '
-		{list, rate} = sync.timing
-		cumulative = cumsum list, rate
-		index = 0
-		index++ while timeDelta > cumulative[index]
-		index++ if timeDelta > cumulative[0] / 2
-			
-		document.querySelector("#visible").innerText = words.slice(0, index).join(' ') + " "
-		document.querySelector("#unread").innerText = words.slice(index).join(' ')
+	if sync.question isnt last_question
+		changeQuestion() #whee slidey
+		last_question = sync.question
+	timeDelta = time() - sync.begin_time
+	words = sync.question.split ' '
+	{list, rate} = sync.timing
+	cumulative = cumsum list, rate
+	index = 0
+	index++ while timeDelta > cumulative[index]
+	index++ if timeDelta > cumulative[0] / 2
+	bundle = $('#history .bundle').first()
+	new_text = words.slice(0, index).join(' ')
+	old_text = bundle.find('.readout .visible').text()
+	#this more complicated system allows text selection
+	#while it's still reading out stuff
+	if new_text isnt old_text
+		if new_text.indexOf old_text is 0
+			node = bundle.find('.readout .visible')[0]
+			change = new_text.slice old_text.length
+			node.appendChild document.createTextNode(change)
+		else
+			bundle.find('.readout .visible').text new_text
+		bundle.find('.readout .unread').text words.slice(index).join(' ')
+	#render the time
+	renderTimer sync.end_time - time()
+	progress = (time() - sync.begin_time)/(sync.end_time - sync.begin_time)
+	# console.log progress
+	$('.progress .bar').width progress * 100 + '%'
+
+	
 
 
+setInterval renderState, 1000
+setInterval renderPartial, 50
 
-transitionQuestion = ->
-	if $('.bundle').length > 10
-		#remove the old crap when it's really old (and turdy)
-		$('.bundle').last().slideUp 'normal', -> 
+renderTimer = (ms) ->
+	
+	$('.progress').toggleClass 'progress-warning', !!sync.time_freeze
+	# $('.progress').toggleClass 'active', ms < 0
+	sign = ""
+	sign = "+" if ms < 0
+	sec = Math.abs(ms) / 1000
+	cs = (sec % 1).toFixed(1).slice(1)
+	$('.timer .fraction').text cs
+	min = sec / 60
+	pad = (num) ->
+		str = Math.floor(num).toString()
+		while str.length < 2
+			str = '0' + str
+		str
+	$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
+
+changeQuestion = ->
+	cutoff = 10
+	#smaller cutoff for phones which dont place things in parallel
+	cutoff = 1 if matchMedia('(max-width: 768px)').matches
+	#remove the old crap when it's really old (and turdy)
+	$('.bundle').slice(cutoff).slideUp 'normal', -> 
 			$(this).remove()
-	$('#history .bundle .readout').first().slideUp('slow')
+	old = $('#history .bundle').first()
+	# old.find('.answer').css('visibility', 'visible')
+	old.removeClass 'active'
+	#merge the text nodes, perhaps for performance reasons
+	if old.find('.readout').length > 0
+		old.find('.readout')[0].normalize() 
+	old.find('.readout').slideUp('slow')
 	bundle = createBundle().width($('#history').width()) #.css('display', 'none')
+	bundle.addClass 'active'
 	$('#history').prepend bundle.hide()
 	bundle.slideDown('slow')
 	bundle.width('auto')
 
-
-TestingQuestion = {"category": "Trash", "pKey": "His creation is attributed to either Bill Finger or Jerry Robinson, with the distinctive look based partly on the look of actor Conrad Veidt in one film. This man, perhaps originally Red Hood, is cred", "difficulty": "HS", "tournament": "QuAC I", "question": "His creation is attributed to either Bill Finger or Jerry Robinson, with the distinctive look based partly on the look of actor Conrad Veidt in one film. This man, perhaps originally Red Hood, is credited with killing Sarah Gordon and Jason Todd as well as permanently injuring Oracle, while another story sees his psychiatrist Harleen Quinzl falling in love with him and attempting to feed his arch-nemesis to piranhas. In television and movies, he's been played by Cesar Romero and Jack Nicholson. For 10 points name this fictional villain more recently played by Heath Ledger, a nemesis of the Batman.", "accept": null, "question_num": 12, "year": 2008, "answer": "The Joker", "round": "Round1Final.doc"}
 
 createBundle = ->
 	breadcrumb = $('<ul>').addClass('breadcrumb')
 	addInfo = (name, value) ->
 		breadcrumb.find('li').last().append $('<span>').addClass('divider').text('/')
 		breadcrumb.append $('<li>').text(name + ": " + value)
-	addInfo 'Category', 'Robots'
-	# addInfo 'Difficulty', 'Google Fiber Middle School'
-	addInfo 'Cupholders', 'Large'
+	addInfo 'Category', sync.info.category
+	addInfo 'Difficulty', sync.info.difficulty
+	addInfo 'Tournament', sync.info.tournament
+	addInfo 'Year', sync.info.year
+	# addInfo 'Number', sync.info.num
+	# addInfo 'Round', sync.info.round
 	breadcrumb.append $('<li>').addClass('answer pull-right')
-		.text("Answer: Robot Ponies")
+		.text("Answer: " + sync.answer)
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
-	well.append $('<span>').addClass('visible').text(TestingQuestion.question)
-	well.append $('<span>').addClass('unread')
+	well.append $('<span>').addClass('visible')
+	well.append document.createTextNode(' ') #space: the frontier in between visible and unread
+	well.append $('<span>').addClass('unread').text(sync.question)
 	annotations = $('<div>').addClass 'annotations'
 	$('<div>').addClass('bundle')
 		.append(breadcrumb)
@@ -133,7 +204,7 @@ addAnnotation = (el) ->
 	el.css('display', 'none').prependTo $('#history .bundle .annotations').first()
 	el.slideDown()
 
-$('html').toggleClass 'touchscreen', !!('ontouchstart' in window)
+
 
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
@@ -142,12 +213,12 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 document.addEventListener 'keydown', (e) ->
 	if e.keyCode is 32 #space = skip
 		sock.emit 'skip', 'yay'
+		e.preventDefault()
 	else if e.keyCode is 80
 		sock.emit 'pause', 'yay'
 	else if e.keyCode is 90
 		sock.emit 'unpause', 'yay'
 
-# setInterval renderState, 50
 
 # $('.leaderboard tbody tr').live 'click', ->
 
@@ -161,12 +232,12 @@ $('.leaderboard tbody tr').popover {
 }
 
 # get em out of phase
-n = 0
-setInterval ->
-	if n++ % 4 == 0
-		transitionQuestion()
-	else
-		chatAnnotation('cucumber', 'im a dumb dinosaur '+ n)
-, 1000
+# n = 0
+# setInterval ->
+# 	if n++ % 4 == 0
+# 		transitionQuestion()
+# 	else
+# 		chatAnnotation('cucumber', 'im a dumb dinosaur '+ n)
+# , 1000
 
 
