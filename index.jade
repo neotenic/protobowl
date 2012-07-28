@@ -21,6 +21,9 @@ html(lang="en")
 			.timer .fraction {
 				font-size: 50%;
 			}
+			.timer.buzz {
+				color: #DA2F22;
+			}
 			.thumbnail {
 				margin: 0;
 				margin-bottom: 18px;
@@ -101,7 +104,7 @@ html(lang="en")
 						div.span9
 							div.form-horizontal
 								div.actionbar
-									button.btn.chatbtn(title="Shortcut: / (forward slash) key", rel='tooltip')
+									button.btn.chatbtn(title="Shortcut: / key", rel='tooltip')
 										i.icon-comment
 										| Chat
 									| 
@@ -137,7 +140,8 @@ html(lang="en")
 						h5 
 							i.icon-time
 							| Timer 
-							span.label.label-warning#pause Paused
+							span.label.label-warning.pause(style="display:none") Paused
+							span.label.label-important.buzz(style="display:none") Buzz
 						div.timer.unselectable
 							span.face 00:00
 							span.fraction .0

@@ -38,8 +38,45 @@ cumsum = (list, rate) ->
 	for num in list
 		sum += Math.round(num) * rate #always round!
 
-time = ->
-	return if sync.time_freeze then sync.time_freeze else new Date - sync_offset - sync.time_offset
+###
+	So in this application, we have to juggle around not one, not two, but three notions of time
+	(and possibly four if you consider freezable time, which needs a cooler name, like what 
+	futurama calls intragnizent, so I'll use that, intragnizent time) anyway. So we have three
+	notions of time. The first and simplest is server time, which is an uninterruptable number
+	of milliseconds recorded by the server's +new Date. Problem is, that the client's +new Date
+	isn't exactly the same (can be a few seconds off, not good when we're dealing with precisions
+	of tens of milliseconds). However, we can operate off the assumption that the relative duration
+	of each increment of time is the same (as in, the relativistic effects due to players in
+	moving vehicles at significant fractions of the speed of light are largely unaccounted for
+	in this version of the application), and even imprecise quartz clocks only loose a second
+	every day or so, which is perfectly okay in the short spans of minutes which need to go 
+	unadjusted. So, we can store the round trip and compare the values and calculate a constant
+	offset between the client time and the server time. However, for some reason or another, I
+	decided to implement the notion of "pausing" the game by stopping the flow of some tertiary
+	notion of time (this makes the math relating to calculating the current position of the read
+	somewhat easier).
+
+	This is implemented by an offset which is maintained by the server which goes on top of the
+	notion of server time. 
+
+	Why not just use the abstraction of that pausable (tragnizent) time everywhere and forget
+	about the abstraction of server time, you may ask? Well, there are two reasons, the first
+	of which is that two offsets are maintained anyway (the first prototype only used one, 
+	and this caused problems on iOS because certain http requests would have extremely long
+	latencies when the user was scrolling, skewing the time, this new system allows the system
+	to differentiate a pause from a time skew and maintain a more precise notion of time which
+	is calculated by a moving window average of previously observed values)
+
+	The second reason, is that there are times when you actually need server time. Situations
+	like when you're buzzing and you have a limited time to answer before your window shuts and
+	control gets handed back to the group.
+###
+
+
+
+time = -> if sync.time_freeze then sync.time_freeze else serverTime() - sync.time_offset
+
+serverTime = -> new Date - sync_offset
 
 
 window.onbeforeunload = ->
@@ -84,7 +121,10 @@ sock.on 'sync', (data) ->
 	console.log 'sync', data
 	for attr of data
 		sync[attr] = data[attr]
-	renderState()
+	if 'users' of data
+		renderState()
+	else
+		renderPartial()
 
 latency_log = []
 testLatency = ->
@@ -186,7 +226,7 @@ renderPartial = ->
 	cumulative = cumsum list, rate
 	index = 0
 	index++ while timeDelta > cumulative[index]
-	index++ if timeDelta > cumulative[0] / 2
+	index++ if timeDelta > cumulative[0]
 	bundle = $('#history .bundle').first()
 	new_text = words.slice(0, index).join(' ')
 	old_text = bundle.find('.readout .visible').text()
@@ -201,10 +241,14 @@ renderPartial = ->
 			bundle.find('.readout .visible').text new_text
 		bundle.find('.readout .unread').text words.slice(index).join(' ')
 	#render the time
-	renderTimer sync.end_time - time()
-	progress = (time() - sync.begin_time)/(sync.end_time - sync.begin_time)
-	# console.log progress
-	$('.progress .bar').width progress * 100 + '%'
+	renderTimer()
+	
+
+	# manipulate the action bar
+	$('.pausebtn, .buzzbtn').attr 'disabled', !!sync.attempt
+	if sync.attempt
+		guessAnnotation sync.attempt
+
 
 	if latency_log.length > 0
 		$('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1))
@@ -215,10 +259,16 @@ renderPartial = ->
 setInterval renderState, 10000
 setInterval renderPartial, 50
 
-renderTimer = (ms) ->
+renderTimer = ->
 	# $('#pause').show !!sync.time_freeze
 	if sync.time_freeze
-		$('#pause').fadeIn()
+		if sync.attempt
+			$('.label.pause').hide()
+			$('.label.buzz').fadeIn()
+		else
+			$('.label.pause').fadeIn()
+			$('.label.buzz').hide()
+
 		if $('.pausebtn').text() != 'Continue'
 			$('.pausebtn')
 			.text('Continue')
@@ -226,18 +276,41 @@ renderTimer = (ms) ->
 			.removeClass('btn-warning')
 
 	else
-		$('#pause').fadeOut()
+		$('.label.pause').fadeOut()
+		$('.label.buzz').fadeOut()
 		if $('.pausebtn').text() != 'Pause'
 			$('.pausebtn')
 			.text('Pause')
 			.addClass('btn-warning')
 			.removeClass('btn-success')
 
-	$('.progress').toggleClass 'progress-warning', !!sync.time_freeze
-	# $('.progress').toggleClass 'active', ms < 0
+	$('.timer').toggleClass 'buzz', !!sync.attempt
+
+
+	$('.progress').toggleClass 'progress-warning', !!(sync.time_freeze and !sync.attempt)
+	$('.progress').toggleClass 'progress-danger', !!sync.attempt
+	
+	
+
+	if sync.attempt
+		elapsed = serverTime() - sync.attempt.start
+		ms = sync.attempt.duration - elapsed
+		progress = elapsed / sync.attempt.duration
+	else
+		ms = sync.end_time - time()
+		progress = (time() - sync.begin_time)/(sync.end_time - sync.begin_time)
+	
+	if $('.progress .bar').hasClass 'pull-right'
+		$('.progress .bar').width (1 - progress) * 100 + '%'
+	else
+		$('.progress .bar').width progress * 100 + '%'
+
+	ms = Math.max(0, ms) # force time into positive range, comment this out to show negones
 	sign = ""
 	sign = "+" if ms < 0
 	sec = Math.abs(ms) / 1000
+
+
 	cs = (sec % 1).toFixed(1).slice(1)
 	$('.timer .fraction').text cs
 	min = sec / 60
@@ -299,13 +372,37 @@ createBundle = ->
 userSpan = (user) ->
 	$('<span>')
 		.addClass('user-'+user)
-		.text(users[user].name)
+		.text(users[user]?.name || '[name missing]')
 
 addAnnotation = (el) ->
 	el.css('display', 'none').prependTo $('#history .bundle .annotations').first()
 	el.slideDown()
 	return el
 
+
+guessAnnotation = ({session, text, user, final}) ->
+	# TODO: make this less like chats
+	id = user + '-' + session
+	if $('#' + id).length > 0
+		line = $('#' + id)
+	else
+		line = $('<p>').attr('id', id)
+		line.append $('<span>').addClass('label label-important').text("Buzz")
+		line.append " "
+		line.append userSpan(user).addClass('author')
+		line.append document.createTextNode ' '
+		$('<span>')
+			.addClass('comment')
+			.appendTo line
+		addAnnotation line
+	if final
+		if text is ''
+			line.find('.comment').html('<em>(no message)</em>')
+		else
+			line.find('.comment').text(text)
+	else
+		line.find('.comment').text(text)
+	# line.toggleClass 'typing', !final
 
 chatAnnotation = ({session, text, user, final}) ->
 	id = user + '-' + session
@@ -351,7 +448,9 @@ sock.on 'leave', ({user}) ->
 
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
-		$(this).parent().find('.readout').slideToggle()
+		readout = $(this).parent().find('.readout')
+		readout.width($('#history').width()).slideToggle "slow", ->
+			readout.width 'auto'
 
 actionMode = ''
 setActionMode = (mode) ->
@@ -375,11 +474,11 @@ $('.skipbtn').click ->
 
 
 $('.buzzbtn').click ->
+	
 	sock.emit 'buzz', 'yay', (data) ->
 		if data is 'http://www.whosawesome.com/'
 			setActionMode 'guess'
 			$('.guess_input')
-				.data('input_session', Math.random().toString(36).slice(3))
 				.val('')
 				.focus()
 		else
@@ -419,7 +518,6 @@ $('.guess_input').keyup (e) ->
 	return if e.keyCode is 13
 	sock.emit 'guess', {
 		text: $('.guess_input').val(), 
-		session: $('.guess_input').data('input_session'), 
 		final: false
 	}
 
@@ -427,7 +525,6 @@ $('.guess_input').keyup (e) ->
 $('.guess_form').submit (e) ->
 	sock.emit 'guess', {
 		text: $('.guess_input').val(), 
-		session: $('.guess_input').data('input_session'), 
 		final: true
 	}
 	e.preventDefault()
@@ -437,7 +534,6 @@ $('body').keydown (e) ->
 	if e.keyCode is 32
 		e.preventDefault()
 		$('.buzzbtn').click()
-		
 	else if e.keyCode is 83 # S
 		$('.skipbtn').click()
 	else if e.keyCode is 80 # P
@@ -447,7 +543,7 @@ $('body').keydown (e) ->
 		e.preventDefault()
 		$('.chatbtn').click()
 
-	# console.log e
+	console.log e
 
 
 # possibly this should be replaced by something smarter using CSS calc()

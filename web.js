@@ -66,6 +66,7 @@ QuizRoom = (function() {
     this.name = name;
     this.time_offset = 0;
     this.new_question();
+    this.attempt = null;
     this.freeze();
   }
 
@@ -90,6 +91,7 @@ QuizRoom = (function() {
 
   QuizRoom.prototype.new_question = function() {
     var answer_time, cumulative, list, question, rate, word, _ref;
+    this.attempt = null;
     answer_time = 1000 * 5;
     this.begin_time = this.time();
     question = questions[Math.floor(questions.length * Math.random())];
@@ -130,6 +132,36 @@ QuizRoom = (function() {
     return io.sockets["in"](this.name).emit(name, data);
   };
 
+  QuizRoom.prototype.buzz = function(user, fn) {
+    if (this.attempt === null) {
+      this.attempt = {
+        user: user,
+        start: +(new Date),
+        duration: 5 * 1000,
+        session: Math.random().toString(36).slice(2),
+        guess: ''
+      };
+      fn('http://www.whosawesome.com/');
+      this.freeze();
+      return this.sync();
+    } else if (this.owner === user) {
+      return fn('wai?');
+    } else {
+      return fn('narp');
+    }
+  };
+
+  QuizRoom.prototype.guess = function(user, data) {
+    var _ref;
+    if (((_ref = this.attempt) != null ? _ref.user : void 0) === user) {
+      this.attempt.text = data.text;
+      if (data.final) {
+        console.log('omg final clubs are so cool ~ zuck');
+      }
+      return this.sync();
+    }
+  };
+
   QuizRoom.prototype.sync = function(full) {
     var action, actionvotes, attr, blacklist, client, data, nay, vote, voting, yay, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
     data = {
@@ -156,7 +188,6 @@ QuizRoom = (function() {
       if (actionvotes.length > 0) {
         data.voting[action] = actionvotes;
       }
-      console.log(yay, nay, "VOTES FOR", action);
       if (yay / (yay + nay) > 0) {
         _ref1 = io.sockets.clients(this.name);
         for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
@@ -239,9 +270,11 @@ io.sockets.on('connection', function(sock) {
     sock.set('unfreeze', vote);
     return room.sync();
   });
-  sock.on('buzz', function(vote, fn) {
-    fn('http://www.whosawesome.com/');
-    return room.sync();
+  sock.on('buzz', function(data, fn) {
+    return room.buzz(sock.id, fn);
+  });
+  sock.on('guess', function(data) {
+    return room.guess(sock.id, data);
   });
   sock.on('chat', function(_arg) {
     var final, session, text;

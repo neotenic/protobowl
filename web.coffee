@@ -57,6 +57,7 @@ class QuizRoom
 		@name = name
 		@time_offset = 0
 		@new_question()
+		@attempt = null
 		@freeze()
 
 	time: ->
@@ -71,6 +72,8 @@ class QuizRoom
 			@time_freeze = 0
 
 	new_question: ->
+		@attempt = null
+
 		answer_time = 1000 * 5
 		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
@@ -104,7 +107,33 @@ class QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
 
+	buzz: (user, fn) ->
+		if @attempt is null
+			@attempt = {
+				user: user,
+				start: +new Date, # oh god so much time crap
+				duration: 5 * 1000,
+				session: Math.random().toString(36).slice(2), # generate 'em server side 
+				guess: ''
+			}
+			fn 'http://www.whosawesome.com/'
+			@freeze()
+			@sync() #partial sync
+		else if @owner is user
+			fn 'wai?'
+		else
+			fn 'narp'
 
+	guess: (user, data) ->
+		if @attempt?.user is user
+			@attempt.text = data.text
+			# lets just ignore the input session attribute
+			# because that's more of a chat thing since with
+			# buzzes, you always have room locking anyway
+			if data.final
+				# do final stuff
+				console.log 'omg final clubs are so cool ~ zuck'
+			@sync()		
 
 	sync: (full) ->
 		data = {
@@ -126,7 +155,7 @@ class QuizRoom
 			# console.log yay, 'yay', nay, 'nay', action
 			if actionvotes.length > 0
 				data.voting[action] = actionvotes
-			console.log yay, nay, "VOTES FOR", action
+			# console.log yay, nay, "VOTES FOR", action
 			if yay / (yay + nay) > 0
 				client.del(action) for client in io.sockets.clients(@name)
 				this[action]()
@@ -181,10 +210,11 @@ io.sockets.on 'connection', (sock) ->
 		sock.set 'unfreeze', vote
 		room.sync()
 
-	sock.on 'buzz', (vote, fn) ->
-		# todo: room locking, etc
-		fn 'http://www.whosawesome.com/'
-		room.sync()
+	sock.on 'buzz', (data, fn) ->
+		room.buzz sock.id, fn
+
+	sock.on 'guess', (data) ->
+		room.guess sock.id, data
 
 	sock.on 'chat', ({text, final, session}) ->
 		room.emit 'chat', {text: text, session:  session, user: sock.id, final: final}
