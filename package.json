@@ -1,6 +1,6 @@
 {
   "name": "protobowl",
-  "version": "0.0.2",
+  "version": "0.0.2-4",
   "dependencies": {
     "less-middleware": "0.1.x",
     "express": "2.5.x",
@@ -8,7 +8,10 @@
     "jade": "0.26.x"
   },
   "engines": {
-    "node": "0.8.x",
-    "npm":  "1.1.x"
+    "node": ">=0.4"
+  },
+  "subdomain": "protobowl",
+  "scripts": {
+    "start": "web.js"
   }
 }

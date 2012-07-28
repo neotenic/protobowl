@@ -9,8 +9,6 @@ app = express.createServer(express.logger());
 io = require('socket.io').listen(app);
 
 io.configure(function() {
-  io.set("transports", ["xhr-polling"]);
-  io.set("polling duration", 10);
   return io.set("log level", 2);
 });
 
@@ -128,6 +126,10 @@ QuizRoom = (function() {
     return this.new_question();
   };
 
+  QuizRoom.prototype.emit = function(name, data) {
+    return io.sockets["in"](this.name).emit(name, data);
+  };
+
   QuizRoom.prototype.sync = function(full) {
     var action, actionvotes, attr, blacklist, client, data, nay, vote, voting, yay, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
     data = {
@@ -188,7 +190,6 @@ QuizRoom = (function() {
         return _results;
       }).call(this);
     }
-    console.log(data);
     return io.sockets["in"](this.name).emit('sync', data);
   };
 
@@ -199,7 +200,8 @@ QuizRoom = (function() {
 rooms = {};
 
 io.sockets.on('connection', function(sock) {
-  var room;
+  var room,
+    _this = this;
   room = null;
   sock.on('join', function(data) {
     var room_name;
@@ -213,7 +215,13 @@ io.sockets.on('connection', function(sock) {
       rooms[room_name] = new QuizRoom(room_name);
     }
     room = rooms[room_name];
-    return room.sync(true);
+    room.sync(true);
+    return room.emit('introduce', {
+      user: sock.id
+    });
+  });
+  sock.on('echo', function(data, callback) {
+    return callback(+(new Date));
   });
   sock.on('rename', function(name) {
     sock.set('name', name);
@@ -235,10 +243,27 @@ io.sockets.on('connection', function(sock) {
     fn('http://www.whosawesome.com/');
     return room.sync();
   });
+  sock.on('chat', function(_arg) {
+    var final, session, text;
+    text = _arg.text, final = _arg.final, session = _arg.session;
+    return room.emit('chat', {
+      text: text,
+      session: session,
+      user: sock.id,
+      final: final
+    });
+  });
   return sock.on('disconnect', function() {
+    var id;
+    id = sock.id;
+    console.log("someone", id, "left");
     return setTimeout(function() {
+      console.log(!!room, 'rooms');
       if (room) {
-        return room.sync(true);
+        room.sync(true);
+        return room.emit('leave', {
+          user: id
+        });
       }
     }, 100);
   });

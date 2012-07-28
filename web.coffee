@@ -2,8 +2,9 @@ express = require('express')
 app = express.createServer express.logger()
 io = require('socket.io').listen(app)
 io.configure ->
-	io.set "transports", ["xhr-polling"]
-	io.set "polling duration", 10
+	# now this is meant to run on nodejitsu rather than heroku
+	#io.set "transports", ["xhr-polling"]
+	#io.set "polling duration", 10
 	io.set "log level", 2
 
 fs = require('fs')
@@ -100,6 +101,11 @@ class QuizRoom
 	skip: ->
 		@new_question()
 
+	emit: (name, data) ->
+		io.sockets.in(@name).emit name, data
+
+
+
 	sync: (full) ->
 		data = {
 			real_time: +new Date,
@@ -137,7 +143,6 @@ class QuizRoom
 					name: client.store.data.name
 				}
 
-		console.log data
 		io.sockets.in(@name).emit 'sync', data
 
 
@@ -155,6 +160,10 @@ io.sockets.on 'connection', (sock) ->
 		rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
 		room = rooms[room_name]
 		room.sync(true)
+		room.emit 'introduce', {user: sock.id}
+
+	sock.on 'echo', (data, callback) =>
+		callback +new Date
 
 	sock.on 'rename', (name) ->
 		sock.set 'name', name
@@ -176,9 +185,17 @@ io.sockets.on 'connection', (sock) ->
 		fn 'http://www.whosawesome.com/'
 		room.sync()
 
+	sock.on 'chat', ({text, final, session}) ->
+		room.emit 'chat', {text: text, session:  session, user: sock.id, final: final}
+
 	sock.on 'disconnect', ->
+		id = sock.id
+		console.log "someone", id, "left"
 		setTimeout ->
-			room.sync(true) if room
+			console.log !!room, 'rooms'
+			if room
+				room.sync(true)
+				room.emit 'leave', {user: id}
 		, 100
 
 

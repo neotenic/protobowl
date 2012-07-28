@@ -43,6 +43,12 @@ html(lang="en")
 			.bundle .annotations .author {
 				font-weight: bold;
 			}
+			.bundle .annotations .typing {
+				opacity: 0.7;
+			}
+			.bundle .annotations .log {
+				font-style: italic;
+			}
 			.active .unread {
 				visibility: hidden;
 			}
@@ -121,16 +127,11 @@ html(lang="en")
 								tr
 									th #
 									th Name
-									th Interrupts
+									th Interrupt
 									th Score
 							tbody
 
 
-					//- div.span3.thumbnail
-					//- 		h5 
-					//- 			i.icon-fire
-					//- 			| Label label label label
-					//- 		p Content content content
 
 					div.span3.thumbnail
 						h5
@@ -160,6 +161,24 @@ html(lang="en")
 							| Tips
 						ul
 							li Buttons are fun to press
+
+					div.span3.thumbnail
+							h5 
+								i.icon-fire
+								| Debugging
+							table.table-condensed.table
+								thead
+									tr
+										th attr
+										th val
+								tbody
+									tr
+										td latency
+										td#latency ?
+									tr
+										td sync_offset
+										td#sync_offset ? 
+
 
 		div.modal.hide#disco
 			div.modal-header

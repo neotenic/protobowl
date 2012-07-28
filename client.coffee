@@ -1,5 +1,6 @@
 sock = io.connect()
 sync = {}
+users = {}
 sync_offsets = []
 sync_offset = 0
 
@@ -48,9 +49,9 @@ sock.on 'disconnect', ->
 	# make it so that refreshes dont show disco flash
 	setTimeout ->
 		$('#disco').modal('show')
-	, 500
+	, 1000
 
-sock.on 'connect', ->
+sock.once 'connect', ->
 	sock.emit 'join', {
 		old_socket: localStorage.old_socket,
 		room_name: channel_name,
@@ -73,13 +74,38 @@ sock.on 'sync', (data) ->
 	below = (item for item in sync_offsets when item <= thresh)
 	sync_offset = avg(below)
 
+	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + thresh.toFixed(1))
+
+
 	console.log 'sync', data
 	for attr of data
 		sync[attr] = data[attr]
 	renderState()
 
+latency_log = []
+testLatency = ->
+	initialTime = +new Date
+	sock.emit 'echo', {}, (firstServerTime) ->
+		recieveTime = +new Date
+		sock.emit 'echo', {}, (secondServerTime) ->
+			secondTime = +new Date
+			CSC1 = recieveTime - initialTime
+			CSC2 = secondTime - recieveTime
+			SCS1 = secondServerTime - firstServerTime
+			latency_log.push CSC1
+			latency_log.push SCS1
+			latency_log.push CSC2
+			# console.log CSC1, SCS1, CSC2
+
+setTimeout ->
+	testLatency()
+	setInterval testLatency, 60 * 1000
+, 2500
 
 last_question = null
+
+sock.on 'chat', (data) ->
+	chatAnnotation data
 
 renderState = ->
 	# render the user list and that stuff
@@ -90,17 +116,43 @@ renderState = ->
 				if user.id in sync.voting[action]
 					votes.push action
 			user.votes = votes.join(', ')
+			users[user.id] = user
+
 			# user.name + " (" + user.id + ") " + votes.join(", ")
 		list = $('.leaderboard tbody')
 		# list.find('tr').remove() #abort all people
 		count = 0
 		list.find('tr').addClass 'to_remove'
 		for user in sync.users
+			$('.user-' + user.id).text(user.name)
 			count++
 			row = list.find '.sockid-' + user.id
 			if row.length < 1
 				console.log 'recreating user'
 				row = $('<tr>').appendTo list 
+
+				row.popover {
+					placement: ->
+						if matchMedia('(max-width: 768px)').matches
+							return "top"
+						else
+							return "left"
+					, 
+					title: user.name + "'s stats",
+					trigger: 'manual',
+					content: 'well, they dont exist. sorry. '+ user.id
+				}
+				row.click ->
+					$('.leaderboard tbody tr').not(this).popover 'hide'
+					$(this).popover 'toggle'
+
+				# row.mouseover (e) ->
+				# 	$('.leaderboard tbody tr').not(this).popover 'hide'
+				# 	if $(this).data('popover'),$(this).data('popover').tip().hasClass('out')
+				# 		$(this).popover 'show'
+				# row.mouseout (e) ->
+				# 	console.log $(this).data('popover'),$(this).data('popover').tip().hasClass('in')
+				# 	# $(this).popover 'hide'
 			row.find('td').remove()
 			row.addClass 'sockid-' + user.id
 			row.removeClass 'to_remove'
@@ -109,12 +161,7 @@ renderState = ->
 			$('<td>').text(user.name).appendTo row
 			$('<td>').text(user.votes || 0).appendTo row
 			$('<td>').text(7).appendTo row
-			
-			row.popover {
-				placement: 'left', 
-				title: user.name + "'s stats",
-				content: 'well, they dont exist. sorry. '+ user.id
-			}
+
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
@@ -154,10 +201,13 @@ renderPartial = ->
 	# console.log progress
 	$('.progress .bar').width progress * 100 + '%'
 
+	if latency_log.length > 0
+		$('#latency').text(avg(latency_log).toFixed(1))
+
 	
 
 
-setInterval renderState, 1000
+setInterval renderState, 10000
 setInterval renderPartial, 50
 
 renderTimer = (ms) ->
@@ -227,15 +277,52 @@ createBundle = ->
 		.append(readout)
 		.append(annotations)
 
-chatAnnotation = (name, text) ->
-	line = $('<p>')
-	$('<span>').addClass('author').text(name+" ").appendTo line
-	$('<span>').addClass('comment').text(text).appendTo line
-	addAnnotation line
+
+userSpan = (user) ->
+	$('<span>')
+		.addClass('user-'+user)
+		.text(users[user].name)
 
 addAnnotation = (el) ->
 	el.css('display', 'none').prependTo $('#history .bundle .annotations').first()
 	el.slideDown()
+	return el
+
+
+chatAnnotation = ({session, text, user, final}) ->
+	id = user + '-' + session
+	if $('#' + id).length > 0
+		line = $('#' + id)
+	else
+		line = $('<p>').attr('id', id)
+		line.append userSpan(user).addClass('author')
+		line.append document.createTextNode ' '
+		$('<span>')
+			.addClass('comment')
+			.appendTo line
+		addAnnotation line
+	
+	line.find('.comment').text(text)
+	line.toggleClass 'typing', !final
+
+sock.on 'introduce', ({user}) ->
+	line = $('<p>').addClass 'log'
+	line.append userSpan(user)
+	line.append " joined the room"
+	addAnnotation line
+
+sock.on 'leave', ({user}) ->
+	line = $('<p>').addClass 'log'
+	line.append userSpan(user)
+	line.append " left the room"
+	addAnnotation line
+
+# chatAnnotationOld = (name, text) ->
+# 	line = $('<p>')
+# 	$('<span>').addClass('author').text(name+" ").appendTo line
+# 	$('<span>').addClass('comment').text(text).appendTo line
+# 	addAnnotation line
+
 
 
 
@@ -250,17 +337,29 @@ $('.main_input').keyup (e) ->
 	mode = $('.main_input').data('mode')
 	if mode is 'buzz'
 		if e.keyCode is 13
-			sock.emit 'final', $(this).val()	
-			$('.main_input').attr('disabled', true).val('')
+			sock.emit 'guess', {text: $(this).val(), final: true}
+			$('.main_input').attr('disabled', true).val('').blur()
+			$('.main_input').data('mode', '')
 		else
-			sock.emit 'guess', $(this).val()
+			sock.emit 'guess', {text: $(this).val()}
 	else if mode is 'chat'
-		$('.main_input').attr('disabled', true).val('')
+		val = $(this).val().replace(/^.*?: ?/g, '')
+		if e.keyCode is 13
+			sock.emit 'chat', {text: val, final: true, session: $(this).data('input_session')}
+			$('.main_input').attr('disabled', true).val('').blur()
+			$('.main_input').data('mode', '')
+		else
+			sock.emit 'chat', {text: val, session: $(this).data('input_session')}
 
 $('body').keydown (e) ->
+	mode = $('.main_input').data('mode')
+	if mode is 'chat'
+		$('.main_input').focus()
+		return
 	if e.keyCode is 32
 		sock.emit 'buzz', 'MARP', (result) ->
 			console.log result
+			$('.main_input').data('mode', 'buzz')
 			$('.main_input').attr('disabled', false).focus()
 		e.preventDefault()
 	else if e.keyCode is 83 # S
@@ -272,6 +371,8 @@ $('body').keydown (e) ->
 	else if e.keyCode in [47, 111, 191] # / (forward slash)
 		console.log "slash"
 		e.preventDefault()
-		$('.main_input').attr('disabled', false).val('chat/').focus()
+		$('.main_input').data('mode', 'chat')
+		$('.main_input').data('input_session', Math.random().toString(36).slice(3))
+		$('.main_input').attr('disabled', false).val('chat: ').focus()
 	
-	console.log e
+	# console.log e
