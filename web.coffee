@@ -182,6 +182,7 @@ io.sockets.on 'connection', (sock) ->
 		room.sync()
 
 	sock.on 'buzz', (vote, fn) ->
+		# todo: room locking, etc
 		fn 'http://www.whosawesome.com/'
 		room.sync()
 

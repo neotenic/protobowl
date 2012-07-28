@@ -8,6 +8,7 @@ html(lang="en")
 		link(rel='stylesheet', href='less/responsive.css')
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
 		script(src="js/bootstrap.js")
+		script(src="js/modernizr.js")
 		script(src="/socket.io/socket.io.js")
 		script
 			channel_name = '!{name}'
@@ -25,8 +26,9 @@ html(lang="en")
 				margin-bottom: 18px;
 				overflow: auto;
 			}
-			.thumbnail h5 i {
+			.thumbnail h5 i, .expando i, .actionbar i {
 				margin-right: 5px;
+				margin-top: 1px;
 			}
 			.breadcrumb {
 				overflow: auto;
@@ -34,12 +36,15 @@ html(lang="en")
 			.show-touch {
 				display: none;
 			}
-			html.touchscreen .show-touch {
-				display: inherit;
+
+			div.textbar { display: none !important ;}
+			.text div.textbar { display: inherit !important; }
+			.text .actionbar { display: none !important; }
+
+			form.expando {
+				margin: 0;
 			}
-			html.touchscreen .show-keyboard {
-				display: none;
-			}
+
 			.bundle .annotations .author {
 				font-weight: bold;
 			}
@@ -93,17 +98,35 @@ html(lang="en")
 			div.row
 				div.span9
 					div.row(style="margin-bottom: 10px")
-						div.span9.show-touch
-							div.well.form-horizontal
-								button.btn.btn-info Pause 
-								| 
-								button.btn.btn-warning Skip
-								| 
-								button.btn.pull-right.btn-danger Buzz 
-						div.span6.show-keyboard
-							div
-								input.main_input.span9(type='text', placeholder='eventually this might do something', disabled)
-						
+						div.span9
+							div.form-horizontal
+								div.actionbar
+									button.btn.chatbtn(title="Shortcut: / (forward slash) key", rel='tooltip')
+										i.icon-comment
+										| Chat
+									| 
+									button.btn.btn-info.skipbtn(title="Shortcut: s key", rel='tooltip')
+										| Skip
+									| 
+									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip') 
+										| Pause
+									| 
+									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip')
+										i.icon-bell.icon-white
+										| Buzz
+								form.expando.chat_form(style="display:none")
+									div.input-prepend
+										span.add-on
+											i.icon-comment
+											| Chat
+										input.chat_input(type='text', placeholder='well, i guess this will do something')
+								form.expando.guess_form(style="display:none")
+									div.input-prepend
+										span.add-on
+											i.icon-pencil
+											| Guess
+										input.guess_input(type='text', placeholder='this place is held')	
+									
 					div#history
 				div.span3
 					// this part really doesn't matter
@@ -127,8 +150,7 @@ html(lang="en")
 								tr
 									th #
 									th Name
-									th Interrupt
-									th Score
+									th Interrupts
 							tbody
 
 
@@ -138,12 +160,15 @@ html(lang="en")
 							i.icon-wrench
 							| Settings
 						div(style="text-align: center")
-							div.input-prepend
-								span.add-on
-									i.icon-user
-								input#username.span2(type='text', value='flame monkey')
-
-								// span.badge(style="margin-left: 10px") 42
+							div.expando
+								div.input-prepend
+									span.add-on
+										i.icon-user
+									input#username(type='text', value='flame monkey')
+							//- button.btn(data-toggle="button") 
+							//- 	i.icon-bell
+							//- 	| Sound
+							// span.badge(style="margin-left: 10px") 42
 
 					div.span3.thumbnail.show-keyboard
 						h5 

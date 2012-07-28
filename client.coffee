@@ -4,12 +4,12 @@ users = {}
 sync_offsets = []
 sync_offset = 0
 
-is_touch = !!('ontouchstart' in window)
-$('html').toggleClass 'touchscreen', is_touch
+
+# $('html').toggleClass 'touchscreen', Modernizr.touch
 
 generateName = ->
-	adjective = 'flaming,aberrant,agressive,warty,hoary,breezy,dapper,edgy,feisty,gutsy,hardy,intrepid,jaunty,karmic,lucid,maverick,natty,oneric,precise,quantal,quizzical,curious,derisive,bodacious,nefarious'
-	animal = 'monkey,axolotl,warthog,hedgehog,badger,drake,fawn,gibbon,heron,ibex,jackalope,koala,lynx,meerkat,narwhal,ocelot,penguin,quetzal,kodiak,cheetah,puma,jaguar,panther,tiger,leopard,lion,neandertal'
+	adjective = 'flaming,aberrant,agressive,warty,hoary,breezy,dapper,edgy,feisty,gutsy,hardy,intrepid,jaunty,karmic,lucid,maverick,natty,oneric,precise,quantal,quizzical,curious,derisive,bodacious,nefarious,nuclear,nonchalant'
+	animal = 'monkey,axolotl,warthog,hedgehog,badger,drake,fawn,gibbon,heron,ibex,jackalope,koala,lynx,meerkat,narwhal,ocelot,penguin,quetzal,kodiak,cheetah,puma,jaguar,panther,tiger,leopard,lion,neanderthal,walrus,mushroom,dolphin'
 	pick = (list) -> 
 		n = list.split(',')
 		n[Math.floor(n.length * Math.random())]
@@ -21,13 +21,17 @@ $('#username').keydown (e) ->
 	e.stopPropagation()
 
 $('#username').keyup ->
-	console.log 'renaming'
-	sock.emit 'rename', $(this).val()
+	if $(this).val().length > 0
+		sock.emit 'rename', $(this).val()
 
 avg = (list) ->
 	sum = 0
 	sum += item for item in list
 	sum / list.length
+
+stdev = (list) ->
+	mu = avg(list)
+	Math.sqrt avg((item - mu) * (item - mu) for item in list)
 
 cumsum = (list, rate) ->
 	sum = 0
@@ -74,7 +78,7 @@ sock.on 'sync', (data) ->
 	below = (item for item in sync_offsets when item <= thresh)
 	sync_offset = avg(below)
 
-	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + thresh.toFixed(1))
+	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1))
 
 
 	console.log 'sync', data
@@ -156,11 +160,12 @@ renderState = ->
 			row.find('td').remove()
 			row.addClass 'sockid-' + user.id
 			row.removeClass 'to_remove'
-
-			$('<td>').text(count).appendTo row
+			badge = $('<span>').addClass('badge').text(Math.floor(Math.random() * 1000))
+			badge.addClass 'badge-success' if user.id is sock.socket.sessionid #green if me
+			$('<td>').text(count).append('&nbsp;').append(badge).appendTo row
 			$('<td>').text(user.name).appendTo row
 			$('<td>').text(user.votes || 0).appendTo row
-			$('<td>').text(7).appendTo row
+			# $('<td>').text(7).appendTo row
 
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
@@ -202,7 +207,7 @@ renderPartial = ->
 	$('.progress .bar').width progress * 100 + '%'
 
 	if latency_log.length > 0
-		$('#latency').text(avg(latency_log).toFixed(1))
+		$('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1))
 
 	
 
@@ -214,8 +219,19 @@ renderTimer = (ms) ->
 	# $('#pause').show !!sync.time_freeze
 	if sync.time_freeze
 		$('#pause').fadeIn()
+		if $('.pausebtn').text() != 'Continue'
+			$('.pausebtn')
+			.text('Continue')
+			.addClass('btn-success')
+			.removeClass('btn-warning')
+
 	else
 		$('#pause').fadeOut()
+		if $('.pausebtn').text() != 'Pause'
+			$('.pausebtn')
+			.text('Pause')
+			.addClass('btn-warning')
+			.removeClass('btn-success')
 
 	$('.progress').toggleClass 'progress-warning', !!sync.time_freeze
 	# $('.progress').toggleClass 'active', ms < 0
@@ -242,6 +258,7 @@ changeQuestion = ->
 	old = $('#history .bundle').first()
 	# old.find('.answer').css('visibility', 'visible')
 	old.removeClass 'active'
+	old.find('.breadcrumb').click -> 1 # register a empty event handler so touch devices recognize
 	#merge the text nodes, perhaps for performance reasons
 	if old.find('.readout').length > 0
 		old.find('.readout')[0].normalize() 
@@ -258,6 +275,7 @@ createBundle = ->
 	addInfo = (name, value) ->
 		breadcrumb.find('li').last().append $('<span>').addClass('divider').text('/')
 		breadcrumb.append $('<li>').text(name + ": " + value)
+	
 	addInfo 'Category', sync.info.category
 	addInfo 'Difficulty', sync.info.difficulty
 	addInfo 'Tournament', sync.info.tournament
@@ -301,8 +319,13 @@ chatAnnotation = ({session, text, user, final}) ->
 			.addClass('comment')
 			.appendTo line
 		addAnnotation line
-	
-	line.find('.comment').text(text)
+	if final
+		if text is ''
+			line.find('.comment').html('<em>(no message)</em>')
+		else
+			line.find('.comment').text(text)
+	else
+		line.find('.comment').text(text)
 	line.toggleClass 'typing', !final
 
 sock.on 'introduce', ({user}) ->
@@ -330,49 +353,114 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
 		$(this).parent().find('.readout').slideToggle()
 
-$('.main_input').keydown (e) ->
-	e.stopPropagation()
+actionMode = ''
+setActionMode = (mode) ->
+	actionMode = mode
+	$('.guess_input, .chat_input').blur()
+	$('.actionbar' ).toggle mode is ''
+	$('.chat_form').toggle mode is 'chat'
+	$('.guess_form').toggle mode is 'guess'
+	$(window).resize() #reset expandos
 
-$('.main_input').keyup (e) ->
-	mode = $('.main_input').data('mode')
-	if mode is 'buzz'
-		if e.keyCode is 13
-			sock.emit 'guess', {text: $(this).val(), final: true}
-			$('.main_input').attr('disabled', true).val('').blur()
-			$('.main_input').data('mode', '')
+$('.chatbtn').click ->
+	setActionMode 'chat'
+	# create a new input session id, which helps syncing work better
+	$('.chat_input')
+		.data('input_session', Math.random().toString(36).slice(3))
+		.val('')
+		.focus()
+
+$('.skipbtn').click ->
+	sock.emit 'skip', 'yay'
+
+
+$('.buzzbtn').click ->
+	sock.emit 'buzz', 'yay', (data) ->
+		if data is 'http://www.whosawesome.com/'
+			setActionMode 'guess'
+			$('.guess_input')
+				.data('input_session', Math.random().toString(36).slice(3))
+				.val('')
+				.focus()
 		else
-			sock.emit 'guess', {text: $(this).val()}
-	else if mode is 'chat'
-		val = $(this).val().replace(/^.*?: ?/g, '')
-		if e.keyCode is 13
-			sock.emit 'chat', {text: val, final: true, session: $(this).data('input_session')}
-			$('.main_input').attr('disabled', true).val('').blur()
-			$('.main_input').data('mode', '')
-		else
-			sock.emit 'chat', {text: val, session: $(this).data('input_session')}
+			console.log 'you arent cool enough'
+			# TODO: disable buzz and continue/pause buttons when in a buzz
+			# $('.buzzbtn').attr 'disabled', true
+
+$('.pausebtn').click ->
+	if !!sync.time_freeze
+		console.log 'unapuse'
+		sock.emit 'unpause', 'yay'
+	else
+		sock.emit 'pause', 'yay'
+
+
+$('.guess_input, .chat_input').keydown (e) ->
+	e.stopPropagation() #make it so that the event listener doesnt pick up on stuff
+
+$('.chat_input').keyup (e) ->
+	return if e.keyCode is 13
+	sock.emit 'chat', {
+		text: $('.chat_input').val(), 
+		session: $('.chat_input').data('input_session'), 
+		final: false
+	}
+
+$('.chat_form').submit (e) ->
+	sock.emit 'chat', {
+		text: $('.chat_input').val(), 
+		session: $('.chat_input').data('input_session'), 
+		final: true
+	}
+	e.preventDefault()
+	setActionMode ''
+
+$('.guess_input').keyup (e) ->
+	return if e.keyCode is 13
+	sock.emit 'guess', {
+		text: $('.guess_input').val(), 
+		session: $('.guess_input').data('input_session'), 
+		final: false
+	}
+
+	
+$('.guess_form').submit (e) ->
+	sock.emit 'guess', {
+		text: $('.guess_input').val(), 
+		session: $('.guess_input').data('input_session'), 
+		final: true
+	}
+	e.preventDefault()
+	setActionMode ''
 
 $('body').keydown (e) ->
-	mode = $('.main_input').data('mode')
-	if mode is 'chat'
-		$('.main_input').focus()
-		return
 	if e.keyCode is 32
-		sock.emit 'buzz', 'MARP', (result) ->
-			console.log result
-			$('.main_input').data('mode', 'buzz')
-			$('.main_input').attr('disabled', false).focus()
 		e.preventDefault()
+		$('.buzzbtn').click()
+		
 	else if e.keyCode is 83 # S
-		sock.emit 'skip', 'yay'
+		$('.skipbtn').click()
 	else if e.keyCode is 80 # P
-		sock.emit 'pause', 'yay'
-	else if e.keyCode is 90 # Z
-		sock.emit 'unpause', 'yay'
+		$('.pausebtn').click()
 	else if e.keyCode in [47, 111, 191] # / (forward slash)
 		console.log "slash"
 		e.preventDefault()
-		$('.main_input').data('mode', 'chat')
-		$('.main_input').data('input_session', Math.random().toString(36).slice(3))
-		$('.main_input').attr('disabled', false).val('chat: ').focus()
-	
+		$('.chatbtn').click()
+
 	# console.log e
+
+
+# possibly this should be replaced by something smarter using CSS calc()
+# but that would be a 
+$(window).resize ->
+	$('.expando').each ->
+		add = $(this).find('.add-on').outerWidth()
+		size = $(this).width()
+		outer = $(this).find('input').outerWidth() - $(this).find('input').width()
+		$(this).find('input').width size - outer - add
+
+$(window).resize()
+
+#display a tooltip for keyboard shortcuts on keyboard machines
+unless Modernizr.touch
+	$('.actionbar button').tooltip()
