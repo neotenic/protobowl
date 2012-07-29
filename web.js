@@ -188,7 +188,8 @@ QuizRoom = (function() {
       session = Math.random().toString(36).slice(2);
       this.attempt = {
         user: user,
-        start: this.serverTime(),
+        realTime: this.serverTime(),
+        start: this.time(),
         duration: 8 * 1000,
         session: session,
         text: '',
@@ -197,7 +198,7 @@ QuizRoom = (function() {
       fn('http://www.whosawesome.com/');
       this.freeze();
       this.sync();
-      return this.timeout(this.serverTime, this.attempt.start + this.attempt.duration, function() {
+      return this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
         return _this.end_buzz(session);
       });
     } else {

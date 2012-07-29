@@ -297,7 +297,7 @@ renderTimer = ->
 	
 
 	if sync.attempt
-		elapsed = serverTime() - sync.attempt.start
+		elapsed = serverTime() - sync.attempt.realTime
 		ms = sync.attempt.duration - elapsed
 		progress = elapsed / sync.attempt.duration
 		$('.pausebtn, .buzzbtn').attr 'disabled', true

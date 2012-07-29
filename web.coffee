@@ -152,7 +152,8 @@ class QuizRoom
 			session = Math.random().toString(36).slice(2)
 			@attempt = {
 				user: user,
-				start: @serverTime(), # oh god so much time crap
+				realTime: @serverTime(), # oh god so much time crap
+				start: @time(),
 				duration: 8 * 1000,
 				session, # generate 'em server side 
 				text: '',
@@ -161,7 +162,7 @@ class QuizRoom
 			fn 'http://www.whosawesome.com/'
 			@freeze()
 			@sync() #partial sync
-			@timeout @serverTime, @attempt.start + @attempt.duration, =>
+			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
 		else
 			fn 'narp'

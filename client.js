@@ -334,7 +334,7 @@ renderTimer = function() {
   $('.progress').toggleClass('progress-warning', !!(sync.time_freeze && !sync.attempt));
   $('.progress').toggleClass('progress-danger', !!sync.attempt);
   if (sync.attempt) {
-    elapsed = serverTime() - sync.attempt.start;
+    elapsed = serverTime() - sync.attempt.realTime;
     ms = sync.attempt.duration - elapsed;
     progress = elapsed / sync.attempt.duration;
     $('.pausebtn, .buzzbtn').attr('disabled', true);
