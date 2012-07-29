@@ -98,7 +98,7 @@ html(lang="en")
 						a.btn.btn-primary(href="/") New Room
 					ul.nav.pull-right
 						li
-							a(href="#") About
+							a(href="#", data-toggle="modal", href="#about") About
 						
 		div.container
 
@@ -228,4 +228,31 @@ html(lang="en")
 			div.modal-footer
 				a.btn(href="#", data-dismiss="modal") Close
 				a.btn.btn-primary(href="") Reload
+
+		div.modal.hide#about
+			div.modal-header
+				button.close(type="button", data-dismiss="modal") ×
+				h3 About
+			div.modal-body
+				p I really don't have the slightest clue what to say here.
+				p 
+					| But this was concieved some time towards the end of the school year of 2012
+					| and was implemented mostly within a week's time intermittently, and this is
+					| actually the second prototype. The name actually comes as a contraction or
+					| portmanteau of "Prototype" and "QuizBowl", with the word "Application" cleverly
+					| ommitted for no reason in particular. 
+
+				p
+					| It's something made with Twitter Bootstrap,
+					| which I'm trying to disguise best I can by replacing that cliche black header bar
+					| with something considerably lighter. Also, it uses jQuery (largely because Bootstrap
+					| really likes jQuery, but I guess I really like jQuery too). Modernizr, but only for
+					| one function which is sort of lame. Most of the code is actually written in CoffeeScript
+					| which is pretty cool. It uses node.js, socket.io, express, jade and less (via 
+					| less-middleware).
+			div.modal-footer
+				a.btn(href="https://github.com/antimatter15/protobowl/tree/rewrite", target="_blank") GitHub
+				a.btn.btn-primary(href="#", data-dismiss="modal") Close
+
+				
 		script(src="client.js")
