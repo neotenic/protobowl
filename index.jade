@@ -108,17 +108,17 @@ html(lang="en")
 						div.span9
 							div.form-horizontal
 								div.actionbar
-									button.btn.chatbtn(title="Shortcut: / key", rel='tooltip')
+									button.btn.chatbtn(title="Shortcut: / key", rel='tooltip', disabled)
 										i.icon-comment
 										| Chat
 									| 
-									button.btn.btn-info.skipbtn(title="Shortcut: s key", rel='tooltip')
+									button.btn.btn-info.skipbtn(title="Shortcut: s key", rel='tooltip', disabled)
 										| Skip
 									| 
-									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip') 
+									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip', disabled) 
 										| Pause
 									| 
-									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip')
+									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip', disabled)
 										i.icon-bell.icon-white
 										| Buzz
 								form.expando.chat_form(style="display:none")

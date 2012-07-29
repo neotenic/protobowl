@@ -93,11 +93,13 @@ sock.on 'disconnect', ->
 	, 1000
 
 sock.once 'connect', ->
+	$('.actionbar button').attr 'disabled', false
 	sock.emit 'join', {
 		old_socket: localStorage.old_socket,
 		room_name: channel_name,
 		public_name: public_name
 	}
+
 
 sock.on 'sync', (data) ->
 	#here is the rather complicated code to calculate
@@ -271,9 +273,9 @@ renderTimer = ->
 			$('.label.pause').fadeIn()
 			$('.label.buzz').hide()
 
-		if $('.pausebtn').text() != 'Continue'
+		if $('.pausebtn').text() != 'Resume'
 			$('.pausebtn')
-			.text('Continue')
+			.text('Resume')
 			.addClass('btn-success')
 			.removeClass('btn-warning')
 
@@ -489,14 +491,18 @@ $('.skipbtn').click ->
 
 
 $('.buzzbtn').click ->
-	
+	setActionMode 'guess'
+	$('.guess_input')
+		.val('')
+		.focus()
+	# so it seems that on mobile devices with on screen virtual keyboards
+	# if your focus isn't event initiated (eg. based on the callback of
+	# some server query to confirm control of the textbox) it wont actualy
+	# bring up the keyboard, so the solution here is to first open it up
+	# and ask nicely for forgiveness otherwise
 	sock.emit 'buzz', 'yay', (data) ->
-		if data is 'http://www.whosawesome.com/'
-			setActionMode 'guess'
-			$('.guess_input')
-				.val('')
-				.focus()
-		else
+		if data isnt 'http://www.whosawesome.com/'
+			setActionMode ''
 			console.log 'you arent cool enough'
 			# TODO: disable buzz and continue/pause buttons when in a buzz
 			# $('.buzzbtn').attr 'disabled', true

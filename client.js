@@ -136,6 +136,7 @@ sock.on('disconnect', function() {
 });
 
 sock.once('connect', function() {
+  $('.actionbar button').attr('disabled', false);
   return sock.emit('join', {
     old_socket: localStorage.old_socket,
     room_name: channel_name,
@@ -319,8 +320,8 @@ renderTimer = function() {
       $('.label.pause').fadeIn();
       $('.label.buzz').hide();
     }
-    if ($('.pausebtn').text() !== 'Continue') {
-      $('.pausebtn').text('Continue').addClass('btn-success').removeClass('btn-warning');
+    if ($('.pausebtn').text() !== 'Resume') {
+      $('.pausebtn').text('Resume').addClass('btn-success').removeClass('btn-warning');
     }
   } else {
     $('.label.pause').fadeOut();
@@ -538,11 +539,11 @@ $('.skipbtn').click(function() {
 });
 
 $('.buzzbtn').click(function() {
+  setActionMode('guess');
+  $('.guess_input').val('').focus();
   return sock.emit('buzz', 'yay', function(data) {
-    if (data === 'http://www.whosawesome.com/') {
-      setActionMode('guess');
-      return $('.guess_input').val('').focus();
-    } else {
+    if (data !== 'http://www.whosawesome.com/') {
+      setActionMode('');
       return console.log('you arent cool enough');
     }
   });
