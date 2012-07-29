@@ -241,19 +241,19 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'rename', (name) ->
 		sock.set 'name', name
-		room.sync(true)
+		room.sync(true) if room
 
 	sock.on 'skip', (vote) ->
 		sock.set 'skip', vote
-		room.sync()
+		room.sync() if room
 
 	sock.on 'pause', (vote) ->
 		sock.set 'pause', vote
-		room.sync()
+		room.sync() if room
 
 	sock.on 'unpause', (vote) ->
 		sock.set 'unpause', vote
-		room.sync()
+		room.sync() if room
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz sock.id, fn

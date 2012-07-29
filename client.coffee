@@ -230,20 +230,44 @@ renderPartial = ->
 	cumulative = cumsum list, rate
 	index = 0
 	index++ while timeDelta > cumulative[index]
-	index++ if timeDelta > cumulative[0]
-	bundle = $('#history .bundle').first()
+	# index++ if timeDelta > cumulative[0]
+	bundle = $('#history .bundle.active') #$('#history .bundle').first()
 	new_text = words.slice(0, index).join(' ')
-	old_text = bundle.find('.readout .visible').text()
+	old_text = bundle.find('.readout .visible').text().replace(/\s+/g, ' ')
 	#this more complicated system allows text selection
 	#while it's still reading out stuff
-	if new_text isnt old_text
-		if new_text.indexOf(old_text) is 0
-			node = bundle.find('.readout .visible')[0]
-			change = new_text.slice old_text.length
-			node.appendChild document.createTextNode(change)
+	# for word in words.slice(0, index)
+	spots = for buzz in (bundle.data('starts') || [])
+		del = buzz - sync.begin_time
+		i = 0
+		i++ while del > cumulative[i]
+		i - 1
+
+	visible = bundle.find('.readout .visible')
+	old_spots = visible.data('spots') is spots.join(',')
+	if new_text isnt old_text or !old_spots
+		# console.log spots
+		if new_text.indexOf(old_text.trim()) is 0 and old_spots
+			bundle.find('.readout .visible').append(new_text.slice old_text.length)
 		else
-			bundle.find('.readout .visible').text new_text
-		bundle.find('.readout .unread').text words.slice(index).join(' ')
+			console.log 'redo'
+			visible.data('spots', spots.join(','))
+			visible.text ''
+			for i in [0...index]
+				visible.append(words[i] + " ")
+				if i in spots
+					# visible.append('<span class="label label-important">'+words[i]+'</span> ')
+					visible.append ' <span class="buzzicon label label-important"><i class="icon-white icon-bell"></i></span> '
+		
+
+	# if new_text isnt old_text
+	# 	if new_text.indexOf(old_text) is 0
+	# 		node = bundle.find('.readout .visible')[0]
+	# 		change = new_text.slice old_text.length
+	# 		node.appendChild document.createTextNode(change)
+	# 	else
+	# 		bundle.find('.readout .visible').text new_text
+	bundle.find('.readout .unread').text words.slice(index).join(' ')
 	#render the time
 	renderTimer()
 	
@@ -268,6 +292,11 @@ renderTimer = ->
 	# $('.buzzbtn').attr 'disabled', !!sync.attempt
 	if sync.time_freeze
 		if sync.attempt
+			
+			starts = ($('.bundle.active').data('starts') || [])
+			starts.push(sync.attempt.start) if sync.attempt.start not in starts
+			$('.bundle.active').data('starts', starts)
+
 			$('.label.pause').hide()
 			$('.label.buzz').fadeIn()
 
@@ -602,6 +631,10 @@ unless Modernizr.touch
 	$('.actionbar button').click -> 
 		$('.actionbar button').tooltip 'hide'
 
+
 if Modernizr.touch
-    $('.show-keyboard').hide()
+	$('.show-keyboard').hide()
 	$('.show-touch').show()
+else
+	$('.show-keyboard').show()
+	$('.show-touch').hide()

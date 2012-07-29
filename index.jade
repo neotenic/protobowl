@@ -59,6 +59,9 @@ html(lang="en")
 			.active .unread {
 				visibility: hidden;
 			}
+			.visible .buzzicon.label {
+				padding: 0;
+			}
 			.answer {
 				font-weight: bold;
 			}
@@ -189,7 +192,7 @@ html(lang="en")
 							li Change settings by hacking the code
 							li Make up tips and don't do anything about them
 
-					div.span3.thumbnail.show-touch
+					div.span3.thumbnail.show-touch(style="display:none")
 						h5 
 							i.icon-info-sign
 							| Tips

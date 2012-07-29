@@ -268,7 +268,7 @@ renderState = function() {
 };
 
 renderPartial = function() {
-  var bundle, change, cumulative, index, list, new_text, node, old_text, rate, timeDelta, words, _ref;
+  var bundle, buzz, cumulative, del, i, index, list, new_text, old_spots, old_text, rate, spots, timeDelta, visible, words, _i, _ref;
   if (!(sync.question && sync.timing)) {
     return;
   }
@@ -284,22 +284,42 @@ renderPartial = function() {
   while (timeDelta > cumulative[index]) {
     index++;
   }
-  if (timeDelta > cumulative[0]) {
-    index++;
-  }
-  bundle = $('#history .bundle').first();
+  bundle = $('#history .bundle.active');
   new_text = words.slice(0, index).join(' ');
-  old_text = bundle.find('.readout .visible').text();
-  if (new_text !== old_text) {
-    if (new_text.indexOf(old_text) === 0) {
-      node = bundle.find('.readout .visible')[0];
-      change = new_text.slice(old_text.length);
-      node.appendChild(document.createTextNode(change));
-    } else {
-      bundle.find('.readout .visible').text(new_text);
+  old_text = bundle.find('.readout .visible').text().replace(/\s+/g, ' ');
+  spots = (function() {
+    var _i, _len, _ref1, _results;
+    _ref1 = bundle.data('starts') || [];
+    _results = [];
+    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+      buzz = _ref1[_i];
+      del = buzz - sync.begin_time;
+      i = 0;
+      while (del > cumulative[i]) {
+        i++;
+      }
+      _results.push(i - 1);
     }
-    bundle.find('.readout .unread').text(words.slice(index).join(' '));
+    return _results;
+  })();
+  visible = bundle.find('.readout .visible');
+  old_spots = visible.data('spots') === spots.join(',');
+  if (new_text !== old_text || !old_spots) {
+    if (new_text.indexOf(old_text.trim()) === 0 && old_spots) {
+      bundle.find('.readout .visible').append(new_text.slice(old_text.length));
+    } else {
+      console.log('redo');
+      visible.data('spots', spots.join(','));
+      visible.text('');
+      for (i = _i = 0; 0 <= index ? _i < index : _i > index; i = 0 <= index ? ++_i : --_i) {
+        visible.append(words[i] + " ");
+        if (__indexOf.call(spots, i) >= 0) {
+          visible.append(' <span class="buzzicon label label-important"><i class="icon-white icon-bell"></i></span> ');
+        }
+      }
+    }
   }
+  bundle.find('.readout .unread').text(words.slice(index).join(' '));
   renderTimer();
   if (sync.attempt) {
     guessAnnotation(sync.attempt);
@@ -314,9 +334,14 @@ setInterval(renderState, 10000);
 setInterval(renderPartial, 50);
 
 renderTimer = function() {
-  var cs, elapsed, min, ms, pad, progress, sec, sign;
+  var cs, elapsed, min, ms, pad, progress, sec, sign, starts, _ref;
   if (sync.time_freeze) {
     if (sync.attempt) {
+      starts = $('.bundle.active').data('starts') || [];
+      if (_ref = sync.attempt.start, __indexOf.call(starts, _ref) < 0) {
+        starts.push(sync.attempt.start);
+      }
+      $('.bundle.active').data('starts', starts);
       $('.label.pause').hide();
       $('.label.buzz').fadeIn();
     } else {
@@ -660,6 +685,8 @@ if (!Modernizr.touch) {
 
 if (Modernizr.touch) {
   $('.show-keyboard').hide();
+  $('.show-touch').show();
+} else {
+  $('.show-keyboard').show();
+  $('.show-touch').hide();
 }
-
-$('.show-touch').show();

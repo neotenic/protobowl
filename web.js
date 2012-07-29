@@ -313,19 +313,27 @@ io.sockets.on('connection', function(sock) {
   });
   sock.on('rename', function(name) {
     sock.set('name', name);
-    return room.sync(true);
+    if (room) {
+      return room.sync(true);
+    }
   });
   sock.on('skip', function(vote) {
     sock.set('skip', vote);
-    return room.sync();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('pause', function(vote) {
     sock.set('pause', vote);
-    return room.sync();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('unpause', function(vote) {
     sock.set('unpause', vote);
-    return room.sync();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('buzz', function(data, fn) {
     return room.buzz(sock.id, fn);
