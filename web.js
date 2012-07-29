@@ -74,8 +74,12 @@ QuizRoom = (function() {
     if (this.time_freeze) {
       return this.time_freeze;
     } else {
-      return new Date - this.time_offset;
+      return this.serverTime() - this.time_offset;
     }
+  };
+
+  QuizRoom.prototype.serverTime = function() {
+    return +(new Date);
   };
 
   QuizRoom.prototype.freeze = function() {
@@ -89,10 +93,35 @@ QuizRoom = (function() {
     }
   };
 
+  QuizRoom.prototype.pause = function() {
+    if (!this.attempt) {
+      return this.freeze();
+    }
+  };
+
+  QuizRoom.prototype.unpause = function() {
+    if (!this.attempt) {
+      return this.unfreeze();
+    }
+  };
+
+  QuizRoom.prototype.timeout = function(metric, time, callback) {
+    var diff,
+      _this = this;
+    diff = time - metric();
+    if (diff < 0) {
+      return callback();
+    } else {
+      return setTimeout(function() {
+        return _this.timeout(metric, time, callback);
+      }, diff);
+    }
+  };
+
   QuizRoom.prototype.new_question = function() {
     var answer_time, cumulative, list, question, rate, word, _ref;
     this.attempt = null;
-    answer_time = 1000 * 5;
+    answer_time = 1000 * 9;
     this.begin_time = this.time();
     question = questions[Math.floor(questions.length * Math.random())];
     this.info = {
@@ -132,18 +161,37 @@ QuizRoom = (function() {
     return io.sockets["in"](this.name).emit(name, data);
   };
 
+  QuizRoom.prototype.end_buzz = function(session) {
+    var _ref;
+    if (((_ref = this.attempt) != null ? _ref.session : void 0) === session) {
+      this.attempt.final = true;
+      this.attempt.correct = Math.random() > 0.5;
+      this.sync();
+      this.attempt = null;
+      this.unfreeze();
+      return this.sync();
+    }
+  };
+
   QuizRoom.prototype.buzz = function(user, fn) {
+    var session,
+      _this = this;
     if (this.attempt === null) {
+      session = Math.random().toString(36).slice(2);
       this.attempt = {
         user: user,
-        start: +(new Date),
+        start: this.serverTime(),
         duration: 5 * 1000,
-        session: Math.random().toString(36).slice(2),
-        guess: ''
+        session: session,
+        guess: '',
+        final: false
       };
       fn('http://www.whosawesome.com/');
       this.freeze();
-      return this.sync();
+      this.sync();
+      return this.timeout(this.serverTime, this.attempt.start + this.attempt.duration, function() {
+        return _this.end_buzz(session);
+      });
     } else if (this.owner === user) {
       return fn('wai?');
     } else {
@@ -157,8 +205,10 @@ QuizRoom = (function() {
       this.attempt.text = data.text;
       if (data.final) {
         console.log('omg final clubs are so cool ~ zuck');
+        return this.end_buzz(this.attempt.session);
+      } else {
+        return this.sync();
       }
-      return this.sync();
     }
   };
 
@@ -168,7 +218,7 @@ QuizRoom = (function() {
       real_time: +(new Date),
       voting: {}
     };
-    voting = ['skip', 'freeze', 'unfreeze'];
+    voting = ['skip', 'pause', 'unpause'];
     for (_i = 0, _len = voting.length; _i < _len; _i++) {
       action = voting[_i];
       yay = 0;
@@ -263,11 +313,11 @@ io.sockets.on('connection', function(sock) {
     return room.sync();
   });
   sock.on('pause', function(vote) {
-    sock.set('freeze', vote);
+    sock.set('pause', vote);
     return room.sync();
   });
   sock.on('unpause', function(vote) {
-    sock.set('unfreeze', vote);
+    sock.set('unpause', vote);
     return room.sync();
   });
   sock.on('buzz', function(data, fn) {

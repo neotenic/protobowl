@@ -61,7 +61,10 @@ class QuizRoom
 		@freeze()
 
 	time: ->
-		return if @time_freeze then @time_freeze else new Date - @time_offset
+		return if @time_freeze then @time_freeze else @serverTime() - @time_offset
+
+	serverTime: ->
+		return +new Date
 
 	freeze: ->
 		@time_freeze = @time()
@@ -71,10 +74,28 @@ class QuizRoom
 			@time_offset = new Date - @time_freeze
 			@time_freeze = 0
 
+	pause: ->
+		#no point really because being in an attempt means being frozen
+		@freeze() unless @attempt
+			
+	unpause: ->
+		#freeze with access controls
+		@unfreeze() unless @attempt
+	
+	timeout: (metric, time, callback) ->
+		diff = time - metric()
+		if diff < 0
+			callback()
+		else
+			setTimeout =>
+				@timeout(metric, time, callback)
+			, diff
+
+
 	new_question: ->
 		@attempt = null
 
-		answer_time = 1000 * 5
+		answer_time = 1000 * 9
 		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
 		@info = {
@@ -107,18 +128,33 @@ class QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
 
+	end_buzz: (session) ->
+		#killit, killitwithfire
+		if @attempt?.session is session
+			@attempt.final = true
+			@attempt.correct = Math.random() > 0.5 #pretty good alg, eh?
+			@sync()
+			@attempt = null #g'bye
+			@unfreeze()
+			@sync() #two syncs in one request!
+
+
 	buzz: (user, fn) ->
 		if @attempt is null
+			session = Math.random().toString(36).slice(2)
 			@attempt = {
 				user: user,
-				start: +new Date, # oh god so much time crap
+				start: @serverTime(), # oh god so much time crap
 				duration: 5 * 1000,
-				session: Math.random().toString(36).slice(2), # generate 'em server side 
-				guess: ''
+				session, # generate 'em server side 
+				guess: '',
+				final: false
 			}
 			fn 'http://www.whosawesome.com/'
 			@freeze()
 			@sync() #partial sync
+			@timeout @serverTime, @attempt.start + @attempt.duration, =>
+				@end_buzz session
 		else if @owner is user
 			fn 'wai?'
 		else
@@ -133,14 +169,16 @@ class QuizRoom
 			if data.final
 				# do final stuff
 				console.log 'omg final clubs are so cool ~ zuck'
-			@sync()		
+				@end_buzz @attempt.session
+			else
+				@sync()
 
 	sync: (full) ->
 		data = {
 			real_time: +new Date,
 			voting: {}
 		}
-		voting = ['skip', 'freeze', 'unfreeze']
+		voting = ['skip', 'pause', 'unpause']
 		for action in voting
 			yay = 0
 			nay = 0
@@ -203,11 +241,11 @@ io.sockets.on 'connection', (sock) ->
 		room.sync()
 
 	sock.on 'pause', (vote) ->
-		sock.set 'freeze', vote
+		sock.set 'pause', vote
 		room.sync()
 
 	sock.on 'unpause', (vote) ->
-		sock.set 'unfreeze', vote
+		sock.set 'unpause', vote
 		room.sync()
 
 	sock.on 'buzz', (data, fn) ->

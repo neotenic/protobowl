@@ -297,7 +297,6 @@ renderPartial = function() {
     bundle.find('.readout .unread').text(words.slice(index).join(' '));
   }
   renderTimer();
-  $('.pausebtn, .buzzbtn').attr('disabled', !!sync.attempt);
   if (sync.attempt) {
     guessAnnotation(sync.attempt);
   }
@@ -337,9 +336,11 @@ renderTimer = function() {
     elapsed = serverTime() - sync.attempt.start;
     ms = sync.attempt.duration - elapsed;
     progress = elapsed / sync.attempt.duration;
+    $('.pausebtn, .buzzbtn').attr('disabled', true);
   } else {
     ms = sync.end_time - time();
     progress = (time() - sync.begin_time) / (sync.end_time - sync.begin_time);
+    $('.pausebtn, .buzzbtn').attr('disabled', ms < 0);
   }
   if ($('.progress .bar').hasClass('pull-right')) {
     $('.progress .bar').width((1 - progress) * 100 + '%');
@@ -424,8 +425,8 @@ addAnnotation = function(el) {
 };
 
 guessAnnotation = function(_arg) {
-  var final, id, line, session, text, user;
-  session = _arg.session, text = _arg.text, user = _arg.user, final = _arg.final;
+  var correct, final, id, line, ruling, session, text, user;
+  session = _arg.session, text = _arg.text, user = _arg.user, final = _arg.final, correct = _arg.correct;
   id = user + '-' + session;
   if ($('#' + id).length > 0) {
     line = $('#' + id);
@@ -436,16 +437,30 @@ guessAnnotation = function(_arg) {
     line.append(userSpan(user).addClass('author'));
     line.append(document.createTextNode(' '));
     $('<span>').addClass('comment').appendTo(line);
+    ruling = $('<span>').addClass('label ruling').hide();
+    line.append(' ');
+    line.append(ruling);
     addAnnotation(line);
   }
   if (final) {
     if (text === '') {
-      return line.find('.comment').html('<em>(no message)</em>');
+      line.find('.comment').html('<em>(blank)</em>');
     } else {
-      return line.find('.comment').text(text);
+      line.find('.comment').text(text);
     }
   } else {
-    return line.find('.comment').text(text);
+    line.find('.comment').text(text);
+  }
+  if (final) {
+    ruling = line.find('.ruling').show();
+    if (correct) {
+      ruling.addClass('label-success').text('Correct');
+    } else {
+      ruling.addClass('label-warning').text('Wrong');
+    }
+    if (actionMode === 'guess') {
+      return setActionMode('');
+    }
   }
 };
 
@@ -542,7 +557,7 @@ $('.pausebtn').click(function() {
   }
 });
 
-$('.guess_input, .chat_input').keydown(function(e) {
+$('input').keydown(function(e) {
   return e.stopPropagation();
 });
 
@@ -588,6 +603,12 @@ $('.guess_form').submit(function(e) {
 
 $('body').keydown(function(e) {
   var _ref;
+  if (actionMode === 'chat') {
+    return $('.chat_input').focus();
+  }
+  if (actionMode === 'guess') {
+    return $('.guess_input').focus();
+  }
   if (e.keyCode === 32) {
     e.preventDefault();
     $('.buzzbtn').click();
@@ -617,4 +638,7 @@ $(window).resize();
 
 if (!Modernizr.touch) {
   $('.actionbar button').tooltip();
+  $('.actionbar button').click(function() {
+    return $('.actionbar button').tooltip('hide');
+  });
 }

@@ -245,7 +245,7 @@ renderPartial = ->
 	
 
 	# manipulate the action bar
-	$('.pausebtn, .buzzbtn').attr 'disabled', !!sync.attempt
+	# $('.pausebtn, .buzzbtn').attr 'disabled', !!sync.attempt
 	if sync.attempt
 		guessAnnotation sync.attempt
 
@@ -261,10 +261,12 @@ setInterval renderPartial, 50
 
 renderTimer = ->
 	# $('#pause').show !!sync.time_freeze
+	# $('.buzzbtn').attr 'disabled', !!sync.attempt
 	if sync.time_freeze
 		if sync.attempt
 			$('.label.pause').hide()
 			$('.label.buzz').fadeIn()
+
 		else
 			$('.label.pause').fadeIn()
 			$('.label.buzz').hide()
@@ -296,9 +298,11 @@ renderTimer = ->
 		elapsed = serverTime() - sync.attempt.start
 		ms = sync.attempt.duration - elapsed
 		progress = elapsed / sync.attempt.duration
+		$('.pausebtn, .buzzbtn').attr 'disabled', true
 	else
 		ms = sync.end_time - time()
 		progress = (time() - sync.begin_time)/(sync.end_time - sync.begin_time)
+		$('.pausebtn, .buzzbtn').attr 'disabled', (ms < 0)
 	
 	if $('.progress .bar').hasClass 'pull-right'
 		$('.progress .bar').width (1 - progress) * 100 + '%'
@@ -380,7 +384,7 @@ addAnnotation = (el) ->
 	return el
 
 
-guessAnnotation = ({session, text, user, final}) ->
+guessAnnotation = ({session, text, user, final, correct}) ->
 	# TODO: make this less like chats
 	id = user + '-' + session
 	if $('#' + id).length > 0
@@ -394,14 +398,25 @@ guessAnnotation = ({session, text, user, final}) ->
 		$('<span>')
 			.addClass('comment')
 			.appendTo line
+		ruling = $('<span>').addClass('label ruling').hide()
+		line.append ' '
+		line.append ruling
 		addAnnotation line
 	if final
 		if text is ''
-			line.find('.comment').html('<em>(no message)</em>')
+			line.find('.comment').html('<em>(blank)</em>')
 		else
 			line.find('.comment').text(text)
 	else
 		line.find('.comment').text(text)
+	if final
+		ruling = line.find('.ruling').show()
+		if correct
+			ruling.addClass('label-success').text('Correct')
+		else
+			ruling.addClass('label-warning').text('Wrong')
+		if actionMode is 'guess'
+			setActionMode ''
 	# line.toggleClass 'typing', !final
 
 chatAnnotation = ({session, text, user, final}) ->
@@ -494,7 +509,7 @@ $('.pausebtn').click ->
 		sock.emit 'pause', 'yay'
 
 
-$('.guess_input, .chat_input').keydown (e) ->
+$('input').keydown (e) ->
 	e.stopPropagation() #make it so that the event listener doesnt pick up on stuff
 
 $('.chat_input').keyup (e) ->
@@ -531,6 +546,12 @@ $('.guess_form').submit (e) ->
 	setActionMode ''
 
 $('body').keydown (e) ->
+	if actionMode is 'chat'
+		return $('.chat_input').focus()
+
+	if actionMode is 'guess'
+		return $('.guess_input').focus()
+		
 	if e.keyCode is 32
 		e.preventDefault()
 		$('.buzzbtn').click()
@@ -560,3 +581,6 @@ $(window).resize()
 #display a tooltip for keyboard shortcuts on keyboard machines
 unless Modernizr.touch
 	$('.actionbar button').tooltip()
+	# hide crap when clicked upon
+	$('.actionbar button').click -> 
+		$('.actionbar button').tooltip 'hide'
