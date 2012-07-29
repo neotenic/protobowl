@@ -342,6 +342,9 @@ renderTimer = function() {
     ms = sync.end_time - time();
     progress = (time() - sync.begin_time) / (sync.end_time - sync.begin_time);
     $('.pausebtn, .buzzbtn').attr('disabled', ms < 0);
+    if (ms < 0) {
+      $('.bundle.active').find('.answer').css('visibility', 'visible');
+    }
   }
   if ($('.progress .bar').hasClass('pull-right')) {
     $('.progress .bar').width((1 - progress) * 100 + '%');
@@ -369,8 +372,8 @@ renderTimer = function() {
 };
 
 changeQuestion = function() {
-  var bundle, cutoff, old;
-  cutoff = 10;
+  var bundle, cutoff, old, runAnimations;
+  cutoff = 15;
   if (matchMedia('(max-width: 768px)').matches) {
     cutoff = 1;
   }
@@ -382,15 +385,24 @@ changeQuestion = function() {
   old.find('.breadcrumb').click(function() {
     return 1;
   });
-  if (old.find('.readout').length > 0) {
-    old.find('.readout')[0].normalize();
-  }
-  old.find('.readout').slideUp('slow');
   bundle = createBundle().width($('#history').width());
   bundle.addClass('active');
   $('#history').prepend(bundle.hide());
-  bundle.slideDown('slow');
-  return bundle.width('auto');
+  runAnimations = function() {
+    old.find('.readout').slideUp('slow');
+    return bundle.slideDown('slow').queue(function() {
+      bundle.width('auto');
+      return $(this).dequeue();
+    });
+  };
+  if (old.find('.readout').length > 0) {
+    old.find('.readout')[0].normalize();
+    return old.queue(function() {
+      return runAnimations();
+    });
+  } else {
+    return runAnimations();
+  }
 };
 
 createBundle = function() {
@@ -402,8 +414,7 @@ createBundle = function() {
   };
   addInfo('Category', sync.info.category);
   addInfo('Difficulty', sync.info.difficulty);
-  addInfo('Tournament', sync.info.tournament);
-  addInfo('Year', sync.info.year);
+  addInfo('Tournament', sync.info.year + ' ' + sync.info.tournament);
   breadcrumb.append($('<li>').addClass('answer pull-right').text("Answer: " + sync.answer));
   readout = $('<div>').addClass('readout');
   well = $('<div>').addClass('well').appendTo(readout);
@@ -539,6 +550,9 @@ $('.skipbtn').click(function() {
 });
 
 $('.buzzbtn').click(function() {
+  if ($('.buzzbtn').attr('disabled') === 'disabled') {
+    return;
+  }
   setActionMode('guess');
   $('.guess_input').val('').focus();
   return sock.emit('buzz', 'yay', function(data) {
@@ -642,4 +656,6 @@ if (!Modernizr.touch) {
   $('.actionbar button').click(function() {
     return $('.actionbar button').tooltip('hide');
   });
+  $('.show-keyboard').hide();
+  $('.show-touch').show();
 }

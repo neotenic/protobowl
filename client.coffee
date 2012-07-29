@@ -305,6 +305,8 @@ renderTimer = ->
 		ms = sync.end_time - time()
 		progress = (time() - sync.begin_time)/(sync.end_time - sync.begin_time)
 		$('.pausebtn, .buzzbtn').attr 'disabled', (ms < 0)
+		if ms < 0
+			$('.bundle.active').find('.answer').css('visibility', 'visible')
 	
 	if $('.progress .bar').hasClass 'pull-right'
 		$('.progress .bar').width (1 - progress) * 100 + '%'
@@ -328,7 +330,7 @@ renderTimer = ->
 	$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
 
 changeQuestion = ->
-	cutoff = 10
+	cutoff = 15
 	#smaller cutoff for phones which dont place things in parallel
 	cutoff = 1 if matchMedia('(max-width: 768px)').matches
 	#remove the old crap when it's really old (and turdy)
@@ -339,15 +341,22 @@ changeQuestion = ->
 	old.removeClass 'active'
 	old.find('.breadcrumb').click -> 1 # register a empty event handler so touch devices recognize
 	#merge the text nodes, perhaps for performance reasons
-	if old.find('.readout').length > 0
-		old.find('.readout')[0].normalize() 
-	old.find('.readout').slideUp('slow')
 	bundle = createBundle().width($('#history').width()) #.css('display', 'none')
 	bundle.addClass 'active'
 	$('#history').prepend bundle.hide()
-	bundle.slideDown('slow')
-	bundle.width('auto')
+	
+	runAnimations = ->
+		old.find('.readout').slideUp('slow')
+		bundle.slideDown('slow').queue ->
+			bundle.width('auto')
+			$(this).dequeue()
 
+	if old.find('.readout').length > 0
+		old.find('.readout')[0].normalize() 
+		old.queue ->
+			runAnimations()
+	else
+		runAnimations()
 
 createBundle = ->
 	breadcrumb = $('<ul>').addClass('breadcrumb')
@@ -357,8 +366,8 @@ createBundle = ->
 	
 	addInfo 'Category', sync.info.category
 	addInfo 'Difficulty', sync.info.difficulty
-	addInfo 'Tournament', sync.info.tournament
-	addInfo 'Year', sync.info.year
+	addInfo 'Tournament', sync.info.year + ' ' + sync.info.tournament
+	# addInfo 'Year', sync.info.year
 	# addInfo 'Number', sync.info.num
 	# addInfo 'Round', sync.info.round
 	breadcrumb.append $('<li>').addClass('answer pull-right')
@@ -491,6 +500,7 @@ $('.skipbtn').click ->
 
 
 $('.buzzbtn').click ->
+	return if $('.buzzbtn').attr('disabled') is 'disabled'
 	setActionMode 'guess'
 	$('.guess_input')
 		.val('')
@@ -590,3 +600,5 @@ unless Modernizr.touch
 	# hide crap when clicked upon
 	$('.actionbar button').click -> 
 		$('.actionbar button').tooltip 'hide'
+	$('.show-keyboard').hide()
+	$('.show-touch').show()

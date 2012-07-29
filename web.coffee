@@ -95,7 +95,7 @@ class QuizRoom
 	new_question: ->
 		@attempt = null
 
-		answer_time = 1000 * 9
+		answer_time = 1000 * 3
 		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
 		@info = {
@@ -145,7 +145,7 @@ class QuizRoom
 			@attempt = {
 				user: user,
 				start: @serverTime(), # oh god so much time crap
-				duration: 5 * 1000,
+				duration: 7 * 1000,
 				session, # generate 'em server side 
 				guess: '',
 				final: false

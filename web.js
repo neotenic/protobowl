@@ -121,7 +121,7 @@ QuizRoom = (function() {
   QuizRoom.prototype.new_question = function() {
     var answer_time, cumulative, list, question, rate, word, _ref;
     this.attempt = null;
-    answer_time = 1000 * 9;
+    answer_time = 1000 * 3;
     this.begin_time = this.time();
     question = questions[Math.floor(questions.length * Math.random())];
     this.info = {
@@ -181,7 +181,7 @@ QuizRoom = (function() {
       this.attempt = {
         user: user,
         start: this.serverTime(),
-        duration: 5 * 1000,
+        duration: 7 * 1000,
         session: session,
         guess: '',
         final: false
