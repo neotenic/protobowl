@@ -237,7 +237,7 @@ renderPartial = ->
 	#this more complicated system allows text selection
 	#while it's still reading out stuff
 	if new_text isnt old_text
-		if new_text.indexOf old_text is 0
+		if new_text.indexOf(old_text) is 0
 			node = bundle.find('.readout .visible')[0]
 			change = new_text.slice old_text.length
 			node.appendChild document.createTextNode(change)
@@ -601,5 +601,7 @@ unless Modernizr.touch
 	# hide crap when clicked upon
 	$('.actionbar button').click -> 
 		$('.actionbar button').tooltip 'hide'
-	$('.show-keyboard').hide()
+
+if Modernizr.touch
+    $('.show-keyboard').hide()
 	$('.show-touch').show()
