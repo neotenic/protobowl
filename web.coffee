@@ -119,7 +119,7 @@ class QuizRoom
 			.replace(/\[\w\w\]/g, '')
 		@timing = {
 			list: syllables(word) for word in @question.split(" "),
-			rate: 1000 * 60 / 2 / 300
+			rate: 1000 * 60 / 2 / 250
 		}
 		{list, rate} = @timing
 		cumulative = cumsum list, rate

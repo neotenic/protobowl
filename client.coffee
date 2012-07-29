@@ -119,7 +119,6 @@ sock.on 'sync', (data) ->
 
 	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1))
 
-
 	console.log 'sync', data
 	for attr of data
 		sync[attr] = data[attr]
@@ -127,6 +126,9 @@ sock.on 'sync', (data) ->
 		renderState()
 	else
 		renderPartial()
+	if sync.time_offset isnt null
+		$('#time_offset').text(sync.time_offset.toFixed(1))
+
 
 latency_log = []
 testLatency = ->

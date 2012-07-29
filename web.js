@@ -149,7 +149,7 @@ QuizRoom = (function() {
         }
         return _results;
       }).call(this),
-      rate: 1000 * 60 / 2 / 300
+      rate: 1000 * 60 / 2 / 250
     };
     _ref = this.timing, list = _ref.list, rate = _ref.rate;
     cumulative = cumsum(list, rate);

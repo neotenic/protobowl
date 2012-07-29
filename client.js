@@ -166,9 +166,12 @@ sock.on('sync', function(data) {
     sync[attr] = data[attr];
   }
   if ('users' in data) {
-    return renderState();
+    renderState();
   } else {
-    return renderPartial();
+    renderPartial();
+  }
+  if (sync.time_offset !== null) {
+    return $('#time_offset').text(sync.time_offset.toFixed(1));
   }
 });
 
