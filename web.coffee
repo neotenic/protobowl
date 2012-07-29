@@ -76,7 +76,7 @@ class QuizRoom
 
 	pause: ->
 		#no point really because being in an attempt means being frozen
-		@freeze() unless @attempt
+		@freeze() unless @attempt or @time() > @end_time
 			
 	unpause: ->
 		#freeze with access controls
@@ -140,7 +140,7 @@ class QuizRoom
 
 
 	buzz: (user, fn) ->
-		if @attempt is null
+		if @attempt is null and @time() <= @end_time
 			session = Math.random().toString(36).slice(2)
 			@attempt = {
 				user: user,
@@ -155,8 +155,6 @@ class QuizRoom
 			@sync() #partial sync
 			@timeout @serverTime, @attempt.start + @attempt.duration, =>
 				@end_buzz session
-		else if @owner is user
-			fn 'wai?'
 		else
 			fn 'narp'
 

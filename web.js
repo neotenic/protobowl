@@ -94,7 +94,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.pause = function() {
-    if (!this.attempt) {
+    if (!(this.attempt || this.time() > this.end_time)) {
       return this.freeze();
     }
   };
@@ -176,7 +176,7 @@ QuizRoom = (function() {
   QuizRoom.prototype.buzz = function(user, fn) {
     var session,
       _this = this;
-    if (this.attempt === null) {
+    if (this.attempt === null && this.time() <= this.end_time) {
       session = Math.random().toString(36).slice(2);
       this.attempt = {
         user: user,
@@ -192,8 +192,6 @@ QuizRoom = (function() {
       return this.timeout(this.serverTime, this.attempt.start + this.attempt.duration, function() {
         return _this.end_buzz(session);
       });
-    } else if (this.owner === user) {
-      return fn('wai?');
     } else {
       return fn('narp');
     }
