@@ -8,7 +8,7 @@ io.configure ->
 	io.set "log level", 2
 
 fs = require('fs')
-damlev = require('./levenshtein').levenshtein
+checkAnswer = require('./answerparse').checkAnswer
 syllables = require('./syllable').syllables
 
 questions = []
@@ -71,8 +71,12 @@ class QuizRoom
 
 	unfreeze: ->
 		if @time_freeze
-			@time_offset = new Date - @time_freeze
+			# @time_offset = new Date - @time_freeze
+			@set_time @time_freeze
 			@time_freeze = 0
+
+	set_time: (ts) ->
+		@time_offset = new Date - ts
 
 	pause: ->
 		#no point really because being in an attempt means being frozen
@@ -95,7 +99,7 @@ class QuizRoom
 	new_question: ->
 		@attempt = null
 
-		answer_time = 1000 * 3
+		answer_time = 1000 * 5
 		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
 		@info = {
@@ -132,10 +136,14 @@ class QuizRoom
 		#killit, killitwithfire
 		if @attempt?.session is session
 			@attempt.final = true
-			@attempt.correct = Math.random() > 0.5 #pretty good alg, eh?
+			score = checkAnswer @attempt.text, @answer
+			@attempt.correct = (score < 2)
+			
 			@sync()
-			@attempt = null #g'bye
 			@unfreeze()
+			if @attempt.correct
+				@set_time @end_time
+			@attempt = null #g'bye
 			@sync() #two syncs in one request!
 
 
@@ -145,9 +153,9 @@ class QuizRoom
 			@attempt = {
 				user: user,
 				start: @serverTime(), # oh god so much time crap
-				duration: 7 * 1000,
+				duration: 8 * 1000,
 				session, # generate 'em server side 
-				guess: '',
+				text: '',
 				final: false
 			}
 			fn 'http://www.whosawesome.com/'

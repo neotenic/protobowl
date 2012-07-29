@@ -345,18 +345,17 @@ changeQuestion = ->
 	bundle.addClass 'active'
 	$('#history').prepend bundle.hide()
 	
-	runAnimations = ->
-		old.find('.readout').slideUp('slow')
-		bundle.slideDown('slow').queue ->
-			bundle.width('auto')
-			$(this).dequeue()
-
+	
+	bundle.slideDown("slow").queue ->
+		bundle.width('auto')
+		$(this).dequeue()
 	if old.find('.readout').length > 0
 		old.find('.readout')[0].normalize() 
+		
 		old.queue ->
-			runAnimations()
-	else
-		runAnimations()
+			console.log 'running animation'
+			old.find('.readout').slideUp("slow")
+			$(this).dequeue()
 
 createBundle = ->
 	breadcrumb = $('<ul>').addClass('breadcrumb')
@@ -571,7 +570,7 @@ $('body').keydown (e) ->
 	if e.keyCode is 32
 		e.preventDefault()
 		$('.buzzbtn').click()
-	else if e.keyCode is 83 # S
+	else if e.keyCode in [83, 78] # S, N
 		$('.skipbtn').click()
 	else if e.keyCode is 80 # P
 		$('.pausebtn').click()

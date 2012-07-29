@@ -372,7 +372,7 @@ renderTimer = function() {
 };
 
 changeQuestion = function() {
-  var bundle, cutoff, old, runAnimations;
+  var bundle, cutoff, old;
   cutoff = 15;
   if (matchMedia('(max-width: 768px)').matches) {
     cutoff = 1;
@@ -388,20 +388,17 @@ changeQuestion = function() {
   bundle = createBundle().width($('#history').width());
   bundle.addClass('active');
   $('#history').prepend(bundle.hide());
-  runAnimations = function() {
-    old.find('.readout').slideUp('slow');
-    return bundle.slideDown('slow').queue(function() {
-      bundle.width('auto');
-      return $(this).dequeue();
-    });
-  };
+  bundle.slideDown("slow").queue(function() {
+    bundle.width('auto');
+    return $(this).dequeue();
+  });
   if (old.find('.readout').length > 0) {
     old.find('.readout')[0].normalize();
     return old.queue(function() {
-      return runAnimations();
+      console.log('running animation');
+      old.find('.readout').slideUp("slow");
+      return $(this).dequeue();
     });
-  } else {
-    return runAnimations();
   }
 };
 
@@ -617,7 +614,7 @@ $('.guess_form').submit(function(e) {
 });
 
 $('body').keydown(function(e) {
-  var _ref;
+  var _ref, _ref1;
   if (actionMode === 'chat') {
     return $('.chat_input').focus();
   }
@@ -627,11 +624,11 @@ $('body').keydown(function(e) {
   if (e.keyCode === 32) {
     e.preventDefault();
     $('.buzzbtn').click();
-  } else if (e.keyCode === 83) {
+  } else if ((_ref = e.keyCode) === 83 || _ref === 78) {
     $('.skipbtn').click();
   } else if (e.keyCode === 80) {
     $('.pausebtn').click();
-  } else if ((_ref = e.keyCode) === 47 || _ref === 111 || _ref === 191) {
+  } else if ((_ref1 = e.keyCode) === 47 || _ref1 === 111 || _ref1 === 191) {
     console.log("slash");
     e.preventDefault();
     $('.chatbtn').click();
