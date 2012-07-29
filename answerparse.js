@@ -9,7 +9,7 @@ damlev = require('./levenshtein').levenshtein;
 stopwords = 'dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,mentioned,before,that,have,word,equivalents,forms,jr,sr,etc,a'.toLowerCase().split(',');
 
 checkAnswer = function(compare, answer) {
-  var accepts, clean, comp, index, list, max, neg, p, part, pos, scores, sorted, sum, weight, weighted, word, _i, _j, _k, _len, _len1, _ref;
+  var accepts, clean, comp, index, list, max, neg, p, part, parts, pos, scores, sorp, sorted, weight, weighted, word, _i, _j, _len, _len1;
   compare = compare.trim().split(' ');
   answer = answer.replace(/[\[\]\<\>\{\}][\w\-]+?[\[\]\<\>\{\}]/g, '');
   clean = (function() {
@@ -71,35 +71,42 @@ checkAnswer = function(compare, answer) {
     })();
     if (list.length > 0) {
       console.log(list);
-      sum = 0;
-      for (index = _k = 0, _ref = list.length; 0 <= _ref ? _k < _ref : _k > _ref; index = 0 <= _ref ? ++_k : --_k) {
-        scores = (function() {
-          var _l, _len2, _results;
-          _results = [];
-          for (_l = 0, _len2 = compare.length; _l < _len2; _l++) {
-            word = compare[_l];
-            _results.push([word, damlev(list[index].toLowerCase(), word.toLowerCase())]);
+      parts = (function() {
+        var _k, _ref, _results;
+        _results = [];
+        for (index = _k = 0, _ref = list.length; 0 <= _ref ? _k < _ref : _k > _ref; index = 0 <= _ref ? ++_k : --_k) {
+          scores = (function() {
+            var _l, _len2, _results1;
+            _results1 = [];
+            for (_l = 0, _len2 = compare.length; _l < _len2; _l++) {
+              word = compare[_l];
+              _results1.push([word, damlev(list[index].toLowerCase(), word.toLowerCase())]);
+            }
+            return _results1;
+          })();
+          sorted = scores.sort(function(_arg, _arg1) {
+            var a, b, w, z;
+            w = _arg[0], a = _arg[1];
+            z = _arg1[0], b = _arg1[1];
+            return a - b;
+          });
+          weight = 1;
+          if (index === 0) {
+            weight = 2;
           }
-          return _results;
-        })();
-        sorted = scores.sort(function(_arg, _arg1) {
-          var a, b, w, z;
-          w = _arg[0], a = _arg[1];
-          z = _arg1[0], b = _arg1[1];
-          return a - b;
-        });
-        weight = 1;
-        if (index === 0) {
-          weight = 2;
+          if (index === list.length - 1) {
+            weight = 3;
+          }
+          weighted = sorted[0][1] * weight / list[index].length;
+          console.log("-", sorted[0][0], list[index], sorted[0][1], weighted);
+          _results.push(weighted);
         }
-        if (index === list.length - 1) {
-          weight = 3;
-        }
-        weighted = sorted[0][1] * weight / list[index].length;
-        console.log("-", sorted[0][0], list[index], sorted[0][1], weighted);
-        sum += weighted;
-      }
-      accepts.push(sum);
+        return _results;
+      })();
+      sorp = parts.sort(function(a, b) {
+        return a - b;
+      });
+      accepts.push(sorp[0]);
     }
   }
   max = accepts.sort(function(a, b) {

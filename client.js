@@ -308,7 +308,6 @@ renderPartial = function() {
     if (new_text.indexOf(old_text.trim()) === 0 && old_spots) {
       bundle.find('.readout .visible').append(new_text.slice(old_text.length));
     } else {
-      console.log('redo');
       visible.data('spots', spots.join(','));
       visible.text('');
       for (i = _i = 0; 0 <= index ? _i < index : _i > index; i = 0 <= index ? ++_i : --_i) {

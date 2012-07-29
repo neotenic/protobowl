@@ -37,8 +37,8 @@ checkAnswer = (compare, answer) ->
 		
 		if list.length > 0
 			console.log list
-			sum = 0
-			for index in [0...list.length]
+			
+			parts = for index in [0...list.length]
 				scores = for word in compare
 					[word, damlev list[index].toLowerCase(), word.toLowerCase()]
 				sorted = scores.sort ([w,a], [z,b]) -> a - b
@@ -48,8 +48,10 @@ checkAnswer = (compare, answer) ->
 
 				weighted = sorted[0][1] * weight / list[index].length
 				console.log "-", sorted[0][0], list[index], sorted[0][1], weighted
-				sum += weighted
-			accepts.push sum
+				weighted
+			sorp = parts.sort (a, b) -> a - b
+			accepts.push sorp[0]
+			# accepts.push sum
 
 	max = accepts.sort (a, b) -> a - b
 	console.log max

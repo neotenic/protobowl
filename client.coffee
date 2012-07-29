@@ -250,7 +250,7 @@ renderPartial = ->
 		if new_text.indexOf(old_text.trim()) is 0 and old_spots
 			bundle.find('.readout .visible').append(new_text.slice old_text.length)
 		else
-			console.log 'redo'
+			# console.log 'redo'
 			visible.data('spots', spots.join(','))
 			visible.text ''
 			for i in [0...index]
