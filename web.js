@@ -154,7 +154,7 @@ QuizRoom = (function() {
     _ref = this.timing, list = _ref.list, rate = _ref.rate;
     cumulative = cumsum(list, rate);
     this.end_time = this.begin_time + cumulative[cumulative.length - 1] + this.answer_duration;
-    return this.sync(true);
+    return this.sync(2);
   };
 
   QuizRoom.prototype.skip = function() {
@@ -179,7 +179,7 @@ QuizRoom = (function() {
         io.sockets.socket(this.attempt.user).store.data.interrupts = (io.sockets.socket(this.attempt.user).store.data.interrupts || 0) + 1;
       }
       this.attempt = null;
-      return this.sync();
+      return this.sync(1);
     }
   };
 
@@ -201,7 +201,7 @@ QuizRoom = (function() {
       };
       io.sockets.socket(user).store.data.guesses = (io.sockets.socket(user).store.data.guesses || 0) + 1;
       this.freeze();
-      this.sync();
+      this.sync(1);
       return this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
         return _this.end_buzz(session);
       });
@@ -223,8 +223,11 @@ QuizRoom = (function() {
     }
   };
 
-  QuizRoom.prototype.sync = function(full) {
+  QuizRoom.prototype.sync = function(level) {
     var action, actionvotes, attr, blacklist, client, data, nay, vote, voting, yay, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+    if (level == null) {
+      level = 0;
+    }
     data = {
       real_time: +(new Date),
       voting: {}
@@ -264,11 +267,7 @@ QuizRoom = (function() {
         data[attr] = this[attr];
       }
     }
-    if (full) {
-      data.question = this.question;
-      data.answer = this.answer;
-      data.timing = this.timing;
-      data.info = this.info;
+    if (level >= 1) {
       data.users = (function() {
         var _l, _len3, _ref2, _results;
         _ref2 = io.sockets.clients(this.name);
@@ -285,6 +284,12 @@ QuizRoom = (function() {
         }
         return _results;
       }).call(this);
+    }
+    if (level >= 2) {
+      data.question = this.question;
+      data.answer = this.answer;
+      data.timing = this.timing;
+      data.info = this.info;
     }
     return io.sockets["in"](this.name).emit('sync', data);
   };
@@ -311,7 +316,7 @@ io.sockets.on('connection', function(sock) {
       rooms[room_name] = new QuizRoom(room_name);
     }
     room = rooms[room_name];
-    room.sync(true);
+    room.sync(2);
     return room.emit('introduce', {
       user: sock.id
     });
@@ -322,7 +327,7 @@ io.sockets.on('connection', function(sock) {
   sock.on('rename', function(name) {
     sock.set('name', name);
     if (room) {
-      return room.sync(true);
+      return room.sync(1);
     }
   });
   sock.on('skip', function(vote) {
@@ -372,7 +377,7 @@ io.sockets.on('connection', function(sock) {
     return setTimeout(function() {
       console.log(!!room, 'rooms');
       if (room) {
-        room.sync(true);
+        room.sync(1);
         return room.emit('leave', {
           user: id
         });

@@ -125,7 +125,7 @@ class QuizRoom
 		{list, rate} = @timing
 		cumulative = cumsum list, rate
 		@end_time = @begin_time + cumulative[cumulative.length - 1] + @answer_duration
-		@sync(true)
+		@sync(2)
 
 	skip: ->
 		@new_question()
@@ -147,7 +147,7 @@ class QuizRoom
 			else if @attempt.interrupt
 				io.sockets.socket(@attempt.user).store.data.interrupts = (io.sockets.socket(@attempt.user).store.data.interrupts || 0) + 1
 			@attempt = null #g'bye
-			@sync() #two syncs in one request!
+			@sync(1) #two syncs in one request!
 
 
 	buzz: (user, fn) ->
@@ -167,7 +167,7 @@ class QuizRoom
 			io.sockets.socket(user).store.data.guesses = (io.sockets.socket(user).store.data.guesses || 0) + 1
 			
 			@freeze()
-			@sync() #partial sync
+			@sync(1) #partial sync
 			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
 		else
@@ -186,7 +186,7 @@ class QuizRoom
 			else
 				@sync()
 
-	sync: (full) ->
+	sync: (level = 0) ->
 		data = {
 			real_time: +new Date,
 			voting: {}
@@ -213,11 +213,7 @@ class QuizRoom
 		blacklist = ["name", "question", "answer", "timing", "voting", "info"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
-		if full
-			data.question = @question
-			data.answer = @answer
-			data.timing = @timing
-			data.info = @info
+		if level >= 1
 			data.users = for client in io.sockets.clients(@name)
 				{
 					id: client.id,
@@ -227,6 +223,12 @@ class QuizRoom
 					guesses: client.store.data.guesses || 0
 				}
 
+		if level >= 2
+			data.question = @question
+			data.answer = @answer
+			data.timing = @timing
+			data.info = @info
+			
 		io.sockets.in(@name).emit 'sync', data
 
 
@@ -243,7 +245,7 @@ io.sockets.on 'connection', (sock) ->
 		sock.join room_name
 		rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
 		room = rooms[room_name]
-		room.sync(true)
+		room.sync(2)
 		room.emit 'introduce', {user: sock.id}
 
 	sock.on 'echo', (data, callback) =>
@@ -251,7 +253,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'rename', (name) ->
 		sock.set 'name', name
-		room.sync(true) if room
+		room.sync(1) if room
 
 	sock.on 'skip', (vote) ->
 		sock.set 'skip', vote
@@ -281,7 +283,7 @@ io.sockets.on 'connection', (sock) ->
 		setTimeout ->
 			console.log !!room, 'rooms'
 			if room
-				room.sync(true)
+				room.sync(1)
 				room.emit 'leave', {user: id}
 		, 100
 
