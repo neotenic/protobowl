@@ -166,11 +166,10 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.end_buzz = function(session) {
-    var score, _ref;
+    var _ref;
     if (((_ref = this.attempt) != null ? _ref.session : void 0) === session) {
       this.attempt.final = true;
-      score = checkAnswer(this.attempt.text, this.answer);
-      this.attempt.correct = score < 2;
+      this.attempt.correct = checkAnswer(this.attempt.text, this.answer);
       this.sync();
       this.unfreeze();
       if (this.attempt.correct) {
@@ -313,27 +312,19 @@ io.sockets.on('connection', function(sock) {
   });
   sock.on('rename', function(name) {
     sock.set('name', name);
-    if (room) {
-      return room.sync(true);
-    }
+    return room.sync(true);
   });
   sock.on('skip', function(vote) {
     sock.set('skip', vote);
-    if (room) {
-      return room.sync();
-    }
+    return room.sync();
   });
   sock.on('pause', function(vote) {
     sock.set('pause', vote);
-    if (room) {
-      return room.sync();
-    }
+    return room.sync();
   });
   sock.on('unpause', function(vote) {
     sock.set('unpause', vote);
-    if (room) {
-      return room.sync();
-    }
+    return room.sync();
   });
   sock.on('buzz', function(data, fn) {
     return room.buzz(sock.id, fn);
@@ -377,7 +368,7 @@ app.get('/:channel', function(req, res) {
 
 app.get('/', function(req, res) {
   var noun, people, pick, verb;
-  people = 'spock,kirk,feynman,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut';
+  people = 'kirk,feynman,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut';
   verb = 'on,enveloping,eating,drinking,in,near,sleeping,destruction,arresting,cloning,around,jumping,scrambling';
   noun = 'mountain,drugs,house,asylum,elevator,scandal,planet,school,brick,lamp,water,paper,friend,toilet,airplane,cow,pony';
   pick = function(list) {

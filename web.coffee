@@ -136,8 +136,7 @@ class QuizRoom
 		#killit, killitwithfire
 		if @attempt?.session is session
 			@attempt.final = true
-			score = checkAnswer @attempt.text, @answer
-			@attempt.correct = (score < 2)
+			@attempt.correct = checkAnswer @attempt.text, @answer
 			
 			@sync()
 			@unfreeze()
@@ -241,19 +240,19 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'rename', (name) ->
 		sock.set 'name', name
-		room.sync(true) if room
+		room.sync(true)
 
 	sock.on 'skip', (vote) ->
 		sock.set 'skip', vote
-		room.sync() if room
+		room.sync()
 
 	sock.on 'pause', (vote) ->
 		sock.set 'pause', vote
-		room.sync() if room
+		room.sync()
 
 	sock.on 'unpause', (vote) ->
 		sock.set 'unpause', vote
-		room.sync() if room
+		room.sync()
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz sock.id, fn
@@ -281,7 +280,7 @@ app.get '/:channel', (req, res) ->
 	res.render 'index.jade', { name }
 
 app.get '/', (req, res) ->
-	people = 'spock,kirk,feynman,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut'
+	people = 'kirk,feynman,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut'
 	verb = 'on,enveloping,eating,drinking,in,near,sleeping,destruction,arresting,cloning,around,jumping,scrambling'
 	noun = 'mountain,drugs,house,asylum,elevator,scandal,planet,school,brick,lamp,water,paper,friend,toilet,airplane,cow,pony'
 	pick = (list) -> 

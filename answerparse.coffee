@@ -1,9 +1,9 @@
 removeDiacritics = require('./removeDiacritics').removeDiacritics
 damlev = require('./levenshtein').levenshtein
-stopwords = 'dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,mentioned,before,that,have,word,equivalents,forms,jr,sr,etc,a'.toLowerCase().split(',')
+stopwords = 'dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
 
-checkAnswer = (compare, answer) ->
-	compare = compare.trim().split ' '
+
+parseAnswer = (answer) ->
 	answer = answer.replace(/[\[\]\<\>\{\}][\w\-]+?[\[\]\<\>\{\}]/g, '')
 
 	clean = (part.trim() for part in answer.split(/[^\w]and[^\w]|[^\w]or[^\w]|\[|\]|\{|\}|\;|\,|\<|\>|\(|\)/g))
@@ -29,6 +29,12 @@ checkAnswer = (compare, answer) ->
 			# console.log 'pos-', comp
 		else
 			pos.push part
+	[pos, neg]
+
+
+checkAnswer = (compare, answer) ->
+	compare = compare.trim().split ' '
+	[pos, neg] = parseAnswer(answer)
 
 	accepts = []
 
@@ -36,27 +42,43 @@ checkAnswer = (compare, answer) ->
 		list = (word for word in p.split(/\s/) when word.toLowerCase().trim() not in stopwords and word.trim() isnt '')
 		
 		if list.length > 0
-			console.log list
-			
+			# console.log list
+			sum = 0	
 			parts = for index in [0...list.length]
 				scores = for word in compare
-					[word, damlev list[index].toLowerCase(), word.toLowerCase()]
+					score = damlev list[index].toLowerCase(), word.toLowerCase()
+					if list[index].toLowerCase()[0] != word.toLowerCase()[0]
+						score += 2 #first letters count a lot
+					[word, score]
 				sorted = scores.sort ([w,a], [z,b]) -> a - b
 				weight = 1
-				weight = 2 if index is 0
-				weight = 3 if index is list.length - 1
+				weight = 1.5 if index is 0
+				weight = 1.5 if index is list.length - 1
 
-				weighted = sorted[0][1] * weight / list[index].length
-				console.log "-", sorted[0][0], list[index], sorted[0][1], weighted
-				weighted
-			sorp = parts.sort (a, b) -> a - b
-			accepts.push sorp[0]
-			# accepts.push sum
+				# weighted = sorted[0][1] * weight / list[index].length
+				weighted = Math.max(0, list[index].length - Math.pow(sorted[0][1], 1.5)) * weight
 
-	max = accepts.sort (a, b) -> a - b
-	console.log max
+				# console.log list[index], sorted[0][0], sorted[0][1], weighted
+				# sum += Math.pow(weighted, 1.1)
+				sum += weighted
 
-	# TODO: check "do not accept list"
-	return max[0]
+
+			# sorp = parts.sort (a, b) -> b - a
+			# console.log sorp
+			# accepts.push sorp[0]
+			accepts.push [list, sum]
+
+	max = accepts.sort ([w,a], [z,b]) -> b - a
+
+	str = max[0][0]
+	len = str.join('').length
+	score = max[0][1]
+	# console.log str, score
+
+	if score > len * 0.8 or score > 8
+		return true
+
+	return false
 
 exports.checkAnswer = checkAnswer
+exports.parseAnswer = parseAnswer
