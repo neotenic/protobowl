@@ -207,7 +207,7 @@ sock.on('chat', function(data) {
 });
 
 computeScore = function(user) {
-  return user.correct * 15 - user.interrupts * 5;
+  return user.correct * 10 - user.interrupts * 5;
 };
 
 renderState = function() {

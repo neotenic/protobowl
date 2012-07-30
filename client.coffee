@@ -157,7 +157,7 @@ sock.on 'chat', (data) ->
 
 
 computeScore = (user) ->
-	user.correct * 15 - user.interrupts * 5
+	user.correct * 10 - user.interrupts * 5
 
 renderState = ->
 	# render the user list and that stuff
