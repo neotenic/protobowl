@@ -64,6 +64,7 @@ QuizRoom = (function() {
 
   function QuizRoom(name) {
     this.name = name;
+    this.answer_duration = 1000 * 5;
     this.time_offset = 0;
     this.new_question();
     this.attempt = null;
@@ -123,9 +124,8 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.new_question = function() {
-    var answer_time, cumulative, list, question, rate, word, _ref;
+    var cumulative, list, question, rate, word, _ref;
     this.attempt = null;
-    answer_time = 1000 * 5;
     this.begin_time = this.time();
     question = questions[Math.floor(questions.length * Math.random())];
     this.info = {
@@ -153,7 +153,7 @@ QuizRoom = (function() {
     };
     _ref = this.timing, list = _ref.list, rate = _ref.rate;
     cumulative = cumsum(list, rate);
-    this.end_time = this.begin_time + cumulative[cumulative.length - 1] + answer_time;
+    this.end_time = this.begin_time + cumulative[cumulative.length - 1] + this.answer_duration;
     return this.sync(true);
   };
 
@@ -173,7 +173,10 @@ QuizRoom = (function() {
       this.sync();
       this.unfreeze();
       if (this.attempt.correct) {
+        io.sockets.socket(this.attempt.user).store.data.correct = (io.sockets.socket(this.attempt.user).store.data.correct || 0) + 1;
         this.set_time(this.end_time);
+      } else if (this.attempt.interrupt) {
+        io.sockets.socket(user).store.data.interrupts = (io.sockets.socket(user).store.data.interrupts || 0) + 1;
       }
       this.attempt = null;
       return this.sync();
@@ -184,6 +187,7 @@ QuizRoom = (function() {
     var session,
       _this = this;
     if (this.attempt === null && this.time() <= this.end_time) {
+      fn('http://www.whosawesome.com/');
       session = Math.random().toString(36).slice(2);
       this.attempt = {
         user: user,
@@ -192,9 +196,10 @@ QuizRoom = (function() {
         duration: 8 * 1000,
         session: session,
         text: '',
+        interrupt: this.time() < this.end_time - this.answer_duration,
         final: false
       };
-      fn('http://www.whosawesome.com/');
+      io.sockets.socket(user).store.data.guesses = (io.sockets.socket(user).store.data.guesses || 0) + 1;
       this.freeze();
       this.sync();
       return this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
@@ -271,7 +276,10 @@ QuizRoom = (function() {
           client = _ref2[_l];
           _results.push({
             id: client.id,
-            name: client.store.data.name
+            name: client.store.data.name,
+            interrupts: client.store.data.interrupts || 0,
+            correct: client.store.data.correct || 0,
+            guesses: client.store.data.guesses || 0
           });
         }
         return _results;

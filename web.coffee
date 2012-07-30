@@ -55,6 +55,7 @@ cumsum = (list, rate) ->
 class QuizRoom
 	constructor: (name) ->
 		@name = name
+		@answer_duration = 1000 * 5
 		@time_offset = 0
 		@new_question()
 		@attempt = null
@@ -99,7 +100,7 @@ class QuizRoom
 	new_question: ->
 		@attempt = null
 
-		answer_time = 1000 * 5
+		
 		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
 		@info = {
@@ -123,7 +124,7 @@ class QuizRoom
 		}
 		{list, rate} = @timing
 		cumulative = cumsum list, rate
-		@end_time = @begin_time + cumulative[cumulative.length - 1] + answer_time
+		@end_time = @begin_time + cumulative[cumulative.length - 1] + @answer_duration
 		@sync(true)
 
 	skip: ->
@@ -141,13 +142,17 @@ class QuizRoom
 			@sync()
 			@unfreeze()
 			if @attempt.correct
+				io.sockets.socket(@attempt.user).store.data.correct = (io.sockets.socket(@attempt.user).store.data.correct || 0) + 1
 				@set_time @end_time
+			else if @attempt.interrupt
+				io.sockets.socket(user).store.data.interrupts = (io.sockets.socket(user).store.data.interrupts || 0) + 1
 			@attempt = null #g'bye
 			@sync() #two syncs in one request!
 
 
 	buzz: (user, fn) ->
 		if @attempt is null and @time() <= @end_time
+			fn 'http://www.whosawesome.com/'
 			session = Math.random().toString(36).slice(2)
 			@attempt = {
 				user: user,
@@ -156,9 +161,11 @@ class QuizRoom
 				duration: 8 * 1000,
 				session, # generate 'em server side 
 				text: '',
+				interrupt: @time() < @end_time - @answer_duration,
 				final: false
 			}
-			fn 'http://www.whosawesome.com/'
+			io.sockets.socket(user).store.data.guesses = (io.sockets.socket(user).store.data.guesses || 0) + 1
+			
 			@freeze()
 			@sync() #partial sync
 			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
@@ -213,7 +220,10 @@ class QuizRoom
 			data.users = for client in io.sockets.clients(@name)
 				{
 					id: client.id,
-					name: client.store.data.name
+					name: client.store.data.name,
+					interrupts: client.store.data.interrupts || 0,
+					correct: client.store.data.correct || 0,
+					guesses: client.store.data.guesses || 0
 				}
 
 		io.sockets.in(@name).emit 'sync', data

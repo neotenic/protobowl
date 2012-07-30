@@ -119,7 +119,7 @@ sock.on 'sync', (data) ->
 
 	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1))
 
-	console.log 'sync', data
+	# console.log 'sync', data
 	for attr of data
 		sync[attr] = data[attr]
 	if 'users' of data
@@ -155,6 +155,10 @@ last_question = null
 sock.on 'chat', (data) ->
 	chatAnnotation data
 
+
+computeScore = (user) ->
+	user.correct * 15 - user.interrupts * 5
+
 renderState = ->
 	# render the user list and that stuff
 	if sync.users
@@ -171,7 +175,8 @@ renderState = ->
 		# list.find('tr').remove() #abort all people
 		count = 0
 		list.find('tr').addClass 'to_remove'
-		for user in sync.users
+
+		for user in sync.users.sort((a, b) -> computeScore(b) - computeScore(b))
 			$('.user-' + user.id).text(user.name)
 			count++
 			row = list.find '.sockid-' + user.id
@@ -187,8 +192,7 @@ renderState = ->
 							return "left"
 					, 
 					title: user.name + "'s stats",
-					trigger: 'manual',
-					content: 'well, they dont exist. sorry. '+ user.id
+					trigger: 'manual'
 				}
 				row.click ->
 					$('.leaderboard tbody tr').not(this).popover 'hide'
@@ -201,14 +205,20 @@ renderState = ->
 				# row.mouseout (e) ->
 				# 	console.log $(this).data('popover'),$(this).data('popover').tip().hasClass('in')
 				# 	# $(this).popover 'hide'
+
+			row.attr 'data-content', "User ID: #{user.id}\n
+										Correct: #{user.correct}\n
+										Incorrect: #{user.guesses - user.correct}\n
+										Interrupts: #{user.interrupts}\n
+										Guesses: #{user.guesses}".replace(/\n/g, '<br>')
 			row.find('td').remove()
 			row.addClass 'sockid-' + user.id
 			row.removeClass 'to_remove'
-			badge = $('<span>').addClass('badge').text(Math.floor(Math.random() * 1000))
+			badge = $('<span>').addClass('badge').text(computeScore(user))
 			badge.addClass 'badge-success' if user.id is sock.socket.sessionid #green if me
 			$('<td>').text(count).append('&nbsp;').append(badge).appendTo row
 			$('<td>').text(user.name).appendTo row
-			$('<td>').text(user.votes || 0).appendTo row
+			$('<td>').text(user.interrupts).appendTo row
 			# $('<td>').text(7).appendTo row
 
 		list.find('tr.to_remove').remove()
@@ -384,7 +394,6 @@ changeQuestion = ->
 		old.find('.readout')[0].normalize() 
 		
 		old.queue ->
-			console.log 'running animation'
 			old.find('.readout').slideUp("slow")
 			$(this).dequeue()
 
@@ -597,20 +606,22 @@ $('body').keydown (e) ->
 
 	if actionMode is 'guess'
 		return $('.guess_input').focus()
-		
+	
+	return if e.shiftKey or e.ctrlKey or e.metaKey
+
 	if e.keyCode is 32
 		e.preventDefault()
 		$('.buzzbtn').click()
-	else if e.keyCode in [83, 78] # S, N
+	else if e.keyCode in [83, 78, 74] # S, N, J
 		$('.skipbtn').click()
-	else if e.keyCode is 80 # P
+	else if e.keyCode in [80, 82] # P, R
 		$('.pausebtn').click()
-	else if e.keyCode in [47, 111, 191] # / (forward slash)
+	else if e.keyCode in [47, 111, 191, 67] # / (forward slash), C
 		console.log "slash"
 		e.preventDefault()
 		$('.chatbtn').click()
 
-	console.log e
+	console.log e.keyCode
 
 
 # possibly this should be replaced by something smarter using CSS calc()
