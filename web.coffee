@@ -145,7 +145,7 @@ class QuizRoom
 				io.sockets.socket(@attempt.user).store.data.correct = (io.sockets.socket(@attempt.user).store.data.correct || 0) + 1
 				@set_time @end_time
 			else if @attempt.interrupt
-				io.sockets.socket(user).store.data.interrupts = (io.sockets.socket(user).store.data.interrupts || 0) + 1
+				io.sockets.socket(@attempt.user).store.data.interrupts = (io.sockets.socket(@attempt.user).store.data.interrupts || 0) + 1
 			@attempt = null #g'bye
 			@sync() #two syncs in one request!
 
@@ -250,28 +250,29 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'rename', (name) ->
 		sock.set 'name', name
-		room.sync(true)
+		room.sync(true) if room
 
 	sock.on 'skip', (vote) ->
 		sock.set 'skip', vote
-		room.sync()
+		room.sync() if room
 
 	sock.on 'pause', (vote) ->
 		sock.set 'pause', vote
-		room.sync()
+		room.sync() if room
 
 	sock.on 'unpause', (vote) ->
 		sock.set 'unpause', vote
-		room.sync()
+		room.sync() if room
 
 	sock.on 'buzz', (data, fn) ->
-		room.buzz sock.id, fn
+		room.buzz(sock.id, fn) if room
 
 	sock.on 'guess', (data) ->
-		room.guess sock.id, data
+		room.guess(sock.id, data)  if room
 
 	sock.on 'chat', ({text, final, session}) ->
-		room.emit 'chat', {text: text, session:  session, user: sock.id, final: final}
+		if room
+			room.emit 'chat', {text: text, session:  session, user: sock.id, final: final}
 
 	sock.on 'disconnect', ->
 		id = sock.id

@@ -176,7 +176,7 @@ QuizRoom = (function() {
         io.sockets.socket(this.attempt.user).store.data.correct = (io.sockets.socket(this.attempt.user).store.data.correct || 0) + 1;
         this.set_time(this.end_time);
       } else if (this.attempt.interrupt) {
-        io.sockets.socket(user).store.data.interrupts = (io.sockets.socket(user).store.data.interrupts || 0) + 1;
+        io.sockets.socket(this.attempt.user).store.data.interrupts = (io.sockets.socket(this.attempt.user).store.data.interrupts || 0) + 1;
       }
       this.attempt = null;
       return this.sync();
@@ -320,35 +320,49 @@ io.sockets.on('connection', function(sock) {
   });
   sock.on('rename', function(name) {
     sock.set('name', name);
-    return room.sync(true);
+    if (room) {
+      return room.sync(true);
+    }
   });
   sock.on('skip', function(vote) {
     sock.set('skip', vote);
-    return room.sync();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('pause', function(vote) {
     sock.set('pause', vote);
-    return room.sync();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('unpause', function(vote) {
     sock.set('unpause', vote);
-    return room.sync();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('buzz', function(data, fn) {
-    return room.buzz(sock.id, fn);
+    if (room) {
+      return room.buzz(sock.id, fn);
+    }
   });
   sock.on('guess', function(data) {
-    return room.guess(sock.id, data);
+    if (room) {
+      return room.guess(sock.id, data);
+    }
   });
   sock.on('chat', function(_arg) {
     var final, session, text;
     text = _arg.text, final = _arg.final, session = _arg.session;
-    return room.emit('chat', {
-      text: text,
-      session: session,
-      user: sock.id,
-      final: final
-    });
+    if (room) {
+      return room.emit('chat', {
+        text: text,
+        session: session,
+        user: sock.id,
+        final: final
+      });
+    }
   });
   return sock.on('disconnect', function() {
     var id;
