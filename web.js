@@ -258,7 +258,7 @@ QuizRoom = (function() {
         this[action]();
       }
     }
-    blacklist = ["name", "question", "answer", "timing", "voting"];
+    blacklist = ["name", "question", "answer", "timing", "voting", "info"];
     for (attr in this) {
       if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0) {
         data[attr] = this[attr];
@@ -268,6 +268,7 @@ QuizRoom = (function() {
       data.question = this.question;
       data.answer = this.answer;
       data.timing = this.timing;
+      data.info = this.info;
       data.users = (function() {
         var _l, _len3, _ref2, _results;
         _ref2 = io.sockets.clients(this.name);

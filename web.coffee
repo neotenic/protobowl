@@ -210,13 +210,14 @@ class QuizRoom
 			if yay / (yay + nay) > 0
 				client.del(action) for client in io.sockets.clients(@name)
 				this[action]()
-		blacklist = ["name", "question", "answer", "timing", "voting"]
+		blacklist = ["name", "question", "answer", "timing", "voting", "info"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
 		if full
 			data.question = @question
 			data.answer = @answer
 			data.timing = @timing
+			data.info = @info
 			data.users = for client in io.sockets.clients(@name)
 				{
 					id: client.id,

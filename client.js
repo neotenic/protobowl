@@ -146,6 +146,7 @@ sock.once('connect', function() {
 
 sock.on('sync', function(data) {
   var attr, below, item, thresh;
+  console.log(JSON.stringify(data));
   sync_offsets.push(+(new Date) - data.real_time);
   thresh = avg(sync_offsets);
   below = (function() {
@@ -273,7 +274,7 @@ renderState = function() {
 };
 
 renderPartial = function() {
-  var bundle, buzz, cumulative, del, i, index, list, new_text, old_spots, old_text, rate, spots, timeDelta, visible, words, _i, _ref;
+  var bundle, buzz, children, cumulative, del, element, elements, i, index, label_type, list, new_text, old_spots, old_text, rate, spots, timeDelta, unread, visible, words, _i, _j, _ref, _ref1, _ref2;
   if (!(sync.question && sync.timing)) {
     return;
   }
@@ -282,7 +283,7 @@ renderPartial = function() {
     last_question = sync.question;
   }
   timeDelta = time() - sync.begin_time;
-  words = sync.question.split(' ');
+  words = sync.question.replace(/\s+/g, ' ').split(' ');
   _ref = sync.timing, list = _ref.list, rate = _ref.rate;
   cumulative = cumsum(list, rate);
   index = 0;
@@ -290,8 +291,8 @@ renderPartial = function() {
     index++;
   }
   bundle = $('#history .bundle.active');
-  new_text = words.slice(0, index).join(' ');
-  old_text = bundle.find('.readout .visible').text().replace(/\s+/g, ' ');
+  new_text = words.slice(0, index).join(' ').trim();
+  old_text = bundle.find('.readout .visible').text().replace(/\s+/g, ' ').trim();
   spots = (function() {
     var _i, _len, _ref1, _results;
     _ref1 = bundle.data('starts') || [];
@@ -308,22 +309,41 @@ renderPartial = function() {
     return _results;
   })();
   visible = bundle.find('.readout .visible');
+  unread = bundle.find('.readout .unread');
   old_spots = visible.data('spots') === spots.join(',');
   if (new_text !== old_text || !old_spots) {
-    if (new_text.indexOf(old_text.trim()) === 0 && old_spots) {
-      bundle.find('.readout .visible').append(new_text.slice(old_text.length));
-    } else {
-      visible.data('spots', spots.join(','));
-      visible.text('');
-      for (i = _i = 0; 0 <= index ? _i < index : _i > index; i = 0 <= index ? ++_i : --_i) {
-        visible.append(words[i] + " ");
-        if (__indexOf.call(spots, i) >= 0) {
-          visible.append(' <span class="buzzicon label label-important"><i class="icon-white icon-bell"></i></span> ');
+    visible.data('spots', spots.join(','));
+    unread.text('');
+    children = visible.children();
+    children.slice(index).remove();
+    elements = [];
+    for (i = _i = 0, _ref1 = words.length; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
+      element = $('<span>');
+      if (words[i].indexOf('*') !== -1) {
+        element.append(" <span class='inline-icon label'><i class='icon-white icon-asterisk'>" + words[i] + "</i></span> ");
+      } else {
+        element.append(words[i] + " ");
+      }
+      if (__indexOf.call(spots, i) >= 0) {
+        label_type = 'label-important';
+        if (i === words.length - 1) {
+          label_type = "label-info";
         }
+        element.append(" <span class='inline-icon label " + label_type + "'><i class='icon-white icon-bell'></i></span> ");
+      }
+      elements.push(element);
+    }
+    for (i = _j = 0, _ref2 = words.length; 0 <= _ref2 ? _j < _ref2 : _j > _ref2; i = 0 <= _ref2 ? ++_j : --_j) {
+      if (i < index) {
+        if (children.eq(i).html() !== elements[i].html()) {
+          children.slice(i).remove();
+          visible.append(elements[i]);
+        }
+      } else {
+        unread.append(elements[i].contents());
       }
     }
   }
-  bundle.find('.readout .unread').text(words.slice(index).join(' '));
   renderTimer();
   if (sync.attempt) {
     guessAnnotation(sync.attempt);
@@ -372,8 +392,10 @@ renderTimer = function() {
     $('.pausebtn, .buzzbtn').attr('disabled', true);
   } else {
     ms = sync.end_time - time();
-    progress = (time() - sync.begin_time) / (sync.end_time - sync.begin_time);
-    $('.pausebtn, .buzzbtn').attr('disabled', ms < 0);
+    elapsed = time() - sync.begin_time;
+    progress = elapsed / (sync.end_time - sync.begin_time);
+    $('.pausebtn').attr('disabled', ms < 0);
+    $('.buzzbtn').attr('disabled', ms < 0 || elapsed < 100);
     if (ms < 0) {
       $('.bundle.active').find('.answer').css('visibility', 'visible');
     }
@@ -465,14 +487,20 @@ addAnnotation = function(el) {
 };
 
 guessAnnotation = function(_arg) {
-  var correct, final, id, line, ruling, session, text, user;
-  session = _arg.session, text = _arg.text, user = _arg.user, final = _arg.final, correct = _arg.correct;
+  var correct, final, id, interrupt, line, marker, ruling, session, text, user;
+  session = _arg.session, text = _arg.text, user = _arg.user, final = _arg.final, correct = _arg.correct, interrupt = _arg.interrupt;
   id = user + '-' + session;
   if ($('#' + id).length > 0) {
     line = $('#' + id);
   } else {
     line = $('<p>').attr('id', id);
-    line.append($('<span>').addClass('label label-important').text("Buzz"));
+    marker = $('<span>').addClass('label').text("Buzz");
+    if (interrupt) {
+      marker.addClass('label-important');
+    } else {
+      marker.addClass('label-info');
+    }
+    line.append(marker);
     line.append(" ");
     line.append(userSpan(user).addClass('author'));
     line.append(document.createTextNode(' '));
