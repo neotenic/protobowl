@@ -24,6 +24,7 @@ app.set 'view options', {
 }
 app.use require('less-middleware')({src: __dirname})
 app.use express.static(__dirname)
+app.use express.favicon()
 
 # Array::amap = (fn, callback) ->
 # 	count = 0

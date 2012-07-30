@@ -101,8 +101,8 @@ sock.once 'connect', ->
 	}
 
 
-sock.on 'sync', (data) ->
-	console.log JSON.stringify(data)
+synchronize = (data) ->
+	# console.log JSON.stringify(data)
 	#here is the rather complicated code to calculate
 	#then offsets of the time synchronization stuff
 	#it's totally not necessary to do this, but whatever
@@ -131,6 +131,11 @@ sock.on 'sync', (data) ->
 		$('#time_offset').text(sync.time_offset.toFixed(1))
 
 
+
+sock.on 'sync', (data) ->
+	synchronize(data)
+
+	
 latency_log = []
 testLatency = ->
 	initialTime = +new Date
@@ -148,7 +153,7 @@ testLatency = ->
 
 setTimeout ->
 	testLatency()
-	setInterval testLatency, 60 * 1000
+	setInterval testLatency, 30 * 1000
 , 2500
 
 last_question = null
@@ -177,12 +182,14 @@ renderState = ->
 		count = 0
 		list.find('tr').addClass 'to_remove'
 
-		for user in sync.users.sort((a, b) -> computeScore(b) - computeScore(b))
+		for user in sync.users.sort((a, b) -> computeScore(b) - computeScore(a))
+			# console.log user.name, count
 			$('.user-' + user.id).text(user.name)
 			count++
 			row = list.find '.sockid-' + user.id
+			list.append row			
 			if row.length < 1
-				console.log 'recreating user'
+				# console.log 'recreating user'
 				row = $('<tr>').appendTo list 
 
 				row.popover {
@@ -225,7 +232,9 @@ renderState = ->
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
-
+	
+	#fix all the expandos
+	$(window).resize()
 	renderPartial()
 
 renderPartial = ->
@@ -373,7 +382,8 @@ renderTimer = ->
 
 
 	$('.progress').toggleClass 'progress-warning', !!(sync.time_freeze and !sync.attempt)
-	$('.progress').toggleClass 'progress-danger', !!sync.attempt
+	$('.progress').toggleClass 'active progress-danger', !!sync.attempt
+
 	
 	
 
@@ -433,8 +443,12 @@ changeQuestion = ->
 		bundle.width('auto')
 		$(this).dequeue()
 	if old.find('.readout').length > 0
-		old.find('.readout')[0].normalize() 
-		
+		nested = old.find('.readout .visible>span')
+		old.find('.readout .visible').append nested.contents()
+		nested.remove()
+
+		old.find('.readout')[0].normalize()
+
 		old.queue ->
 			old.find('.readout').slideUp("slow")
 			$(this).dequeue()
@@ -507,7 +521,7 @@ guessAnnotation = ({session, text, user, final, correct, interrupt}) ->
 	else
 		line.find('.comment').text(text)
 	if final
-		ruling = line.find('.ruling').show()
+		ruling = line.find('.ruling').show().css('display', 'inline')
 		if correct
 			ruling.addClass('label-success').text('Correct')
 		else
@@ -678,9 +692,15 @@ $(window).resize ->
 		add = $(this).find('.add-on').outerWidth()
 		size = $(this).width()
 		outer = $(this).find('input').outerWidth() - $(this).find('input').width()
+		# console.log 'exp', add, outer, size
 		$(this).find('input').width size - outer - add
 
 $(window).resize()
+
+#ugh, this is fugly, maybe i should have used calc
+setTimeout ->
+	$(window).resize()
+, 762 
 
 #display a tooltip for keyboard shortcuts on keyboard machines
 unless Modernizr.touch

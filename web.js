@@ -49,6 +49,8 @@ app.use(require('less-middleware')({
 
 app.use(express["static"](__dirname));
 
+app.use(express.favicon());
+
 cumsum = function(list, rate) {
   var num, sum, _i, _len, _results;
   sum = 0;

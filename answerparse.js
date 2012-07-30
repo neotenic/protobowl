@@ -59,7 +59,7 @@ parseAnswer = function(answer) {
 checkAnswer = function(compare, answer) {
   var accepts, index, len, list, max, neg, p, parts, pos, score, scores, sorted, str, sum, weight, weighted, word, _i, _len, _ref;
   compare = compare.trim().split(' ');
-  _ref = parseAnswer(answer), pos = _ref[0], neg = _ref[1];
+  _ref = parseAnswer(answer.trim()), pos = _ref[0], neg = _ref[1];
   accepts = [];
   for (_i = 0, _len = pos.length; _i < _len; _i++) {
     p = pos[_i];

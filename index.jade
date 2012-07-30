@@ -4,96 +4,18 @@ html(lang="en")
 		title #{name} - ProtoBowl 
 		meta(charset="utf8")
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		
 		link(rel='stylesheet', href='less/bootstrap.css')
 		link(rel='stylesheet', href='less/responsive.css')
+		link(rel='stylesheet', href='styles.css')
+
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
 		script(src="js/bootstrap.js")
 		script(src="js/modernizr.js")
 		script(src="/socket.io/socket.io.js")
 		script
 			channel_name = '!{name}'
-		style
-			.timer {
-				font-size: 250%;
-				text-align: center;
-				margin-bottom: 10px;
-			}
-			.timer .fraction {
-				font-size: 50%;
-			}
-			.timer.buzz {
-				color: #DA2F22;
-			}
-			.thumbnail {
-				margin: 0;
-				margin-bottom: 18px;
-				overflow: auto;
-			}
-			.thumbnail h5 i, .expando i, .actionbar i {
-				margin-right: 5px;
-				margin-top: 1px;
-			}
-			.expando i {
-				margin-left: 5px;
-			}
-			.actionbar .expando .add-on {
-				padding-right: 10px;
-			}
-			.breadcrumb {
-				overflow: auto;
-			}
-			.show-touch {
-				display: none;
-			}
 
-			div.textbar { display: none !important ;}
-			.text div.textbar { display: inherit !important; }
-			.text .actionbar { display: none !important; }
-
-			form.expando {
-				margin: 0;
-			}
-			.bundle .annotations .author {
-				font-weight: bold;
-			}
-			.bundle .annotations .typing {
-				opacity: 0.7;
-			}
-			.bundle .annotations .log {
-				font-style: italic;
-			}
-			.active .unread {
-				visibility: hidden;
-			}
-			.bundle .inline-icon.label {
-				padding: 0;
-			}
-			.bundle i {
-				color: transparent;
-			}
-			.answer {
-				font-weight: bold;
-			}
-
-			.active .answer {
-				visibility: hidden;
-			}
-			.unselectable {
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				user-select: none;
-			}
-			.progress .bar {
-				-webkit-transition: none;
-				-moz-transition: none;
-				-ms-transition: none;
-				-o-transition: none;
-				transition: none;
-			}​
-
-			.btn.disabled, .btn[disabled] {
-				opacity: 0.35;
-			}
 
 	body
 		div.navbar.navbar-top

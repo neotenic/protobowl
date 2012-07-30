@@ -34,7 +34,7 @@ parseAnswer = (answer) ->
 
 checkAnswer = (compare, answer) ->
 	compare = compare.trim().split ' '
-	[pos, neg] = parseAnswer(answer)
+	[pos, neg] = parseAnswer(answer.trim())
 
 	accepts = []
 
