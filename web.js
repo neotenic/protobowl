@@ -19,8 +19,8 @@ app = express.createServer(express.logger());
 io = require('socket.io').listen(app);
 
 io.configure(function() {
+  io.set("polling duration", 10);
   io.set("log level", 2);
-  io.set("connect timeout", 2000);
   return io.set("authorization", function(data, fn) {
     var cookie;
     if (!data.headers.cookie) {
