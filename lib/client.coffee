@@ -230,7 +230,6 @@ renderState = ->
 						else
 							return "left"
 					, 
-					title: user.name + "'s stats",
 					trigger: 'manual'
 				}
 				row.click ->
@@ -244,7 +243,7 @@ renderState = ->
 				# row.mouseout (e) ->
 				# 	console.log $(this).data('popover'),$(this).data('popover').tip().hasClass('in')
 				# 	# $(this).popover 'hide'
-
+			row.attr 'data-original-title', "<span class='user-#{user.id}'>#{user.name}</span>'s stats"
 			row.attr 'data-content', "User ID: #{user.id.slice(0, 16)}\n
 										Last Seen: #{formatTime(user.last_action)}\n
 										Correct: #{user.correct}\n
