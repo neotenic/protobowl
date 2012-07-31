@@ -6,9 +6,9 @@ express = require('express');
 
 fs = require('fs');
 
-checkAnswer = require('./answerparse').checkAnswer;
+checkAnswer = require('./lib/answerparse').checkAnswer;
 
-syllables = require('./syllable').syllables;
+syllables = require('./lib/syllable').syllables;
 
 parseCookie = require('express/node_modules/connect').utils.parseCookie;
 
@@ -17,6 +17,23 @@ crypto = require('crypto');
 app = express.createServer(express.logger());
 
 io = require('socket.io').listen(app);
+
+app.use(require('less-middleware')({
+  src: __dirname
+}));
+
+app.use(express["static"](__dirname));
+
+app.use(express.favicon());
+
+app.use(express.cookieParser());
+
+app.use(express.session({
+  secret: 'should probably make this more secret',
+  cookie: {
+    httpOnly: false
+  }
+}));
 
 io.configure(function() {
   io.set("log level", 2);
@@ -40,23 +57,6 @@ app.set('views', __dirname);
 app.set('view options', {
   layout: false
 });
-
-app.use(require('less-middleware')({
-  src: __dirname
-}));
-
-app.use(express["static"](__dirname));
-
-app.use(express.favicon());
-
-app.use(express.cookieParser());
-
-app.use(express.session({
-  secret: 'should probably make this more secret',
-  cookie: {
-    httpOnly: false
-  }
-}));
 
 questions = [];
 

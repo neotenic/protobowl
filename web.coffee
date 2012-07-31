@@ -1,14 +1,18 @@
 express = require('express')
 fs = require('fs')
-checkAnswer = require('./answerparse').checkAnswer
-syllables = require('./syllable').syllables
+checkAnswer = require('./lib/answerparse').checkAnswer
+syllables = require('./lib/syllable').syllables
 parseCookie = require('express/node_modules/connect').utils.parseCookie
 crypto = require('crypto')
 
-
-
 app = express.createServer express.logger()
 io = require('socket.io').listen(app)
+
+app.use require('less-middleware')({src: __dirname})
+app.use express.static(__dirname)
+app.use express.favicon()
+app.use express.cookieParser()
+app.use express.session {secret: 'should probably make this more secret', cookie: {httpOnly: false}}
 
 io.configure ->
 	# now this is meant to run on nodejitsu rather than heroku
@@ -34,12 +38,6 @@ app.set 'views', __dirname
 app.set 'view options', {
   layout: false
 }
-app.use require('less-middleware')({src: __dirname})
-app.use express.static(__dirname)
-app.use express.favicon()
-app.use express.cookieParser()
-app.use express.session {secret: 'should probably make this more secret', cookie: {httpOnly: false}}
-
 
 questions = []
 fs.readFile 'sample.txt', 'utf8', (err, data) ->
@@ -47,27 +45,6 @@ fs.readFile 'sample.txt', 'utf8', (err, data) ->
 	questions = (JSON.parse(line) for line in data.split("\n"))
 	# questions = (q for q in questions when q.question.indexOf('*') != -1)
 	# questions = [{answer: "ponies", question: "tu tu to galvanizationationationationation to galvanization to galvin to galvanization to galvanization two galvanization moo galvanization"}]
-
-
-# Array::amap = (fn, callback) ->
-# 	count = 0
-# 	result = []
-# 	len = @length
-# 	for i in [0...len]
-# 		el = this[i]
-# 		do (i, el) ->
-# 			fields = 0
-# 			object = {}
-# 			fn el, (field) ->
-# 				fields++
-# 				(value) ->
-# 					object[field] = value
-# 					fields--
-# 					if fields.length is 0
-# 						result[i] = object
-# 						count++
-# 						callback(result) if count is len
-# 	null
 
 
 cumsum = (list, rate) ->

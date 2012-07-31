@@ -7,11 +7,11 @@ html(lang="en")
 		
 		link(rel='stylesheet', href='less/bootstrap.css')
 		link(rel='stylesheet', href='less/responsive.css')
-		link(rel='stylesheet', href='styles.css')
+		link(rel='stylesheet', href='less/protobowl.css')
 
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
-		script(src="js/bootstrap.js")
-		script(src="js/modernizr.js")
+		script(src="lib/bootstrap.js")
+		script(src="lib/modernizr.js")
 		script(src="/socket.io/socket.io.js")
 		script
 			channel_name = '!{name}'
@@ -183,4 +183,4 @@ html(lang="en")
 				a.btn(href="https://github.com/antimatter15/protobowl/tree/rewrite", target="_blank") GitHub
 				a.btn.btn-primary(href="#", data-dismiss="modal") Close
 
-		script(src="client.js")
+		script(src="lib/client.js")
