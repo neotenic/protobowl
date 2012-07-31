@@ -56,28 +56,17 @@ app.use(express.session({
 questions = [];
 
 fs.readFile('sample.txt', 'utf8', function(err, data) {
-  var line, q;
+  var line;
   if (err) {
     throw err;
   }
-  questions = (function() {
+  return questions = (function() {
     var _i, _len, _ref, _results;
     _ref = data.split("\n");
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       line = _ref[_i];
       _results.push(JSON.parse(line));
-    }
-    return _results;
-  })();
-  return questions = (function() {
-    var _i, _len, _results;
-    _results = [];
-    for (_i = 0, _len = questions.length; _i < _len; _i++) {
-      q = questions[_i];
-      if (q.question.indexOf('*') !== -1) {
-        _results.push(q);
-      }
     }
     return _results;
   })();

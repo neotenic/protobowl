@@ -40,7 +40,7 @@ questions = []
 fs.readFile 'sample.txt', 'utf8', (err, data) ->
 	throw err if err
 	questions = (JSON.parse(line) for line in data.split("\n"))
-	questions = (q for q in questions when q.question.indexOf('*') != -1)
+	# questions = (q for q in questions when q.question.indexOf('*') != -1)
 	# questions = [{question: "to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization"}]
 
 
