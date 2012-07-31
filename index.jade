@@ -34,7 +34,6 @@ html(lang="en")
 							a(href="#", data-toggle="modal", href="#about") About
 						
 		div.container
-
 			div.row
 				div.span9
 					div.row(style="margin-bottom: 10px")
@@ -68,18 +67,15 @@ html(lang="en")
 										input.guess_input(type='text', placeholder='answer')	
 									
 					div#history
+						
 				div.span3
-					// this part really doesn't matter
-					// so it's perfectly logical to stick
-					// it here so it'll be inaccessible in mobile
-				
 					div.span3.thumbnail
 						h5 
 							i.icon-time
 							| Timer 
 							span.label.label-warning.pause(style="display:none") Paused
 							span.label.label-important.buzz(style="display:none") Buzz
-						div.timer.unselectable
+						div.timer.unselectable.disabled
 							span.face 00:00
 							span.fraction .0
 
@@ -150,7 +146,6 @@ html(lang="en")
 										td time_offset
 										td#time_offset ?
 
-
 		div.modal.hide#disco
 			div.modal-header
 				button.close(type="button", data-dismiss="modal") ×
@@ -190,5 +185,4 @@ html(lang="en")
 				a.btn(href="https://github.com/antimatter15/protobowl/tree/rewrite", target="_blank") GitHub
 				a.btn.btn-primary(href="#", data-dismiss="modal") Close
 
-				
 		script(src="client.js")

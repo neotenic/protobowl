@@ -1,22 +1,29 @@
 express = require('express')
+fs = require('fs')
+checkAnswer = require('./answerparse').checkAnswer
+syllables = require('./syllable').syllables
+parseCookie = require('express/node_modules/connect').utils.parseCookie
+crypto = require('crypto')
+
 app = express.createServer express.logger()
 io = require('socket.io').listen(app)
+
 io.configure ->
 	# now this is meant to run on nodejitsu rather than heroku
 	#io.set "transports", ["xhr-polling"]
 	#io.set "polling duration", 10
 	io.set "log level", 2
+	io.set "max reconnection attempts", 1
+	io.set "authorization", (data, fn) ->
+		cookie = parseCookie(data.headers.cookie)
+		if cookie
+			console.log "GOT COOKIE", data.headers.cookie
 
-fs = require('fs')
-checkAnswer = require('./answerparse').checkAnswer
-syllables = require('./syllable').syllables
+			data.sessionID = cookie['connect.sid']
+			fn null, true #woot
+		fn 'No cookie found', false
 
-questions = []
 
-fs.readFile 'sample.txt', 'utf8', (err, data) ->
-	throw err if err
-	questions = (JSON.parse(line) for line in data.split("\n"))
-	# questions = [{question: "to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization"}]
 
 app.set 'views', __dirname
 app.set 'view options', {
@@ -25,6 +32,17 @@ app.set 'view options', {
 app.use require('less-middleware')({src: __dirname})
 app.use express.static(__dirname)
 app.use express.favicon()
+app.use express.cookieParser()
+app.use express.session {secret: 'should probably make this more secret'}
+
+
+questions = []
+fs.readFile 'sample.txt', 'utf8', (err, data) ->
+	throw err if err
+	questions = (JSON.parse(line) for line in data.split("\n"))
+	questions = (q for q in questions when q.question.indexOf('*') != -1)
+	# questions = [{question: "to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization"}]
+
 
 # Array::amap = (fn, callback) ->
 # 	count = 0
@@ -59,8 +77,28 @@ class QuizRoom
 		@answer_duration = 1000 * 5
 		@time_offset = 0
 		@new_question()
-		@attempt = null
 		@freeze()
+		@users = {}
+
+	add_socket: (id, socket) ->
+		unless id of @users
+			@users[id] = {
+				sockets: [],
+				guesses: 0,
+				interrupts: 0,
+				early: 0,
+				correct: 0
+			}
+		user = @users[id]
+		user.id = id
+		unless socket in user.sockets
+			user.sockets.push socket
+
+
+	del_socket: (id, socket) ->
+		user = @users[id]
+		if user
+			user.sockets = (sock for sock in user.sockets when sock isnt socket)
 
 	time: ->
 		return if @time_freeze then @time_freeze else @serverTime() - @time_offset
@@ -101,7 +139,6 @@ class QuizRoom
 	new_question: ->
 		@attempt = null
 
-		
 		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
 		@info = {
@@ -124,8 +161,8 @@ class QuizRoom
 			rate: 1000 * 60 / 2 / 250
 		}
 		{list, rate} = @timing
-		cumulative = cumsum list, rate
-		@end_time = @begin_time + cumulative[cumulative.length - 1] + @answer_duration
+		@cumulative = cumsum list, rate
+		@end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
 		@sync(2)
 
 	skip: ->
@@ -143,18 +180,22 @@ class QuizRoom
 			@sync()
 			@unfreeze()
 			if @attempt.correct
-				io.sockets.socket(@attempt.user).store.data.correct = (io.sockets.socket(@attempt.user).store.data.correct || 0) + 1
+				@users[@attempt.user].correct++
+				if @attempt.early 
+					@users[@attempt.user].early++
 				@set_time @end_time
 			else if @attempt.interrupt
-				io.sockets.socket(@attempt.user).store.data.interrupts = (io.sockets.socket(@attempt.user).store.data.interrupts || 0) + 1
+				@users[@attempt.user].interrupts++
 			@attempt = null #g'bye
 			@sync(1) #two syncs in one request!
 
 
-	buzz: (user, fn) ->
+	buzz: (user) -> #todo, remove the callback and replace it with a sync listener
 		if @attempt is null and @time() <= @end_time
-			fn 'http://www.whosawesome.com/'
+			# fn 'http://www.whosawesome.com/'
 			session = Math.random().toString(36).slice(2)
+			early_index = @question.replace(/[^ \*]/g, '').indexOf('*')
+
 			@attempt = {
 				user: user,
 				realTime: @serverTime(), # oh god so much time crap
@@ -162,10 +203,12 @@ class QuizRoom
 				duration: 8 * 1000,
 				session, # generate 'em server side 
 				text: '',
+				early: early_index and @time() < @begin_time + @cumulative[early_index],
 				interrupt: @time() < @end_time - @answer_duration,
 				final: false
 			}
-			io.sockets.socket(user).store.data.guesses = (io.sockets.socket(user).store.data.guesses || 0) + 1
+
+			@users[user].guesses++
 			
 			@freeze()
 			@sync(1) #partial sync
@@ -197,11 +240,11 @@ class QuizRoom
 			yay = 0
 			nay = 0
 			actionvotes = []
-			for client in io.sockets.clients(@name)
-				vote = client.store.data[action]
+			for id of @users
+				vote = @users[id][action]
 				if vote is 'yay'
 					yay++
-					actionvotes.push client.id
+					actionvotes.push id
 				else
 					nay++
 			# console.log yay, 'yay', nay, 'nay', action
@@ -209,20 +252,20 @@ class QuizRoom
 				data.voting[action] = actionvotes
 			# console.log yay, nay, "VOTES FOR", action
 			if yay / (yay + nay) > 0
-				client.del(action) for client in io.sockets.clients(@name)
+				# client.del(action) for client in io.sockets.clients(@name)
+				delete @users[id][action] for id of @users
 				this[action]()
-		blacklist = ["name", "question", "answer", "timing", "voting", "info"]
+		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users"]
+		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
 		if level >= 1
-			data.users = for client in io.sockets.clients(@name)
-				{
-					id: client.id,
-					name: client.store.data.name,
-					interrupts: client.store.data.interrupts || 0,
-					correct: client.store.data.correct || 0,
-					guesses: client.store.data.guesses || 0
-				}
+			data.users = for id of @users
+				user = {}
+				for attr of @users[id] when attr not in user_blacklist
+					user[attr] = @users[id][attr] 
+				user.online = @users[id].sockets.length > 0
+				user
 
 		if level >= 2
 			data.question = @question
@@ -233,60 +276,96 @@ class QuizRoom
 		io.sockets.in(@name).emit 'sync', data
 
 
+sha1 = (text) ->
+	hash = crypto.createHash('sha1')
+	hash.update(text)
+	hash.digest('hex')
+
+generateName = ->
+	adjective = 'flaming,aberrant,agressive,warty,hoary,breezy,dapper,edgy,feisty,gutsy,hardy,intrepid,jaunty,karmic,lucid,maverick,natty,oneric,precise,quantal,quizzical,curious,derisive,bodacious,nefarious,nuclear,nonchalant'
+	animal = 'monkey,axolotl,warthog,hedgehog,badger,drake,fawn,gibbon,heron,ibex,jackalope,koala,lynx,meerkat,narwhal,ocelot,penguin,quetzal,kodiak,cheetah,puma,jaguar,panther,tiger,leopard,lion,neanderthal,walrus,mushroom,dolphin'
+	pick = (list) -> 
+		n = list.split(',')
+		n[Math.floor(n.length * Math.random())]
+	pick(adjective) + " " + pick(animal)
+
 
 rooms = {}
 io.sockets.on 'connection', (sock) ->
+	sessionID = sock.handshake.sessionID
+	publicID = null
 	room = null
-	sock.on 'join', (data) ->
+
+	sock.on 'join', (data, fn) ->
 		if data.old_socket and io.sockets.socket(data.old_socket)
 			io.sockets.socket(data.old_socket).disconnect()
-
+		
 		room_name = data.room_name
-		sock.set 'name', data.public_name
+		
+		publicID = sha1(sessionID + room_name) #preserves a sense of privacy
+
 		sock.join room_name
 		rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
 		room = rooms[room_name]
+		room.add_socket publicID, sock.id
+		unless 'name' of room.users[publicID]
+			room.users[publicID].name = generateName()
+		fn {
+			id: publicID,
+			name: room.users[publicID].name
+		}
 		room.sync(2)
-		room.emit 'introduce', {user: sock.id}
+		room.emit 'introduce', {user: publicID}
+
 
 	sock.on 'echo', (data, callback) =>
 		callback +new Date
 
 	sock.on 'rename', (name) ->
-		sock.set 'name', name
+		# sock.set 'name', name
+		room.users[publicID].name = name
 		room.sync(1) if room
 
 	sock.on 'skip', (vote) ->
-		sock.set 'skip', vote
+		# sock.set 'skip', vote
+		room.users[publicID].skip = vote
 		room.sync() if room
 
 	sock.on 'pause', (vote) ->
-		sock.set 'pause', vote
+		# sock.set 'pause', vote
+		room.users[publicID].pause = vote
 		room.sync() if room
 
 	sock.on 'unpause', (vote) ->
-		sock.set 'unpause', vote
+		# sock.set 'unpause', vote
+		room.users[publicID].unpause = vote
 		room.sync() if room
 
 	sock.on 'buzz', (data, fn) ->
-		room.buzz(sock.id, fn) if room
+		room.buzz(publicID, fn) if room
 
 	sock.on 'guess', (data) ->
-		room.guess(sock.id, data)  if room
+		room.guess(publicID, data)  if room
 
 	sock.on 'chat', ({text, final, session}) ->
 		if room
-			room.emit 'chat', {text: text, session:  session, user: sock.id, final: final}
+			room.emit 'chat', {text: text, session:  session, user: publicID, final: final}
 
 	sock.on 'disconnect', ->
-		id = sock.id
-		console.log "someone", id, "left"
-		setTimeout ->
-			console.log !!room, 'rooms'
-			if room
-				room.sync(1)
-				room.emit 'leave', {user: id}
-		, 100
+		# id = sock.id
+		console.log "someone", publicID, sock.id, "left"
+		if room
+			room.del_socket publicID, sock.id
+			room.sync(1)
+			if room.users[publicID].sockets.length is 0
+				room.emit 'leave', {user: publicID}
+		
+		# setTimeout ->
+		# 	console.log !!room, 'rooms'
+		# 	if room
+		# 		room.sync(1)
+		# 		room.emit 'leave', {user: id}
+		# , 100
 
 
 app.get '/:channel', (req, res) ->

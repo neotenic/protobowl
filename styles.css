@@ -44,6 +44,9 @@ form.expando {
 .bundle .annotations .log {
   font-style: italic;
 }
+.bundle .bookmark {
+  margin-left: 5px;
+}
 .bundle .answer {
   font-weight: bold;
 }
@@ -60,13 +63,20 @@ form.expando {
 .bundle.active .unread {
   visibility: hidden;
 }
+.bundle .breadcrumb {
+  cursor: default;
+}
+.bundle:not(.active) .breadcrumb {
+  cursor: pointer;
+}
 .unselectable {
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
 }
 .btn.disabled,
-.btn[disabled] {
+.btn[disabled],
+.timer.disabled {
   opacity: 0.35;
 }
 .progress .bar {
