@@ -5,6 +5,8 @@ syllables = require('./syllable').syllables
 parseCookie = require('express/node_modules/connect').utils.parseCookie
 crypto = require('crypto')
 
+
+
 app = express.createServer express.logger()
 io = require('socket.io').listen(app)
 
@@ -13,6 +15,7 @@ io.configure ->
 	#io.set "transports", ["xhr-polling"]
 	#io.set "polling duration", 10
 	io.set "log level", 2
+	io.set "connect timeout", 2000
 	# io.set "max reconnection attempts", 1
 	io.set "authorization", (data, fn) ->
 		if !data.headers.cookie
