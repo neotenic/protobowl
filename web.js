@@ -78,11 +78,12 @@ fs.readFile('sample.txt', 'utf8', function(err, data) {
 });
 
 cumsum = function(list, rate) {
-  var num, sum, _i, _len, _results;
+  var num, sum, _i, _len, _ref, _results;
   sum = 0;
+  _ref = [1].concat(list).slice(0, -1);
   _results = [];
-  for (_i = 0, _len = list.length; _i < _len; _i++) {
-    num = list[_i];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    num = _ref[_i];
     _results.push(sum += Math.round(num) * rate);
   }
   return _results;
@@ -221,11 +222,11 @@ QuizRoom = (function() {
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           word = _ref[_i];
-          _results.push(syllables(word));
+          _results.push(syllables(word) + 1);
         }
         return _results;
       }).call(this),
-      rate: 1000 * 60 / 2 / 250
+      rate: 1000 * 60 / 3 / 300
     };
     _ref = this.timing, list = _ref.list, rate = _ref.rate;
     this.cumulative = cumsum(list, rate);

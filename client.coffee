@@ -26,8 +26,8 @@ stdev = (list) ->
 	Math.sqrt avg((item - mu) * (item - mu) for item in list)
 
 cumsum = (list, rate) ->
-	sum = 0
-	for num in list
+	sum = 0 #start nonzero, allow pause before rendering
+	for num in [1].concat(list).slice(0, -1)
 		sum += Math.round(num) * rate #always round!
 
 ###
@@ -286,7 +286,9 @@ renderState = ->
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
-	
+	if sync.users.length > 0
+		$('.leaderboard').slideDown()
+		
 	#fix all the expandos
 	$(window).resize()
 	renderPartial()
@@ -309,7 +311,8 @@ renderPartial = ->
 	cumulative = cumsum list, rate
 	index = 0
 	index++ while timeDelta > cumulative[index]
-	# index++ if timeDelta > cumulative[0]
+	# index++ if timeDelta > rate
+
 	bundle = $('#history .bundle.active') #$('#history .bundle').first()
 	new_text = words.slice(0, index).join(' ').trim()
 	old_text = bundle.find('.readout .visible').text().replace(/\s+/g, ' ').trim()
@@ -321,6 +324,8 @@ renderPartial = ->
 		i = 0
 		i++ while del > cumulative[i]
 		i - 1
+
+	# console.log "BUZES", spots, words.length
 
 	visible = bundle.find('.readout .visible')
 	unread = bundle.find('.readout .unread')
@@ -360,6 +365,7 @@ renderPartial = ->
 			if i in spots
 				# element.append('<span class="label label-important">'+words[i]+'</span> ')
 				label_type = 'label-important'
+				# console.log spots, i, words.length
 				if i is words.length - 1
 					label_type = "label-info"
 				element.append " <span class='inline-icon label #{label_type}'><i class='icon-white icon-bell'></i></span> "
@@ -731,8 +737,15 @@ $('.pausebtn').click ->
 			sock.emit 'pause', 'yay'
 
 
+$('.chat_input').keydown (e) ->
+	if e.keyCode in [47, 111, 191] and $(this).val().length is 0
+		e.preventDefault()
+
+
 $('input').keydown (e) ->
 	e.stopPropagation() #make it so that the event listener doesnt pick up on stuff
+
+
 
 $('.chat_input').keyup (e) ->
 	return if e.keyCode is 13

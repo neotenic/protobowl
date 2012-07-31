@@ -46,7 +46,7 @@ fs.readFile 'sample.txt', 'utf8', (err, data) ->
 	throw err if err
 	questions = (JSON.parse(line) for line in data.split("\n"))
 	# questions = (q for q in questions when q.question.indexOf('*') != -1)
-	# questions = [{question: "to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization to galvanization"}]
+	# questions = [{answer: "ponies", question: "tu tu to galvanizationationationationation to galvanization to galvin to galvanization to galvanization two galvanization moo galvanization"}]
 
 
 # Array::amap = (fn, callback) ->
@@ -71,8 +71,8 @@ fs.readFile 'sample.txt', 'utf8', (err, data) ->
 
 
 cumsum = (list, rate) ->
-	sum = 0
-	for num in list
+	sum = 0 #start nonzero, allow pause before rendering
+	for num in [1].concat(list).slice(0, -1)
 		sum += Math.round(num) * rate #always round!
 
 
@@ -171,8 +171,8 @@ class QuizRoom
 			.replace(/\<\w\w\>/g, '')
 			.replace(/\[\w\w\]/g, '')
 		@timing = {
-			list: syllables(word) for word in @question.split(" "),
-			rate: 1000 * 60 / 2 / 250
+			list: syllables(word) + 1 for word in @question.split(" "),
+			rate: 1000 * 60 / 3 / 300
 		}
 		{list, rate} = @timing
 		@cumulative = cumsum list, rate

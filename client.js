@@ -49,11 +49,12 @@ stdev = function(list) {
 };
 
 cumsum = function(list, rate) {
-  var num, sum, _i, _len, _results;
+  var num, sum, _i, _len, _ref, _results;
   sum = 0;
+  _ref = [1].concat(list).slice(0, -1);
   _results = [];
-  for (_i = 0, _len = list.length; _i < _len; _i++) {
-    num = list[_i];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    num = _ref[_i];
     _results.push(sum += Math.round(num) * rate);
   }
   return _results;
@@ -308,6 +309,9 @@ renderState = function() {
       $('<td>').text(user.interrupts).appendTo(row);
     }
     list.find('tr.to_remove').remove();
+  }
+  if (sync.users.length > 0) {
+    $('.leaderboard').slideDown();
   }
   $(window).resize();
   return renderPartial();
@@ -714,6 +718,13 @@ $('.pausebtn').click(function() {
       return sock.emit('pause', 'yay');
     }
   });
+});
+
+$('.chat_input').keydown(function(e) {
+  var _ref;
+  if (((_ref = e.keyCode) === 47 || _ref === 111 || _ref === 191) && $(this).val().length === 0) {
+    return e.preventDefault();
+  }
 });
 
 $('input').keydown(function(e) {
