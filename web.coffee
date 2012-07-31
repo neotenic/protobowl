@@ -15,6 +15,8 @@ io.configure ->
 	io.set "log level", 2
 	io.set "max reconnection attempts", 1
 	io.set "authorization", (data, fn) ->
+		if !data.headers.cookie
+			return fn 'No cookie header', false
 		cookie = parseCookie(data.headers.cookie)
 		if cookie
 			console.log "GOT COOKIE", data.headers.cookie

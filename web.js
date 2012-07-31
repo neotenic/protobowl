@@ -23,6 +23,9 @@ io.configure(function() {
   io.set("max reconnection attempts", 1);
   return io.set("authorization", function(data, fn) {
     var cookie;
+    if (!data.headers.cookie) {
+      return fn('No cookie header', false);
+    }
     cookie = parseCookie(data.headers.cookie);
     if (cookie) {
       console.log("GOT COOKIE", data.headers.cookie);
