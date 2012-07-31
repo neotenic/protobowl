@@ -53,7 +53,10 @@ app.use(express.favicon());
 app.use(express.cookieParser());
 
 app.use(express.session({
-  secret: 'should probably make this more secret'
+  secret: 'should probably make this more secret',
+  cookie: {
+    httpOnly: false
+  }
 }));
 
 questions = [];

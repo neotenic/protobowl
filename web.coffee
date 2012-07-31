@@ -35,7 +35,7 @@ app.use require('less-middleware')({src: __dirname})
 app.use express.static(__dirname)
 app.use express.favicon()
 app.use express.cookieParser()
-app.use express.session {secret: 'should probably make this more secret'}
+app.use express.session {secret: 'should probably make this more secret', cookie: {httpOnly: false}}
 
 
 questions = []
