@@ -355,7 +355,7 @@ renderPartial = ->
 			# console.log words[i]
 			element = $('<span>')
 			if words[i].indexOf('*') isnt -1
-				element.append " <span class='inline-icon label'><i class='icon-white icon-asterisk'>"+words[i]+"</i></span> "
+				element.append " <span class='inline-icon label'><span class='asterisk'>"+words[i]+"</span><i class='icon-white icon-asterisk'></i></span> "
 			else
 				element.append(words[i] + " ")
 
