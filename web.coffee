@@ -231,8 +231,6 @@ class QuizRoom
 			@sync(1) #partial sync
 			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
-		else
-			fn 'narp'
 
 	guess: (user, data) ->
 		@touch user

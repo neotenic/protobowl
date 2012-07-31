@@ -46,3 +46,5 @@ z('al gore', 'albert al gore');
 z('cage', 'john cage');
 
 z('nicolas cage', 'john cage');
+
+z('locke', 'john locke');

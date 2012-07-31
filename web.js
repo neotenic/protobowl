@@ -288,8 +288,6 @@ QuizRoom = (function() {
       return this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
         return _this.end_buzz(session);
       });
-    } else {
-      return fn('narp');
     }
   };
 
