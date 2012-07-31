@@ -13,7 +13,7 @@ io.configure ->
 	#io.set "transports", ["xhr-polling"]
 	#io.set "polling duration", 10
 	io.set "log level", 2
-	io.set "max reconnection attempts", 1
+	# io.set "max reconnection attempts", 1
 	io.set "authorization", (data, fn) ->
 		if !data.headers.cookie
 			return fn 'No cookie header', false
