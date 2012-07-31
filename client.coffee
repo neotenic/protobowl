@@ -99,6 +99,8 @@ sock.once 'connect', ->
 		public_name = data.name
 		public_id = data.id
 		$('#username').val public_name
+		$('#username').disable false
+
 
 
 $('#username').keyup ->

@@ -135,7 +135,8 @@ sock.once('connect', function() {
   }, function(data) {
     public_name = data.name;
     public_id = data.id;
-    return $('#username').val(public_name);
+    $('#username').val(public_name);
+    return $('#username').disable(false);
   });
 });
 
