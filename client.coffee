@@ -139,8 +139,8 @@ synchronize = (data) ->
 		# else
 		# 	setActionMode 'guess' if actionMode isnt 'guess'
 
-	if sync.time_offset isnt null
-		$('#time_offset').text(sync.time_offset.toFixed(1))
+	# if sync.time_offset isnt null
+	# 	$('#time_offset').text(sync.time_offset.toFixed(1))
 
 
 
@@ -188,6 +188,12 @@ computeScore = (user) ->
 	return user.early * EARLY + (user.correct - user.early) * CORRECT + user.interrupts * INTERRUPT
 
 
+formatTime = (timestamp) ->
+	date = new Date
+	date.setTime timestamp
+	('0' +date.getHours()).substr(-2,2)+':'+
+	('0'+date.getMinutes()).substr(-2,2)+':'+
+	('0'+date.getSeconds()).substr(-2,2)
 
 
 
@@ -240,7 +246,8 @@ renderState = ->
 				# 	console.log $(this).data('popover'),$(this).data('popover').tip().hasClass('in')
 				# 	# $(this).popover 'hide'
 
-			row.attr 'data-content', "User ID: #{user.id}\n
+			row.attr 'data-content', "User ID: #{user.id.slice(0, 16)}\n
+										Last Seen: #{formatTime(user.last_action)}\n
 										Correct: #{user.correct}\n
 										Early: #{user.early}\n
 										Incorrect: #{user.guesses - user.correct}\n
@@ -250,9 +257,27 @@ renderState = ->
 			row.addClass 'sockid-' + user.id
 			row.removeClass 'to_remove'
 			badge = $('<span>').addClass('badge').text(computeScore(user))
-			badge.addClass 'badge-success' if user.online
+			if user.id is public_id
+				#its me, you idiot
+				badge.addClass 'badge-info'
+				badge.attr 'title', 'You'
+			else
+				if user.online
+					if serverTime() - user.last_action > 1000 * 60 * 10
+						#the user is idle
+						badge.addClass 'badge-warning'
+						badge.attr 'title', 'Idle'
+					else
+						# the user is online
+						badge.addClass 'badge-success' 
+						badge.attr 'title', 'Online'
+
 			$('<td>').text(count).append('&nbsp;').append(badge).appendTo row
-			$('<td>').text(user.name).appendTo row
+			name = $('<td>').text(user.name)
+			# if public_id is user.id
+			# 	name.append " "
+			# 	name.append $('<span>').addClass('label').text('me')
+			name.appendTo row
 			$('<td>').text(user.interrupts).appendTo row
 			# $('<td>').text(7).appendTo row
 
@@ -270,9 +295,10 @@ renderPartial = ->
 	#render the question 
 	if sync.question isnt last_question
 		changeQuestion() #whee slidey
-		if !last_question and sync.time_freeze
-			console.log 'blank'
 		last_question = sync.question
+
+	if !sync.time_freeze
+		removeSplash()
 
 
 	timeDelta = time() - sync.begin_time
@@ -449,6 +475,22 @@ renderTimer = ->
 		str
 	$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
 
+
+removeSplash = (fn) ->
+	bundle = $('.bundle.active')
+	start = bundle.find('.start-page')
+	if start.length > 0
+		bundle.find('.readout')
+			.width(start.width())
+			.slideDown 'normal', ->
+				$(this).width('auto')
+
+		start.slideUp 'normal', ->
+			start.remove()
+			fn() if fn
+	else
+		fn() if fn
+
 changeQuestion = ->
 	cutoff = 15
 	#smaller cutoff for phones which dont place things in parallel
@@ -463,8 +505,25 @@ changeQuestion = ->
 	#merge the text nodes, perhaps for performance reasons
 	bundle = createBundle().width($('#history').width()) #.css('display', 'none')
 	bundle.addClass 'active'
+
+
 	$('#history').prepend bundle.hide()
 	
+	if !last_question and sync.time_freeze and sync.time_freeze - sync.begin_time < 500
+		# console.log 'loading splash page'
+		start = $('<div>').addClass('start-page')
+		well = $('<div>').addClass('well').appendTo(start)
+		$('<button>')
+			.addClass('btn btn-success btn-large')
+			.text('Start the Question')
+			.appendTo(well)
+			.click ->
+				removeSplash ->
+					$('.pausebtn').click()
+
+		
+		bundle.find('.readout').hide().before start
+
 	bundle.slideDown("slow").queue ->
 		bundle.width('auto')
 		$(this).dequeue()
@@ -586,13 +645,13 @@ guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 			setActionMode ''
 	# line.toggleClass 'typing', !final
 
-chatAnnotation = ({session, text, user, final}) ->
+chatAnnotation = ({session, text, user, final, time}) ->
 	id = user + '-' + session
 	if $('#' + id).length > 0
 		line = $('#' + id)
 	else
 		line = $('<p>').attr('id', id)
-		line.append userSpan(user).addClass('author')
+		line.append userSpan(user).addClass('author').attr('title', formatTime(time))
 		line.append document.createTextNode ' '
 		$('<span>')
 			.addClass('comment')
@@ -663,11 +722,11 @@ $('.buzzbtn').click ->
 
 
 $('.pausebtn').click ->
-	if !!sync.time_freeze
-		console.log 'unapuse'
-		sock.emit 'unpause', 'yay'
-	else
-		sock.emit 'pause', 'yay'
+	removeSplash ->
+		if !!sync.time_freeze
+			sock.emit 'unpause', 'yay'
+		else
+			sock.emit 'pause', 'yay'
 
 
 $('input').keydown (e) ->
@@ -723,7 +782,6 @@ $('body').keydown (e) ->
 	else if e.keyCode in [80, 82] # P, R
 		$('.pausebtn').click()
 	else if e.keyCode in [47, 111, 191, 67] # / (forward slash), C
-		console.log "slash"
 		e.preventDefault()
 		$('.chatbtn').click()
 

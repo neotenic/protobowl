@@ -89,8 +89,8 @@ QuizRoom = (function() {
     this.name = name;
     this.answer_duration = 1000 * 5;
     this.time_offset = 0;
-    this.new_question();
     this.freeze();
+    this.new_question();
     this.users = {};
   }
 
@@ -102,14 +102,25 @@ QuizRoom = (function() {
         guesses: 0,
         interrupts: 0,
         early: 0,
-        correct: 0
+        correct: 0,
+        last_action: 0
       };
     }
     user = this.users[id];
     user.id = id;
+    user.last_action = this.serverTime();
     if (__indexOf.call(user.sockets, socket) < 0) {
       return user.sockets.push(socket);
     }
+  };
+
+  QuizRoom.prototype.vote = function(id, action, val) {
+    this.users[id][action] = val;
+    return this.sync();
+  };
+
+  QuizRoom.prototype.touch = function(id) {
+    return this.users[id].last_action = this.serverTime();
   };
 
   QuizRoom.prototype.del_socket = function(id, socket) {
@@ -228,6 +239,7 @@ QuizRoom = (function() {
   QuizRoom.prototype.end_buzz = function(session) {
     var _ref;
     if (((_ref = this.attempt) != null ? _ref.session : void 0) === session) {
+      this.touch(this.attempt.user);
       this.attempt.final = true;
       this.attempt.correct = checkAnswer(this.attempt.text, this.answer);
       this.sync();
@@ -249,6 +261,7 @@ QuizRoom = (function() {
   QuizRoom.prototype.buzz = function(user) {
     var early_index, session,
       _this = this;
+    this.touch(user);
     if (this.attempt === null && this.time() <= this.end_time) {
       session = Math.random().toString(36).slice(2);
       early_index = this.question.replace(/[^ \*]/g, '').indexOf('*');
@@ -276,6 +289,7 @@ QuizRoom = (function() {
 
   QuizRoom.prototype.guess = function(user, data) {
     var _ref;
+    this.touch(user);
     if (((_ref = this.attempt) != null ? _ref.user : void 0) === user) {
       this.attempt.text = data.text;
       if (data.final) {
@@ -415,27 +429,19 @@ io.sockets.on('connection', function(sock) {
   });
   sock.on('rename', function(name) {
     room.users[publicID].name = name;
+    room.touch(publicID);
     if (room) {
       return room.sync(1);
     }
   });
   sock.on('skip', function(vote) {
-    room.users[publicID].skip = vote;
-    if (room) {
-      return room.sync();
-    }
+    return room.vote(publicID, 'skip', vote);
   });
   sock.on('pause', function(vote) {
-    room.users[publicID].pause = vote;
-    if (room) {
-      return room.sync();
-    }
+    return room.vote(publicID, 'pause', vote);
   });
   sock.on('unpause', function(vote) {
-    room.users[publicID].unpause = vote;
-    if (room) {
-      return room.sync();
-    }
+    return room.vote(publicID, 'unpause', vote);
   });
   sock.on('buzz', function(data, fn) {
     if (room) {
@@ -451,11 +457,13 @@ io.sockets.on('connection', function(sock) {
     var final, session, text;
     text = _arg.text, final = _arg.final, session = _arg.session;
     if (room) {
+      room.touch(publicID);
       return room.emit('chat', {
         text: text,
         session: session,
         user: publicID,
-        final: final
+        final: final,
+        time: room.serverTime()
       });
     }
   });

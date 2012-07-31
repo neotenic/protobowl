@@ -57,8 +57,8 @@ parseAnswer = function(answer) {
 };
 
 checkAnswer = function(compare, answer) {
-  var accepts, index, len, list, max, neg, p, parts, pos, score, scores, sorted, str, sum, weight, weighted, word, _i, _len, _ref;
-  compare = compare.trim().split(' ');
+  var accepts, index, len, list, max, neg, p, p2, pos, score, scores, sorted, str, sum, weight, weighted, word, _i, _len, _ref;
+  compare = removeDiacritics(compare).trim().split(' ');
   _ref = parseAnswer(answer.trim()), pos = _ref[0], neg = _ref[1];
   accepts = [];
   for (_i = 0, _len = pos.length; _i < _len; _i++) {
@@ -77,20 +77,23 @@ checkAnswer = function(compare, answer) {
     })();
     if (list.length > 0) {
       sum = 0;
-      parts = (function() {
-        var _j, _ref1, _results;
+      p2 = (function() {
+        var _j, _len1, _results;
         _results = [];
-        for (index = _j = 0, _ref1 = list.length; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; index = 0 <= _ref1 ? ++_j : --_j) {
+        for (_j = 0, _len1 = compare.length; _j < _len1; _j++) {
+          word = compare[_j];
           scores = (function() {
-            var _k, _len1, _results1;
+            var _k, _ref1, _results1;
             _results1 = [];
-            for (_k = 0, _len1 = compare.length; _k < _len1; _k++) {
-              word = compare[_k];
+            for (index = _k = 0, _ref1 = list.length; 0 <= _ref1 ? _k < _ref1 : _k > _ref1; index = 0 <= _ref1 ? ++_k : --_k) {
               score = damlev(list[index].toLowerCase(), word.toLowerCase());
               if (list[index].toLowerCase()[0] !== word.toLowerCase()[0]) {
                 score += 2;
               }
-              _results1.push([word, score]);
+              if (list[index].toLowerCase()[1] !== word.toLowerCase()[1]) {
+                score += 1;
+              }
+              _results1.push([index, score]);
             }
             return _results1;
           })();
@@ -100,6 +103,7 @@ checkAnswer = function(compare, answer) {
             z = _arg1[0], b = _arg1[1];
             return a - b;
           });
+          index = sorted[0][0];
           weight = 1;
           if (index === 0) {
             weight = 1.5;
@@ -107,7 +111,7 @@ checkAnswer = function(compare, answer) {
           if (index === list.length - 1) {
             weight = 1.5;
           }
-          weighted = Math.max(0, list[index].length - Math.pow(sorted[0][1], 1.5)) * weight;
+          weighted = list[index].length - Math.pow(sorted[0][1], 1.0) * weight;
           _results.push(sum += weighted);
         }
         return _results;
@@ -124,7 +128,8 @@ checkAnswer = function(compare, answer) {
   str = max[0][0];
   len = str.join('').length;
   score = max[0][1];
-  if (score > len * 0.8 || score > 8) {
+  console.log(str, score, compare.join(' '));
+  if (score > len * 0.6 || score > 5) {
     return true;
   }
   return false;

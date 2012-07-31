@@ -76,8 +76,8 @@ class QuizRoom
 		@name = name
 		@answer_duration = 1000 * 5
 		@time_offset = 0
-		@new_question()
 		@freeze()
+		@new_question()
 		@users = {}
 
 	add_socket: (id, socket) ->
@@ -87,13 +87,22 @@ class QuizRoom
 				guesses: 0,
 				interrupts: 0,
 				early: 0,
-				correct: 0
+				correct: 0,
+				last_action: 0
 			}
 		user = @users[id]
 		user.id = id
+		user.last_action = @serverTime()
 		unless socket in user.sockets
 			user.sockets.push socket
 
+	vote: (id, action, val) ->
+		# room.add_socket publicID, sock.id
+		@users[id][action] = val
+		@sync()
+
+	touch: (id) ->
+		@users[id].last_action = @serverTime()
 
 	del_socket: (id, socket) ->
 		user = @users[id]
@@ -171,9 +180,11 @@ class QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
 
+
 	end_buzz: (session) ->
 		#killit, killitwithfire
 		if @attempt?.session is session
+			@touch @attempt.user
 			@attempt.final = true
 			@attempt.correct = checkAnswer @attempt.text, @answer
 			
@@ -191,6 +202,7 @@ class QuizRoom
 
 
 	buzz: (user) -> #todo, remove the callback and replace it with a sync listener
+		@touch user
 		if @attempt is null and @time() <= @end_time
 			# fn 'http://www.whosawesome.com/'
 			session = Math.random().toString(36).slice(2)
@@ -218,6 +230,7 @@ class QuizRoom
 			fn 'narp'
 
 	guess: (user, data) ->
+		@touch user
 		if @attempt?.user is user
 			@attempt.text = data.text
 			# lets just ignore the input session attribute
@@ -317,29 +330,33 @@ io.sockets.on 'connection', (sock) ->
 		room.sync(2)
 		room.emit 'introduce', {user: publicID}
 
-
 	sock.on 'echo', (data, callback) =>
 		callback +new Date
 
 	sock.on 'rename', (name) ->
 		# sock.set 'name', name
 		room.users[publicID].name = name
+		room.touch(publicID)
 		room.sync(1) if room
 
 	sock.on 'skip', (vote) ->
 		# sock.set 'skip', vote
-		room.users[publicID].skip = vote
-		room.sync() if room
+		# room.add_socket publicID, sock.id
+		# room.users[publicID].skip = vote
+		# room.sync() if room
+		room.vote publicID, 'skip', vote
 
 	sock.on 'pause', (vote) ->
 		# sock.set 'pause', vote
-		room.users[publicID].pause = vote
-		room.sync() if room
+		# room.users[publicID].pause = vote
+		# room.sync() if room
+		room.vote publicID, 'pause', vote
 
 	sock.on 'unpause', (vote) ->
 		# sock.set 'unpause', vote
-		room.users[publicID].unpause = vote
-		room.sync() if room
+		room.vote publicID, 'unpause', vote
+		# room.users[publicID].unpause = vote
+		# room.sync() if room
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz(publicID, fn) if room
@@ -349,7 +366,8 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'chat', ({text, final, session}) ->
 		if room
-			room.emit 'chat', {text: text, session:  session, user: publicID, final: final}
+			room.touch publicID
+			room.emit 'chat', {text: text, session:  session, user: publicID, final: final, time: room.serverTime()}
 
 	sock.on 'disconnect', ->
 		# id = sock.id

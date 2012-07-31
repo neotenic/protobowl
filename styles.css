@@ -50,6 +50,9 @@ form.expando {
 .bundle .answer {
   font-weight: bold;
 }
+.bundle .start-page {
+  text-align: center;
+}
 .bundle .inline-icon.label {
   padding: 0;
   text-shadow: none;
