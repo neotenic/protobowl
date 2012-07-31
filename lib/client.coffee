@@ -4,10 +4,7 @@ users = {}
 sync_offsets = []
 sync_offset = 0
 
-
 # $('html').toggleClass 'touchscreen', Modernizr.touch
-
-
 
 jQuery.fn.disable = (value) ->
 	current = $(this).attr('disabled') is 'disabled'
