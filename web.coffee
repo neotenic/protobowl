@@ -13,7 +13,7 @@ io = require('socket.io').listen(app)
 io.configure ->
 	# now this is meant to run on nodejitsu rather than heroku
 	#io.set "transports", ["xhr-polling"]
-	io.set "polling duration", 10
+	#io.set "polling duration", 10
 	io.set "log level", 2
 	# io.set "connect timeout", 2000
 	# io.set "max reconnection attempts", 1
