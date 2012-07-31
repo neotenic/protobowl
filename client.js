@@ -161,7 +161,7 @@ synchronize = function(data) {
     return _results;
   })();
   sync_offset = avg(below);
-  $('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1));
+  $('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + (" (" + sync_offsets.length + ")"));
   for (attr in data) {
     sync[attr] = data[attr];
   }
@@ -391,7 +391,7 @@ renderPartial = function() {
     guessAnnotation(sync.attempt);
   }
   if (latency_log.length > 0) {
-    return $('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1));
+    return $('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + (" (" + latency_log.length + ")"));
   }
 };
 
