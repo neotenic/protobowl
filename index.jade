@@ -65,6 +65,12 @@ html(lang="en")
 											i.icon-pencil
 											| Guess
 										input.guess_input(type='text', placeholder='answer')	
+								form.expando.prompt_form(style="display:none")
+									div.input-prepend
+										span.add-on
+											i.icon-question-sign
+											| Prompt
+										input.prompt_input(type='text', placeholder='prompt')	
 									
 					div#history
 
@@ -157,11 +163,22 @@ html(lang="en")
 		div.modal.hide#review
 			div.modal-header
 				button.close(type="button", data-dismiss="modal") ×
-				h3 Review Algorithmic Judgement
+				h3 Submit Response for Manual Review
 			div.modal-body
-				p TODO: interface to submit
+				p 
+					| The answer checks for this application are done automatically by an algorithm 
+					| which may or may not be entirely competent. However, by submitting a response
+					| for manual review, the points for this question may be retroactively awarded, 
+					| and most importantly, it offers data which may serve to improve future iterations
+					| of the scoring algorithm.
+				p
+					| You believe the response <span class="review-response label">[review response]</span> 
+					| has been marked incorrectly as <span class="review-judgement label">[review judgement]
+					| </span> according to your interpretation of the answer <span class="review-answer label">
+					| [review answer] </span>. Does this appear correct to you?
+
 			div.modal-footer
-				a.btn(href="#", data-dismiss="modal") Close
+				a.btn(href="#", data-dismiss="modal") Cancel
 				a.btn.btn-primary(href="#", data-dismiss="modal") Submit
 
 

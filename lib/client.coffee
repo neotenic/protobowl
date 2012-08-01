@@ -645,7 +645,11 @@ guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 			ruling.addClass('label-success').text('Correct')
 		else
 			ruling.addClass('label-warning').text('Wrong')
+		answer = sync.answer
 		ruling.click ->
+			$('#review .review-judgement').text ruling.text()
+			$('#review .review-answer').text answer
+			$('#review .review-response').text text
 			$('#review').modal('show')
 			return false
 
@@ -696,10 +700,11 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 actionMode = ''
 setActionMode = (mode) ->
 	actionMode = mode
-	$('.guess_input, .chat_input').blur()
+	$('.prompt_input, .guess_input, .chat_input').blur()
 	$('.actionbar' ).toggle mode is ''
 	$('.chat_form').toggle mode is 'chat'
 	$('.guess_form').toggle mode is 'guess'
+	$('.prompt_form').toggle mode is 'prompt'
 	$(window).resize() #reset expandos
 
 $('.chatbtn').click ->
@@ -779,6 +784,23 @@ $('.guess_form').submit (e) ->
 	}
 	e.preventDefault()
 	setActionMode ''
+
+$('.prompt_input').keyup (e) ->
+	return if e.keyCode is 13
+	sock.emit 'prompt', {
+		text: $('.prompt_input').val(), 
+		final: false
+	}
+
+	
+$('.prompt_form').submit (e) ->
+	sock.emit 'prompt', {
+		text: $('.prompt_input').val(), 
+		final: true
+	}
+	e.preventDefault()
+	setActionMode ''
+
 
 $('body').keydown (e) ->
 	if actionMode is 'chat'

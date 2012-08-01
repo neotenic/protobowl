@@ -58,11 +58,11 @@ form.expando {
 .bundle .inline-icon {
   text-shadow: none;
 }
-.bundle .inline-icon.label {
+.bundle .inline-icon .label {
   padding-top: 0;
   padding-bottom: 0;
-  padding-left: 2px;
-  padding-right: 2px;
+  padding-left: 3px;
+  padding-right: 3px;
   display: inline-block;
 }
 .bundle .asterisk {
@@ -70,6 +70,11 @@ form.expando {
   color: transparent;
   display: inline-block;
   text-shadow: none;
+}
+#review .review-response,
+#review .review-judgement,
+#review .review-answer {
+  font-style: italic;
 }
 .bundle.active .answer {
   visibility: hidden;
