@@ -201,7 +201,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.new_question = function() {
-    var list, question, rate, word, _ref;
+    var question, word, _i, _len, _ref;
     this.attempt = null;
     this.begin_time = this.time();
     question = questions[Math.floor(questions.length * Math.random())];
@@ -215,21 +215,13 @@ QuizRoom = (function() {
     };
     this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ');
     this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
-    this.timing = {
-      list: (function() {
-        var _i, _len, _ref, _results;
-        _ref = this.question.split(" ");
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          word = _ref[_i];
-          _results.push(syllables(word) + 1);
-        }
-        return _results;
-      }).call(this),
-      rate: 1000 * 60 / 3 / 300
-    };
-    _ref = this.timing, list = _ref.list, rate = _ref.rate;
-    this.cumulative = cumsum(list, rate);
+    _ref = this.question.split(" ");
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      word = _ref[_i];
+      this.timing = syllables(word) + 1;
+    }
+    this.rate = 1000 * 60 / 3 / 300;
+    this.cumulative = cumsum(this.timing, this.rate);
     this.end_time = this.begin_time + this.cumulative[this.cumulative.length - 1] + this.answer_duration;
     return this.sync(2);
   };

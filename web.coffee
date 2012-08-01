@@ -147,12 +147,9 @@ class QuizRoom
 		@answer = question.answer
 			.replace(/\<\w\w\>/g, '')
 			.replace(/\[\w\w\]/g, '')
-		@timing = {
-			list: syllables(word) + 1 for word in @question.split(" "),
-			rate: 1000 * 60 / 3 / 300
-		}
-		{list, rate} = @timing
-		@cumulative = cumsum list, rate
+		@timing = syllables(word) + 1 for word in @question.split(" ")
+		@rate = 1000 * 60 / 3 / 300 
+		@cumulative = cumsum @timing, @rate
 		@end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
 		@sync(2)
 

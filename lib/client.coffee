@@ -303,8 +303,8 @@ renderPartial = ->
 
 	timeDelta = time() - sync.begin_time
 	words = sync.question.replace(/\s+/g, ' ').split ' '
-	{list, rate} = sync.timing
-	cumulative = cumsum list, rate
+	# {list, rate} = sync.timing
+	cumulative = cumsum sync.timing, sync.rate
 	index = 0
 	index++ while timeDelta > cumulative[index]
 	# index++ if timeDelta > rate
