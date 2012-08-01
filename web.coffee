@@ -148,7 +148,7 @@ class QuizRoom
 			.replace(/\<\w\w\>/g, '')
 			.replace(/\[\w\w\]/g, '')
 		@timing = (syllables(word) + 1 for word in @question.split(" "))
-		@rate = 1000 * 60 / 3 / 300 
+		@rate = Math.round(1000 * 60 / 3 / 300)
 		@cumulative = cumsum @timing, @rate
 		@end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
 		@sync(2)

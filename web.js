@@ -225,7 +225,7 @@ QuizRoom = (function() {
       }
       return _results;
     }).call(this);
-    this.rate = 1000 * 60 / 3 / 300;
+    this.rate = Math.round(1000 * 60 / 3 / 300);
     this.cumulative = cumsum(this.timing, this.rate);
     this.end_time = this.begin_time + this.cumulative[this.cumulative.length - 1] + this.answer_duration;
     return this.sync(2);
