@@ -354,7 +354,7 @@ renderPartial = ->
 			# console.log words[i]
 			element = $('<span>')
 			if words[i].indexOf('*') isnt -1
-				element.append " <span class='inline-icon label'><span class='asterisk'>"+words[i]+"</span><i class='icon-white icon-asterisk'></i></span> "
+				element.append " <span class='inline-icon'><span class='asterisk'>"+words[i]+"</span><i class='label icon-white icon-asterisk'></i></span> "
 			else
 				element.append(words[i] + " ")
 
@@ -364,7 +364,7 @@ renderPartial = ->
 				# console.log spots, i, words.length
 				if i is words.length - 1
 					label_type = "label-info"
-				element.append " <span class='inline-icon label #{label_type}'><i class='icon-white icon-bell'></i></span> "
+				element.append " <span class='inline-icon'><i class='label icon-white icon-bell  #{label_type}'></i></span> "
 
 			elements.push element
 				
