@@ -47,6 +47,7 @@ form.expando {
 .bundle .bookmark {
   margin-left: 5px;
   text-decoration: none;
+  font-size: 125%;
 }
 .bundle .answer {
   font-weight: bold;

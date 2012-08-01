@@ -628,7 +628,7 @@ guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 		$('<span>')
 			.addClass('comment')
 			.appendTo line
-		ruling = $('<span>').addClass('label ruling').hide()
+		ruling = $('<a>').addClass('label ruling').hide().attr('href', '#')
 		line.append ' '
 		line.append ruling
 		addAnnotation line
@@ -645,6 +645,10 @@ guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 			ruling.addClass('label-success').text('Correct')
 		else
 			ruling.addClass('label-warning').text('Wrong')
+		ruling.click ->
+			$('#review').modal('show')
+			return false
+
 		if actionMode is 'guess'
 			setActionMode ''
 	# line.toggleClass 'typing', !final

@@ -129,10 +129,6 @@ html(lang="en")
 								i.icon-fire
 								| Debugging
 							table.table-condensed.table
-								thead
-									tr
-										th attr
-										th val
 								tbody
 									tr
 										td latency
@@ -157,6 +153,17 @@ html(lang="en")
 			div.modal-footer
 				a.btn(href="#", data-dismiss="modal") Close
 				a.btn.btn-primary(href="") Reload
+
+		div.modal.hide#review
+			div.modal-header
+				button.close(type="button", data-dismiss="modal") ×
+				h3 Review Algorithmic Judgement
+			div.modal-body
+				p TODO: interface to submit
+			div.modal-footer
+				a.btn(href="#", data-dismiss="modal") Close
+				a.btn.btn-primary(href="#", data-dismiss="modal") Submit
+
 
 		div.modal.hide#about
 			div.modal-header
