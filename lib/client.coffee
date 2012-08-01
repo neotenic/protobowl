@@ -813,7 +813,10 @@ $('body').keydown (e) ->
 
 	if e.keyCode is 32
 		e.preventDefault()
-		$('.buzzbtn').click()
+		if $('.bundle .start-page').length is 1
+			$('.pausebtn').click()	
+		else
+			$('.buzzbtn').click()
 	else if e.keyCode in [83, 78, 74] # S, N, J
 		$('.skipbtn').click()
 	else if e.keyCode in [80, 82] # P, R
