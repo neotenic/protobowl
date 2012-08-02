@@ -90,6 +90,7 @@ html(lang="en")
 
 
 					div.span3.thumbnail.leaderboard(style="display:none")
+						
 						table.table
 							thead
 								tr
@@ -99,12 +100,12 @@ html(lang="en")
 							tbody
 
 					div.span3.thumbnail.singleuser(style="display:none")
-						table.table.headless
-							tbody
-								tr
-									td Name
-									td Flame Monkey
-
+						h5
+							i.icon-user
+							| Single Player 
+							span.label.label-important.offline(style="display:none") Offline
+						div.stats
+							table
 
 					div.span3.thumbnail
 						h5
@@ -130,6 +131,7 @@ html(lang="en")
 							li Press <code>space</code> to buzz
 							li Press <code>/</code> to chat
 							li Change settings by hacking the code
+							li Invite other people to this page for multiplayer
 
 					div.span3.thumbnail.show-touch(style="display:none")
 						h5 
@@ -142,32 +144,19 @@ html(lang="en")
 							h5 
 								i.icon-fire
 								| Debugging
-							table.table-condensed.table.headless
+							table.table.headless
 								tbody
 									tr
-										td latency
+										th latency
 										td#latency ?
 									tr
-										td sync_offset
+										th sync_offset
 										td#sync_offset ? 
 									//- tr
 									//-	td time_offset
 									//-	td#time_offset ?
 
-		div.modal.hide#disco
-			div.modal-header
-				button.close(type="button", data-dismiss="modal") ×
-				h3 YOU GOT DISCONNECTED
-			div.modal-body
-				p Sorry, try reloading.
-				p 
-					| Also, I don't think this is the most user friendly possible
-					| modal disconnection alert window, but fixing that issue is
-					| the problem of future me, or of someone else. 
-			div.modal-footer
-				a.btn(href="#", data-dismiss="modal") Close
-				a.btn.btn-primary(href="") Reload
-
+		
 		div.modal.hide#review
 			div.modal-header
 				button.close(type="button", data-dismiss="modal") ×

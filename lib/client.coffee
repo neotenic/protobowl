@@ -77,14 +77,22 @@ sock.on 'echo', (data, fn) ->
 
 sock.on 'disconnect', ->
 	# make it so that refreshes dont show disco flash
-	setTimeout ->
-		$('#disco').modal('show')
-	, 1000
+	# setTimeout ->
+	# 	$('#disco').modal('show')
+	# , 1000
+	line = $('<div>').addClass 'log well'
+	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
+			" from the server for some reason. ", $('em').text(new Date))
+	line.append $('<p>').append("This may be due to a drop in the network 
+			connectivity or a malfunction in the server. The client will automatically 
+			attempt to reconnect to the server. However, you might want to try <a href=''>reloading</a>.")
+	addImportant line
+	renderState()
 
 public_name = null
 public_id = null
 
-sock.once 'connect', ->
+sock.on 'connect', ->
 	$('.actionbar button').disable false
 	$('.timer').removeClass 'disabled'
 
@@ -190,10 +198,29 @@ computeScore = (user) ->
 formatTime = (timestamp) ->
 	date = new Date
 	date.setTime timestamp
-	('0' +date.getHours()).substr(-2,2)+':'+
-	('0'+date.getMinutes()).substr(-2,2)+':'+
-	('0'+date.getSeconds()).substr(-2,2)
+	(date.getHours() % 12)+':'+
+	('0'+date.getMinutes()).substr(-2,2)+
+	#':'+ ('0'+date.getSeconds()).substr(-2,2) +
+	(if date.getHours() > 12 then "pm" else "am")
 
+
+createStatSheet = (user, full) ->
+	table = $('<table>').addClass('table headless')
+	body = $('<tbody>').appendTo(table)
+	row = (name, val) ->
+		$('<tr>')
+			.appendTo(body)
+			.append($("<th>").text(name))
+			.append($("<td>").text(val))
+	row "ID", user.id.slice(0, 10) if full
+	row	"Score", computeScore(user)
+	row	"Correct", user.correct
+	row "Interrupts", user.interrupts
+	row "Early", user.early  if full
+	row "Incorrect", user.guesses - user.correct  if full
+	row "Guesses", user.guesses  if full
+	row "Last Seen", formatTime(user.last_action) if full
+	return table
 
 
 renderState = ->
@@ -244,13 +271,8 @@ renderState = ->
 				# 	console.log $(this).data('popover'),$(this).data('popover').tip().hasClass('in')
 				# 	# $(this).popover 'hide'
 			row.attr 'data-original-title', "<span class='user-#{user.id}'>#{user.name}</span>'s stats"
-			row.attr 'data-content', "User ID: #{user.id.slice(0, 16)}\n
-										Last Seen: #{formatTime(user.last_action)}\n
-										Correct: #{user.correct}\n
-										Early: #{user.early}\n
-										Incorrect: #{user.guesses - user.correct}\n
-										Interrupts: #{user.interrupts}\n
-										Guesses: #{user.guesses}".replace(/\n/g, '<br>')
+
+			row.attr 'data-content', $('<div>').append(createStatSheet(user, true)).html()
 			row.find('td').remove()
 			row.addClass 'sockid-' + user.id
 			row.removeClass 'to_remove'
@@ -259,6 +281,7 @@ renderState = ->
 				#its me, you idiot
 				badge.addClass 'badge-info'
 				badge.attr 'title', 'You'
+				$('.singleuser .stats table').replaceWith(createStatSheet(user))
 			else
 				if user.online
 					if serverTime() - user.last_action > 1000 * 60 * 10
@@ -282,14 +305,19 @@ renderState = ->
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
-	if sync.users.length > 0
+	if sync.users.length > 1 and sock.socket.connected
 		$('.leaderboard').slideDown()
+		$('.singleuser').slideUp()
+	else
+		$('.leaderboard').slideUp()
+		$('.singleuser').slideDown()
 		
 	#fix all the expandos
 	$(window).resize()
 	renderPartial()
 
 renderPartial = ->
+
 	return unless sync.question and sync.timing
 	
 	#render the question 
@@ -408,6 +436,10 @@ setInterval renderPartial, 50
 renderTimer = ->
 	# $('#pause').show !!sync.time_freeze
 	# $('.buzzbtn').attr 'disabled', !!sync.attempt
+	if sock.socket.connected
+		$('.offline').fadeOut()
+	else
+		$('.offline').fadeIn()
 	if sync.time_freeze
 		if sync.attempt
 			
@@ -546,6 +578,8 @@ changeQuestion = ->
 
 createBundle = ->
 	bundle = $('<div>').addClass('bundle')
+	important = $('<div>').addClass 'important'
+	bundle.append(important)
 	breadcrumb = $('<ul>').addClass('breadcrumb')
 	addInfo = (name, value) ->
 		breadcrumb.find('li').last().append $('<span>').addClass('divider').text('/')
@@ -605,6 +639,10 @@ addAnnotation = (el) ->
 	el.slideDown()
 	return el
 
+addImportant = (el) ->
+	el.css('display', 'none').prependTo $('#history .bundle .important').first()
+	el.slideDown()
+	return el
 
 guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 	# TODO: make this less like chats
@@ -647,7 +685,10 @@ guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 			ruling.addClass('label-warning').text('Wrong')
 		answer = sync.answer
 		ruling.click ->
-			$('#review .review-judgement').text ruling.text()
+			$('#review .review-judgement')
+				.after(ruling.clone().addClass('review-judgement'))
+				.remove()
+				
 			$('#review .review-answer').text answer
 			$('#review .review-response').text text
 			$('#review').modal('show')
@@ -716,6 +757,7 @@ $('.chatbtn').click ->
 		.focus()
 
 $('.skipbtn').click ->
+	removeSplash()
 	sock.emit 'skip', 'yay'
 
 

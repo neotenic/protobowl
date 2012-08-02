@@ -16,17 +16,28 @@
 	margin: 0;
 	margin-bottom: 18px;
 	overflow: auto;
-	.table {
-		margin-bottom: 5px;
-	}
+	
 
-	.table.headless tbody tr:first-child td {
-		border-top: none;
-	}
 	.progress {
 		margin-bottom: 9px;
 	}
 }
+.table {
+	
+	margin-bottom: 5px;
+}
+.table.headless{
+	tbody tr:first-child{
+		td, th {
+			border-top: none;
+		}
+	}	
+} 
+
+.popover-content {
+	padding: 1px;
+}
+
 .thumbnail h5 i, .expando i, .actionbar i {
 	margin-right: 5px;
 	margin-top: 1px;

@@ -14,14 +14,18 @@
   margin-bottom: 18px;
   overflow: auto;
 }
-.thumbnail .table {
-  margin-bottom: 5px;
-}
-.thumbnail .table.headless tbody tr:first-child td {
-  border-top: none;
-}
 .thumbnail .progress {
   margin-bottom: 9px;
+}
+.table {
+  margin-bottom: 5px;
+}
+.table.headless tbody tr:first-child td,
+.table.headless tbody tr:first-child th {
+  border-top: none;
+}
+.popover-content {
+  padding: 1px;
 }
 .thumbnail h5 i,
 .expando i,
