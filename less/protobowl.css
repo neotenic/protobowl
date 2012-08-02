@@ -17,6 +17,9 @@
 .thumbnail .table {
   margin-bottom: 5px;
 }
+.thumbnail .table.headless tbody tr:first-child td {
+  border-top: none;
+}
 .thumbnail .progress {
   margin-bottom: 9px;
 }

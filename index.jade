@@ -87,6 +87,8 @@ html(lang="en")
 
 						div.progress.progress-striped
 							div.bar(style="width:0%")
+
+
 					div.span3.thumbnail.leaderboard(style="display:none")
 						table.table
 							thead
@@ -96,6 +98,12 @@ html(lang="en")
 									th Interrupts
 							tbody
 
+					div.span3.thumbnail.singleuser(style="display:none")
+						table.table.headless
+							tbody
+								tr
+									td Name
+									td Flame Monkey
 
 
 					div.span3.thumbnail
@@ -134,7 +142,7 @@ html(lang="en")
 							h5 
 								i.icon-fire
 								| Debugging
-							table.table-condensed.table
+							table.table-condensed.table.headless
 								tbody
 									tr
 										td latency
