@@ -1,8 +1,24 @@
-sock = io.connect()
+inner_socket = io.connect()
 sync = {}
 users = {}
 sync_offsets = []
 sync_offset = 0
+
+sock = {
+	listeners: {},
+
+	emit: (name, data, fn) ->
+		if connected()
+			inner_socket.emit(name, data, fn)
+		else
+			console.log name, data, fn
+
+	on: (name, listen) ->
+		inner_socket.on(name, listen)
+		sock.listeners[name] = listen
+}
+
+connected = -> inner_socket.socket.connected
 
 # $('html').toggleClass 'touchscreen', Modernizr.touch
 
@@ -69,7 +85,7 @@ serverTime = -> new Date - sync_offset
 
 
 window.onbeforeunload = ->
-	localStorage.old_socket = sock.socket.sessionid
+	localStorage.old_socket = inner_socket.socket.sessionid
 	return null
 
 sock.on 'echo', (data, fn) ->
@@ -305,7 +321,7 @@ renderState = ->
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
-	if sync.users.length > 1 and sock.socket.connected
+	if sync.users.length > 1 and connected()
 		$('.leaderboard').slideDown()
 		$('.singleuser').slideUp()
 	else
@@ -436,7 +452,7 @@ setInterval renderPartial, 50
 renderTimer = ->
 	# $('#pause').show !!sync.time_freeze
 	# $('.buzzbtn').attr 'disabled', !!sync.attempt
-	if sock.socket.connected
+	if connected()
 		$('.offline').fadeOut()
 	else
 		$('.offline').fadeIn()
