@@ -4,6 +4,125 @@ users = {}
 sync_offsets = []
 sync_offset = 0
 
+checkAnswer = (attempt, correct) ->
+	attempt.toLowerCase()
+	return Math.random() > 0.5
+
+# maybe it would be advantageous to find a way
+# to actually sy
+virtual_server = {
+	pause: ->
+		@freeze() unless sync.attempt or time() > sync.end_time
+	unpause: ->
+		this.unfreeze() unless sync.attempt
+
+	set_time: (ts) ->
+		sync.time_offset = serverTime() - ts
+
+	freeze: ->
+		sync.time_freeze = time()
+
+	unfreeze: ->
+		if sync.time_freeze
+			@set_time sync.time_freeze
+			sync.time_freeze = 0
+
+	###### THE ABOVE SECTION IS PRACTICALLY VERBATIM
+	chat: (msg) ->
+		sock.server_emit 'chat', {text: msg.text, session: msg.session, user: public_id, final: msg.final, time: serverTime()}
+		if msg.final and /lonely/.test msg.text
+			setTimeout ->
+				# TODO: a turing-test passing chat bot with a surreal and schizophrenic quality
+				sock.server_emit 'chat', {text: "I'm lonely too. Plz talk to meeeee", session: "yay"+Math.random(), user: public_id, final: true, time: serverTime()}
+			, 1000
+
+	new_question: ->
+		sync.attempt = null
+		
+		sync.begin_time = time()
+		# question = questions[Math.floor(questions.length * Math.random())]
+		sync.info = {
+			category: question.category, 
+			difficulty: question.difficulty, 
+			tournament: question.tournament, 
+			num: question.question_num, 
+			year: question.year, 
+			round: question.round
+		}
+		sync.question = question.question
+			.replace(/FTP/g, 'For 10 points')
+			.replace(/^\[.*?\]/, '')
+			.replace(/\n/g, ' ')
+		sync.answer = question.answer
+			.replace(/\<\w\w\>/g, '')
+			.replace(/\[\w\w\]/g, '')
+		syllables = (word) ->
+			# avg(sync.question.split(' ').map(function(e, i){return (sync.timing[i] - 1) / e.length}))
+			Math.round(word.length * 0.35636480798038367)
+
+		sync.timing = (syllables(word) + 1 for word in @question.split(" "))
+		sync.rate = Math.round(1000 * 60 / 3 / 300)
+		cumulative = cumsum @timing, @rate
+		sync.end_time = sync.begin_time + cumulative[cumulative.length - 1] + sync.answer_duration
+		# @sync(2)
+		synchronize()
+
+	guess: (data) ->
+		if sync.attempt
+			sync.attempt.text = data.text
+			if data.final
+				@end_buzz sync.attempt.session
+
+	end_buzz: (session) ->
+		if sync.attempt?.session is session
+			sync.attempt.final = true
+			sync.attempt.correct = checkAnswer sync.attempt.text, sync.answer
+			
+			# @sync()
+			synchronize()
+			@unfreeze()
+			if sync.attempt.correct
+				users[public_id].correct++
+				if sync.attempt.early 
+					users[public_id].early++
+				@set_time sync.end_time
+			else if sync.attempt.interrupt
+				users[public_id].interrupts++
+			sync.attempt = null
+			synchronize()
+
+	buzz: ->
+		if time() <= sync.end_time
+			session = Math.random().toString(36).slice(2)
+			early_index = sync.question.replace(/[^ \*]/g, '').indexOf('*')
+			cumulative = cumsum sync.timing, sync.rate
+			sync.attempt = {
+				user: public_id,
+				realTime: serverTime(), # oh god so much time crap
+				start: time(),
+				duration: 8 * 1000,
+				session, # generate 'em server side 
+				text: '',
+				early: early_index and time() < sync.begin_time + cumulative[early_index],
+				interrupt: time() < sync.end_time - sync.answer_duration,
+				final: false
+			}
+			users[public_id].guesses++
+			@freeze()
+			@timeout serverTime, sync.attempt.realTime + sync.attempt.duration, =>
+				@end_buzz session
+
+	timeout: (metric, time, callback) ->
+		diff = time - metric()
+		if diff < 0
+			callback()
+		else
+			setTimeout =>
+				@timeout(metric, time, callback)
+			, diff
+}
+
+
 sock = {
 	listeners: {},
 
@@ -11,7 +130,14 @@ sock = {
 		if connected()
 			inner_socket.emit(name, data, fn)
 		else
-			console.log name, data, fn
+			if name of virtual_server
+				result = virtual_server[name](data)
+				fn(result) if fn
+			else
+				console.log name, data, fn
+
+	server_emit: (name, data) ->
+		sock.listeners[name](data)
 
 	on: (name, listen) ->
 		inner_socket.on(name, listen)
@@ -42,6 +168,13 @@ cumsum = (list, rate) ->
 	sum = 0 #start nonzero, allow pause before rendering
 	for num in [1].concat(list).slice(0, -1)
 		sum += Math.round(num) * rate #always round!
+
+fisher_yates = (i) ->
+	arr = [0...i]
+	while --i
+		j = Math.floor(Math.random() * (i+1))
+		[arr[i], arr[j]] = [arr[j], arr[i]] 
+	arr
 
 ###
 	So in this application, we have to juggle around not one, not two, but three notions of time
@@ -92,13 +225,10 @@ sock.on 'echo', (data, fn) ->
 	fn 'alive'
 
 sock.on 'disconnect', ->
-	# make it so that refreshes dont show disco flash
-	# setTimeout ->
-	# 	$('#disco').modal('show')
-	# , 1000
+	sync.attempt = null if sync.attempt?.user isnt public_id # get rid of any buzzes
 	line = $('<div>').addClass 'log well'
 	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
-			" from the server for some reason. ", $('em').text(new Date))
+			" from the server for some reason. ", $('<em>').text(new Date))
 	line.append $('<p>').append("This may be due to a drop in the network 
 			connectivity or a malfunction in the server. The client will automatically 
 			attempt to reconnect to the server. However, you might want to try <a href=''>reloading</a>.")
@@ -129,29 +259,32 @@ $('#username').keyup ->
 		sock.emit 'rename', $(this).val()
 
 synchronize = (data) ->
-	# console.log JSON.stringify(data)
+	if data
+		# console.log JSON.stringify(data)
 
-	#here is the rather complicated code to calculate
-	#then offsets of the time synchronization stuff
-	#it's totally not necessary to do this, but whatever
-	#it might make the stuff work better when on an
-	#apple iOS device where screen drags pause the
-	#recieving of sockets/xhrs meaning that the sync
-	#might be artificially inflated, so this could
-	#counteract that. since it's all numerical math
-	#hopefully it'll be fast even if sync_offsets becomes
-	#really really huge
-	sync_offsets.push +new Date - data.real_time
-	thresh = avg sync_offsets
-	below = (item for item in sync_offsets when item <= thresh)
-	sync_offset = avg(below)
+		#here is the rather complicated code to calculate
+		#then offsets of the time synchronization stuff
+		#it's totally not necessary to do this, but whatever
+		#it might make the stuff work better when on an
+		#apple iOS device where screen drags pause the
+		#recieving of sockets/xhrs meaning that the sync
+		#might be artificially inflated, so this could
+		#counteract that. since it's all numerical math
+		#hopefully it'll be fast even if sync_offsets becomes
+		#really really huge
 
-	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + " (#{sync_offsets.length})")
+		sync_offsets.push +new Date - data.real_time
+		thresh = avg sync_offsets
+		below = (item for item in sync_offsets when item <= thresh)
+		sync_offset = avg(below)
 
-	# console.log 'sync', data
-	for attr of data
-		sync[attr] = data[attr]
-	if 'users' of data
+		$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + " (#{sync_offsets.length})")
+
+		# console.log 'sync', data
+		for attr of data
+			sync[attr] = data[attr]
+	
+	if !data or 'users' of data
 		renderState()
 	else
 		renderPartial()
@@ -173,6 +306,7 @@ sock.on 'sync', (data) ->
 	
 latency_log = []
 testLatency = ->
+	return unless connected()
 	initialTime = +new Date
 	sock.emit 'echo', {}, (firstServerTime) ->
 		recieveTime = +new Date
