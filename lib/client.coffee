@@ -385,7 +385,12 @@ $('.singleuser').click ->
 renderPartial = ->
 
 	return unless sync.question and sync.timing
-	
+
+
+	wpm = Math.round(1000 * 60 / 5 / sync.rate)
+	unless $(document.activeElement).is(".speed")
+		if Math.abs($('.speed').val() - wpm) > 1
+			$('.speed').val(wpm)
 	#render the question 
 	if sync.question isnt last_question
 		changeQuestion() #whee slidey
@@ -686,7 +691,7 @@ createBundle = ->
 
 
 	breadcrumb.append $('<li>').addClass('pull-right').append(star)
-	breadcrumb.append $('<li>').addClass('pull-right answer').text("Answer: " + sync.answer)
+	breadcrumb.append $('<li>').addClass('pull-right answer').text(sync.answer)
 
 
 
@@ -941,15 +946,22 @@ $('body').keydown (e) ->
 		e.preventDefault()
 		$('.chatbtn').click()
 
-	console.log e.keyCode
+	# console.log e.keyCode
 
+
+$('.speed').change ->
+	$('.speed').not(this).val($(this).val())
+	rate = 1000 * 60 / 5 / Math.round($(this).val())
+	sock.emit 'speed', rate
+	# console.log rate
+		
 
 # possibly this should be replaced by something smarter using CSS calc()
 # but that would be a 
 $(window).resize ->
 	$('.expando').each ->
 		add = sum($(i).outerWidth() for i in $(this).find('.add-on'))
-		console.log add
+		# console.log add
 		size = $(this).width()
 		outer = $(this).find('input').outerWidth() - $(this).find('input').width()
 		# console.log 'exp', add, outer, size
@@ -969,8 +981,8 @@ if !Modernizr.touch and !mobileLayout()
 	$('.actionbar button').click -> 
 		$('.actionbar button').tooltip 'hide'
 
-	$('#history').tooltip({
-		selector: "a[rel=tooltip]", 
+	$('#history, .settings').tooltip({
+		selector: "[rel=tooltip]", 
 		placement: -> 
 			if mobileLayout() then "error" else "left"
 	})

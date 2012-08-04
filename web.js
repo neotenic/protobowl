@@ -127,6 +127,7 @@ QuizRoom = (function() {
     this.name = name;
     this.answer_duration = 1000 * 5;
     this.time_offset = 0;
+    this.rate = 1000 * 60 / 5 / 200;
     this.freeze();
     this.new_question();
     this.users = {};
@@ -235,7 +236,6 @@ QuizRoom = (function() {
   QuizRoom.prototype.new_question = function() {
     var question, word;
     this.attempt = null;
-    this.begin_time = this.time();
     question = questions[Math.floor(questions.length * Math.random())];
     this.info = {
       category: question.category,
@@ -247,6 +247,7 @@ QuizRoom = (function() {
     };
     this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ');
     this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
+    this.begin_time = this.time();
     this.timing = (function() {
       var _i, _len, _ref, _results;
       _ref = this.question.split(" ");
@@ -257,10 +258,27 @@ QuizRoom = (function() {
       }
       return _results;
     }).call(this);
-    this.rate = Math.round(1000 * 60 / 3 / 300);
-    this.cumulative = cumsum(this.timing, this.rate);
-    this.end_time = this.begin_time + this.cumulative[this.cumulative.length - 1] + this.answer_duration;
+    this.set_speed(this.rate);
     return this.sync(2);
+  };
+
+  QuizRoom.prototype.set_speed = function(rate) {
+    var done, duration, elapsed, new_duration, now, remainder;
+    now = this.time();
+    this.cumulative = cumsum(this.timing, this.rate);
+    elapsed = now - this.begin_time;
+    duration = this.cumulative[this.cumulative.length - 1];
+    done = elapsed / duration;
+    remainder = 0;
+    if (done > 1) {
+      remainder = elapsed - duration;
+      done = 1;
+    }
+    this.rate = rate;
+    this.cumulative = cumsum(this.timing, this.rate);
+    new_duration = this.cumulative[this.cumulative.length - 1];
+    this.begin_time = now - new_duration * done - remainder;
+    return this.end_time = this.begin_time + new_duration + this.answer_duration;
   };
 
   QuizRoom.prototype.skip = function() {
@@ -463,6 +481,10 @@ io.sockets.on('connection', function(sock) {
   });
   sock.on('unpause', function(vote) {
     return room.vote(publicID, 'unpause', vote);
+  });
+  sock.on('speed', function(data) {
+    room.set_speed(data);
+    return room.sync();
   });
   sock.on('buzz', function(data, fn) {
     if (room) {

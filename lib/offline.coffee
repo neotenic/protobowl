@@ -95,6 +95,7 @@ virtual_server = {
 			id: publicID,
 			name: publicName
 		}]
+		sync.rate = Math.round(1000 * 60 / 3 / 300)
 
 		@freeze()
 		@new_question()
@@ -161,11 +162,44 @@ virtual_server = {
 
 		syllables = require('./lib/syllable').syllables
 		sync.timing = (syllables(word) + 1 for word in sync.question.split(" "))
-		sync.rate = Math.round(1000 * 60 / 3 / 300)
-		cumulative = cumsum sync.timing, sync.rate
-		sync.end_time = sync.begin_time + cumulative[cumulative.length - 1] + sync.answer_duration
+		# sync.rate = Math.round(1000 * 60 / 3 / 300)
+		# cumulative = cumsum sync.timing, sync.rate
+		# sync.end_time = sync.begin_time + cumulative[cumulative.length - 1] + sync.answer_duration
 		# @sync(2)
+		@set_speed sync.rate
 		synchronize()
+
+	speed: (rate) ->
+		@set_speed rate
+		synchronize()
+
+	set_speed: (rate) ->
+		now = time() # take a snapshot of time to do math with
+		#first thing's first, recalculate the cumulative array
+		cumulative = cumsum sync.timing, sync.rate
+		#calculate percentage of reading right now
+		elapsed = now - sync.begin_time
+		duration = cumulative[cumulative.length - 1]
+		done = elapsed / duration
+
+		# if it's past the actual reading time
+		# this means altering the rate doesnt actually
+		# affect the length of the answer_duration
+		remainder = 0
+		if done > 1
+			remainder = elapsed - duration
+			done = 1
+		
+		# set the new rate
+		sync.rate = rate
+		# recalculate the reading intervals
+		cumulative = cumsum sync.timing, sync.rate
+		new_duration = cumulative[cumulative.length - 1]
+		#how much time has elapsed in the new timescale
+		sync.begin_time = now - new_duration * done - remainder
+		# set the ending time
+		sync.end_time = sync.begin_time + new_duration + sync.answer_duration
+
 
 	guess: (data) ->
 		if sync.attempt

@@ -82,6 +82,7 @@ class QuizRoom
 		@name = name
 		@answer_duration = 1000 * 5
 		@time_offset = 0
+		@rate = 1000 * 60 / 5 / 200
 		@freeze()
 		@new_question()
 		@users = {}
@@ -153,8 +154,6 @@ class QuizRoom
 
 	new_question: ->
 		@attempt = null
-
-		@begin_time = @time()
 		question = questions[Math.floor(questions.length * Math.random())]
 		@info = {
 			category: question.category, 
@@ -171,11 +170,42 @@ class QuizRoom
 		@answer = question.answer
 			.replace(/\<\w\w\>/g, '')
 			.replace(/\[\w\w\]/g, '')
+
+		@begin_time = @time()
 		@timing = (syllables(word) + 1 for word in @question.split(" "))
-		@rate = Math.round(1000 * 60 / 3 / 300)
-		@cumulative = cumsum @timing, @rate
-		@end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
+		@set_speed @rate #do the math with speeds
+		# @cumulative = cumsum @timing, @rate #todo: comment out
+		# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
 		@sync(2)
+
+	set_speed: (rate) ->
+		now = @time() # take a snapshot of time to do math with
+		#first thing's first, recalculate the cumulative array
+		@cumulative = cumsum @timing, @rate
+		#calculate percentage of reading right now
+		elapsed = now - @begin_time
+		duration = @cumulative[@cumulative.length - 1]
+		done = elapsed / duration
+
+		# if it's past the actual reading time
+		# this means altering the rate doesnt actually
+		# affect the length of the answer_duration
+		remainder = 0
+		if done > 1
+			remainder = elapsed - duration
+			done = 1
+		
+		# set the new rate
+		@rate = rate
+		# recalculate the reading intervals
+		@cumulative = cumsum @timing, @rate
+		new_duration = @cumulative[@cumulative.length - 1]
+		#how much time has elapsed in the new timescale
+		@begin_time = now - new_duration * done - remainder
+		# set the ending time
+		@end_time = @begin_time + new_duration + @answer_duration
+
+
 
 	skip: ->
 		@new_question()
@@ -350,6 +380,10 @@ io.sockets.on 'connection', (sock) ->
 		room.vote publicID, 'unpause', vote
 		# room.users[publicID].unpause = vote
 		# room.sync() if room
+
+	sock.on 'speed', (data) ->
+		room.set_speed data
+		room.sync()
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz(publicID, fn) if room

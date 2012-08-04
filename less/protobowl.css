@@ -98,6 +98,7 @@ form.expando {
 #review .review-judgement,
 #review .review-answer {
   font-style: italic;
+  font-weight: bold;
 }
 .bundle.active .answer {
   visibility: hidden;

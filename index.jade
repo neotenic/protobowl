@@ -113,24 +113,24 @@ html(lang="en", manifest="offline.appcache")
 						div(style="text-align: center; padding-right: 4px; padding-left: 4px; padding-top: 4px")
 							div.expando
 								div.input-prepend
-									span.add-on
+									span.add-on(title="Public name", rel='tooltip')
 										i.icon-user
 									input#username(type='text', value='', disabled)
 							//- button.btn(data-toggle="button") 
 							//- 	i.icon-bell
 							//- 	| Sound
-							div.expando
-								div.input-prepend.input-append
-									span.add-on(style="width:21px")
-										i.icon-bolt
-									input(type="number", value="200")
-									span.add-on wpm
-							//- input(type="range", min="60", max="600")
+							//- the following speed picker was vetoed by the almighty ben
+							//- div.expando
+							//- 	div.input-prepend.input-append
+							//- 		span.add-on(style="width:21px")
+							//- 			i.icon-bolt
+							//- 		input.speed(type="number", value="200", min="60", max="600")
+							//- 		span.add-on wpm
 							div.expando
 								div.input-prepend
-									span.add-on(style="width:21px")
+									span.add-on(style="width:21px", title="Read speed", rel='tooltip')
 										i.icon-bolt
-									input(type="range", value="200", min="60", max="600")
+									input.speed(type="range", value="200", min="60", max="600")
 									//- span.add-on wpm
 
 					div.span3.thumbnail.show-keyboard
@@ -143,6 +143,7 @@ html(lang="en", manifest="offline.appcache")
 							li Press <code>/</code> to chat
 							li Change settings by hacking the code
 							li Invite other people to this page for multiplayer
+							li Also, this page works offline.
 
 					div.span3.thumbnail.show-touch(style="display:none")
 						h5 
