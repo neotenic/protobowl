@@ -1,0 +1,249 @@
+doctype 5
+html(lang="en", manifest="offline.appcache")
+
+	head
+		title #{name} - ProtoBowl 
+		meta(charset="utf8")
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+		
+		link(rel='stylesheet', href='less/bootstrap.css')
+		link(rel='stylesheet', href='less/responsive.css')
+		link(rel='stylesheet', href='less/protobowl.css')
+		
+	body
+		div.navbar.navbar-top
+			div.navbar-inner
+				div.container
+					a.brand(href="#")
+						strong Proto
+						| Bowl 
+						em.hidden-phone(style="font-size: small")
+							| doing one thing and doing it acceptably well
+						
+					div.pull-right
+						a.btn.btn-primary.new-room(href="/") New Room
+						
+					ul.nav.pull-right
+						li
+							a(href="#", data-toggle="modal", href="#about") About
+						
+		div.container
+			div.row
+				div.span9
+					div.row(style="margin-bottom: 10px")
+						div.span9
+							div.form-horizontal
+								div.actionbar
+									button.btn.chatbtn(title="Shortcut: / key", rel='tooltip', disabled)
+										i.icon-comment
+										| Chat
+									| 
+									button.btn.btn-info.skipbtn(title="Shortcut: n key", rel='tooltip', disabled)
+										| Next
+									| 
+									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip', disabled) 
+										| Pause
+									| 
+									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip', disabled)
+										i.icon-bell.icon-white
+										| Buzz
+								form.expando.chat_form(style="display:none")
+									div.input-prepend
+										span.add-on
+											i.icon-comment
+											| Chat
+										input.chat_input(type='text', placeholder='chat message')
+								form.expando.guess_form(style="display:none")
+									div.input-prepend
+										span.add-on
+											i.icon-pencil
+											| Guess
+										input.guess_input(type='text', placeholder='answer')	
+								form.expando.prompt_form(style="display:none")
+									div.input-prepend
+										span.add-on
+											i.icon-question-sign
+											| Prompt
+										input.prompt_input(type='text', placeholder='prompt')	
+					div#update(style="display:none")
+						div.well
+							a.btn.btn-primary.pull-right(href="") Reload
+							| A <strong>new version</strong> of this application has been downloaded. Please reload the application now.
+							
+					div#history
+
+				div.span3
+					div.span3.thumbnail
+						h5 
+							i.icon-time
+							| Timer 
+							span.label.label-warning.pause(style="display:none") Paused
+							span.label.label-important.buzz(style="display:none") Buzz
+						div.timer.unselectable.disabled
+							span.face 00:00
+							span.fraction .0
+
+						div.progress.progress-striped
+							div.bar(style="width:0%")
+
+
+					div.span3.thumbnail.leaderboard(style="display:none")
+						
+						table.table
+							thead
+								tr
+									th #
+									th Name
+									th Interrupts
+							tbody
+
+					div.span3.thumbnail.singleuser(style="display:none")
+						h5
+							i.icon-user
+							| Single Player 
+							span.label.label-important.offline(style="display:none") Offline
+						div.stats
+							table
+
+					div.span3.thumbnail.settings(style="display:none")
+						h5
+							i.icon-wrench
+							| Settings
+
+						div(style="text-align: center; padding-right: 4px; padding-left: 4px; padding-top: 4px")
+							div.expando
+								div.input-prepend
+									span.add-on(title="Public name", rel='tooltip')
+										i.icon-user
+									input#username(type='text', value='', disabled)
+							//- button.btn(data-toggle="button") 
+							//- 	i.icon-bell
+							//- 	| Sound
+							//- the following speed picker was vetoed by the almighty ben
+							//- div.expando
+							//- 	div.input-prepend.input-append
+							//- 		span.add-on(style="width:21px")
+							//- 			i.icon-bolt
+							//- 		input.speed(type="number", value="200", min="60", max="600")
+							//- 		span.add-on wpm
+							div.expando
+								div.input-prepend
+									span.add-on(style="width:21px", title="Read speed", rel='tooltip')
+										i.icon-bolt
+									input.speed(type="range", value="200", min="60", max="600")
+									//- span.add-on wpm
+
+					div.span3.thumbnail.show-keyboard
+						h5 
+							i.icon-info-sign
+							| Directions
+						ul
+							li Press <code>p</code> to begin
+							li Press <code>space</code> to buzz
+							li Press <code>/</code> to chat
+							li Change settings by hacking the code
+							li Invite other people to this page for multiplayer
+							li Also, this page works offline.
+
+					div.span3.thumbnail.show-touch(style="display:none")
+						h5 
+							i.icon-info-sign
+							| Directions
+						ul
+							li Buttons are fun to press
+
+					div.span3.thumbnail
+							h5 
+								i.icon-fire
+								| Debugging
+							table.table.headless
+								tbody
+									tr
+										th latency
+										td#latency ?
+									tr
+										th sync_offset
+										td#sync_offset ? 
+									//- tr
+									//-	td time_offset
+									//-	td#time_offset ?
+									tr
+										td
+											a(href="#", onclick="sock.disconnect();return false") Disconnect
+										td#cachestatus 
+
+
+		
+		div.modal.hide#review
+			div.modal-header
+				button.close(type="button", data-dismiss="modal") ×
+				h3 Submit Response for Manual Review
+			div.modal-body
+				p 
+					| The answer checks for this application are done automatically by an algorithm 
+					| which may or may not be entirely competent. However, by submitting a response
+					| for manual review, the points for this question may be retroactively awarded, 
+					| and most importantly, it offers data which may serve to improve future iterations
+					| of the scoring algorithm.
+				p
+					| You believe the response <span class="review-response label">[review response]</span> 
+					| has been marked incorrectly as <span class="review-judgement label">[review judgement]
+					| </span> according to your interpretation of the answer <span class="review-answer">
+					| [review answer] </span>. 
+
+				p Would you like to submit this request for a manual answer review?
+
+			div.modal-footer
+				a.btn(href="#", data-dismiss="modal") Cancel
+				a.btn.btn-primary(href="#", data-dismiss="modal") Submit
+
+		div.modal.hide#report-question
+			div.modal-header
+				button.close(type="button", data-dismiss="modal") ×
+				h3 Submit Question for Review
+			div.modal-body
+				p 
+					| TODO: words here
+
+				p Would you like to submit this request for question review?
+
+			div.modal-footer
+				a.btn(href="#", data-dismiss="modal") Cancel
+				a.btn.btn-primary(href="#", data-dismiss="modal") Submit
+
+
+		div.modal.hide#about
+			div.modal-header
+				button.close(type="button", data-dismiss="modal") ×
+				h3 About
+			div.modal-body
+				p I really don't have the slightest clue what to say here.
+				p 
+					| But this was concieved some time towards the end of the school year of 2012
+					| and was implemented mostly within a week's time intermittently, and this is
+					| actually the second prototype. The name actually comes as a contraction or
+					| portmanteau of "Prototype" and "QuizBowl", with the word "Application" cleverly
+					| ommitted for no reason in particular. 
+
+				p
+					| It's something made with Twitter Bootstrap,
+					| which I'm trying to disguise best I can by replacing that cliche black header bar
+					| with something considerably lighter. Also, it uses jQuery (largely because Bootstrap
+					| really likes jQuery, but I guess I really like jQuery too). Modernizr, but only for
+					| one function which is sort of lame. Most of the code is actually written in CoffeeScript
+					| which is pretty cool. It uses node.js, socket.io, express, jade and less (via 
+					| less-middleware).
+			div.modal-footer
+				a.btn(href="https://github.com/antimatter15/protobowl/tree/rewrite", target="_blank") GitHub
+				a.btn.btn-primary(href="#", data-dismiss="modal") Close
+		
+		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
+		script
+			channel_name = '!{name}'
+			//if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
+
+		// script(src="lib/jquery.min.js")
+		script(src="lib/bootstrap.min.js")
+		script(src="lib/modernizr.js")
+		script(src="/socket.io/socket.io.js")
+		script(src="lib/client.js")

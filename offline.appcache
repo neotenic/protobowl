@@ -1,0 +1,29 @@
+CACHE MANIFEST
+# INSERT_DATE Sat Aug 04 2012 12:49:55 GMT-0400 (EDT)
+
+CACHE:
+/favicon.ico
+sample.txt
+lib/bootstrap.min.js
+lib/modernizr.js
+lib/levenshtein.js
+lib/removeDiacritics.js
+lib/syllable.js
+lib/names.js
+lib/answerparse.js
+lib/offline.js
+lib/client.js
+lib/chatbot.js
+less/bootstrap.css
+less/responsive.css
+less/protobowl.css
+font/fontawesome-webfont.woff
+//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
+
+
+NETWORK:
+/socket.io
+
+
+FALLBACK:
+/ offline

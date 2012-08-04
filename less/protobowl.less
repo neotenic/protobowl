@@ -1,0 +1,146 @@
+.timer {
+	font-size: 250%;
+	text-align: center;
+	margin-bottom: 10px;
+
+	.fraction {
+		font-size: 50%;
+	}
+	.buzz {
+		color: #DA2F22;
+	}
+
+}
+
+.thumbnail {
+	margin: 0;
+	margin-bottom: 18px;
+	overflow: auto;
+	
+
+	.progress {
+		margin-bottom: 9px;
+	}
+}
+.table {
+	
+	margin-bottom: 5px;
+}
+.table.headless{
+	tbody tr:first-child{
+		td, th {
+			border-top: none;
+		}
+	}
+	td.value {
+		text-align: right;
+	}
+} 
+
+.popover-content {
+	padding: 1px;
+}
+
+.thumbnail h5 i, .expando i, .actionbar i {
+	margin-right: 5px;
+	margin-top: 1px;
+}
+
+.expando i {
+	margin-left: 5px;
+}
+.actionbar .expando .add-on {
+	padding-right: 10px;
+}
+.breadcrumb {
+	overflow: auto;
+}
+.show-touch {
+	display: none;
+}
+
+form.expando {
+	margin: 0;
+}
+
+.bundle {
+	.annotations {
+		.author { font-weight: bold; }
+		.typing { opacity: 0.7; }
+		.log { font-style: italic;}
+	}
+	.bookmark {
+		margin-left: 5px;
+		text-decoration: none;
+		font-size: 125%;
+	}
+	.answer {
+		font-weight: bold;
+	}
+	.start-page {
+		text-align: center;
+	}
+	.inline-icon {
+		text-shadow: none;
+	}
+	.inline-icon .label {
+		padding-top: 0;
+		padding-bottom: 0;
+		padding-left: 3px;
+		padding-right: 3px;
+		display: inline-block;
+	}
+	.breadcrumb {
+		a {
+			text-decoration: none;
+		}
+		.clickable {
+			cursor: pointer;
+			color: lighten(#333, 30%);
+		}
+		padding-right: 5px;
+	}
+	.asterisk {
+		width: 0px;
+		color: transparent;
+		display: inline-block;
+		text-shadow: none;
+	}
+}
+
+#review {
+	.review-response, .review-judgement, .review-answer {
+		font-style: italic;
+		font-weight: bold;
+	}
+}
+
+
+.bundle.active {
+	.answer { visibility: hidden; }
+	.unread { visibility: hidden; }
+}
+.bundle .breadcrumb {
+	cursor: default;
+}
+.bundle:not(.active) .breadcrumb {
+	cursor: pointer;
+}
+
+.unselectable {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+}
+
+.btn.disabled, .btn[disabled], .timer.disabled {
+	opacity: 0.35;
+}
+
+.progress .bar {
+	-webkit-transition: none;
+	-moz-transition: none;
+	-ms-transition: none;
+	-o-transition: none;
+	transition: none;
+}​
