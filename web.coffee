@@ -22,17 +22,19 @@ if app.settings.env is 'development'
 			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
 			fs.writeFile 'offline.appcache', data, (err) ->
 				throw err if err
-				console.log 'updated appcache'
+				io.sockets.emit 'application_update', +new Date
 				scheduledUpdate = null
 
 	watcher = (event, filename) ->
-		return if filename is "offline.appcache"
+		return if filename is "offline.appcache" or /\.css$/.test(filename)
+		console.log "changed file", filename
 		unless scheduledUpdate
 			scheduledUpdate = setTimeout updateCache, 500
 
 	fs.watch __dirname, watcher
 	fs.watch __dirname + "/lib", watcher
 	fs.watch __dirname + "/less", watcher
+
 
 
 

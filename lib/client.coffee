@@ -103,7 +103,6 @@ cumsum = (list, rate) ->
 ###
 
 
-
 time = -> if sync.time_freeze then sync.time_freeze else serverTime() - sync.time_offset
 
 serverTime = -> new Date - sync_offset
@@ -128,6 +127,9 @@ sock.on 'disconnect', ->
 	addImportant line
 	sock.emit 'init_offline', 'yay' #obviously server wont pay attention to that
 	renderState()
+
+sock.on 'application_update', ->
+	applicationCache.update() if applicationCache?
 
 public_name = null
 public_id = null
@@ -979,6 +981,7 @@ setTimeout ->
 	window.require = -> window.exports
 	deps = ["levenshtein", "removeDiacritics", "answerparse", "syllable", "names", "offline"]
 	loadNextResource = ->
+		# console.log "loading script"
 		$.getScript "lib/#{deps.shift()}.js", ->
 			if deps.length > 0
 				loadNextResource()

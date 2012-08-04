@@ -47,15 +47,16 @@ if (app.settings.env === 'development') {
         if (err) {
           throw err;
         }
-        console.log('updated appcache');
+        io.sockets.emit('application_update', +(new Date));
         return scheduledUpdate = null;
       });
     });
   };
   watcher = function(event, filename) {
-    if (filename === "offline.appcache") {
+    if (filename === "offline.appcache" || /\.css$/.test(filename)) {
       return;
     }
+    console.log("changed file", filename);
     if (!scheduledUpdate) {
       return scheduledUpdate = setTimeout(updateCache, 500);
     }
