@@ -415,11 +415,7 @@ renderPartial = ->
 	#this more complicated system allows text selection
 	#while it's still reading out stuff
 	# for word in words.slice(0, index)
-	spots = for buzz in (bundle.data('starts') || [])
-		del = buzz - sync.begin_time
-		i = 0
-		i++ while del > cumulative[i]
-		i - 1
+	spots = bundle.data('starts') || []
 
 	# console.log "BUZES", spots, words.length
 
@@ -517,10 +513,14 @@ renderTimer = ->
 		$('.offline').fadeIn()
 	if sync.time_freeze
 		if sync.attempt
-			
-			starts = ($('.bundle.active').data('starts') || [])
-			starts.push(sync.attempt.start) if sync.attempt.start not in starts
-			$('.bundle.active').data('starts', starts)
+			do ->
+				cumulative = cumsum sync.timing, sync.rate
+				del = sync.attempt.start - sync.begin_time
+				i = 0
+				i++ while del > cumulative[i]
+				starts = ($('.bundle.active').data('starts') || [])
+				starts.push(i - 1) if (i - 1) not in starts
+				$('.bundle.active').data('starts', starts)
 
 			$('.label.pause').hide()
 			$('.label.buzz').fadeIn()
@@ -1030,10 +1030,13 @@ do -> # isolate variables from globals
 			applicationCache.addEventListener name, handleCacheEvent
 
 # asynchronously load offline components
+#also, html5slider isnt actually for offline,
+# but it can be loaded async, so lets do that, 
+# and reuse all the crap that can be reused
 setTimeout ->
 	window.exports = {}
 	window.require = -> window.exports
-	deps = ["levenshtein", "removeDiacritics", "answerparse", "syllable", "names", "offline"]
+	deps = ["html5slider", "levenshtein", "removeDiacritics", "answerparse", "syllable", "names", "offline"]
 	loadNextResource = ->
 		$.ajax {
 			url: "lib/#{deps.shift()}.js",
