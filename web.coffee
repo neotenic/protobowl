@@ -188,7 +188,7 @@ class QuizRoom
 		#killit, killitwithfire
 		if @attempt?.session is session
 			@touch @attempt.user
-			@attempt.final = true
+			@attempt.done = true
 			@attempt.correct = checkAnswer @attempt.text, @answer
 			
 			@sync()
@@ -220,7 +220,7 @@ class QuizRoom
 				text: '',
 				early: early_index and @time() < @begin_time + @cumulative[early_index],
 				interrupt: @time() < @end_time - @answer_duration,
-				final: false
+				done: false
 			}
 
 			@users[user].guesses++
@@ -237,9 +237,9 @@ class QuizRoom
 			# lets just ignore the input session attribute
 			# because that's more of a chat thing since with
 			# buzzes, you always have room locking anyway
-			if data.final
-				# do final stuff
-				console.log 'omg final clubs are so cool ~ zuck'
+			if data.done
+				# do done stuff
+				console.log 'omg done clubs are so cool ~ zuck'
 				@end_buzz @attempt.session
 			else
 				@sync()
@@ -357,10 +357,10 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'guess', (data) ->
 		room.guess(publicID, data)  if room
 
-	sock.on 'chat', ({text, final, session}) ->
+	sock.on 'chat', ({text, done, session}) ->
 		if room
 			room.touch publicID
-			room.emit 'chat', {text: text, session:  session, user: publicID, final: final, time: room.serverTime()}
+			room.emit 'chat', {text: text, session:  session, user: publicID, done: done, time: room.serverTime()}
 
 	sock.on 'disconnect', ->
 		# id = sock.id

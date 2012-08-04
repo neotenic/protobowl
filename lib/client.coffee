@@ -62,54 +62,55 @@ jQuery.fn.disable = (value) ->
 mobileLayout = -> matchMedia('(max-width: 768px)').matches
 
 avg = (list) ->
-	sum = 0
-	sum += item for item in list
-	sum / list.length
+	sum(list) / list.length
+
+sum = (list) ->
+	s = 0
+	s += item for item in list
+	s
 
 stdev = (list) ->
 	mu = avg(list)
 	Math.sqrt avg((item - mu) * (item - mu) for item in list)
 
 cumsum = (list, rate) ->
-	sum = 0 #start nonzero, allow pause before rendering
+	s = 0 #start nonzero, allow pause before rendering
 	for num in [1].concat(list).slice(0, -1)
-		sum += Math.round(num) * rate #always round!
+		s += Math.round(num) * rate #always round!
 
 
 
-###
-	So in this application, we have to juggle around not one, not two, but three notions of time
-	(and possibly four if you consider freezable time, which needs a cooler name, like what 
-	futurama calls intragnizent, so I'll use that, intragnizent time) anyway. So we have three
-	notions of time. The first and simplest is server time, which is an uninterruptable number
-	of milliseconds recorded by the server's +new Date. Problem is, that the client's +new Date
-	isn't exactly the same (can be a few seconds off, not good when we're dealing with precisions
-	of tens of milliseconds). However, we can operate off the assumption that the relative duration
-	of each increment of time is the same (as in, the relativistic effects due to players in
-	moving vehicles at significant fractions of the speed of light are largely unaccounted for
-	in this version of the application), and even imprecise quartz clocks only loose a second
-	every day or so, which is perfectly okay in the short spans of minutes which need to go 
-	unadjusted. So, we can store the round trip and compare the values and calculate a constant
-	offset between the client time and the server time. However, for some reason or another, I
-	decided to implement the notion of "pausing" the game by stopping the flow of some tertiary
-	notion of time (this makes the math relating to calculating the current position of the read
-	somewhat easier).
+# So in this application, we have to juggle around not one, not two, but three notions of time
+# (and possibly four if you consider freezable time, which needs a cooler name, like what 
+# futurama calls intragnizent, so I'll use that, intragnizent time) anyway. So we have three
+# notions of time. The first and simplest is server time, which is an uninterruptable number
+# of milliseconds recorded by the server's +new Date. Problem is, that the client's +new Date
+# isn't exactly the same (can be a few seconds off, not good when we're dealing with precisions
+# of tens of milliseconds). However, we can operate off the assumption that the relative duration
+# of each increment of time is the same (as in, the relativistic effects due to players in
+# moving vehicles at significant fractions of the speed of light are largely unaccounted for
+# in this version of the application), and even imprecise quartz clocks only loose a second
+# every day or so, which is perfectly okay in the short spans of minutes which need to go 
+# unadjusted. So, we can store the round trip and compare the values and calculate a constant
+# offset between the client time and the server time. However, for some reason or another, I
+# decided to implement the notion of "pausing" the game by stopping the flow of some tertiary
+# notion of time (this makes the math relating to calculating the current position of the read
+# somewhat easier).
 
-	This is implemented by an offset which is maintained by the server which goes on top of the
-	notion of server time. 
+# This is implemented by an offset which is maintained by the server which goes on top of the
+# notion of server time. 
 
-	Why not just use the abstraction of that pausable (tragnizent) time everywhere and forget
-	about the abstraction of server time, you may ask? Well, there are two reasons, the first
-	of which is that two offsets are maintained anyway (the first prototype only used one, 
-	and this caused problems on iOS because certain http requests would have extremely long
-	latencies when the user was scrolling, skewing the time, this new system allows the system
-	to differentiate a pause from a time skew and maintain a more precise notion of time which
-	is calculated by a moving window average of previously observed values)
+# Why not just use the abstraction of that pausable (tragnizent) time everywhere and forget
+# about the abstraction of server time, you may ask? Well, there are two reasons, the first
+# of which is that two offsets are maintained anyway (the first prototype only used one, 
+# and this caused problems on iOS because certain http requests would have extremely long
+# latencies when the user was scrolling, skewing the time, this new system allows the system
+# to differentiate a pause from a time skew and maintain a more precise notion of time which
+# is calculated by a moving window average of previously observed values)
 
-	The second reason, is that there are times when you actually need server time. Situations
-	like when you're buzzing and you have a limited time to answer before your window shuts and
-	control gets handed back to the group.
-###
+# The second reason, is that there are times when you actually need server time. Situations
+# like when you're buzzing and you have a limited time to answer before your window shuts and
+# control gets handed back to the group.
 
 
 time = -> if sync.time_freeze then sync.time_freeze else serverTime() - sync.time_offset
@@ -132,7 +133,8 @@ sock.on 'disconnect', ->
 			" from the server for some reason. ", $('<em>').text(new Date))
 	line.append $('<p>').append("This may be due to a drop in the network 
 			connectivity or a malfunction in the server. The client will automatically 
-			attempt to reconnect to the server. However, you might want to try <a href=''>reloading</a>.")
+			attempt to reconnect to the server and in the mean time, the app has automatically transitioned
+			into offline mode. However, you might want to try <a href=''>reloading</a>.")
 	addImportant $('<div>').addClass('log disconnect-notice').append(line)
 	sock.emit 'init_offline', 'yay' #obviously server wont pay attention to that
 	renderState()
@@ -716,7 +718,7 @@ addImportant = (el) ->
 	el.slideDown()
 	return el
 
-guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
+guessAnnotation = ({session, text, user, done, correct, interrupt, early}) ->
 	# TODO: make this less like chats
 	id = user + '-' + session
 	# console.log id
@@ -742,14 +744,14 @@ guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 		line.append ' '
 		line.append ruling
 		addAnnotation line
-	if final
+	if done
 		if text is ''
 			line.find('.comment').html('<em>(blank)</em>')
 		else
 			line.find('.comment').text(text)
 	else
 		line.find('.comment').text(text)
-	if final
+	if done
 		ruling = line.find('.ruling').show().css('display', 'inline')
 		if correct
 			ruling.addClass('label-success').text('Correct')
@@ -768,9 +770,9 @@ guessAnnotation = ({session, text, user, final, correct, interrupt, early}) ->
 
 		if actionMode is 'guess'
 			setActionMode ''
-	# line.toggleClass 'typing', !final
+	# line.toggleClass 'typing', !done
 
-chatAnnotation = ({session, text, user, final, time}) ->
+chatAnnotation = ({session, text, user, done, time}) ->
 	id = user + '-' + session
 	if $('#' + id).length > 0
 		line = $('#' + id)
@@ -782,14 +784,14 @@ chatAnnotation = ({session, text, user, final, time}) ->
 			.addClass('comment')
 			.appendTo line
 		addAnnotation line
-	if final
+	if done
 		if text is ''
 			line.find('.comment').html('<em>(no message)</em>')
 		else
 			line.find('.comment').text(text)
 	else
 		line.find('.comment').text(text)
-	line.toggleClass 'typing', !final
+	line.toggleClass 'typing', !done
 
 sock.on 'introduce', ({user}) ->
 	line = $('<p>').addClass 'log'
@@ -871,14 +873,14 @@ $('.chat_input').keyup (e) ->
 	sock.emit 'chat', {
 		text: $('.chat_input').val(), 
 		session: $('.chat_input').data('input_session'), 
-		final: false
+		done: false
 	}
 
 $('.chat_form').submit (e) ->
 	sock.emit 'chat', {
 		text: $('.chat_input').val(), 
 		session: $('.chat_input').data('input_session'), 
-		final: true
+		done: true
 	}
 	e.preventDefault()
 	setActionMode ''
@@ -887,14 +889,14 @@ $('.guess_input').keyup (e) ->
 	return if e.keyCode is 13
 	sock.emit 'guess', {
 		text: $('.guess_input').val(), 
-		final: false
+		done: false
 	}
 
 	
 $('.guess_form').submit (e) ->
 	sock.emit 'guess', {
 		text: $('.guess_input').val(), 
-		final: true
+		done: true
 	}
 	e.preventDefault()
 	setActionMode ''
@@ -903,14 +905,14 @@ $('.prompt_input').keyup (e) ->
 	return if e.keyCode is 13
 	sock.emit 'prompt', {
 		text: $('.prompt_input').val(), 
-		final: false
+		done: false
 	}
 
 	
 $('.prompt_form').submit (e) ->
 	sock.emit 'prompt', {
 		text: $('.prompt_input').val(), 
-		final: true
+		done: true
 	}
 	e.preventDefault()
 	setActionMode ''
@@ -946,7 +948,8 @@ $('body').keydown (e) ->
 # but that would be a 
 $(window).resize ->
 	$('.expando').each ->
-		add = $(this).find('.add-on').outerWidth()
+		add = sum($(i).outerWidth() for i in $(this).find('.add-on'))
+		console.log add
 		size = $(this).width()
 		outer = $(this).find('input').outerWidth() - $(this).find('input').width()
 		# console.log 'exp', add, outer, size
@@ -1005,10 +1008,10 @@ handleCacheEvent = ->
 		when applicationCache.CHECKING
 			$('#cachestatus').text 'Checking'
 
-
-if window.applicationCache
-	for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
-		applicationCache.addEventListener name, handleCacheEvent
+do -> # isolate variables from globals
+	if window.applicationCache
+		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
+			applicationCache.addEventListener name, handleCacheEvent
 
 # asynchronously load offline components
 setTimeout ->

@@ -119,12 +119,19 @@ html(lang="en", manifest="offline.appcache")
 							//- button.btn(data-toggle="button") 
 							//- 	i.icon-bell
 							//- 	| Sound
-							//- div.expando
-							//- 	div.input-prepend
-							//- 		span.add-on
-							//- 			i.icon-bolt
-
-							//- 		input(type="range")
+							div.expando
+								div.input-prepend.input-append
+									span.add-on(style="width:21px")
+										i.icon-bolt
+									input(type="number", value="200")
+									span.add-on wpm
+							//- input(type="range", min="60", max="600")
+							div.expando
+								div.input-prepend
+									span.add-on(style="width:21px")
+										i.icon-bolt
+									input(type="range", value="200", min="60", max="600")
+									//- span.add-on wpm
 
 					div.span3.thumbnail.show-keyboard
 						h5 

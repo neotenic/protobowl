@@ -275,7 +275,7 @@ QuizRoom = (function() {
     var _ref;
     if (((_ref = this.attempt) != null ? _ref.session : void 0) === session) {
       this.touch(this.attempt.user);
-      this.attempt.final = true;
+      this.attempt.done = true;
       this.attempt.correct = checkAnswer(this.attempt.text, this.answer);
       this.sync();
       this.unfreeze();
@@ -309,7 +309,7 @@ QuizRoom = (function() {
         text: '',
         early: early_index && this.time() < this.begin_time + this.cumulative[early_index],
         interrupt: this.time() < this.end_time - this.answer_duration,
-        final: false
+        done: false
       };
       this.users[user].guesses++;
       this.freeze();
@@ -325,8 +325,8 @@ QuizRoom = (function() {
     this.touch(user);
     if (((_ref = this.attempt) != null ? _ref.user : void 0) === user) {
       this.attempt.text = data.text;
-      if (data.final) {
-        console.log('omg final clubs are so cool ~ zuck');
+      if (data.done) {
+        console.log('omg done clubs are so cool ~ zuck');
         return this.end_buzz(this.attempt.session);
       } else {
         return this.sync();
@@ -475,15 +475,15 @@ io.sockets.on('connection', function(sock) {
     }
   });
   sock.on('chat', function(_arg) {
-    var final, session, text;
-    text = _arg.text, final = _arg.final, session = _arg.session;
+    var done, session, text;
+    text = _arg.text, done = _arg.done, session = _arg.session;
     if (room) {
       room.touch(publicID);
       return room.emit('chat', {
         text: text,
         session: session,
         user: publicID,
-        final: final,
+        done: done,
         time: room.serverTime()
       });
     }
