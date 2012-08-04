@@ -245,7 +245,7 @@ QuizRoom = (function() {
       year: question.year,
       round: question.round
     };
-    this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ');
+    this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ').replace(/\s+/g, ' ');
     this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
     this.begin_time = this.time();
     this.timing = (function() {

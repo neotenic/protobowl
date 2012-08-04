@@ -134,7 +134,8 @@ sock.on 'disconnect', ->
 	line.append $('<p>').append("This may be due to a drop in the network 
 			connectivity or a malfunction in the server. The client will automatically 
 			attempt to reconnect to the server and in the mean time, the app has automatically transitioned
-			into offline mode. However, you might want to try <a href=''>reloading</a>.")
+			into <b>offline mode</b>. You can continue playing alone with a limited offline set
+			of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
 	addImportant $('<div>').addClass('log disconnect-notice').append(line)
 	sock.emit 'init_offline', 'yay' #obviously server wont pay attention to that
 	renderState()
@@ -401,7 +402,7 @@ renderPartial = ->
 
 
 	timeDelta = time() - sync.begin_time
-	words = sync.question.replace(/\s+/g, ' ').split ' '
+	words = sync.question.split ' '
 	# {list, rate} = sync.timing
 	cumulative = cumsum sync.timing, sync.rate
 	index = 0
@@ -426,9 +427,12 @@ renderPartial = ->
 	unread = bundle.find('.readout .unread')
 	old_spots = visible.data('spots') is spots.join(',')
 	if new_text isnt old_text or !old_spots
+		# console.log words
 		# console.log spots
 		# change = new_text.slice old_text.length
 		# console.log change
+		# console.log new_text
+		# console.log old_text
 		# if new_text.indexOf(old_text.trim()) is 0 and old_spots and change.indexOf('*') is -1
 		# 	visible.append(change)
 		# 	unread.text words.slice(index).join(' ')

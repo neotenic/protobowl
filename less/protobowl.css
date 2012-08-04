@@ -81,6 +81,9 @@ form.expando {
   padding-right: 3px;
   display: inline-block;
 }
+.bundle .breadcrumb {
+  padding-right: 5px;
+}
 .bundle .breadcrumb a {
   text-decoration: none;
 }

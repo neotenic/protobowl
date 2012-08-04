@@ -150,6 +150,7 @@ virtual_server = {
 			.replace(/FTP/g, 'For 10 points')
 			.replace(/^\[.*?\]/, '')
 			.replace(/\n/g, ' ')
+			.replace(/\s+/g, ' ')
 		sync.answer = question.answer
 			.replace(/\<\w\w\>/g, '')
 			.replace(/\[\w\w\]/g, '')
