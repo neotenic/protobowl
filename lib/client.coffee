@@ -640,9 +640,11 @@ createBundle = ->
 	# addInfo 'Report', ''
 
 	breadcrumb.find('li').last().append $('<span>').addClass('divider').text('/')
-	breadcrumb.append $('<li>').addClass('clickable').text('Report').click ->
+	breadcrumb.append $('<li>').addClass('clickable').text('Report').click (e) ->
 		console.log 'report question'
 		$('#report-question').modal('show')
+		e.stopPropagation()
+		e.preventDefault()
 
 	star = $('<a>', {
 		href: "#",
