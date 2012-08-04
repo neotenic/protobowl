@@ -64,6 +64,7 @@ if (app.settings.env === 'development') {
   fs.watch(__dirname, watcher);
   fs.watch(__dirname + "/lib", watcher);
   fs.watch(__dirname + "/less", watcher);
+  updateCache();
 }
 
 io.configure(function() {

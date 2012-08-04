@@ -34,7 +34,7 @@ if app.settings.env is 'development'
 	fs.watch __dirname, watcher
 	fs.watch __dirname + "/lib", watcher
 	fs.watch __dirname + "/less", watcher
-
+	updateCache()
 
 
 

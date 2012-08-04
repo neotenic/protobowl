@@ -968,8 +968,6 @@ handleCacheEvent = ->
 		# when applicationCache.DOWNLOADING
 		# when applicationCache.CHECKING
 
-	
-	
 
 if window.applicationCache
 	for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
@@ -981,10 +979,14 @@ setTimeout ->
 	window.require = -> window.exports
 	deps = ["levenshtein", "removeDiacritics", "answerparse", "syllable", "names", "offline"]
 	loadNextResource = ->
-		# console.log "loading script"
-		$.getScript "lib/#{deps.shift()}.js", ->
-			if deps.length > 0
-				loadNextResource()
+		$.ajax {
+			url: "lib/#{deps.shift()}.js",
+			cache: true,
+			dataType: "script",
+			success: ->
+				if deps.length > 0
+					loadNextResource()
+		}
 	loadNextResource()
 , 10
 

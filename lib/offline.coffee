@@ -86,11 +86,27 @@ virtual_server = {
 
 	chat: (msg) ->
 		sock.server_emit 'chat', {text: msg.text, session: msg.session, user: public_id, final: msg.final, time: serverTime()}
-		if msg.final and /lonely/.test msg.text
-			setTimeout ->
-				# TODO: a turing-test passing chat bot with a surreal and schizophrenic quality
-				sock.server_emit 'chat', {text: "I'm lonely too. Plz talk to meeeee", session: "yay"+Math.random(), user: public_id, final: true, time: serverTime()}
-			, 1000
+
+		if msg.final
+			if replies? or /lonely/.test msg.text
+				session = Math.random().toString(36).slice(2)
+				if replies?
+					pick = (list) -> list[Math.floor(list.length * Math.random())]
+					if msg.text of replies
+						reply = pick replies[msg.text]
+					else
+						reply = pick Object.keys(replies)
+				else
+					$('<script>').attr('src', 'lib/chatbot.js').appendTo('head')
+					reply = "I'm lonely too. Plz talk to meeeee"
+				count = 0
+				writeLetter = ->
+					if ++count <= reply.length
+						console.log session
+						sock.server_emit 'chat', {text: reply.slice(0, count), session, user: public_id, final: count == reply.length, time: serverTime()}
+						setTimeout writeLetter, 1000 * 60 / 6 / 130
+				writeLetter()
+
 
 	new_question: ->
 		sync.attempt = null
