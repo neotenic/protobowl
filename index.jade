@@ -155,6 +155,9 @@ html(lang="en", manifest="offline.appcache")
 									//- tr
 									//-	td time_offset
 									//-	td#time_offset ?
+									tr
+										td(colspan="2")
+											a(href="#", onclick="inner_socket.disconnect();return false") Disconnect
 
 		
 		div.modal.hide#review
