@@ -637,6 +637,12 @@ createBundle = ->
 	# addInfo 'Year', sync.info.year
 	# addInfo 'Number', sync.info.num
 	# addInfo 'Round', sync.info.round
+	# addInfo 'Report', ''
+
+	breadcrumb.find('li').last().append $('<span>').addClass('divider').text('/')
+	breadcrumb.append $('<li>').addClass('clickable').text('Report').click ->
+		console.log 'report question'
+		$('#report-question').modal('show')
 
 	star = $('<a>', {
 		href: "#",

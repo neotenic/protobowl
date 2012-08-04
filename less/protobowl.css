@@ -78,6 +78,13 @@ form.expando {
   padding-right: 3px;
   display: inline-block;
 }
+.bundle .breadcrumb a {
+  text-decoration: none;
+}
+.bundle .breadcrumb .clickable {
+  cursor: pointer;
+  color: #666666;
+}
 .bundle .asterisk {
   width: 0px;
   color: transparent;

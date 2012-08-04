@@ -102,7 +102,6 @@ virtual_server = {
 				count = 0
 				writeLetter = ->
 					if ++count <= reply.length
-						console.log session
 						sock.server_emit 'chat', {text: reply.slice(0, count), session, user: public_id, final: count == reply.length, time: serverTime()}
 						setTimeout writeLetter, 1000 * 60 / 6 / 130
 				writeLetter()
