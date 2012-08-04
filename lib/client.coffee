@@ -6,6 +6,15 @@ sync_offset = 0
 
 sock = {
 	listeners: {},
+	disconnect: ->
+		if inner_socket.socket.connecting
+			virtual_connect = ->
+				if virtual_server?
+					virtual_server.connect()
+				else
+					setTimeout virtual_connect, 100
+			virtual_connect()
+		inner_socket.disconnect()
 
 	emit: (name, data, fn) ->
 		if connected()
@@ -118,13 +127,13 @@ sock.on 'echo', (data, fn) ->
 
 sock.on 'disconnect', ->
 	sync.attempt = null if sync.attempt?.user isnt public_id # get rid of any buzzes
-	line = $('<div>').addClass 'log well'
+	line = $('<div>').addClass 'well'
 	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
 			" from the server for some reason. ", $('<em>').text(new Date))
 	line.append $('<p>').append("This may be due to a drop in the network 
 			connectivity or a malfunction in the server. The client will automatically 
 			attempt to reconnect to the server. However, you might want to try <a href=''>reloading</a>.")
-	addImportant line
+	addImportant $('<div>').addClass('log disconnect-notice').append(line)
 	sock.emit 'init_offline', 'yay' #obviously server wont pay attention to that
 	renderState()
 
@@ -137,6 +146,7 @@ public_id = null
 sock.on 'connect', ->
 	$('.actionbar button').disable false
 	$('.timer').removeClass 'disabled'
+	$('.disconnect-notice').slideUp()
 
 	sock.emit 'join', {
 		old_socket: localStorage.old_socket,
@@ -257,14 +267,14 @@ createStatSheet = (user, full) ->
 		$('<tr>')
 			.appendTo(body)
 			.append($("<th>").text(name))
-			.append($("<td>").text(val))
+			.append($("<td>").addClass("value").text(val))
 	row "ID", user.id.slice(0, 10) if full
 	row	"Score", computeScore(user)
 	row	"Correct", user.correct
 	row "Interrupts", user.interrupts
 	row "Early", user.early  if full
 	row "Incorrect", user.guesses - user.correct  if full
-	row "Guesses", user.guesses  if full
+	row "Guesses", user.guesses 
 	row "Last Seen", formatTime(user.last_action) if full
 	return table
 
@@ -327,7 +337,7 @@ renderState = ->
 				#its me, you idiot
 				badge.addClass 'badge-info'
 				badge.attr 'title', 'You'
-				$('.singleuser .stats table').replaceWith(createStatSheet(user))
+				$('.singleuser .stats table').replaceWith(createStatSheet(user, !!$('.singleuser').data('full')))
 			else
 				if user.online
 					if serverTime() - user.last_action > 1000 * 60 * 10
@@ -361,6 +371,14 @@ renderState = ->
 	#fix all the expandos
 	$(window).resize()
 	renderPartial()
+
+
+$('.singleuser').click ->
+	$('.singleuser .stats').slideUp().queue ->
+		$('.singleuser').data 'full', !$('.singleuser').data('full')
+		renderState()
+
+		$(this).dequeue().slideDown()
 
 renderPartial = ->
 
@@ -967,14 +985,25 @@ handleCacheEvent = ->
 	status = applicationCache.status
 	switch applicationCache.status
 		when applicationCache.UPDATEREADY
+			$('#cachestatus').text 'Updated'
 			console.log 'update is ready'
 			applicationCache.swapCache()
 			$('#update').slideDown()		
-		# when applicationCache.UNCACHED
-		# when applicationCache.OBSOLETE
-		# when applicationCache.IDLE
-		# when applicationCache.DOWNLOADING
-		# when applicationCache.CHECKING
+			
+			if localStorage.auto_reload is "yay"
+				setTimeout ->
+					location.reload()
+				, 500
+		when applicationCache.UNCACHED
+			$('#cachestatus').text 'Uncached'
+		when applicationCache.OBSOLETE
+			$('#cachestatus').text 'Obsolete'
+		when applicationCache.IDLE
+			$('#cachestatus').text 'Cached'
+		when applicationCache.DOWNLOADING
+			$('#cachestatus').text 'Downloading'
+		when applicationCache.CHECKING
+			$('#cachestatus').text 'Checking'
 
 
 if window.applicationCache

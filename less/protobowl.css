@@ -24,6 +24,9 @@
 .table.headless tbody tr:first-child th {
   border-top: none;
 }
+.table.headless td.value {
+  text-align: right;
+}
 .popover-content {
   padding: 1px;
 }

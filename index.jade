@@ -10,8 +10,6 @@ html(lang="en", manifest="offline.appcache")
 		link(rel='stylesheet', href='less/responsive.css')
 		link(rel='stylesheet', href='less/protobowl.css')
 		
-
-
 	body
 		div.navbar.navbar-top
 			div.navbar-inner
@@ -162,8 +160,10 @@ html(lang="en", manifest="offline.appcache")
 									//-	td time_offset
 									//-	td#time_offset ?
 									tr
-										td(colspan="2")
-											a(href="#", onclick="inner_socket.disconnect();return false") Disconnect
+										td
+											a(href="#", onclick="sock.disconnect();return false") Disconnect
+										td#cachestatus 
+
 
 		
 		div.modal.hide#review

@@ -1,6 +1,27 @@
 questions = [{"category": "Meta", "question_num": 666, "tournament": "Metaception Bowl", "question": "This application was intended to act as a chat client which could handle single user sessions offline by pretending the user was schizophrenic. It was started primarily because of an argument about how to implement multiplayer and whether or not the DC comics character, the Joker, might say \"Singleplayer is Multiplayer without balls\". For 10 points, name this application that you are almost certainly using right now.", "accept": null, "difficulty": "HS", "year": 2012, "answer": "protobowl", "round": "Round_10_HSAPQ4Q.pdf"}
 ]
 
+###
+this shuffling algorithm allows the questions to be displayed
+in an order which doesn't repeat until absolutely necessary, 
+which is a nice feature because it's annoying when questions
+can repeat.
+
+However, this may be less of an issue with larger data sets 
+by virtue of being large data sets, but since the offline 
+cache sample probably isn't terribly large, it's nice to have
+this here. That said, it requires a knowwn number of questions
+and and runs in O(n) time, which is fairly quick considering 
+that the number of elements is unlikely to exceed a few tens
+of thousands.
+
+For basic benchmarking, running fisher_yates for 100,000 
+elements takes only 23 milliseconds, which is actually really
+quite good, since the full database even at this point is 
+only 40,000 questions in size. And storing that array of
+doubles would probably be 4MB, which isn't quite so good, but
+alas, it's okay.
+###
 fisher_yates = (i) ->
 	return [] if i is 0
 	arr = [0...i]
@@ -48,6 +69,11 @@ virtual_server = {
 		@new_question()
 
 	###### THE ABOVE SECTION IS PRACTICALLY VERBATIM
+	connect: ->
+		console.log "initializing server!"
+		loadQuestions ->
+			sock.server_emit "connect"
+			
 	init_offline: -> #this function does not exist server side
 		loadQuestions()
 
@@ -206,6 +232,4 @@ loadQuestions = (fn) ->
 		fn() if fn
 
 if !io? #if this is being loaded and socket io exists not
-	console.log "initializing server!"
-	loadQuestions ->
-		sock.server_emit "connect"
+	virtual_server.connect()
