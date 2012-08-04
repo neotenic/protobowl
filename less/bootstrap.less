@@ -62,6 +62,12 @@
 // Utility classes
 @import "utilities.less"; // Has to be last to override when necessary
 
-.navbar-top .navbar-inner {
-	.border-radius(0);
+@media (min-width: 768px) {
+	.navbar-top .navbar-inner {
+		.border-radius(0);
+	}
+}
+
+.navbar-inner {
+	.box-shadow(~"0 1px 3px rgba(200,200,200,.25), inset 0 -1px 0 rgba(0,0,0,.1)");
 }

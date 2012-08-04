@@ -1,5 +1,6 @@
 doctype 5
-html(lang="en")
+html(lang="en", manifest="offline.appcache")
+
 	head
 		title #{name} - ProtoBowl 
 		meta(charset="utf8")
@@ -8,13 +9,7 @@ html(lang="en")
 		link(rel='stylesheet', href='less/bootstrap.css')
 		link(rel='stylesheet', href='less/responsive.css')
 		link(rel='stylesheet', href='less/protobowl.css')
-
-		script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
-		script(src="lib/bootstrap.js")
-		script(src="lib/modernizr.js")
-		script(src="/socket.io/socket.io.js")
-		script
-			channel_name = '!{name}'
+		
 
 
 	body
@@ -28,7 +23,7 @@ html(lang="en")
 							| doing one thing and doing it acceptably well
 						
 					div.pull-right
-						a.btn.btn-primary(href="/") New Room
+						a.btn.btn-primary.new-room(href="/") New Room
 						
 					ul.nav.pull-right
 						li
@@ -72,7 +67,11 @@ html(lang="en")
 											i.icon-question-sign
 											| Prompt
 										input.prompt_input(type='text', placeholder='prompt')	
-									
+					div#update(style="display:none")
+						div.well
+							a.btn.btn-primary.pull-right(href="") Reload
+							| A <strong>new version</strong> of this application has been downloaded. Please reload the application now.
+							
 					div#history
 
 				div.span3
@@ -108,7 +107,7 @@ html(lang="en")
 						div.stats
 							table
 
-					div.span3.thumbnail
+					div.span3.thumbnail.settings(style="display:none")
 						h5
 							i.icon-wrench
 							| Settings
@@ -206,5 +205,14 @@ html(lang="en")
 			div.modal-footer
 				a.btn(href="https://github.com/antimatter15/protobowl/tree/rewrite", target="_blank") GitHub
 				a.btn.btn-primary(href="#", data-dismiss="modal") Close
+		
+		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
+		script
+			channel_name = '!{name}'
+			//if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
 
+		// script(src="lib/jquery.min.js")
+		script(src="lib/bootstrap.min.js")
+		script(src="lib/modernizr.js")
+		script(src="/socket.io/socket.io.js")
 		script(src="lib/client.js")

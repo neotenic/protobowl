@@ -9,10 +9,32 @@ app = express.createServer express.logger()
 io = require('socket.io').listen(app)
 
 app.use require('less-middleware')({src: __dirname})
-app.use express.static(__dirname)
 app.use express.favicon()
 app.use express.cookieParser()
-app.use express.session {secret: 'should probably make this more secret', cookie: {httpOnly: false}}
+app.use express.session {secret: 'should probably make this more secretive', cookie: {httpOnly: false}}
+app.use express.static(__dirname)
+
+if app.settings.env is 'development'
+	scheduledUpdate = null
+	updateCache = ->
+		fs.readFile 'offline.appcache', 'utf8', (err, data) ->
+			throw err if err
+			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
+			fs.writeFile 'offline.appcache', data, (err) ->
+				throw err if err
+				console.log 'updated appcache'
+				scheduledUpdate = null
+
+	watcher = (event, filename) ->
+		return if filename is "offline.appcache"
+		unless scheduledUpdate
+			scheduledUpdate = setTimeout updateCache, 500
+
+	fs.watch __dirname, watcher
+	fs.watch __dirname + "/lib", watcher
+	fs.watch __dirname + "/less", watcher
+
+
 
 io.configure ->
 	# now this is meant to run on nodejitsu rather than heroku
@@ -271,14 +293,6 @@ sha1 = (text) ->
 	hash.update(text)
 	hash.digest('hex')
 
-generateName = ->
-	adjective = 'flaming,aberrant,agressive,warty,hoary,breezy,dapper,edgy,feisty,gutsy,hardy,intrepid,jaunty,karmic,lucid,maverick,natty,oneric,precise,quantal,quizzical,curious,derisive,bodacious,nefarious,nuclear,nonchalant'
-	animal = 'monkey,axolotl,warthog,hedgehog,badger,drake,fawn,gibbon,heron,ibex,jackalope,koala,lynx,meerkat,narwhal,ocelot,penguin,quetzal,kodiak,cheetah,puma,jaguar,panther,tiger,leopard,lion,neanderthal,walrus,mushroom,dolphin'
-	pick = (list) -> 
-		n = list.split(',')
-		n[Math.floor(n.length * Math.random())]
-	pick(adjective) + " " + pick(animal)
-
 
 rooms = {}
 io.sockets.on 'connection', (sock) ->
@@ -299,7 +313,7 @@ io.sockets.on 'connection', (sock) ->
 		room = rooms[room_name]
 		room.add_socket publicID, sock.id
 		unless 'name' of room.users[publicID]
-			room.users[publicID].name = generateName()
+			room.users[publicID].name = require('./lib/names').generateName()
 		fn {
 			id: publicID,
 			name: room.users[publicID].name
@@ -363,19 +377,18 @@ io.sockets.on 'connection', (sock) ->
 		# , 100
 
 
+
+
 app.get '/:channel', (req, res) ->
 	name = req.params.channel
 	# init_channel name
-	res.render 'index.jade', { name }
+	res.render 'index.jade', { name, env: app.settings.env }
+
+
+
 
 app.get '/', (req, res) ->
-	people = 'kirk,feynman,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut'
-	verb = 'on,enveloping,eating,drinking,in,near,sleeping,destruction,arresting,cloning,around,jumping,scrambling'
-	noun = 'mountain,drugs,house,asylum,elevator,scandal,planet,school,brick,lamp,water,paper,friend,toilet,airplane,cow,pony'
-	pick = (list) -> 
-		n = list.split(',')
-		n[Math.floor(n.length * Math.random())]
-	res.redirect '/' + pick(people) + "-" + pick(verb) + "-" + pick(noun)
+	res.redirect '/' + require('./lib/names').generatePage()
 
 
 port = process.env.PORT || 5000
