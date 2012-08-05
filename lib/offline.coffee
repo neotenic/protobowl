@@ -118,12 +118,18 @@ virtual_server = {
 				session = Math.random().toString(36).slice(2)
 				if replies?
 					pick = (list) -> list[Math.floor(list.length * Math.random())]
-					if msg.text of replies
-						reply = pick replies[msg.text]
+					if msg.text.replace(/[^a-z]/g, '') of replies
+						reply = pick(replies[msg.text.replace(/[^a-z]/g, '')]) + "    "
 					else
 						reply = pick Object.keys(replies)
+						reply = pick replies[reply]
 				else
-					$('<script>').attr('src', 'lib/chatbot.js').appendTo('head')
+					# $('<script>').attr('src', 'lib/chatbot.js').appendTo('head')
+					$.ajax {
+						url: "lib/chatbot.js",
+						cache: true,
+						dataType: "script"
+					}
 					reply = "I'm lonely too. Plz talk to meeeee"
 				count = 0
 				writeLetter = ->
