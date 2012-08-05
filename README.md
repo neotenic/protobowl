@@ -95,3 +95,48 @@ The very last in the menu is a link that quite plainly says "Disconnect", and op
 ### The Main Interface
 
 I think I'm going to start over with this manual.
+
+
+# Blog Post
+
+For the past few weeks, I've been working on a project which was tentatively titled "Protobowl", short for "Prototype Quizbowl Application". And that probably suffices as some sort of cursory description of what it is, it's an app which tries to mimic the experience of a quiz bowl competition online. Most importantly, it was designed for multiplayer from day one.
+
+## Backstory
+
+The github page for this project was created two weeks ago at time of writing, but the history of the project actually extends much further back. For the past two years, I've been a member of my school's quiz bowl team, not a particularly illustrious team, but like any non-dysfunctional organization, we do have a sense of enthusiasm for the game. I've wanted to do something which had something to do with it for a while, but never found a sufficient impetus to do it until late in May.
+
+On May 25th of this year, I was introduced to the website quizbowldb.com which has a pretty cool question reader. My friend, who belongs to a team which is significantly better (as an understatement) was using that tool to prepare for a tournament. I spent a few minutes looking at the site and felt mildly disappointed that multiplayer didn't work, but at least I found some niche that was worth catering to.
+
+### Bayesian Classifier
+
+The first thing which needed to be done was getting some set of labeled questions for the database. I looked around and found a few sources but most of them weren't really large or labeled. I had finished the online AI class a few months ago, and felt like applying it in a fairly obvious scenario, so over the course of the next few hours I built a simple naive bayesian classifier to give categories to questions. 
+
+But, in order to do that, I had to first have some manually labeled corpus. I certainly wasn't up for the tedium, so I decided to pull some from the quizbowldb.com site to seed the algorithm. At that point in time, for some reason, I was using some preview release of Windows 8 and rather regrettably couldn't use wget. But I coped by writing a short python script (rather than the more reasonable solution of rebooting into another operating system) which would incrementaly clone the site's database. 
+
+Because of rate limiting or something to that effect, the script only pulled about 10 questions every 40 seconds, and given that there were 30,000 questions in the database, the process wasn't terribly fast. I eventually booted back into linux and rewrote the script so that it was resumable (for the event that the script might be interrupted for some reason on its scheduled week-long run). 
+
+However, by the next day, some number of them were downloaded and that small number was enough to train the classifier. The first thing was trying to run the classifier on the question set itself and comparing how well it fared. The results were actually surprisingly good, and after careful combing through the exceptions, it appeared that most of the errors manifested from the manual mislabeling of the original corpus. 
+
+After that initial successful result, I did a bit of work on a question extraction algorithm which would use the command line version of Abiword to convert .doc and .docx files that packets are usually distributed as into some machine readable format for feeding into the classifier. However, I never quite finished that, as school work caught up with me and I waited for the database to finish downloading.
+
+### Hiatus
+
+On June 7th, about two weeks after I built the first promising prototype of the question parser, I had noticed that the background task had finished. Actually, it finished something like a week earlier, but I hadn't noticed. Lurking around through Wikipedia, I discovered that Roger Craig, the famed Jeopardy! contestant who wrote a program to help study had actually attended my high school.
+
+But nothing really happened after that. The school year was nearing a close and the after school clubs were having their last meetings of the year. There was the standardized testing and the anxiety about the imminent end of the year, and I had other projects which seemed more enticing at the time. Narrower in scope and more doable in shorter periods of time. This app was always on the radar, it just gradually slipped further and further back.
+
+### It's Ac Attack
+
+I wasn't the only person in my school's quiz bowl team who was interested in pursuing the idea. In fact, it was Ben who actually started the app first. I didn't write code for the actual project until two weeks ago.
+
+Early in July (or possibly late in June), Ben wanted to build that quiz bowl application when I was still working on a few other projects as well as an internship. I gave him the big JSON file of questions and he toiled away for the next few days, experimenting first with Ruby on Rails and then later settling with Node.JS (and the accompanying popular stacks). 
+
+Within a few days, he had put out a pretty impresive application using Mongoose, Jade, Twitter Bootstrap, Express, and Node running on Heroku at the (now defunct) its-ac-attack URL. Soon afterwards search was fairly functional and I started to take an interest in the project again (having almost finished another project, though at time of writing, I have yet to begin writing the blog post for that project).
+
+I felt like exploiting this opportunity to get acquainted somewhat with popular NodeJS frameworks and tools. I haven't done much with Node for over two years, and the landscape has changed considerably in the intervening years. It's a fast growing and developing community. However, I never really found interest in building the entire app. Managing users and doing search has has always struck me as somewhat boring, in part because it's hardly untreaded territory.
+
+I wanted to skip straight into the low latency websocket-driven synchronized multiplayer. Ben was still acclimating to the multimodal (if I'm using these buzzwords right) paradigm of writing code meant to be executed on both the client and the server, so I decided to prototype a multiplayer environment.
+
+## Prototype Quizbowl Application
+
+Chronologically, this places us at about two weeks ago. 
