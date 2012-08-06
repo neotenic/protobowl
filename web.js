@@ -38,12 +38,12 @@ app.use(express["static"](__dirname));
 if (app.settings.env === 'development') {
   scheduledUpdate = null;
   updateCache = function() {
-    return fs.readFile('offline.appcache', 'utf8', function(err, data) {
+    return fs.readFile(__dirname + '/offline.appcache', 'utf8', function(err, data) {
       if (err) {
         throw err;
       }
       data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE ' + (new Date).toString() + "\n");
-      return fs.writeFile('offline.appcache', data, function(err) {
+      return fs.writeFile(__dirname + '/offline.appcache', data, function(err) {
         if (err) {
           throw err;
         }
@@ -64,7 +64,6 @@ if (app.settings.env === 'development') {
   fs.watch(__dirname, watcher);
   fs.watch(__dirname + "/lib", watcher);
   fs.watch(__dirname + "/less", watcher);
-  updateCache();
 }
 
 io.configure(function() {
@@ -92,7 +91,7 @@ app.set('view options', {
 
 questions = [];
 
-fs.readFile('sample.txt', 'utf8', function(err, data) {
+fs.readFile(__dirname + '/sample.txt', 'utf8', function(err, data) {
   var line;
   if (err) {
     throw err;

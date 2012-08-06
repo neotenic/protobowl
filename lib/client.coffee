@@ -389,9 +389,10 @@ renderPartial = ->
 
 
 	wpm = Math.round(1000 * 60 / 5 / sync.rate)
-	unless $(document.activeElement).is(".speed")
+	if !$('.speed').data('last_update') or new Date - $(".speed").data("last_update") > 1337
 		if Math.abs($('.speed').val() - wpm) > 1
 			$('.speed').val(wpm)
+
 	#render the question 
 	if sync.question isnt last_question
 		changeQuestion() #whee slidey
@@ -955,6 +956,7 @@ $('body').keydown (e) ->
 
 $('.speed').change ->
 	$('.speed').not(this).val($(this).val())
+	$('.speed').data("last_update", +new Date)
 	rate = 1000 * 60 / 5 / Math.round($(this).val())
 	sock.emit 'speed', rate
 	# console.log rate

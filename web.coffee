@@ -17,10 +17,10 @@ app.use express.static(__dirname)
 if app.settings.env is 'development'
 	scheduledUpdate = null
 	updateCache = ->
-		fs.readFile 'offline.appcache', 'utf8', (err, data) ->
+		fs.readFile __dirname + '/offline.appcache', 'utf8', (err, data) ->
 			throw err if err
 			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
-			fs.writeFile 'offline.appcache', data, (err) ->
+			fs.writeFile __dirname + '/offline.appcache', data, (err) ->
 				throw err if err
 				io.sockets.emit 'application_update', +new Date
 				scheduledUpdate = null
@@ -34,7 +34,7 @@ if app.settings.env is 'development'
 	fs.watch __dirname, watcher
 	fs.watch __dirname + "/lib", watcher
 	fs.watch __dirname + "/less", watcher
-	updateCache()
+	
 
 
 
@@ -64,7 +64,7 @@ app.set 'view options', {
 }
 
 questions = []
-fs.readFile 'sample.txt', 'utf8', (err, data) ->
+fs.readFile __dirname + '/sample.txt', 'utf8', (err, data) ->
 	throw err if err
 	questions = (JSON.parse(line) for line in data.split("\n"))
 	# questions = (q for q in questions when q.question.indexOf('*') != -1)
