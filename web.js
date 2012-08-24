@@ -127,6 +127,19 @@ getQuestion = function(last_answer, difficulty, category, cb) {
     }
     return Question.findOne(criterion, function(err, doc) {
       console.log(num_attempts, doc);
+      if (doc === null) {
+        cb({
+          'category': 'Error',
+          'difficulty': 'Error',
+          'num': 'Error',
+          'tournament': 'Error Cup',
+          'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. For 10 points, name this event which happened right now.',
+          'answer': 'error',
+          'year': 1995,
+          'round': 'Error'
+        });
+        return;
+      }
       if (doc.answer === last_answer && num_attempts < 10) {
         return runQuery();
       } else {
@@ -306,7 +319,7 @@ QuizRoom = (function() {
         category: question.category,
         difficulty: question.difficulty,
         tournament: question.tournament,
-        num: question.question_num,
+        num: question.num,
         year: question.year,
         round: question.round
       };

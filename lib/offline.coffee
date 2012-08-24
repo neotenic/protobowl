@@ -34,12 +34,49 @@ getQuestion = ->
 	#todo, dedup
 	if question_schedule.length is 0
 		question_schedule = fisher_yates(questions.length)
-	return questions[question_schedule.shift()]
+
+	if sync.difficulty or sync.category
+		question_schedule = question_schedule.filter (e) ->
+			q = questions[e]
+			if sync.difficulty and q.difficulty != sync.difficulty
+				return false
+			if sync.category and q.category != sync.category
+				return false
+			return true
+
+				
+	return questions[question_schedule.shift()] || {
+		'category': 'Error',
+		'difficulty': 'Error',
+		'num': 'Error',
+		'tournament': 'Error Cup',
+		'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. For 10 points, name this event which happened right now.',
+		'answer': 'error',
+		'year': 1995,
+		'round': 'Error'
+	}
 	# for i in [0...20]
 	# 	num = Math.floor(questions.length * Math.random())
 	# 	break unless num in previous_questions
 	# previous_questions.push num
 	# return questions[num]
+
+
+countMatches = ->
+	a = questions.filter (q) ->
+		if sync.difficulty and q.difficulty != sync.difficulty
+			return false
+		if sync.category and q.category != sync.category
+			return false
+		return true
+	return a.length
+
+listProps = (prop) ->
+	propmap = {}
+	for q in questions
+		propmap[q[prop]] = 1
+	return (p for p of propmap)
+
 
 # checkAnswer = (attempt, correct) ->
 # 	attempt.toLowerCase()
@@ -79,6 +116,14 @@ virtual_server = {
 	rename: (name) ->
 		users[public_id].name = name
 
+	difficulty: (data) ->
+		sync.difficulty = data
+		sock.server_emit 'log', {user: public_id, verb: ' set difficulty to '+ (data || 'anything')  + " (#{countMatches()} questions)"}
+
+	category: (data) ->
+		sync.category = data
+		sock.server_emit 'log', {user: public_id, verb: ' set category to ' + (data || 'more pot') + " (#{countMatches()} questions)"}
+
 	join: (data) ->
 		publicID = "offline"
 		publicName = require('lib/names').generateName()
@@ -100,8 +145,12 @@ virtual_server = {
 		@freeze()
 		@new_question()
 
-		sock.server_emit 'introduce', {user: publicID}
+		# sock.server_emit 'introduce', {user: publicID}
+		sock.server_emit 'log', {user: publicID, verb: 'joined the room'}
 		
+		sync.categories = listProps('category')
+		sync.difficulties = listProps('difficulty')
+
 		setTimeout ->
 			synchronize()
 		, 10

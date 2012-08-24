@@ -100,6 +100,18 @@ getQuestion = (last_answer, difficulty, category, cb) ->
 
 		Question.findOne criterion, (err, doc) ->
 			console.log num_attempts, doc
+			if doc is null
+				cb {
+					'category': 'Error',
+					'difficulty': 'Error',
+					'num': 'Error',
+					'tournament': 'Error Cup',
+					'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. For 10 points, name this event which happened right now.',
+					'answer': 'error',
+					'year': 1995,
+					'round': 'Error'
+				}
+				return
 			if doc.answer is last_answer and num_attempts < 10
 				runQuery()
 			else
@@ -245,7 +257,7 @@ class QuizRoom
 				category: question.category, 
 				difficulty: question.difficulty, 
 				tournament: question.tournament, 
-				num: question.question_num, 
+				num: question.num, 
 				year: question.year, 
 				round: question.round
 			}

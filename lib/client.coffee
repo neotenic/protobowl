@@ -193,23 +193,23 @@ synchronize = (data) ->
 		for attr of data
 			sync[attr] = data[attr]
 
-		if 'difficulties' of data or 'categories' of data
-			# re-generate the lists, yaaay
-			$('.difficulties option').remove()
-			$('.difficulties')[0].options.add new Option("Any", '')
-			for dif in sync.difficulties
-				$('.difficulties')[0].options.add new Option(dif, dif)
+	if (data and 'difficulties' of data) or ($('.difficulties')[0].options.length == 0 and sync.difficulties)
+		# re-generate the lists, yaaay
+		$('.difficulties option').remove()
+		$('.difficulties')[0].options.add new Option("Any", '')
+		for dif in sync.difficulties
+			$('.difficulties')[0].options.add new Option(dif, dif)
 
-			$('.categories option').remove()
-			$('.categories')[0].options.add new Option('Everything', '')
-			for cat in sync.categories
-				$('.categories')[0].options.add new Option(cat, cat)
+		$('.categories option').remove()
+		$('.categories')[0].options.add new Option('Everything', '')
+		for cat in sync.categories
+			$('.categories')[0].options.add new Option(cat, cat)
 
-		$('.categories').val sync.category
-		$('.difficulties').val sync.difficulty
+	$('.categories').val sync.category
+	$('.difficulties').val sync.difficulty
 
-		if $('.settings').is(':hidden')
-			$('.settings').slideDown()
+	if $('.settings').is(':hidden')
+		$('.settings').slideDown()
 	
 	if !data or 'users' of data
 		renderState()
