@@ -103,7 +103,7 @@ html(lang="en", manifest="offline.appcache")
 								span.label.label-important.offline(style="display:none") Offline
 							div.stats
 								table
-								
+
 					div.span3.settings(style="display:none; margin: 0")
 						div.span3.thumbnail
 							h5
@@ -136,13 +136,8 @@ html(lang="en", manifest="offline.appcache")
 									div.input-prepend
 										span.add-on(style="width:21px", title="Difficulty/Category", rel='tooltip')
 											i.icon-briefcase
-										select.padd-on(style="width: 60px; border-right: 0")
-											option All
-											option HS
-											option CG
-										select.input(style="border-left: 0")
-											option Everything
-											option Science
+										select.padd-on.difficulties(style="width: 60px; border-right: 0")
+										select.input.categories(style="border-left: 0")
 		
 
 					div.span3.thumbnail.show-keyboard

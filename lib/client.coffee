@@ -159,7 +159,7 @@ sock.on 'connect', ->
 		public_id = data.id
 		$('#username').val public_name
 		$('#username').disable false
-		$('.settings').slideDown()
+		# $('.settings').slideDown()
 
 
 
@@ -192,6 +192,24 @@ synchronize = (data) ->
 		# console.log 'sync', data
 		for attr of data
 			sync[attr] = data[attr]
+
+		if 'difficulties' of data or 'categories' of data
+			# re-generate the lists, yaaay
+			$('.difficulties option').remove()
+			$('.difficulties')[0].options.add new Option("Any", '')
+			for dif in sync.difficulties
+				$('.difficulties')[0].options.add new Option(dif, dif)
+
+			$('.categories option').remove()
+			$('.categories')[0].options.add new Option('Everything', '')
+			for cat in sync.categories
+				$('.categories')[0].options.add new Option(cat, cat)
+
+		$('.categories').val sync.category
+		$('.difficulties').val sync.difficulty
+
+		if $('.settings').is(':hidden')
+			$('.settings').slideDown()
 	
 	if !data or 'users' of data
 		renderState()
@@ -206,6 +224,7 @@ synchronize = (data) ->
 
 	# if sync.time_offset isnt null
 	# 	$('#time_offset').text(sync.time_offset.toFixed(1))
+
 
 
 
@@ -636,7 +655,7 @@ changeQuestion = ->
 		
 		bundle.find('.readout').hide().before start
 
-	bundle.slideDown("slow").queue ->
+	bundle.slideDown("normal").queue ->
 		bundle.width('auto')
 		$(this).dequeue()
 	if old.find('.readout').length > 0
@@ -647,7 +666,7 @@ changeQuestion = ->
 		old.find('.readout')[0].normalize()
 
 		old.queue ->
-			old.find('.readout').slideUp("slow")
+			old.find('.readout').slideUp("normal")
 			$(this).dequeue()
 
 
@@ -803,23 +822,28 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		line.find('.comment').text(text)
 	line.toggleClass 'typing', !done
 
-sock.on 'introduce', ({user}) ->
+# sock.on 'introduce', ({user}) ->
+# 	line = $('<p>').addClass 'log'
+# 	line.append userSpan(user)
+# 	line.append " joined the room"
+# 	addAnnotation line
+
+# sock.on 'leave', ({user}) ->
+# 	line = $('<p>').addClass 'log'
+# 	line.append userSpan(user)
+# 	line.append " left the room"
+# 	addAnnotation line
+
+sock.on 'log', ({user, verb}) ->
 	line = $('<p>').addClass 'log'
 	line.append userSpan(user)
-	line.append " joined the room"
+	line.append " " + verb
 	addAnnotation line
-
-sock.on 'leave', ({user}) ->
-	line = $('<p>').addClass 'log'
-	line.append userSpan(user)
-	line.append " left the room"
-	addAnnotation line
-
 
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
 		readout = $(this).parent().find('.readout')
-		readout.width($('#history').width()).slideToggle "slow", ->
+		readout.width($('#history').width()).slideToggle "normal", ->
 			readout.width 'auto'
 
 actionMode = ''
@@ -961,6 +985,11 @@ $('.speed').change ->
 	sock.emit 'speed', rate
 	# console.log rate
 		
+$('.categories').change ->
+	sock.emit 'category', $('.categories').val()
+
+$('.difficulties').change ->
+	sock.emit 'difficulty', $('.difficulties').val()
 
 # possibly this should be replaced by something smarter using CSS calc()
 # but that would be a 

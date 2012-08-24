@@ -63,13 +63,96 @@ app.set 'view options', {
   layout: false
 }
 
-questions = []
-fs.readFile __dirname + '/sample.txt', 'utf8', (err, data) ->
-	throw err if err
-	questions = (JSON.parse(line) for line in data.split("\n"))
-	# questions = (q for q in questions when q.question.indexOf('*') != -1)
-	# questions = [{answer: "ponies", question: "tu tu to galvanizationationationationation to galvanization to galvin to galvanization to galvanization two galvanization moo galvanization"}]
+mongoose = require('mongoose')
+# oh noes, plz dont hacxxors me
+db = mongoose.createConnection 'mongodb://nodejitsu:87a9e43f3edd8929ef1e48ede1f0fc6d@alex.mongohq.com:10056/nodejitsudb560367656797'
 
+QuestionSchema = new mongoose.Schema {
+	category: String,
+	num: Number,
+	tournament: String,
+	question: String,
+	answer: String,
+	difficulty: String,
+	year: Number,
+	round: String,
+	random: Number
+}
+
+Question = db.model 'Question', QuestionSchema
+
+
+getQuestion = (last_answer, difficulty, category, cb) ->
+	num_attempts = 0
+
+	runQuery = ->
+		rand = Math.random()
+		num_attempts++
+		criterion = {
+			random: {
+				$gte: rand
+			}
+		}
+		if difficulty
+			criterion.difficulty = difficulty
+		if category
+			criterion.category = category
+
+		Question.findOne criterion, (err, doc) ->
+			console.log num_attempts, doc
+			if doc.answer is last_answer and num_attempts < 10
+				runQuery()
+			else
+				cb(doc) if cb
+	runQuery()
+
+countQuestions = (difficulty, category, cb) ->
+	criterion = {}
+	if difficulty
+		criterion.difficulty = difficulty
+	if category
+		criterion.category = category
+	Question.count criterion, (err, doc) ->
+		cb(doc)
+
+# Question.collection.drop()
+# questions = []
+# count = 0
+# fs.readFile __dirname + '/questions.json', 'utf8', (err, data) ->
+# 	throw err if err
+# 	# questions = (JSON.parse(line) for line in data.split("\n"))
+
+# 	for line in data.split("\n")
+# 		# console.log line
+# 		continue if line is ''
+# 		j = JSON.parse(line)
+# 		silence = new Question {
+# 			category: j.category,
+# 			num: j.question_num,
+# 			tournament: j.tournament,
+# 			question: j.question,
+# 			difficulty: j.difficulty,
+# 			answer: j.answer,
+# 			year: j.year,
+# 			round: j.round,
+# 			random: Math.random()
+# 		}
+# 		silence.save (err) ->
+# 			console.log 'meow', count++
+# 	# questions = (q for q in questions when q.question.indexOf('*') != -1)
+# 	# questions = [{answer: "ponies", question: "tu tu to galvanizationationationationation to galvanization to galvin to galvanization to galvanization two galvanization moo galvanization"}]
+
+
+categories = []
+difficulties = []
+
+Question.collection.distinct 'category', (err, docs) ->
+	categories = docs
+
+Question.collection.distinct 'difficulty', (err, docs) ->
+	difficulties = docs
+
+Question.collection.ensureIndex { random: 1, category: 1, difficulty: 1 }
 
 cumsum = (list, rate) ->
 	sum = 0 #start nonzero, allow pause before rendering
@@ -86,6 +169,8 @@ class QuizRoom
 		@freeze()
 		@new_question()
 		@users = {}
+		@difficulty = ''
+		@category = ''
 
 	add_socket: (id, socket) ->
 		unless id of @users
@@ -153,31 +238,32 @@ class QuizRoom
 
 
 	new_question: ->
-		@attempt = null
-		question = questions[Math.floor(questions.length * Math.random())]
-		@info = {
-			category: question.category, 
-			difficulty: question.difficulty, 
-			tournament: question.tournament, 
-			num: question.question_num, 
-			year: question.year, 
-			round: question.round
-		}
-		@question = question.question
-			.replace(/FTP/g, 'For 10 points')
-			.replace(/^\[.*?\]/, '')
-			.replace(/\n/g, ' ')
-			.replace(/\s+/g, ' ')
-		@answer = question.answer
-			.replace(/\<\w\w\>/g, '')
-			.replace(/\[\w\w\]/g, '')
+		# question = questions[Math.floor(questions.length * Math.random())]
+		getQuestion @answer, @difficulty, @category, (question) =>
+			@attempt = null
+			@info = {
+				category: question.category, 
+				difficulty: question.difficulty, 
+				tournament: question.tournament, 
+				num: question.question_num, 
+				year: question.year, 
+				round: question.round
+			}
+			@question = question.question
+				.replace(/FTP/g, 'For 10 points')
+				.replace(/^\[.*?\]/, '')
+				.replace(/\n/g, ' ')
+				.replace(/\s+/g, ' ')
+			@answer = question.answer
+				.replace(/\<\w\w\>/g, '')
+				.replace(/\[\w\w\]/g, '')
 
-		@begin_time = @time()
-		@timing = (syllables(word) + 1 for word in @question.split(" "))
-		@set_speed @rate #do the math with speeds
-		# @cumulative = cumsum @timing, @rate #todo: comment out
-		# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
-		@sync(2)
+			@begin_time = @time()
+			@timing = (syllables(word) + 1 for word in @question.split(" "))
+			@set_speed @rate #do the math with speeds
+			# @cumulative = cumsum @timing, @rate #todo: comment out
+			# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
+			@sync(2)
 
 	set_speed: (rate) ->
 		now = @time() # take a snapshot of time to do math with
@@ -317,6 +403,10 @@ class QuizRoom
 			data.answer = @answer
 			data.timing = @timing
 			data.info = @info
+
+		if level >= 3
+			data.categories = categories
+			data.difficulties = difficulties
 			
 		io.sockets.in(@name).emit 'sync', data
 
@@ -351,8 +441,8 @@ io.sockets.on 'connection', (sock) ->
 			id: publicID,
 			name: room.users[publicID].name
 		}
-		room.sync(2)
-		room.emit 'introduce', {user: publicID}
+		room.sync(3)
+		room.emit 'log', {user: publicID, verb: 'joined the room'}
 
 	sock.on 'echo', (data, callback) =>
 		callback +new Date
@@ -382,6 +472,21 @@ io.sockets.on 'connection', (sock) ->
 		# room.users[publicID].unpause = vote
 		# room.sync() if room
 
+	sock.on 'difficulty', (data) ->
+		room.difficulty = data
+		room.sync()
+		countQuestions room.difficulty, room.category, (count) ->
+			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
+		
+
+	sock.on 'category', (data) ->
+		room.category = data
+		room.sync()
+		countQuestions room.difficulty, room.category, (count) ->
+			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
+		
+
+
 	sock.on 'speed', (data) ->
 		room.set_speed data
 		room.sync()
@@ -404,7 +509,7 @@ io.sockets.on 'connection', (sock) ->
 			room.del_socket publicID, sock.id
 			room.sync(1)
 			if room.users[publicID].sockets.length is 0
-				room.emit 'leave', {user: publicID}
+				room.emit 'log', {user: publicID, verb: 'left the room'}
 		
 		# setTimeout ->
 		# 	console.log !!room, 'rooms'
