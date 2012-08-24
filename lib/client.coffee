@@ -966,12 +966,17 @@ $('.speed').change ->
 # but that would be a 
 $(window).resize ->
 	$('.expando').each ->
-		add = sum($(i).outerWidth() for i in $(this).find('.add-on'))
+		add = sum($(i).outerWidth() for i in $(this).find('.add-on, .padd-on'))
 		# console.log add
 		size = $(this).width()
-		outer = $(this).find('input').outerWidth() - $(this).find('input').width()
-		# console.log 'exp', add, outer, size
-		$(this).find('input').width size - outer - add
+		input = $(this).find('input, .input')
+		if input.hasClass 'input'
+			outer = 0
+		else
+			outer = input.outerWidth() - input.width()
+		# console.log 'exp', input, add, outer, size
+		input.width size - outer - add
+
 
 $(window).resize()
 
