@@ -477,7 +477,7 @@ QuizRoom = (function() {
         duration: 8 * 1000,
         session: session,
         text: '',
-        early: early_index && this.time() < this.begin_time + this.cumulative[early_index],
+        early: early_index !== -1 && this.time() < this.begin_time + this.cumulative[early_index],
         interrupt: this.time() < this.end_time - this.answer_duration,
         done: false
       };
@@ -705,7 +705,8 @@ io.sockets.on('connection', function(sock) {
 });
 
 app.get('/stalkermode', function(req, res) {
-  var room, text, time, u, user;
+  var room, text, time, u, user, util;
+  util = require('util');
   text = "<h1>STALKERMODE ENGAGED</h1><ul>";
   for (room in rooms) {
     text += "<li> <a href='/" + room + "'>" + room + "</a> <ul>";
@@ -721,7 +722,7 @@ app.get('/stalkermode', function(req, res) {
     }
     text += "</ul></li>";
   }
-  text += "</ul>";
+  text += "</ul><p>" + util.inspect(process.memoryUsage());
   return res.send(text);
 });
 

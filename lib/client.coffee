@@ -217,6 +217,16 @@ synchronize = (data) ->
 	else
 		renderPartial()
 
+
+	if sync.attempt
+		guessAnnotation sync.attempt
+
+	wpm = Math.round(1000 * 60 / 5 / sync.rate)
+	if !$('.speed').data('last_update') or new Date - $(".speed").data("last_update") > 1337
+		if Math.abs($('.speed').val() - wpm) > 1
+			$('.speed').val(wpm)
+
+
 	if sync.attempt
 		if sync.attempt.user isnt public_id
 			setActionMode '' if actionMode is 'guess'
@@ -290,14 +300,15 @@ createStatSheet = (user, full) ->
 		$('<tr>')
 			.appendTo(body)
 			.append($("<th>").text(name))
-			.append($("<td>").addClass("value").text(val))
-	row "ID", user.id.slice(0, 10) if full
-	row	"Score", computeScore(user)
+			.append($("<td>").addClass("value").append(val))
+	
+	row	"Score", $('<span>').addClass('badge').text(computeScore(user))
 	row	"Correct", user.correct
 	row "Interrupts", user.interrupts
 	row "Early", user.early  if full
 	row "Incorrect", user.guesses - user.correct  if full
 	row "Guesses", user.guesses 
+	row "ID", user.id.slice(0, 10) if full
 	row "Last Seen", formatTime(user.last_action) if full
 	return table
 
@@ -419,11 +430,6 @@ renderPartial = ->
 	return unless sync.question and sync.timing
 
 
-	wpm = Math.round(1000 * 60 / 5 / sync.rate)
-	if !$('.speed').data('last_update') or new Date - $(".speed").data("last_update") > 1337
-		if Math.abs($('.speed').val() - wpm) > 1
-			$('.speed').val(wpm)
-
 	#render the question 
 	if sync.question isnt last_question
 		changeQuestion() #whee slidey
@@ -438,12 +444,11 @@ renderPartial = ->
 	renderTimer()
 	
 
-	if sync.attempt
-		guessAnnotation sync.attempt
 
 
 updateTextAnnotations = ->
 	words = sync.question.split ' '
+	early_index = sync.question.replace(/[^ \*]/g, '').indexOf('*')
 	bundle = $('#history .bundle.active') 
 	spots = bundle.data('starts') || []
 
@@ -469,6 +474,9 @@ updateTextAnnotations = ->
 			# console.log spots, i, words.length
 			if i is words.length - 1
 				label_type = "label-info"
+			if early_index != -1 and i < early_index
+				label_type = "label"
+
 			element.append " <span class='inline-icon'><i class='label icon-white icon-bell  #{label_type}'></i></span> "
 
 		elements.push element
@@ -483,6 +491,8 @@ updateTextAnnotations = ->
 
 				
 updateTextPosition = ->
+	return unless sync.question and sync.timing
+
 	timeDelta = time() - sync.begin_time
 	words = sync.question.split ' '
 	cumulative = cumsum sync.timing, sync.rate
@@ -492,10 +502,7 @@ updateTextPosition = ->
 	bundle = $('#history .bundle.active') 
 	readout = bundle.find('.readout .well')
 	children = readout.children()
-	# console.log children.length
 	if children.length != words.length
-
-		console.log "updating text annotats", children.length, words.length
 		updateTextAnnotations()
 
 	children.slice(0, index).removeClass('unread')
@@ -543,18 +550,21 @@ renderTimer = ->
 			$('.label.pause').fadeIn()
 			$('.label.buzz').hide()
 
-		if $('.pausebtn').text() != 'Resume'
+		if $('.pausebtn').hasClass('btn-warning')
+			$('.pausebtn .resume').show()
+			$('.pausebtn .pause').hide()
+
 			$('.pausebtn')
-			.text('Resume')
 			.addClass('btn-success')
 			.removeClass('btn-warning')
 
 	else
 		$('.label.pause').fadeOut()
 		$('.label.buzz').fadeOut()
-		if $('.pausebtn').text() != 'Pause'
+		if $('.pausebtn').hasClass('btn-success')
+			$('.pausebtn .resume').hide()
+			$('.pausebtn .pause').show()
 			$('.pausebtn')
-			.text('Pause')
 			.addClass('btn-warning')
 			.removeClass('btn-success')
 
@@ -744,6 +754,7 @@ addImportant = (el) ->
 
 guessAnnotation = ({session, text, user, done, correct, interrupt, early}) ->
 	# TODO: make this less like chats
+	# console.log("guess annotat", text, done)
 	id = user + '-' + session
 	# console.log id
 	if $('#' + id).length > 0

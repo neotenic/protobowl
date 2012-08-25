@@ -23,7 +23,7 @@ html(lang="en", manifest="offline.appcache")
 					div.pull-right
 						a.btn.btn-primary.new-room(href="/") New Room
 						
-					ul.nav.pull-right
+					ul.nav.pull-right.hidden-phone
 						li
 							a(href="#", data-toggle="modal", href="#about") About
 						
@@ -42,7 +42,12 @@ html(lang="en", manifest="offline.appcache")
 										| Next
 									| 
 									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip', disabled) 
-										| Pause
+										span.pause
+											i.icon-pause.visible-phone(style="margin-right:0")
+											span.hidden-phone Pause
+										span.resume(style="display:none")
+											i.icon-play.visible-phone(style="margin-right:0")
+											span.hidden-phone Resume
 									| 
 									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip', disabled)
 										i.icon-bell.icon-white

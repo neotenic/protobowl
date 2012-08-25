@@ -403,8 +403,9 @@ class QuizRoom
 			@touch @attempt.user
 			@attempt.done = true
 			@attempt.correct = checkAnswer @attempt.text, @answer, @question
-			
 			@sync()
+
+			# io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "finished buzzing"}
 			@unfreeze()
 			if @attempt.correct
 				@users[@attempt.user].correct++
@@ -431,7 +432,7 @@ class QuizRoom
 				duration: 8 * 1000,
 				session, # generate 'em server side 
 				text: '',
-				early: early_index and @time() < @begin_time + @cumulative[early_index],
+				early: early_index != -1 and @time() < @begin_time + @cumulative[early_index],
 				interrupt: @time() < @end_time - @answer_duration,
 				done: false
 			}
@@ -619,6 +620,7 @@ io.sockets.on 'connection', (sock) ->
 
 
 app.get '/stalkermode', (req, res) ->
+	util = require('util')
 	text = "<h1>STALKERMODE ENGAGED</h1><ul>"
 	for room of rooms
 		text += "<li> <a href='/#{room}'>#{room}</a> <ul>"
@@ -632,7 +634,7 @@ app.get '/stalkermode', (req, res) ->
 			text += "<li>guesses: #{u.guesses}</li>"
 			text += "</ul></li>"
 		text += "</ul></li>"
-	text += "</ul>"
+	text += "</ul><p>" + util.inspect(process.memoryUsage())
 
 	res.send text
 

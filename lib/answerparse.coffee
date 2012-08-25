@@ -50,7 +50,7 @@ do ->
 
 
 
-	checkAnswer = (compare, answer, question) ->
+	checkAnswer = (compare, answer) ->
 		compare = removeDiacritics(compare).trim().split ' '
 		[pos, neg] = parseAnswer(answer.trim())
 
