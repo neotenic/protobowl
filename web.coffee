@@ -26,7 +26,7 @@ if app.settings.env is 'development'
 				scheduledUpdate = null
 
 	watcher = (event, filename) ->
-		return if filename is "offline.appcache" or /\.css$/.test(filename)
+		return if filename in ["offline.appcache", "web.js", "web.coffee"] or /\.css$/.test(filename)
 		console.log "changed file", filename
 		unless scheduledUpdate
 			scheduledUpdate = setTimeout updateCache, 500
@@ -81,50 +81,89 @@ QuestionSchema = new mongoose.Schema {
 
 Question = db.model 'Question', QuestionSchema
 
+fisher_yates = (i) ->
+	return [] if i is 0
+	arr = [0...i]
+	while --i
+		j = Math.floor(Math.random() * (i+1))
+		[arr[i], arr[j]] = [arr[j], arr[i]] 
+	arr
 
-getQuestion = (last_answer, difficulty, category, cb) ->
-	num_attempts = 0
+error_question = {
+	'category': 'Error',
+	'difficulty': 'Error',
+	'num': 'Error',
+	'tournament': 'Error Cup',
+	'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. For 10 points, name this event which happened right now.',
+	'answer': 'error',
+	'year': 1995,
+	'round': 'Error'
+}
 
-	runQuery = ->
-		rand = Math.random()
-		num_attempts++
-		criterion = {
-			random_loc: {
-				$near: [rand, 0]
-			}
+# getQuestion = (last_answer, difficulty, category, cb) ->
+# 	# countQuestions difficulty, category, (count) ->
+# 	# 	if count < 1000
+# 	# TODO: use fisher yates
+
+# 	num_attempts = 0
+
+# 	runQuery = ->
+# 		rand = Math.random()
+# 		num_attempts++
+# 		criterion = {
+# 			random_loc: {
+# 				$near: [rand, 0]
+# 			}
+# 		}
+# 		if difficulty
+# 			criterion.difficulty = difficulty
+# 		if category
+# 			criterion.category = category
+
+# 		Question.findOne criterion, (err, doc) ->
+# 			console.log rand, num_attempts, doc
+# 			if doc is null
+# 				cb error_question
+# 				return
+# 			if doc.answer is last_answer and num_attempts < 10
+# 				runQuery()
+# 			else
+# 				cb(doc) if cb
+# 	runQuery()
+
+
+getQuestion = (difficulty, category, cb) ->
+	rand = Math.random()
+	criterion = {
+		random_loc: {
+			$near: [rand, 0]
 		}
-		if difficulty
-			criterion.difficulty = difficulty
-		if category
-			criterion.category = category
+	}
+	if difficulty
+		criterion.difficulty = difficulty
+	if category
+		criterion.category = category
 
-		Question.findOne criterion, (err, doc) ->
-			console.log rand, num_attempts, doc
-			if doc is null
-				cb {
-					'category': 'Error',
-					'difficulty': 'Error',
-					'num': 'Error',
-					'tournament': 'Error Cup',
-					'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. For 10 points, name this event which happened right now.',
-					'answer': 'error',
-					'year': 1995,
-					'round': 'Error'
-				}
-				return
-			if doc.answer is last_answer and num_attempts < 10
-				runQuery()
-			else
-				cb(doc) if cb
-	runQuery()
+	Question.findOne criterion, (err, doc) ->
+		if doc is null
+			cb error_question
+			return
+		console.log "RANDOM PICK", rand, doc.random_loc[0], doc.random_loc[0] - rand
+		cb(doc) if cb
 
+
+countCache = {}
 countQuestions = (difficulty, category, cb) ->
+	id = difficulty+'-'+category
+	if id of countCache
+		return cb(countCache[id])
 	criterion = {}
 	if difficulty
 		criterion.difficulty = difficulty
 	if category
 		criterion.category = category
 	Question.count criterion, (err, doc) ->
+		countCache[id] = doc
 		cb(doc)
 
 # Question.collection.drop()
@@ -183,6 +222,51 @@ class QuizRoom
 		@users = {}
 		@difficulty = ''
 		@category = ''
+
+		# the following are nasty database hacks
+		@question_schedule = []
+		@history = []
+
+	# this function really doesn't belong in here, because it sort of screws
+	# up the database abstractions, but this app wasn't even supposed to have
+	# a database, so I don't really care how disgustingly un-cool and bad
+	# this is
+	reset_schedule: ->
+		countQuestions @difficulty, @category, (num) =>
+			if num < 300
+				@question_schedule = fisher_yates(num)
+			else
+				@question_schedule = []
+
+	get_question: (cb) ->
+		num_attempts = 0
+		attemptQuestion = =>
+			num_attempts++
+			getQuestion @difficulty, @category, (question) =>
+				# console.log(typeof question._id, @history,  "ATTEMPTS", num_attempts)
+				if question._id.toString() in @history and num_attempts < 15
+					return attemptQuestion()
+				@history.splice 100
+				@history.splice 0, 0, question._id.toString()
+				cb(question)
+
+		countQuestions @difficulty, @category, (num) =>
+			if num < 300
+				if @question_schedule.length is 0
+					@question_schedule = fisher_yates(num)
+
+				index = @question_schedule.shift()
+				criterion = {}
+				if @difficulty
+					criterion.difficulty = @difficulty
+				if @category
+					criterion.category = @category
+				console.log 'FISHER YATES SCHEDULED', index, 'REMAINING', @question_schedule.length
+				Question.find(criterion).skip(index).limit(1).exec (err, docs) ->
+					cb(docs[0] || error_question)
+
+			else
+				attemptQuestion()
 
 	add_socket: (id, socket) ->
 		unless id of @users
@@ -251,7 +335,7 @@ class QuizRoom
 
 	new_question: ->
 		# question = questions[Math.floor(questions.length * Math.random())]
-		getQuestion @answer, @difficulty, @category, (question) =>
+		@get_question (question) =>
 			@attempt = null
 			@info = {
 				category: question.category, 
@@ -398,7 +482,7 @@ class QuizRoom
 				# client.del(action) for client in io.sockets.clients(@name)
 				delete @users[id][action] for id of @users
 				this[action]()
-		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users"]
+		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history"]
 		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
@@ -486,6 +570,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'difficulty', (data) ->
 		room.difficulty = data
+		room.reset_schedule()
 		room.sync()
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
@@ -493,6 +578,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'category', (data) ->
 		room.category = data
+		room.reset_schedule()
 		room.sync()
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}

@@ -302,6 +302,9 @@ createStatSheet = (user, full) ->
 
 
 renderState = ->
+	if latency_log.length > 0
+		$('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + " (#{latency_log.length})")
+
 	# render the user list and that stuff
 	if sync.users
 		for user in sync.users
@@ -403,6 +406,8 @@ $('.singleuser').click ->
 		$(this).dequeue().slideDown()
 
 renderPartial = ->
+	if !sync.time_freeze or sync.attempt
+		requestAnimationFrame(renderPartial)
 
 	return unless sync.question and sync.timing
 
@@ -469,6 +474,7 @@ renderPartial = ->
 		children.slice(index).remove()
 
 		elements = []
+		#TODO: make this faster!
 		for i in [0...words.length]
 			# console.log words[i]
 			element = $('<span>')
@@ -515,14 +521,22 @@ renderPartial = ->
 		guessAnnotation sync.attempt
 
 
-	if latency_log.length > 0
-		$('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + " (#{latency_log.length})")
 
-	
+window.requestAnimationFrame ||=
+  window.webkitRequestAnimationFrame ||
+  window.mozRequestAnimationFrame    ||
+  window.oRequestAnimationFrame      ||
+  window.msRequestAnimationFrame     ||
+  (callback, element) ->
+    window.setTimeout( ->
+      callback(+new Date())
+    , 1000 / 60)
+
+setInterval renderState, 5000
+
+# setInterval renderPartial, 50
 
 
-setInterval renderState, 10000
-setInterval renderPartial, 50
 
 renderTimer = ->
 	# $('#pause').show !!sync.time_freeze
@@ -1004,7 +1018,14 @@ $(window).resize ->
 		else
 			outer = input.outerWidth() - input.width()
 		# console.log 'exp', input, add, outer, size
-		input.width size - outer - add
+		if Modernizr.csscalc
+			input.css('width', "-webkit-calc(100% - #{outer + add}px)")
+			input.css('width', "-moz-calc(100% - #{outer + add}px)")
+			input.css('width', "-o-calc(100% - #{outer + add}px)")
+			input.css('width', "calc(100% - #{outer + add}px)")
+			
+		else
+			input.width size - outer - add
 
 
 $(window).resize()
