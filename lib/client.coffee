@@ -211,6 +211,7 @@ synchronize = (data) ->
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
 	
+	updateTextAnnotations()
 	if !data or 'users' of data
 		renderState()
 	else
@@ -405,10 +406,16 @@ $('.singleuser').click ->
 
 		$(this).dequeue().slideDown()
 
+lastRendering = 0
 renderPartial = ->
 	if !sync.time_freeze or sync.attempt
-		requestAnimationFrame(renderPartial)
+		if time() < sync.end_time
+			requestAnimationFrame(renderPartial)
 
+			if new Date - lastRendering < 1000 / 20
+				return
+
+	lastRendering = +new Date
 	return unless sync.question and sync.timing
 
 
@@ -425,94 +432,8 @@ renderPartial = ->
 	if !sync.time_freeze
 		removeSplash()
 
+	updateTextPosition()
 
-	timeDelta = time() - sync.begin_time
-	words = sync.question.split ' '
-	# {list, rate} = sync.timing
-	cumulative = cumsum sync.timing, sync.rate
-	index = 0
-	index++ while timeDelta > cumulative[index]
-	# index++ if timeDelta > rate
-
-	bundle = $('#history .bundle.active') #$('#history .bundle').first()
-	new_text = words.slice(0, index).join(' ').trim()
-	old_text = bundle.find('.readout .visible').text().replace(/\s+/g, ' ').trim()
-	#this more complicated system allows text selection
-	#while it's still reading out stuff
-	# for word in words.slice(0, index)
-	spots = bundle.data('starts') || []
-
-	# console.log "BUZES", spots, words.length
-
-	visible = bundle.find('.readout .visible')
-	unread = bundle.find('.readout .unread')
-	old_spots = visible.data('spots') is spots.join(',')
-	if new_text isnt old_text or !old_spots
-		# console.log words
-		# console.log spots
-		# change = new_text.slice old_text.length
-		# console.log change
-		# console.log new_text
-		# console.log old_text
-		# if new_text.indexOf(old_text.trim()) is 0 and old_spots and change.indexOf('*') is -1
-		# 	visible.append(change)
-		# 	unread.text words.slice(index).join(' ')
-		# else
-		# console.log 'redo'
-		visible.data('spots', spots.join(','))
-		
-		# textnodes = (node for node in visible[0].childNodes when node.textContent not in [' ', ''])
-		# console.log textnodes, words
-
-		# visible.contents().remove() # setting text to '' retains a blank textnode
-		unread.text ''
-		# console.log words[0], "RAWR"
-		
-		# $(textnodes).slice(index).remove() #remove the later ones
-
-		children = visible.children()
-		children.slice(index).remove()
-
-		elements = []
-		#TODO: make this faster!
-		for i in [0...words.length]
-			# console.log words[i]
-			element = $('<span>')
-			if words[i].indexOf('*') isnt -1
-				element.append " <span class='inline-icon'><span class='asterisk'>"+words[i]+"</span><i class='label icon-white icon-asterisk'></i></span> "
-			else
-				element.append(words[i] + " ")
-
-			if i in spots
-				# element.append('<span class="label label-important">'+words[i]+'</span> ')
-				label_type = 'label-important'
-				# console.log spots, i, words.length
-				if i is words.length - 1
-					label_type = "label-info"
-				element.append " <span class='inline-icon'><i class='label icon-white icon-bell  #{label_type}'></i></span> "
-
-			elements.push element
-				
-		for i in [0...words.length]
-			if i < index
-				unless children.eq(i).html() is elements[i].html()
-					# console.log 'removing'
-					children.slice(i).remove()
-					visible.append elements[i]
-					
-			else
-				unread.append elements[i].contents()
-				
-
-
-	# if new_text isnt old_text
-	# 	if new_text.indexOf(old_text) is 0
-	# 		node = bundle.find('.readout .visible')[0]
-	# 		change = new_text.slice old_text.length
-	# 		node.appendChild document.createTextNode(change)
-	# 	else
-	# 		bundle.find('.readout .visible').text new_text
-	# bundle.find('.readout .unread').text words.slice(index).join(' ')
 	#render the time
 	renderTimer()
 	
@@ -520,6 +441,65 @@ renderPartial = ->
 	if sync.attempt
 		guessAnnotation sync.attempt
 
+
+updateTextAnnotations = ->
+	words = sync.question.split ' '
+	bundle = $('#history .bundle.active') 
+	spots = bundle.data('starts') || []
+
+	readout = bundle.find('.readout .well')
+	readout.data('spots', spots.join(','))
+
+	children = readout.children()
+	# children.slice(words.length).remove()
+
+	elements = []
+	
+	for i in [0...words.length]
+		element = $('<span>').addClass('unread')
+
+		if words[i].indexOf('*') isnt -1
+			element.append " <span class='inline-icon'><span class='asterisk'>"+words[i]+"</span><i class='label icon-white icon-asterisk'></i></span> "
+		else
+			element.append(words[i] + " ")
+
+		if i in spots
+			# element.append('<span class="label label-important">'+words[i]+'</span> ')
+			label_type = 'label-important'
+			# console.log spots, i, words.length
+			if i is words.length - 1
+				label_type = "label-info"
+			element.append " <span class='inline-icon'><i class='label icon-white icon-bell  #{label_type}'></i></span> "
+
+		elements.push element
+
+	for i in [0...words.length]
+		unless children.eq(i).html() is elements[i].html()
+			if children.eq(i).length > 0
+				children.eq(i).replaceWith(elements[i])
+			else
+				readout.append elements[i]
+
+
+				
+updateTextPosition = ->
+	timeDelta = time() - sync.begin_time
+	words = sync.question.split ' '
+	cumulative = cumsum sync.timing, sync.rate
+	index = 0
+	index++ while timeDelta > cumulative[index]
+	# console.log index
+	bundle = $('#history .bundle.active') 
+	readout = bundle.find('.readout .well')
+	children = readout.children()
+	# console.log children.length
+	if children.length != words.length
+
+		console.log "updating text annotats", children.length, words.length
+		updateTextAnnotations()
+
+	children.slice(0, index).removeClass('unread')
+	# children.slice(index).addClass('unread')
 
 
 window.requestAnimationFrame ||=
@@ -653,7 +633,8 @@ changeQuestion = ->
 
 
 	$('#history').prepend bundle.hide()
-	
+	updateTextPosition()
+
 	if !last_question and sync.time_freeze and sync.time_freeze - sync.begin_time < 500
 		# console.log 'loading splash page'
 		start = $('<div>').addClass('start-page')
@@ -673,8 +654,8 @@ changeQuestion = ->
 		bundle.width('auto')
 		$(this).dequeue()
 	if old.find('.readout').length > 0
-		nested = old.find('.readout .visible>span')
-		old.find('.readout .visible').append nested.contents()
+		nested = old.find('.readout .well>span')
+		old.find('.readout .well').append nested.contents()
 		nested.remove()
 
 		old.find('.readout')[0].normalize()
@@ -736,8 +717,8 @@ createBundle = ->
 
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
-	well.append $('<span>').addClass('visible')
-	well.append document.createTextNode(' ') #space: the frontier in between visible and unread
+	# well.append $('<span>').addClass('visible')
+	# well.append document.createTextNode(' ') #space: the frontier in between visible and unread
 	well.append $('<span>').addClass('unread').text(sync.question)
 	annotations = $('<div>').addClass 'annotations'
 	bundle
