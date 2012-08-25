@@ -102,7 +102,10 @@ QuestionSchema = new mongoose.Schema({
   difficulty: String,
   year: Number,
   round: String,
-  random: Number
+  random_loc: {
+    type: [Number, Number],
+    index: '2d'
+  }
 });
 
 Question = db.model('Question', QuestionSchema);
@@ -115,8 +118,8 @@ getQuestion = function(last_answer, difficulty, category, cb) {
     rand = Math.random();
     num_attempts++;
     criterion = {
-      random: {
-        $gte: rand
+      random_loc: {
+        $near: [rand, 0]
       }
     };
     if (difficulty) {
@@ -126,7 +129,7 @@ getQuestion = function(last_answer, difficulty, category, cb) {
       criterion.category = category;
     }
     return Question.findOne(criterion, function(err, doc) {
-      console.log(num_attempts, doc);
+      console.log(rand, num_attempts, doc);
       if (doc === null) {
         cb({
           'category': 'Error',
@@ -181,7 +184,8 @@ Question.collection.distinct('difficulty', function(err, docs) {
 Question.collection.ensureIndex({
   random: 1,
   category: 1,
-  difficulty: 1
+  difficulty: 1,
+  random_loc: '2d'
 });
 
 cumsum = function(list, rate) {
@@ -373,7 +377,7 @@ QuizRoom = (function() {
     if (((_ref = this.attempt) != null ? _ref.session : void 0) === session) {
       this.touch(this.attempt.user);
       this.attempt.done = true;
-      this.attempt.correct = checkAnswer(this.attempt.text, this.answer);
+      this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
       this.sync();
       this.unfreeze();
       if (this.attempt.correct) {
@@ -627,6 +631,27 @@ io.sockets.on('connection', function(sock) {
       }
     }
   });
+});
+
+app.get('/stalkermode', function(req, res) {
+  var room, text, time, u, user;
+  text = "<h1>STALKERMODE ENGAGED</h1><ul>";
+  for (room in rooms) {
+    text += "<li> <a href='/" + room + "'>" + room + "</a> <ul>";
+    for (user in rooms[room].users) {
+      u = rooms[room].users[user];
+      time = Math.round((new Date - u.last_action) / 1000);
+      text += "<li>" + u.name + " <ul>";
+      text += "<li>last seen " + time + "s ago</li>";
+      text += "<li>" + u.sockets.length + " sockets open</li>";
+      text += "<li>correct: " + u.correct + "</li>";
+      text += "<li>guesses: " + u.guesses + "</li>";
+      text += "</ul></li>";
+    }
+    text += "</ul></li>";
+  }
+  text += "</ul>";
+  return res.send(text);
 });
 
 app.get('/:channel', function(req, res) {

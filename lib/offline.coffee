@@ -267,7 +267,7 @@ virtual_server = {
 		if sync.attempt?.session is session
 			sync.attempt.done = true
 			checkAnswer = require('./lib/answerparse').checkAnswer
-			sync.attempt.correct = checkAnswer sync.attempt.text, sync.answer
+			sync.attempt.correct = checkAnswer sync.attempt.text, sync.answer, sync.question
 			
 			# @sync()
 			synchronize()

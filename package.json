@@ -1,6 +1,6 @@
 {
   "name": "protobowl",
-  "version": "0.0.2-37",
+  "version": "0.0.2-39",
   "dependencies": {
     "less-middleware": "0.1.x",
     "express": "2.5.x",

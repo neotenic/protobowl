@@ -1,7 +1,8 @@
 do ->
 	removeDiacritics = require('./removeDiacritics').removeDiacritics
 	damlev = require('./levenshtein').levenshtein
-	stopwords = 'dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
+	stemmer = require('./porter').stemmer
+	stopwords = 'lol,dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
 
 
 	parseAnswer = (answer) ->
@@ -31,8 +32,25 @@ do ->
 				pos.push part
 		[pos, neg]
 
+	splitWords = (text) ->
+		text = removeDiacritics(text).trim()
+		arr = (word.trim() for word in text.toLowerCase().split(/\s+/))
+		words = (stemmer(word) for word in arr when word not in stopwords and word isnt '')
+		return words
 
-	checkAnswer = (compare, answer) ->
+	checkAnswer2 = (compare, answer, question) ->
+		questionWords = splitWords(question)
+		inputText = (word for word in splitWords(compare) when word not in questionWords)
+		[pos, neg] = parseAnswer(answer.trim())
+		for p in pos
+			list = (word for word in splitWords(p) when word not in questionWords)
+
+			
+
+
+
+
+	checkAnswer = (compare, answer, question) ->
 		compare = removeDiacritics(compare).trim().split ' '
 		[pos, neg] = parseAnswer(answer.trim())
 

@@ -1072,7 +1072,7 @@ do -> # isolate variables from globals
 setTimeout ->
 	window.exports = {}
 	window.require = -> window.exports
-	deps = ["html5slider", "levenshtein", "removeDiacritics", "answerparse", "syllable", "names", "offline"]
+	deps = ["html5slider", "levenshtein", "removeDiacritics", "porter", "answerparse", "syllable", "names", "offline"]
 	loadNextResource = ->
 		$.ajax {
 			url: "lib/#{deps.shift()}.js",

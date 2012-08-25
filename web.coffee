@@ -76,7 +76,7 @@ QuestionSchema = new mongoose.Schema {
 	difficulty: String,
 	year: Number,
 	round: String,
-	random: Number
+	random_loc: {type: [Number, Number], index: '2d'}
 }
 
 Question = db.model 'Question', QuestionSchema
@@ -89,8 +89,8 @@ getQuestion = (last_answer, difficulty, category, cb) ->
 		rand = Math.random()
 		num_attempts++
 		criterion = {
-			random: {
-				$gte: rand
+			random_loc: {
+				$near: [rand, 0]
 			}
 		}
 		if difficulty
@@ -99,7 +99,7 @@ getQuestion = (last_answer, difficulty, category, cb) ->
 			criterion.category = category
 
 		Question.findOne criterion, (err, doc) ->
-			console.log num_attempts, doc
+			console.log rand, num_attempts, doc
 			if doc is null
 				cb {
 					'category': 'Error',
@@ -130,7 +130,7 @@ countQuestions = (difficulty, category, cb) ->
 # Question.collection.drop()
 # questions = []
 # count = 0
-# fs.readFile __dirname + '/questions.json', 'utf8', (err, data) ->
+# fs.readFile '../quiz/questions.json', 'utf8', (err, data) ->
 # 	throw err if err
 # 	# questions = (JSON.parse(line) for line in data.split("\n"))
 
@@ -147,7 +147,7 @@ countQuestions = (difficulty, category, cb) ->
 # 			answer: j.answer,
 # 			year: j.year,
 # 			round: j.round,
-# 			random: Math.random()
+# 			random_loc: [Math.random(), 0]
 # 		}
 # 		silence.save (err) ->
 # 			console.log 'meow', count++
@@ -164,7 +164,7 @@ Question.collection.distinct 'category', (err, docs) ->
 Question.collection.distinct 'difficulty', (err, docs) ->
 	difficulties = docs
 
-Question.collection.ensureIndex { random: 1, category: 1, difficulty: 1 }
+Question.collection.ensureIndex { random: 1, category: 1, difficulty: 1, random_loc: '2d' }
 
 cumsum = (list, rate) ->
 	sum = 0 #start nonzero, allow pause before rendering
@@ -318,7 +318,7 @@ class QuizRoom
 		if @attempt?.session is session
 			@touch @attempt.user
 			@attempt.done = true
-			@attempt.correct = checkAnswer @attempt.text, @answer
+			@attempt.correct = checkAnswer @attempt.text, @answer, @question
 			
 			@sync()
 			@unfreeze()
@@ -532,13 +532,28 @@ io.sockets.on 'connection', (sock) ->
 
 
 
+app.get '/stalkermode', (req, res) ->
+	text = "<h1>STALKERMODE ENGAGED</h1><ul>"
+	for room of rooms
+		text += "<li> <a href='/#{room}'>#{room}</a> <ul>"
+		for user of rooms[room].users
+			u = rooms[room].users[user]
+			time = Math.round((new Date - u.last_action) / 1000)
+			text += "<li>#{u.name} <ul>"
+			text += "<li>last seen #{time}s ago</li>"
+			text += "<li>#{u.sockets.length} sockets open</li>"
+			text += "<li>correct: #{u.correct}</li>"
+			text += "<li>guesses: #{u.guesses}</li>"
+			text += "</ul></li>"
+		text += "</ul></li>"
+	text += "</ul>"
+
+	res.send text
 
 app.get '/:channel', (req, res) ->
 	name = req.params.channel
 	# init_channel name
 	res.render 'index.jade', { name, env: app.settings.env }
-
-
 
 
 app.get '/', (req, res) ->
