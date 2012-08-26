@@ -589,7 +589,7 @@ renderTimer = ->
 		$('.pausebtn').disable (ms < 0)
 		$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
-			$('.bundle.active').find('.answer').css('visibility', 'visible')
+			$('.bundle.active').find('.answer').css('display', 'inline').css('visibility', 'visible')
 	
 	if $('.progress .bar').hasClass 'pull-right'
 		$('.progress .bar').width (1 - progress) * 100 + '%'
