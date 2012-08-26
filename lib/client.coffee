@@ -447,6 +447,8 @@ renderPartial = ->
 
 
 updateTextAnnotations = ->
+	return unless sync.question and sync.timing
+
 	words = sync.question.split ' '
 	early_index = sync.question.replace(/[^ \*]/g, '').indexOf('*')
 	bundle = $('#history .bundle.active') 
@@ -681,24 +683,6 @@ createBundle = ->
 	important = $('<div>').addClass 'important'
 	bundle.append(important)
 	breadcrumb = $('<ul>').addClass('breadcrumb')
-	addInfo = (name, value) ->
-		breadcrumb.find('li').last().append $('<span>').addClass('divider').text('/')
-		breadcrumb.append $('<li>').text(name + ": " + value)
-	
-	addInfo 'Category', sync.info.category
-	addInfo 'Difficulty', sync.info.difficulty
-	addInfo 'Tournament', sync.info.year + ' ' + sync.info.tournament
-	# addInfo 'Year', sync.info.year
-	# addInfo 'Number', sync.info.num
-	# addInfo 'Round', sync.info.round
-	# addInfo 'Report', ''
-
-	breadcrumb.find('li').last().append $('<span>').addClass('divider').text('/')
-	breadcrumb.append $('<li>').addClass('clickable').text('Report').click (e) ->
-		console.log 'report question'
-		$('#report-question').modal('show')
-		e.stopPropagation()
-		e.preventDefault()
 
 	star = $('<a>', {
 		href: "#",
@@ -715,12 +699,42 @@ createBundle = ->
 			star.toggleClass 'icon-star', bundle.hasClass 'bookmarked'
 			e.stopPropagation()
 			e.preventDefault()
+
+	breadcrumb.append $('<li>').addClass('pull-right').append(star)
+	breadcrumb.append $('<li>').addClass('pull-right answer').text(sync.answer)
+
+	addInfo = (name, value) ->
+		breadcrumb.find('li:not(.pull-right)').last().append $('<span>').addClass('divider').text('/')
+		if value
+			name += ": " + value
+		el = $('<li>').text(name).appendTo(breadcrumb)
+		if value
+			el.addClass('hidden-phone')
+		else
+			el.addClass('visible-phone')
+	
+	addInfo 'Category', sync.info.category
+	addInfo 'Difficulty', sync.info.difficulty
+	addInfo 'Tournament', sync.info.year + ' ' + sync.info.tournament
+
+	addInfo sync.info.year + ' ' + sync.info.difficulty + ' ' + sync.info.category
+	# addInfo 'Year', sync.info.year
+	# addInfo 'Number', sync.info.num
+	# addInfo 'Round', sync.info.round
+	# addInfo 'Report', ''
+
+	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone').text('/')
+	breadcrumb.append $('<li>').addClass('clickable hidden-phone').text('Report').click (e) ->
+		console.log 'report question'
+		$('#report-question').modal('show')
+		e.stopPropagation()
+		e.preventDefault()
+
+
 	
 	# breadcrumb.append $('<li>').addClass('pull-right').append(star)
 
 
-	breadcrumb.append $('<li>').addClass('pull-right').append(star)
-	breadcrumb.append $('<li>').addClass('pull-right answer').text(sync.answer)
 
 
 
