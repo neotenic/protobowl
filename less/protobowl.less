@@ -84,12 +84,7 @@ input[type=range] {
 	height: 30px;
 }
 
-.navbar-top .navbar-inner {
-	border-radius: 0;
-	border-top: 0;
-	border-left: 0;
-	border-right: 0;
-}
+
 
 .bundle {
 	.annotations {
@@ -119,6 +114,10 @@ input[type=range] {
 		display: inline-block;
 	}
 	.breadcrumb {
+		ul {
+			display: inline;
+			margin: 0;
+		}
 		a {
 			text-decoration: none;
 		}
@@ -127,6 +126,9 @@ input[type=range] {
 			color: lighten(#333, 30%);
 		}
 		padding-right: 5px;
+		li {
+			display: inline;
+		}
 	}
 	.asterisk {
 		width: 0px;
@@ -174,6 +176,21 @@ input[type=range] {
 	}
 }
 
+.navbar-top .navbar-inner {
+	border-top: 0;
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+}
+
+@media (min-width: 767px) {
+	.navbar-top .navbar-inner {
+		border-radius: 0;
+		border-top: 0;
+		border-left: 0;
+		border-right: 0;
+	}
+}
+
 @media (max-width: 767px) {
 	// Padding to set content in a bit
 	body {
@@ -182,6 +199,15 @@ input[type=range] {
 	}
 	.well {
 		padding: 10px;
+	}
+	.bundle.active {
+		.answer { display: none; }
+	}
+	.navbar {
+		margin-bottom: 10px;
+	}
+	.breadcrumb {
+		margin-bottom: 10px;
 	}
 }
 

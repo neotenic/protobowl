@@ -682,7 +682,7 @@ createBundle = ->
 	bundle = $('<div>').addClass('bundle')
 	important = $('<div>').addClass 'important'
 	bundle.append(important)
-	breadcrumb = $('<ul>').addClass('breadcrumb')
+	breadcrumb = $('<ul>')
 
 	star = $('<a>', {
 		href: "#",
@@ -701,7 +701,6 @@ createBundle = ->
 			e.preventDefault()
 
 	breadcrumb.append $('<li>').addClass('pull-right').append(star)
-	breadcrumb.append $('<li>').addClass('pull-right answer').text(sync.answer)
 
 	addInfo = (name, value) ->
 		breadcrumb.find('li:not(.pull-right)').last().append $('<span>').addClass('divider').text('/')
@@ -731,13 +730,7 @@ createBundle = ->
 		e.preventDefault()
 
 
-	
-	# breadcrumb.append $('<li>').addClass('pull-right').append(star)
-
-
-
-
-
+	breadcrumb.append $('<li>').addClass('pull-right answer').text(sync.answer)
 
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
@@ -746,7 +739,7 @@ createBundle = ->
 	well.append $('<span>').addClass('unread').text(sync.question)
 	annotations = $('<div>').addClass 'annotations'
 	bundle
-		.append(breadcrumb)
+		.append($('<ul>').addClass('breadcrumb').append(breadcrumb))
 		.append(readout)
 		.append(annotations)
 
