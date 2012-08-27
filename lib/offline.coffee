@@ -262,6 +262,7 @@ virtual_server = {
 			sync.attempt.text = data.text
 			if data.done
 				@end_buzz sync.attempt.session
+			synchronize()
 
 	end_buzz: (session) ->
 		if sync.attempt?.session is session

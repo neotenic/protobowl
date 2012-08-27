@@ -23,6 +23,7 @@ sock = {
 			if name of virtual_server
 				result = virtual_server[name](data)
 				fn(result) if fn
+				renderPartial()
 			else
 				console.log name, data, fn
 		else
