@@ -164,7 +164,10 @@ sock.on 'connect', ->
 
 
 
-$('#username').keyup ->
+$('#username').keyup (e) ->
+	if e.keyCode is 13
+		$(this).blur()
+
 	if $(this).val().length > 0
 		sock.emit 'rename', $(this).val()
 
@@ -428,7 +431,7 @@ renderPartial = ->
 	if !sync.time_freeze or sync.attempt
 		if time() < sync.end_time
 			requestAnimationFrame(renderPartial)
-
+			# setTimeout renderPartial, 1000 / 30
 			if new Date - lastRendering < 1000 / 20
 				return
 
@@ -527,7 +530,7 @@ window.requestAnimationFrame ||=
       callback(+new Date())
     , 1000 / 60)
 
-setInterval renderState, 5000
+setInterval renderState, 15000
 
 # setInterval renderPartial, 50
 
@@ -540,6 +543,7 @@ renderTimer = ->
 		$('.offline').fadeOut()
 	else
 		$('.offline').fadeIn()
+
 	if sync.time_freeze
 		if sync.attempt
 			do ->
@@ -575,6 +579,15 @@ renderTimer = ->
 			$('.pausebtn')
 			.addClass('btn-warning')
 			.removeClass('btn-success')
+
+	if time() > sync.end_time - sync.answer_duration
+		if $(".nextbtn").is(":hidden")
+			$('.nextbtn').show() 
+			$('.skipbtn').hide() 
+	else
+		if $(".skipbtn").is(":hidden")
+			$('.nextbtn').hide()
+			$('.skipbtn').show()
 
 	$('.timer').toggleClass 'buzz', !!sync.attempt
 
@@ -776,18 +789,19 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		line = $('#' + id)
 	else
 		line = $('<p>').attr('id', id)
-		marker = $('<span>').addClass('label').text("Buzz")
-		if early
-			# do nothing, use default
-		else if interrupt
-			marker.addClass 'label-important'
+		if prompt
+			prompt_el = $('<a>').addClass('label prompt label-info').text('Prompt')
+			line.append ' '
+			line.append prompt_el
 		else
-			marker.addClass 'label-info'
-		line.append marker
-
-		prompt_el = $('<a>').addClass('label prompt label-inverse').hide().text('Prompt')
-		line.append ' '
-		line.append prompt_el
+			marker = $('<span>').addClass('label').text("Buzz")
+			if early
+				# do nothing, use default
+			else if interrupt
+				marker.addClass 'label-important'
+			else
+				marker.addClass 'label-info'
+			line.append marker
 		
 
 		line.append " "
@@ -809,14 +823,12 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 	else
 		line.find('.comment').text(text)
 
-	if prompt
-		line.find('.prompt').show().css('display', 'inline')
 
 	if done
 		ruling = line.find('.ruling').show().css('display', 'inline')
 
 		if correct is "prompt"
-			ruling.addClass('label-inverse').text('Prompt')
+			ruling.addClass('label-info').text('Prompt')
 		else if correct
 			ruling.addClass('label-success').text('Correct')
 		else

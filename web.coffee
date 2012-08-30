@@ -414,11 +414,11 @@ class QuizRoom
 			@clear_timeout()
 			@attempt.done = true
 			@attempt.correct = checkAnswer @attempt.text, @answer, @question
-
+			log 'buzz', [@name, @attempt.user, @attempt.text, @answer, @attempt.correct]
 			# conditionally set this based on stuff
-			if Math.random() > 0.1
+			if Math.random() > 0.999
 				@attempt.correct = "prompt" # quasi hack i know
-				
+
 				@sync() # sync to create a new line in the annotats
 
 				@attempt.prompt = true
@@ -555,6 +555,21 @@ sha1 = (text) ->
 	hash.digest('hex')
 
 
+http = require('http')
+log = (action, obj) ->
+	req = http.request {
+		host: 'inception.pi.antimatter15.com',
+		port: 3140,
+		path: '/log',
+		method: 'POST'
+	}, ->
+		console.log "saved log"
+	req.on 'error', ->
+		console.log "logging error"
+	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
+	req.end()
+
+
 rooms = {}
 io.sockets.on 'connection', (sock) ->
 	sessionID = sock.handshake.sessionID
@@ -621,6 +636,7 @@ io.sockets.on 'connection', (sock) ->
 		room.difficulty = data
 		room.reset_schedule()
 		room.sync()
+		log 'difficulty', [room.name, publicID, room.difficulty]
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
 		
@@ -629,6 +645,7 @@ io.sockets.on 'connection', (sock) ->
 		room.category = data
 		room.reset_schedule()
 		room.sync()
+		log 'category', [room.name, publicID, room.category]
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
@@ -645,12 +662,16 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'chat', ({text, done, session}) ->
 		if room
 			room.touch publicID
+			log 'chat', [room.name, publicID, text] if done
 			room.emit 'chat', {text: text, session:  session, user: publicID, done: done, time: room.serverTime()}
 
 	sock.on 'disconnect', ->
 		# id = sock.id
+		
 		console.log "someone", publicID, sock.id, "left"
 		if room
+			log 'disconnect', [room.name, publicID, sock.id]
+
 			room.del_socket publicID, sock.id
 			room.sync(1)
 			if room.users[publicID].sockets.length is 0
@@ -658,24 +679,31 @@ io.sockets.on 'connection', (sock) ->
 
 
 
+
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
-	text = "<h1>STALKERMODE ENGAGED</h1><ul>"
-	for room of rooms
-		text += "<li> <a href='/#{room}'>#{room}</a> <ul>"
-		for user of rooms[room].users
-			u = rooms[room].users[user]
-			time = Math.round((new Date - u.last_action) / 1000)
-			text += "<li>#{u.name} <ul>"
-			text += "<li>last seen #{time}s ago</li>"
-			text += "<li>#{u.sockets.length} sockets open</li>"
-			text += "<li>correct: #{u.correct}</li>"
-			text += "<li>guesses: #{u.guesses}</li>"
-			text += "</ul></li>"
-		text += "</ul></li>"
-	text += "</ul><p>" + util.inspect(process.memoryUsage())
+	res.render 'admin.jade', {
+		env: app.settings.env,
+		mem: util.inspect(process.memoryUsage()),
+		rooms: rooms
+	}
 
-	res.send text
+	# text = "<h1>STALKERMODE ENGAGED</h1><ul>"
+	# for room of rooms
+	# 	text += "<li> <a href='/#{room}'>#{room}</a> <ul>"
+	# 	for user of rooms[room].users
+	# 		u = rooms[room].users[user]
+	# 		time = Math.round((new Date - u.last_action) / 1000)
+	# 		text += "<li>#{u.name} <ul>"
+	# 		text += "<li>last seen #{time}s ago</li>"
+	# 		text += "<li>#{u.sockets.length} sockets open</li>"
+	# 		text += "<li>correct: #{u.correct}</li>"
+	# 		text += "<li>guesses: #{u.guesses}</li>"
+	# 		text += "</ul></li>"
+	# 	text += "</ul></li>"
+	# text += "</ul><p>" + util.inspect(process.memoryUsage())
+
+	# res.send text
 
 app.get '/:channel', (req, res) ->
 	name = req.params.channel
