@@ -340,7 +340,9 @@ class QuizRoom
 
 	new_question: ->
 		# question = questions[Math.floor(questions.length * Math.random())]
+		@generating_question = true
 		@get_question (question) =>
+			delete @generating_question;
 			@attempt = null
 			@info = {
 				category: question.category, 
@@ -399,7 +401,7 @@ class QuizRoom
 		@new_question()
 
 	next: ->
-		if @time() > @end_time - @answer_duration
+		if @time() > @end_time - @answer_duration and !@generating_question
 			@new_question()
 
 	emit: (name, data) ->
@@ -688,22 +690,6 @@ app.get '/stalkermode', (req, res) ->
 		rooms: rooms
 	}
 
-	# text = "<h1>STALKERMODE ENGAGED</h1><ul>"
-	# for room of rooms
-	# 	text += "<li> <a href='/#{room}'>#{room}</a> <ul>"
-	# 	for user of rooms[room].users
-	# 		u = rooms[room].users[user]
-	# 		time = Math.round((new Date - u.last_action) / 1000)
-	# 		text += "<li>#{u.name} <ul>"
-	# 		text += "<li>last seen #{time}s ago</li>"
-	# 		text += "<li>#{u.sockets.length} sockets open</li>"
-	# 		text += "<li>correct: #{u.correct}</li>"
-	# 		text += "<li>guesses: #{u.guesses}</li>"
-	# 		text += "</ul></li>"
-	# 	text += "</ul></li>"
-	# text += "</ul><p>" + util.inspect(process.memoryUsage())
-
-	# res.send text
 
 app.get '/:channel', (req, res) ->
 	name = req.params.channel

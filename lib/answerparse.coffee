@@ -2,8 +2,11 @@ do ->
 	removeDiacritics = require('./removeDiacritics').removeDiacritics
 	damlev = require('./levenshtein').levenshtein
 	stemmer = require('./porter').stemmer
-	stopwords = 'lol,dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
-
+	# stopwords = 'lol,dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
+	# some people like to append "lol" to every answer
+	stopwords = "rofl lmao lawl lole lol the on of is a in on that have for at so it do or de y by accept any".split(' ')
+	stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold"
+	commwords = ""
 
 	parseAnswer = (answer) ->
 		answer = answer.replace(/[\[\]\<\>\{\}][\w\-]+?[\[\]\<\>\{\}]/g, '')
@@ -32,25 +35,126 @@ do ->
 				pos.push part
 		[pos, neg]
 
+
+
+
+	stem = (word) ->
+		return stemmer word.replace(/ez$/g, 'es').replace(/[^\w]/g, '')
+
 	splitWords = (text) ->
-		text = removeDiacritics(text).trim()
 		arr = (word.trim() for word in text.toLowerCase().split(/\s+/))
-		words = (stemmer(word) for word in arr when word not in stopwords and word isnt '')
+		words = (stem(word) for word in arr when word not in stopwords and word isnt '')
 		return words
 
-	checkAnswer2 = (compare, answer, question) ->
+	isPerson = (answer) ->
+		# filter out words less than 3 letters long because they suck
+		canon = (name for name in answer.split(/\s+/) when name.length > 3)
+		# find words of the canon (seriously i dont know what to call it)
+		caps = (name for name in canon when "A" <= name[0] <= "Z")
+		# if all words that matter are caps, that means its a person woot
+		return caps.length == canon.length
+
+	# so levenshtein deals with letter differences
+	# damerau deals with transpositions
+	# and this letter reduction algorithm deals with conflated letters
+	reduceLetter = (letter) ->
+		return 's' if letter in ['z', 's', 'k', 'c']
+		return 'e' if letter in ['e', 'a', 'o', 'u', 'y', 'i']
+		return letter
+
+	reduceAlphabet = (word) ->
+		letters = (reduceLetter(letter) for letter in word.split(''))
+		return letters.join('')
+
+	levens = (a, b) ->
+		return damlev reduceAlphabet(a), reduceAlphabet(b)
+
+	checkWord = (word, list) ->
+		scores = for valid in list
+			score = levens valid, word
+			[score, valid.length - score, valid.length, valid]
+		if scores.length == ''
+			return ''
+		scores = scores.sort (a, b) -> a[0] - b[0]
+		[score, real, len, valid] = scores[0] 
+		frac = real / len
+		console.log word, valid, list, len, score, frac
+		if len > 4
+			if frac >= 0.65
+				return valid
+		else
+			if frac >= 0.60
+				return valid
+		return ''
+
+	advancedCompare = (inputText, p, questionWords) ->
+		is_person = isPerson(p.trim())
+
+		list = (word for word in splitWords(p) when word not in questionWords)
+
+
+		valid_count = 0
+		invalid_count = 0
+
+		for word in inputText
+			value = 1
+			result = checkWord word, list
+			if is_person and result in stopnames
+				value = 0.5
+
+			if result
+				valid_count += value
+			else
+				invalid_count += value
+
+		console.log "ADVANCED", valid_count, invalid_count, inputText.length
+		return valid_count - invalid_count >= 1
+
+		
+
+	rawCompare = (compare, p) ->
+		# lowercase and remove spaces and stuff
+		compare = compare.toLowerCase().replace(/[^\w]/g, '')
+		p = p.toLowerCase().replace(/[^\w]/g, '')
+
+		# calculate the length of the shortest one
+		minlen = Math.min(compare.length, p.length)
+
+		diff = levens compare.slice(0, minlen), p.slice(0, minlen)
+		accuracy = 1 - (diff / minlen)
+		console.log "RAW LEVENSHTEIN", diff, minlen, accuracy
+
+		if minlen >= 4 and accuracy >= 0.65
+			return true
+
+		return false
+
+
+	checkAnswer = (compare, answer, question = '') ->
+		console.log '---------------------------'
+
+		question = removeDiacritics(question).trim()
+		answer = removeDiacritics(answer).trim()
+		compare = removeDiacritics(compare).trim()
+
 		questionWords = splitWords(question)
 		inputText = (word for word in splitWords(compare) when word not in questionWords)
+
 		[pos, neg] = parseAnswer(answer.trim())
+
+
 		for p in pos
-			list = (word for word in splitWords(p) when word not in questionWords)
+			if advancedCompare(inputText, p, questionWords)
+				return true
+			if rawCompare compare, p
+				return true
 
-			
+		return false
 
 
 
 
-	checkAnswer = (compare, answer) ->
+	checkAnswer_old = (compare, answer) ->
 		compare = removeDiacritics(compare).trim().split ' '
 		[pos, neg] = parseAnswer(answer.trim())
 
@@ -116,5 +220,6 @@ do ->
 
 		return false
 
+	stopnames = splitWords stopnames
 	exports.checkAnswer = checkAnswer
 	exports.parseAnswer = parseAnswer

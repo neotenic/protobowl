@@ -391,8 +391,10 @@ QuizRoom = (function() {
 
   QuizRoom.prototype.new_question = function() {
     var _this = this;
+    this.generating_question = true;
     return this.get_question(function(question) {
       var word;
+      delete _this.generating_question;
       _this.attempt = null;
       _this.info = {
         category: question.category,
@@ -444,7 +446,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.next = function() {
-    if (this.time() > this.end_time - this.answer_duration) {
+    if (this.time() > this.end_time - this.answer_duration && !this.generating_question) {
       return this.new_question();
     }
   };

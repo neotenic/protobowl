@@ -40,13 +40,38 @@ nextQuestion = ->
 z = (a, b) ->
 	console.log checkAnswer a, b
 
-z 'shays rebellion', 'bacons rebellion'
+z 'shay\'s rebellion', 'bacons rebellion'
 z 'haymarket', 'haymarket square'
-z 'feynman', 'richard feynman'
+z 'feynman', 'Richard Feynman'
+z 'fineman', 'Richard Feynman'
+
 z 'circumsize', 'circumsision'
+z 'circumsise', 'circumsision'
 z 'science', 'scientology'
 z 'scientology', 'science'
 z 'al gore', 'albert al gore'
-z 'cage', 'john cage'
-z 'nicolas cage', 'john cage'
+z 'cage', 'John Cage'
+z 'nicolas cage', 'John Cage'
 z 'locke', 'john locke'
+z 'blake', 'William Blake'
+z 'hangover', 'The Hangover'
+z 'curcible', 'The Crucible'
+z "cortez","Hernan Cortes de Monroy y Pizarro, First Marques del Valle de Oaxaca"
+z "hernando","Hernan Cortes de Monroy y Pizarro, First Marques del Valle de Oaxaca"
+z "13 ways of looking at a blackbird", "Thirteen Ways of Looking at a Blackbird"
+z "Frost", "Robert Lee Frost"
+z "Robert", "Robert Lee Frost"
+z "rawls", "John Rawls"
+z "Hume", 'David Hume'
+z "The Woolf", "Virginia Woolf"
+z "jaialai", "jai alai (HI-ah-LIE)"
+z "paramagnetic", "paramagnetism"
+z "sheild", "shields"
+z "Pierre Renoir", "Pierre-Auguste Renoir"
+z "Taft", "Robert Taft"
+z "Atwell", "Margaret Atwood"
+z "os x", "Mac OSX [or Macintosh Operating System Ten; accept letter-by-letter pronunciations of"
+z "osx", "Mac OSX [or Macintosh Operating System Ten; accept letter-by-letter pronunciations of"
+z "house of lords","The House of Lords [or The House of Lords Spiritual and Temporal or The House of Peers]"
+z 'borobn', "boron [or B]"
+z 'acid', 'base'
