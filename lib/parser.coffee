@@ -75,3 +75,7 @@ z "osx", "Mac OSX [or Macintosh Operating System Ten; accept letter-by-letter pr
 z "house of lords","The House of Lords [or The House of Lords Spiritual and Temporal or The House of Peers]"
 z 'borobn', "boron [or B]"
 z 'acid', 'base'
+z "luke", 'The Gospel According to Luke [or Gospel of Luke]'
+z "kublai khan", 'An Lushan (accept An Luoshan or Ga Luoshan)'
+z '1856', 'United States Presidential election of 1852'
+z '1852', 'United States Presidential election of 1852'

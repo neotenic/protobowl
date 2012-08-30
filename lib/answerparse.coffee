@@ -1,3 +1,9 @@
+# an oversophisticated algorithm for checking crap
+# probably a better one would be just to search the pool of 
+# known candidate answers and seeing if its closest match (by a significant margin)
+# is the correct answer, where things beyond a certain threshold are prompted
+# and even more weird things are outright rejected.
+
 do ->
 	removeDiacritics = require('./removeDiacritics').removeDiacritics
 	damlev = require('./levenshtein').levenshtein
@@ -5,7 +11,7 @@ do ->
 	# stopwords = 'lol,dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
 	# some people like to append "lol" to every answer
 	stopwords = "rofl lmao lawl lole lol the on of is a in on that have for at so it do or de y by accept any".split(' ')
-	stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold"
+	stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold luke matthew"
 	commwords = ""
 
 	parseAnswer = (answer) ->
@@ -99,7 +105,7 @@ do ->
 		for word in inputText
 			value = 1
 			result = checkWord word, list
-			if is_person and result in stopnames
+			if is_person and result in stopnames and 'gospel' not in list # the new testament is canonical
 				value = 0.5
 
 			if result
@@ -122,9 +128,10 @@ do ->
 
 		diff = levens compare.slice(0, minlen), p.slice(0, minlen)
 		accuracy = 1 - (diff / minlen)
+
 		console.log "RAW LEVENSHTEIN", diff, minlen, accuracy
 
-		if minlen >= 4 and accuracy >= 0.65
+		if minlen >= 4 and accuracy >= 0.70
 			return true
 
 		return false
@@ -144,10 +151,19 @@ do ->
 
 
 		for p in pos
-			if advancedCompare(inputText, p, questionWords)
-				return true
-			if rawCompare compare, p
-				return true
+			# checking years because theyre numbers
+			if compare.replace(/[^0-9]/g, '').length == 4
+
+				year = compare.replace(/[^0-9]/g, '')
+				compyr = p.replace(/[^0-9]/g, '')
+				console.log "YEAR COMPARE", year, compyr
+				if year == compyr
+					return true
+			else
+				if advancedCompare(inputText, p, questionWords)
+					return true
+				if rawCompare compare, p
+					return true
 
 		return false
 
