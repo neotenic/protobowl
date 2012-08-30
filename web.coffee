@@ -393,6 +393,10 @@ class QuizRoom
 	skip: ->
 		@new_question()
 
+	next: ->
+		if @time() > @end_time - @answer_duration
+			@new_question()
+
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
 
@@ -418,10 +422,10 @@ class QuizRoom
 			@sync(1) #two syncs in one request!
 
 
-	buzz: (user) -> #todo, remove the callback and replace it with a sync listener
+	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
 		@touch user
 		if @attempt is null and @time() <= @end_time
-			# fn 'http://www.whosawesome.com/'
+			fn 'http://www.whosawesome.com/' if fn
 			session = Math.random().toString(36).slice(2)
 			early_index = @question.replace(/[^ \*]/g, '').indexOf('*')
 
@@ -443,6 +447,8 @@ class QuizRoom
 			@sync(1) #partial sync
 			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
+		else
+			fn 'THE GAME' if fn
 
 	guess: (user, data) ->
 		@touch user
@@ -463,30 +469,32 @@ class QuizRoom
 			real_time: +new Date,
 			voting: {}
 		}
-		voting = ['skip', 'pause', 'unpause']
-		for action in voting
-			yay = 0
-			nay = 0
-			actionvotes = []
-			for id of @users
-				vote = @users[id][action]
-				if vote is 'yay'
-					yay++
-					actionvotes.push id
-				else
-					nay++
-			# console.log yay, 'yay', nay, 'nay', action
-			if actionvotes.length > 0
-				data.voting[action] = actionvotes
-			# console.log yay, nay, "VOTES FOR", action
-			if yay / (yay + nay) > 0
-				# client.del(action) for client in io.sockets.clients(@name)
-				delete @users[id][action] for id of @users
-				this[action]()
+		# voting = ['skip', 'pause', 'unpause']
+		# for action in voting
+		# 	yay = 0
+		# 	nay = 0
+		# 	actionvotes = []
+		# 	for id of @users
+		# 		vote = @users[id][action]
+		# 		if vote is 'yay'
+		# 			yay++
+		# 			actionvotes.push id
+		# 		else
+		# 			nay++
+		# 	# console.log yay, 'yay', nay, 'nay', action
+		# 	if actionvotes.length > 0
+		# 		data.voting[action] = actionvotes
+		# 	# console.log yay, nay, "VOTES FOR", action
+		# 	if yay / (yay + nay) > 0
+		# 		# client.del(action) for client in io.sockets.clients(@name)
+		# 		delete @users[id][action] for id of @users
+		# 		this[action]()
+		
 		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history"]
 		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
+
 		if level >= 1
 			data.users = for id of @users
 				user = {}
@@ -555,17 +563,23 @@ io.sockets.on 'connection', (sock) ->
 		# room.add_socket publicID, sock.id
 		# room.users[publicID].skip = vote
 		# room.sync() if room
-		room.vote publicID, 'skip', vote
+		# room.vote publicID, 'skip', vote
+		room.skip()
+
+	sock.on 'next', ->
+		room.next() # its a more restricted kind of skip
 
 	sock.on 'pause', (vote) ->
 		# sock.set 'pause', vote
 		# room.users[publicID].pause = vote
 		# room.sync() if room
-		room.vote publicID, 'pause', vote
+		# room.vote publicID, 'pause', vote
+		room.pause()
 
 	sock.on 'unpause', (vote) ->
 		# sock.set 'unpause', vote
-		room.vote publicID, 'unpause', vote
+		# room.vote publicID, 'unpause', vote
+		room.unpause()
 		# room.users[publicID].unpause = vote
 		# room.sync() if room
 
@@ -584,8 +598,6 @@ io.sockets.on 'connection', (sock) ->
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
-
-
 	sock.on 'speed', (data) ->
 		room.set_speed data
 		room.sync()
@@ -609,13 +621,6 @@ io.sockets.on 'connection', (sock) ->
 			room.sync(1)
 			if room.users[publicID].sockets.length is 0
 				room.emit 'log', {user: publicID, verb: 'left the room'}
-		
-		# setTimeout ->
-		# 	console.log !!room, 'rooms'
-		# 	if room
-		# 		room.sync(1)
-		# 		room.emit 'leave', {user: id}
-		# , 100
 
 
 

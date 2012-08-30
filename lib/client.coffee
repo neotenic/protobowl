@@ -888,13 +888,18 @@ $('.buzzbtn').click ->
 	setActionMode 'guess'
 	$('.guess_input')
 		.val('')
+		.addClass('disabled')
 		.focus()
 	# so it seems that on mobile devices with on screen virtual keyboards
 	# if your focus isn't event initiated (eg. based on the callback of
 	# some server query to confirm control of the textbox) it wont actualy
 	# bring up the keyboard, so the solution here is to first open it up
 	# and ask nicely for forgiveness otherwise
-	sock.emit 'buzz', 'yay'
+	sock.emit 'buzz', 'yay', (status) ->
+		if status is 'http://www.whosawesome.com/'
+			$('.guess_input').removeClass('disabled')
+		else
+			setActionMode ''
 
 
 
@@ -913,6 +918,8 @@ $('.chat_input').keydown (e) ->
 
 $('input').keydown (e) ->
 	e.stopPropagation() #make it so that the event listener doesnt pick up on stuff
+	if $(this).hasClass("disabled")
+		e.preventDefault()
 
 
 

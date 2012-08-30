@@ -437,6 +437,12 @@ QuizRoom = (function() {
     return this.new_question();
   };
 
+  QuizRoom.prototype.next = function() {
+    if (this.time() > this.end_time - this.answer_duration) {
+      return this.new_question();
+    }
+  };
+
   QuizRoom.prototype.emit = function(name, data) {
     return io.sockets["in"](this.name).emit(name, data);
   };
@@ -463,11 +469,14 @@ QuizRoom = (function() {
     }
   };
 
-  QuizRoom.prototype.buzz = function(user) {
+  QuizRoom.prototype.buzz = function(user, fn) {
     var early_index, session,
       _this = this;
     this.touch(user);
     if (this.attempt === null && this.time() <= this.end_time) {
+      if (fn) {
+        fn('http://www.whosawesome.com/');
+      }
       session = Math.random().toString(36).slice(2);
       early_index = this.question.replace(/[^ \*]/g, '').indexOf('*');
       this.attempt = {
@@ -487,6 +496,10 @@ QuizRoom = (function() {
       return this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
         return _this.end_buzz(session);
       });
+    } else {
+      if (fn) {
+        return fn('THE GAME');
+      }
     }
   };
 
@@ -505,7 +518,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.sync = function(level) {
-    var action, actionvotes, attr, blacklist, data, id, nay, user, user_blacklist, vote, voting, yay, _i, _len;
+    var attr, blacklist, data, id, user, user_blacklist;
     if (level == null) {
       level = 0;
     }
@@ -513,31 +526,6 @@ QuizRoom = (function() {
       real_time: +(new Date),
       voting: {}
     };
-    voting = ['skip', 'pause', 'unpause'];
-    for (_i = 0, _len = voting.length; _i < _len; _i++) {
-      action = voting[_i];
-      yay = 0;
-      nay = 0;
-      actionvotes = [];
-      for (id in this.users) {
-        vote = this.users[id][action];
-        if (vote === 'yay') {
-          yay++;
-          actionvotes.push(id);
-        } else {
-          nay++;
-        }
-      }
-      if (actionvotes.length > 0) {
-        data.voting[action] = actionvotes;
-      }
-      if (yay / (yay + nay) > 0) {
-        for (id in this.users) {
-          delete this.users[id][action];
-        }
-        this[action]();
-      }
-    }
     blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history"];
     user_blacklist = ["sockets"];
     for (attr in this) {
@@ -631,13 +619,16 @@ io.sockets.on('connection', function(sock) {
     }
   });
   sock.on('skip', function(vote) {
-    return room.vote(publicID, 'skip', vote);
+    return room.skip();
+  });
+  sock.on('next', function() {
+    return room.next();
   });
   sock.on('pause', function(vote) {
-    return room.vote(publicID, 'pause', vote);
+    return room.pause();
   });
   sock.on('unpause', function(vote) {
-    return room.vote(publicID, 'unpause', vote);
+    return room.unpause();
   });
   sock.on('difficulty', function(data) {
     room.difficulty = data;
