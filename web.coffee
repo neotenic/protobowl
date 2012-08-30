@@ -217,6 +217,8 @@ class QuizRoom
 		@answer_duration = 1000 * 5
 		@time_offset = 0
 		@rate = 1000 * 60 / 5 / 200
+		@__timeout = -1
+
 		@freeze()
 		@new_question()
 		@users = {}
@@ -324,14 +326,17 @@ class QuizRoom
 		@unfreeze() unless @attempt
 	
 	timeout: (metric, time, callback) ->
+		@clear_timeout()
 		diff = time - metric()
 		if diff < 0
 			callback()
 		else
-			setTimeout =>
+			@__timeout = setTimeout =>
 				@timeout(metric, time, callback)
 			, diff
 
+	clear_timeout: ->
+		clearTimeout @__timeout
 
 	new_question: ->
 		# question = questions[Math.floor(questions.length * Math.random())]
@@ -401,14 +406,42 @@ class QuizRoom
 		io.sockets.in(@name).emit name, data
 
 
-	end_buzz: (session) ->
-		#killit, killitwithfire
-		if @attempt?.session is session
-			@touch @attempt.user
+	end_buzz: (session) -> #killit, killitwithfire
+		return unless @attempt?.session is session
+		# touch the user in weird places
+		@touch @attempt.user
+		unless @attempt.prompt
+			@clear_timeout()
 			@attempt.done = true
 			@attempt.correct = checkAnswer @attempt.text, @answer, @question
+
+			# conditionally set this based on stuff
+			if Math.random() > 0.1
+				@attempt.correct = "prompt" # quasi hack i know
+				
+				@sync() # sync to create a new line in the annotats
+
+				@attempt.prompt = true
+
+				@attempt.done = false
+				@attempt.realTime = @serverTime()
+				@attempt.start = @time()
+				@attempt.text = ''
+				@attempt.duration = 10 * 1000
+
+				# io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "got a prompt"}
+				
+				@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
+					@end_buzz session
+			@sync()
+		else
+			# io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "lost prompt powers"}
+			@attempt.done = true
+			@attempt.correct = checkAnswer @attempt.text, @answer, @question
+
 			@sync()
 
+		if @attempt.done
 			# io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "finished buzzing"}
 			@unfreeze()
 			if @attempt.correct
@@ -490,7 +523,7 @@ class QuizRoom
 		# 		delete @users[id][action] for id of @users
 		# 		this[action]()
 		
-		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history"]
+		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout"]
 		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
@@ -572,16 +605,17 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'pause', (vote) ->
 		# sock.set 'pause', vote
 		# room.users[publicID].pause = vote
-		# room.sync() if room
+		
 		# room.vote publicID, 'pause', vote
 		room.pause()
+		room.sync() if room
 
 	sock.on 'unpause', (vote) ->
 		# sock.set 'unpause', vote
 		# room.vote publicID, 'unpause', vote
 		room.unpause()
 		# room.users[publicID].unpause = vote
-		# room.sync() if room
+		room.sync() if room
 
 	sock.on 'difficulty', (data) ->
 		room.difficulty = data

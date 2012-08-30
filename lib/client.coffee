@@ -228,11 +228,16 @@ synchronize = (data) ->
 			$('.speed').val(wpm)
 
 
-	if sync.attempt
-		if sync.attempt.user isnt public_id
-			setActionMode '' if actionMode is 'guess'
-		# else
-		# 	setActionMode 'guess' if actionMode isnt 'guess'
+	
+	if !sync.attempt or sync.attempt.user isnt public_id
+		setActionMode '' if actionMode in ['guess', 'prompt']
+	else
+		if sync.attempt.prompt
+			if actionMode isnt 'prompt'
+				setActionMode 'prompt' 
+				$('.prompt_input').val('').focus()
+		else
+			setActionMode 'guess' if actionMode isnt 'guess'
 
 	# if sync.time_offset isnt null
 	# 	$('#time_offset').text(sync.time_offset.toFixed(1))
@@ -760,10 +765,12 @@ addImportant = (el) ->
 	el.slideDown()
 	return el
 
-guessAnnotation = ({session, text, user, done, correct, interrupt, early}) ->
+guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt}) ->
 	# TODO: make this less like chats
 	# console.log("guess annotat", text, done)
-	id = user + '-' + session
+	# id = user + '-' + session
+	id = "#{user}-#{session}-#{if prompt then 'prompt' else 'guess'}"
+	# console.log id
 	# console.log id
 	if $('#' + id).length > 0
 		line = $('#' + id)
@@ -777,12 +784,19 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early}) ->
 		else
 			marker.addClass 'label-info'
 		line.append marker
+
+		prompt_el = $('<a>').addClass('label prompt label-inverse').hide().text('Prompt')
+		line.append ' '
+		line.append prompt_el
+		
+
 		line.append " "
 		line.append userSpan(user).addClass('author')
 		line.append document.createTextNode ' '
 		$('<span>')
 			.addClass('comment')
 			.appendTo line
+
 		ruling = $('<a>').addClass('label ruling').hide().attr('href', '#')
 		line.append ' '
 		line.append ruling
@@ -794,12 +808,20 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early}) ->
 			line.find('.comment').text(text)
 	else
 		line.find('.comment').text(text)
+
+	if prompt
+		line.find('.prompt').show().css('display', 'inline')
+
 	if done
 		ruling = line.find('.ruling').show().css('display', 'inline')
-		if correct
+
+		if correct is "prompt"
+			ruling.addClass('label-inverse').text('Prompt')
+		else if correct
 			ruling.addClass('label-success').text('Correct')
 		else
 			ruling.addClass('label-warning').text('Wrong')
+
 		answer = sync.answer
 		ruling.click ->
 			$('#review .review-judgement')
@@ -868,6 +890,7 @@ setActionMode = (mode) ->
 	$('.chat_form').toggle mode is 'chat'
 	$('.guess_form').toggle mode is 'guess'
 	$('.prompt_form').toggle mode is 'prompt'
+
 	$(window).resize() #reset expandos
 
 $('.chatbtn').click ->
@@ -878,10 +901,17 @@ $('.chatbtn').click ->
 		.val('')
 		.focus()
 
-$('.skipbtn').click ->
+skip = ->
 	removeSplash()
 	sock.emit 'skip', 'yay'
 
+next = ->
+	removeSplash()
+	sock.emit 'next', 'yay'
+
+$('.skipbtn').click skip
+
+$('.nextbtn').click next
 
 $('.buzzbtn').click ->
 	return if $('.buzzbtn').attr('disabled') is 'disabled'
@@ -958,14 +988,14 @@ $('.guess_form').submit (e) ->
 
 $('.prompt_input').keyup (e) ->
 	return if e.keyCode is 13
-	sock.emit 'prompt', {
+	sock.emit 'guess', {
 		text: $('.prompt_input').val(), 
 		done: false
 	}
 
 	
 $('.prompt_form').submit (e) ->
-	sock.emit 'prompt', {
+	sock.emit 'guess', {
 		text: $('.prompt_input').val(), 
 		done: true
 	}
@@ -988,13 +1018,17 @@ $('body').keydown (e) ->
 			$('.pausebtn').click()	
 		else
 			$('.buzzbtn').click()
-	else if e.keyCode in [83, 78, 74] # S, N, J
-		$('.skipbtn').click()
+	else if e.keyCode in [83] # S
+		skip()
+	else if e.keyCode in [78, 74] # N, J
+		next()
 	else if e.keyCode in [80, 82] # P, R
 		$('.pausebtn').click()
 	else if e.keyCode in [47, 111, 191, 67] # / (forward slash), C
 		e.preventDefault()
 		$('.chatbtn').click()
+	else if e.keyCode in [66]
+		$('.bundle.active .bookmark').click()
 
 	# console.log e.keyCode
 

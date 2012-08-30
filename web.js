@@ -223,6 +223,7 @@ QuizRoom = (function() {
     this.answer_duration = 1000 * 5;
     this.time_offset = 0;
     this.rate = 1000 * 60 / 5 / 200;
+    this.__timeout = -1;
     this.freeze();
     this.new_question();
     this.users = {};
@@ -373,14 +374,19 @@ QuizRoom = (function() {
   QuizRoom.prototype.timeout = function(metric, time, callback) {
     var diff,
       _this = this;
+    this.clear_timeout();
     diff = time - metric();
     if (diff < 0) {
       return callback();
     } else {
-      return setTimeout(function() {
+      return this.__timeout = setTimeout(function() {
         return _this.timeout(metric, time, callback);
       }, diff);
     }
+  };
+
+  QuizRoom.prototype.clear_timeout = function() {
+    return clearTimeout(this.__timeout);
   };
 
   QuizRoom.prototype.new_question = function() {
@@ -448,12 +454,36 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.end_buzz = function(session) {
-    var _ref;
-    if (((_ref = this.attempt) != null ? _ref.session : void 0) === session) {
-      this.touch(this.attempt.user);
+    var _ref,
+      _this = this;
+    if (((_ref = this.attempt) != null ? _ref.session : void 0) !== session) {
+      return;
+    }
+    this.touch(this.attempt.user);
+    if (!this.attempt.prompt) {
+      this.clear_timeout();
+      this.attempt.done = true;
+      this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
+      if (Math.random() > 0.1) {
+        this.attempt.correct = "prompt";
+        this.sync();
+        this.attempt.prompt = true;
+        this.attempt.done = false;
+        this.attempt.realTime = this.serverTime();
+        this.attempt.start = this.time();
+        this.attempt.text = '';
+        this.attempt.duration = 10 * 1000;
+        this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
+          return _this.end_buzz(session);
+        });
+      }
+      this.sync();
+    } else {
       this.attempt.done = true;
       this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
       this.sync();
+    }
+    if (this.attempt.done) {
       this.unfreeze();
       if (this.attempt.correct) {
         this.users[this.attempt.user].correct++;
@@ -526,7 +556,7 @@ QuizRoom = (function() {
       real_time: +(new Date),
       voting: {}
     };
-    blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history"];
+    blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout"];
     user_blacklist = ["sockets"];
     for (attr in this) {
       if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0) {
@@ -625,10 +655,16 @@ io.sockets.on('connection', function(sock) {
     return room.next();
   });
   sock.on('pause', function(vote) {
-    return room.pause();
+    room.pause();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('unpause', function(vote) {
-    return room.unpause();
+    room.unpause();
+    if (room) {
+      return room.sync();
+    }
   });
   sock.on('difficulty', function(data) {
     room.difficulty = data;
