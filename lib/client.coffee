@@ -154,6 +154,8 @@ sock.on 'connect', ->
 
 	sock.emit 'join', {
 		old_socket: localStorage.old_socket,
+		ninja: /ninja/.test(location.search),
+		god: /god/.test(location.search),
 		room_name: channel_name
 	}, (data) ->
 		public_name = data.name
@@ -764,9 +766,14 @@ createBundle = ->
 
 
 userSpan = (user) ->
-	$('<span>')
-		.addClass('user-'+user)
-		.text(users[user]?.name || '[name missing]')
+	if user.slice(0, 2) == "__"
+		$('<span>')
+			.addClass('user-'+user)
+			.text(user.slice(2))
+	else
+		$('<span>')
+			.addClass('user-'+user)
+			.text(users[user]?.name || "[name missing]")
 
 addAnnotation = (el) ->
 	el.css('display', 'none').prependTo $('#history .bundle.active .annotations')

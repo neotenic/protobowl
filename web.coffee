@@ -531,7 +531,7 @@ class QuizRoom
 			data[attr] = this[attr]
 
 		if level >= 1
-			data.users = for id of @users
+			data.users = for id of @users when !@users[id].ninja
 				user = {}
 				for attr of @users[id] when attr not in user_blacklist
 					user[attr] = @users[id][attr] 
@@ -583,13 +583,25 @@ io.sockets.on 'connection', (sock) ->
 			io.sockets.socket(data.old_socket).disconnect()
 		
 		room_name = data.room_name
+		if data.ninja
+			publicID = '__secret_ninja' # no spaces
+		else
+			publicID = sha1(sessionID + room_name) #preserves a sense of privacy
 		
-		publicID = sha1(sessionID + room_name) #preserves a sense of privacy
+		if data.god
+			publicID += "_god"
+			for room of rooms
+				sock.join room
+		else
+			sock.join room_name
 
-		sock.join room_name
 		rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
 		room = rooms[room_name]
 		room.add_socket publicID, sock.id
+		if data.ninja
+			room.users[publicID].ninja = true
+			room.users[publicID].name = publicID
+
 		unless 'name' of room.users[publicID]
 			room.users[publicID].name = require('./lib/names').generateName()
 		fn {
@@ -597,7 +609,8 @@ io.sockets.on 'connection', (sock) ->
 			name: room.users[publicID].name
 		}
 		room.sync(3)
-		room.emit 'log', {user: publicID, verb: 'joined the room'}
+		unless data.ninja
+			room.emit 'log', {user: publicID, verb: 'joined the room'}
 
 	sock.on 'echo', (data, callback) =>
 		callback +new Date
@@ -676,17 +689,18 @@ io.sockets.on 'connection', (sock) ->
 
 			room.del_socket publicID, sock.id
 			room.sync(1)
-			if room.users[publicID].sockets.length is 0
+			if room.users[publicID].sockets.length is 0 and !room.users[publicID].ninja
 				room.emit 'log', {user: publicID, verb: 'left the room'}
 
 
 
-
+uptime_begin = +new Date
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
 	res.render 'admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
+		start: uptime_begin,
 		rooms: rooms
 	}
 
