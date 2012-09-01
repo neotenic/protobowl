@@ -76,7 +76,7 @@ stdev = (list) ->
 
 cumsum = (list, rate) ->
 	s = 0 #start nonzero, allow pause before rendering
-	for num in [1].concat(list).slice(0, -1)
+	for num in [5].concat(list).slice(0, -1)
 		s += Math.round(num) * rate #always round!
 
 
@@ -220,7 +220,9 @@ synchronize = (data) ->
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
 	
-	updateTextAnnotations()
+	if sync.attempt
+		updateTextAnnotations()
+
 	if !data or 'users' of data
 		renderState()
 	else
@@ -466,6 +468,7 @@ updateTextAnnotations = ->
 	words = sync.question.split ' '
 	early_index = sync.question.replace(/[^ \*]/g, '').indexOf('*')
 	bundle = $('#history .bundle.active') 
+
 	spots = bundle.data('starts') || []
 
 	readout = bundle.find('.readout .well')

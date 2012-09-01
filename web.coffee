@@ -210,7 +210,7 @@ Question.collection.ensureIndex { random: 1, category: 1, difficulty: 1, random_
 
 cumsum = (list, rate) ->
 	sum = 0 #start nonzero, allow pause before rendering
-	for num in [1].concat(list).slice(0, -1)
+	for num in [5].concat(list).slice(0, -1)
 		sum += Math.round(num) * rate #always round!
 
 

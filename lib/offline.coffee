@@ -318,7 +318,7 @@ loadQuestions = (fn) ->
 	$.ajax('sample.txt').done (text) ->
 		# console.log text.slice(0, 100)
 		questions = (JSON.parse(line) for line in text.split('\n'))
-		console.log 'got questions', questions.length
+		# console.log 'got questions', questions.length
 		fn() if fn
 
 if !io? #if this is being loaded and socket io exists not

@@ -187,6 +187,17 @@ html(lang="en", manifest="offline.appcache")
 						table.table.headless
 							tbody
 								tr
+									td
+										<form action="https://www.paypal.com/cgi-bin/webscr" method="post" style="margin:0">
+										<input type="hidden" name="cmd" value="_s-xclick">
+										<input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
+										">
+										<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+										<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+										</form>
+									td Fund Protobowl
+
+								tr
 									th latency
 									td#latency ?
 								tr
@@ -199,43 +210,7 @@ html(lang="en", manifest="offline.appcache")
 									td
 										a(href="#", onclick="sock.disconnect();return false") Disconnect
 									td#cachestatus 
-								
-
-
 		
-		div.modal.hide#review
-			div.modal-header
-				button.close(type="button", data-dismiss="modal") ×
-				h3 Submit Response for Manual Review
-			div.modal-body
-				p
-					| Note that this doesn't do anything at this point.
-				p
-					| You believe the response <span class="review-response label">[review response]</span> 
-					| has been marked incorrectly as <span class="review-judgement label">[review judgement]
-					| </span> according to your interpretation of the answer <span class="review-answer">
-					| [review answer] </span>. 
-
-				p Would you like to submit this request for a manual answer review?
-
-			div.modal-footer
-				a.btn(href="#", data-dismiss="modal") Cancel
-				a.btn.btn-primary(href="#", data-dismiss="modal") Submit
-
-		div.modal.hide#report-question
-			div.modal-header
-				button.close(type="button", data-dismiss="modal") ×
-				h3 Submit Question for Review
-			div.modal-body
-				:markdown
-					Note that this doesn't do anything at this point.
-
-					Would you like to submit this request for question review?
-
-			div.modal-footer
-				a.btn(href="#", data-dismiss="modal") Cancel
-				a.btn.btn-primary(href="#", data-dismiss="modal") Submit
-
 
 		div.modal.hide#about
 			div.modal-header

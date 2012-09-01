@@ -211,7 +211,7 @@ Question.collection.ensureIndex({
 cumsum = function(list, rate) {
   var num, sum, _i, _len, _ref, _results;
   sum = 0;
-  _ref = [1].concat(list).slice(0, -1);
+  _ref = [5].concat(list).slice(0, -1);
   _results = [];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     num = _ref[_i];
