@@ -842,8 +842,12 @@ app.get('/:channel', function(req, res) {
   });
 });
 
-app.get('/', function(req, res) {
+app.get('/new', function(req, res) {
   return res.redirect('/' + require('./lib/names').generatePage());
+});
+
+app.get('/', function(req, res) {
+  return res.redirect('/lobby');
 });
 
 port = process.env.PORT || 5000;

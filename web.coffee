@@ -749,9 +749,11 @@ app.get '/:channel', (req, res) ->
 	res.render 'index.jade', { name, env: app.settings.env }
 
 
-app.get '/', (req, res) ->
+app.get '/new', (req, res) ->
 	res.redirect '/' + require('./lib/names').generatePage()
 
+app.get '/', (req, res) ->
+	res.redirect '/lobby'
 
 port = process.env.PORT || 5000
 app.listen port, ->
