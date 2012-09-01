@@ -708,6 +708,27 @@ io.sockets.on 'connection', (sock) ->
 				room.emit 'log', {user: publicID, verb: 'left the room'}
 
 
+setInterval ->
+	
+	clearInactive 1000 * 60 * 60 * 12 # 12 hours
+
+, 1000 * 10 # every ten seconds
+
+
+clearInactive = (threshold) ->
+	# garbazhe collectour
+	long_time_ago = new Date - threshold
+	for name, room of rooms
+		len = 0
+		for username, user of room.users
+			len++
+			if user.last_action < long_time_ago and user.sockets.length is 0
+				console.log 'kicking user of inactivity', user.name
+				len--
+				delete room.users[username]
+		if len is 0
+			console.log 'removing empty room', name
+			delete rooms[name]
 
 uptime_begin = +new Date
 
@@ -719,6 +740,11 @@ app.post '/stalkermode/update', (req, res) ->
 app.post '/stalkermode/forceupdate', (req, res) ->
 	console.log 'forcing application update'
 	io.sockets.emit 'application_force_update', +new Date
+	res.redirect '/stalkermode'
+
+
+app.post '/stalkermode/kickoffline', (req, res) ->
+	clearInactive 1000 * 5 # five seconds
 	res.redirect '/stalkermode'
 
 app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
