@@ -66,6 +66,10 @@ if (app.settings.env === 'development') {
   fs.watch(__dirname + "/less", watcher);
 }
 
+setTimeout(function() {
+  return io.sockets.emit('application_update', +(new Date));
+}, 1000 * 30);
+
 io.configure(function() {
   io.set("log level", 2);
   return io.set("authorization", function(data, fn) {
@@ -763,6 +767,20 @@ io.sockets.on('connection', function(sock) {
       });
     }
   });
+  sock.on('resetscore', function() {
+    var u;
+    if (room && room.users[publicID]) {
+      u = room.users[publicID];
+      u.interrupts = u.guesses = u.correct = u.early = 0;
+      return room.sync(1);
+    }
+  });
+  sock.on('report_question', function(data) {
+    return log('report_question', data);
+  });
+  sock.on('report_answer', function(data) {
+    return log('report_answer', data);
+  });
   return sock.on('disconnect', function() {
     console.log("someone", publicID, sock.id, "left");
     if (room) {
@@ -780,6 +798,29 @@ io.sockets.on('connection', function(sock) {
 });
 
 uptime_begin = +(new Date);
+
+app.post('/stalkermode/update', function(req, res) {
+  console.log('triggering application update check');
+  io.sockets.emit('application_update', +(new Date));
+  return res.redirect('/stalkermode');
+});
+
+app.post('/stalkermode/forceupdate', function(req, res) {
+  console.log('forcing application update');
+  io.sockets.emit('application_force_update', +(new Date));
+  return res.redirect('/stalkermode');
+});
+
+app.post('/stalkermode/announce', express.bodyParser(), function(req, res) {
+  io.sockets.emit('chat', {
+    text: req.body.message,
+    session: Math.random().toString(36).slice(3),
+    user: '__' + req.body.name,
+    done: true,
+    time: +(new Date)
+  });
+  return res.redirect('/stalkermode');
+});
 
 app.get('/stalkermode', function(req, res) {
   var util;

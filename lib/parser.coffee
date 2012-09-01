@@ -82,3 +82,5 @@ z '1852', 'United States Presidential election of 1852'
 z 'tree', 'RAM [or random-access memory; prompt on memory; accept DRAM or dynamic'
 z 'poisson', 'Paul Cézanne'
 z 'chrysanthemum and the sword', 'The Chrysanthemum and the Sword: Patterns of Japanese Culture'
+z "Debs","Eugene Victor Debs"
+z "Battle","Battle of Bunker Hill [or Battle of Breed's Hill before it is read]"

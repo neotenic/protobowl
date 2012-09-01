@@ -36,7 +36,10 @@ if app.settings.env is 'development'
 	fs.watch __dirname + "/less", watcher
 	
 
-
+setTimeout ->
+	# when the server reboots, check for update in clients
+	io.sockets.emit 'application_update', +new Date
+, 1000 * 30
 
 io.configure ->
 	# now this is meant to run on nodejitsu rather than heroku
@@ -680,6 +683,18 @@ io.sockets.on 'connection', (sock) ->
 			log 'chat', [room.name, publicID, text] if done
 			room.emit 'chat', {text: text, session:  session, user: publicID, done: done, time: room.serverTime()}
 
+	sock.on 'resetscore', ->
+		if room and room.users[publicID]
+			u = room.users[publicID]
+			u.interrupts = u.guesses = u.correct = u.early = 0
+			room.sync(1)
+
+	sock.on 'report_question', (data) ->
+		log 'report_question', data
+
+	sock.on 'report_answer', (data) ->
+		log 'report_answer', data
+
 	sock.on 'disconnect', ->
 		# id = sock.id
 		
@@ -695,6 +710,29 @@ io.sockets.on 'connection', (sock) ->
 
 
 uptime_begin = +new Date
+
+app.post '/stalkermode/update', (req, res) ->
+	console.log 'triggering application update check'
+	io.sockets.emit 'application_update', +new Date
+	res.redirect '/stalkermode'
+
+app.post '/stalkermode/forceupdate', (req, res) ->
+	console.log 'forcing application update'
+	io.sockets.emit 'application_force_update', +new Date
+	res.redirect '/stalkermode'
+
+app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
+	io.sockets.emit 'chat', {
+		text: req.body.message, 
+		session: Math.random().toString(36).slice(3), 
+		user: '__' + req.body.name, 
+		done: true,
+		time: +new Date
+	}
+	res.redirect '/stalkermode'
+
+
+
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
 	res.render 'admin.jade', {

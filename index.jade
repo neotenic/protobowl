@@ -9,7 +9,13 @@ html(lang="en", manifest="offline.appcache")
 		link(rel='stylesheet', href='less/bootstrap.css')
 		link(rel='stylesheet', href='less/responsive.css')
 		link(rel='stylesheet', href='less/protobowl.css')
-		
+
+		script(type="text/javascript")
+			var _gaq = _gaq || [];
+			_gaq.push(['_setAccount', 'UA-34434821-1']);
+			_gaq.push(['_trackPageview']);
+
+
 	body
 		div.navbar.navbar-top
 			div.navbar-inner
@@ -77,7 +83,7 @@ html(lang="en", manifest="offline.appcache")
 						div.well
 							a.btn.btn-primary.pull-right(href="") Reload
 							| A <strong>new version</strong> of this application has been downloaded. Please reload the application now.
-							
+					
 					div#history
 
 				div.span3
@@ -146,6 +152,11 @@ html(lang="en", manifest="offline.appcache")
 											i.icon-briefcase
 										select.padd-on.difficulties(style="width: 60px; border-right: 0")
 										select.input.categories(style="border-left: 0")
+								div.expando
+									div.input-prepend
+										span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
+											i.icon-trash
+										button.btn.input.score-reset Reset My Score 
 		
 
 					div.span3.thumbnail.show-keyboard
@@ -168,25 +179,27 @@ html(lang="en", manifest="offline.appcache")
 						ul
 							li Buttons are fun to press
 
+
 					div.span3.thumbnail
-							h5 
-								i.icon-fire
-								| Debugging
-							table.table.headless
-								tbody
-									tr
-										th latency
-										td#latency ?
-									tr
-										th sync_offset
-										td#sync_offset ? 
-									//- tr
-									//-	td time_offset
-									//-	td#time_offset ?
-									tr
-										td
-											a(href="#", onclick="sock.disconnect();return false") Disconnect
-										td#cachestatus 
+						h5 
+							i.icon-fire
+							| Miscellaneous
+						table.table.headless
+							tbody
+								tr
+									th latency
+									td#latency ?
+								tr
+									th sync_offset
+									td#sync_offset ? 
+								//- tr
+								//-	td time_offset
+								//-	td#time_offset ?
+								tr
+									td
+										a(href="#", onclick="sock.disconnect();return false") Disconnect
+									td#cachestatus 
+								
 
 
 		
@@ -195,12 +208,8 @@ html(lang="en", manifest="offline.appcache")
 				button.close(type="button", data-dismiss="modal") ×
 				h3 Submit Response for Manual Review
 			div.modal-body
-				p 
-					| The answer checks for this application are done automatically by an algorithm 
-					| which may or may not be entirely competent. However, by submitting a response
-					| for manual review, the points for this question may be retroactively awarded, 
-					| and most importantly, it offers data which may serve to improve future iterations
-					| of the scoring algorithm.
+				p
+					| Note that this doesn't do anything at this point.
 				p
 					| You believe the response <span class="review-response label">[review response]</span> 
 					| has been marked incorrectly as <span class="review-judgement label">[review judgement]
@@ -218,10 +227,10 @@ html(lang="en", manifest="offline.appcache")
 				button.close(type="button", data-dismiss="modal") ×
 				h3 Submit Question for Review
 			div.modal-body
-				p 
-					| TODO: words here
+				:markdown
+					Note that this doesn't do anything at this point.
 
-				p Would you like to submit this request for question review?
+					Would you like to submit this request for question review?
 
 			div.modal-footer
 				a.btn(href="#", data-dismiss="modal") Cancel
@@ -233,22 +242,23 @@ html(lang="en", manifest="offline.appcache")
 				button.close(type="button", data-dismiss="modal") ×
 				h3 About
 			div.modal-body
-				p I really don't have the slightest clue what to say here.
-				p 
-					| But this was concieved some time towards the end of the school year of 2012
-					| and was implemented mostly within a week's time intermittently, and this is
-					| actually the second prototype. The name actually comes as a contraction or
-					| portmanteau of "Prototype" and "QuizBowl", with the word "Application" cleverly
-					| ommitted for no reason in particular. 
+				:markdown
+					I really don't have the slightest clue what to say here.
 
-				p
-					| It's something made with Twitter Bootstrap,
-					| which I'm trying to disguise best I can by replacing that cliche black header bar
-					| with something considerably lighter. Also, it uses jQuery (largely because Bootstrap
-					| really likes jQuery, but I guess I really like jQuery too). Modernizr, but only for
-					| one function which is sort of lame. Most of the code is actually written in CoffeeScript
-					| which is pretty cool. It uses node.js, socket.io, express, jade and less (via 
-					| less-middleware).
+					But this was concieved some time towards the end of the school year of 2012
+					and was implemented mostly within a week's time intermittently, and this is
+					actually the second prototype. The name actually comes as a contraction or
+					portmanteau of "Prototype" and "QuizBowl", with the word "Application" cleverly
+					ommitted for no reason in particular. 
+
+					It's something made with Twitter Bootstrap,
+					which I'm trying to disguise best I can by replacing that cliche black header bar
+					with something considerably lighter. Also, it uses jQuery (largely because Bootstrap
+					really likes jQuery, but I guess I really like jQuery too). Modernizr, but only for
+					one function which is sort of lame. Most of the code is actually written in CoffeeScript
+					which is pretty cool. It uses node.js, socket.io, express, jade and less (via 
+					less-middleware).
+
 			div.modal-footer
 				a.btn(href="https://github.com/antimatter15/protobowl/tree/rewrite", target="_blank") GitHub
 				a.btn.btn-primary(href="#", data-dismiss="modal") Close
@@ -264,10 +274,6 @@ html(lang="en", manifest="offline.appcache")
 		script(src="/socket.io/socket.io.js")
 		script(src="lib/client.js")
 		script(type="text/javascript")
-			var _gaq = _gaq || [];
-			_gaq.push(['_setAccount', 'UA-34434821-1']);
-			_gaq.push(['_trackPageview']);
-
 			(function() {
 			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
 			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';

@@ -144,6 +144,9 @@ sock.on 'disconnect', ->
 sock.on 'application_update', ->
 	applicationCache.update() if applicationCache?
 
+sock.on 'application_force_update', ->
+	$('#update').slideDown()
+
 public_name = null
 public_id = null
 
@@ -697,7 +700,24 @@ changeQuestion = ->
 			old.find('.readout').slideUp("normal")
 			$(this).dequeue()
 
-
+createAlert = (bundle, title, message) ->
+	div = $("<div>").addClass("alert alert-success")
+		.insertAfter(bundle.find(".annotations")).hide()
+	div.append $("<button>")
+		.attr("data-dismiss", "alert")
+		.attr("type", "button")
+		.html("&times;")
+		.addClass("close")
+	div.append $("<strong>").text(title)
+	div.append " "
+	div.append message
+	div.slideDown()
+	setTimeout ->
+		div.slideUp().queue ->
+			$(this).dequeue()
+			$(this).remove()
+	, 5000
+	
 
 createBundle = ->
 	bundle = $('<div>').addClass('bundle')
@@ -744,9 +764,21 @@ createBundle = ->
 	# addInfo 'Report', ''
 
 	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone').text('/')
+	bundle.data 'report_info', {
+		year: sync.info.year, 
+		difficulty: sync.info.difficulty, 
+		category: sync.info.category, 
+		tournament: sync.info.turnament,
+		round: sync.info.round,
+		num: sync.info.num,
+		question: sync.question,
+		answer: sync.answer
+	}
 	breadcrumb.append $('<li>').addClass('clickable hidden-phone').text('Report').click (e) ->
-		console.log 'report question'
-		$('#report-question').modal('show')
+		# console.log 'report question'
+		# $('#report-question').modal('show')
+		createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
+		sock.emit 'report_question', bundle.data 'report_info'
 		e.stopPropagation()
 		e.preventDefault()
 
@@ -843,13 +875,16 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 
 		answer = sync.answer
 		ruling.click ->
-			$('#review .review-judgement')
-				.after(ruling.clone().addClass('review-judgement'))
-				.remove()
+			sock.emit 'report_answer', {guess: text, answer: answer}
+			createAlert ruling.parents('.bundle'), 'Reported Answer', 'You have successfully told me that my algorithm sucks. Thanks, and I might fix it eventually.'
+
+			# $('#review .review-judgement')
+			# 	.after(ruling.clone().addClass('review-judgement'))
+			# 	.remove()
 				
-			$('#review .review-answer').text answer
-			$('#review .review-response').text text
-			$('#review').modal('show')
+			# $('#review .review-answer').text answer
+			# $('#review .review-response').text text
+			# $('#review').modal('show')
 			return false
 
 		if actionMode is 'guess'
@@ -947,10 +982,13 @@ $('.buzzbtn').click ->
 	sock.emit 'buzz', 'yay', (status) ->
 		if status is 'http://www.whosawesome.com/'
 			$('.guess_input').removeClass('disabled')
+			_gaq.push ['_trackEvent', 'Game', 'Buzz Accepted']
 		else
 			setActionMode ''
+			_gaq.push ['_trackEvent', 'Game', 'Buzz Rejected']
 
-
+$('.score-reset').click ->
+	sock.emit 'resetscore', 'yay'
 
 $('.pausebtn').click ->
 	removeSplash ->
@@ -1078,6 +1116,7 @@ $(window).resize ->
 		else
 			outer = input.outerWidth() - input.width()
 		# console.log 'exp', input, add, outer, size
+		# console.log(input[0], outer, add)
 		if Modernizr.csscalc
 			input.css('width', "-webkit-calc(100% - #{outer + add}px)")
 			input.css('width', "-moz-calc(100% - #{outer + add}px)")

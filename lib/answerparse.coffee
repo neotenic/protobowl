@@ -12,7 +12,7 @@ do ->
 	# some people like to append "lol" to every answer
 	stopwords = "rofl lmao lawl lole lol the on of is a in on that have for at so it do or de y by accept any and".split(' ')
 	stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold luke matthew"
-	commwords = ""
+	# commwords = "war battle river"
 
 	parseAnswer = (answer) ->
 		answer = answer.replace(/[\[\]\<\>\{\}][\w\-]+?[\[\]\<\>\{\}]/g, '')
