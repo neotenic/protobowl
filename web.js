@@ -833,6 +833,14 @@ app.get('/stalkermode', function(req, res) {
   });
 });
 
+app.get('/new', function(req, res) {
+  return res.redirect('/' + require('./lib/names').generatePage());
+});
+
+app.get('/', function(req, res) {
+  return res.redirect('/lobby');
+});
+
 app.get('/:channel', function(req, res) {
   var name;
   name = req.params.channel;
@@ -840,14 +848,6 @@ app.get('/:channel', function(req, res) {
     name: name,
     env: app.settings.env
   });
-});
-
-app.get('/new', function(req, res) {
-  return res.redirect('/' + require('./lib/names').generatePage());
-});
-
-app.get('/', function(req, res) {
-  return res.redirect('/lobby');
 });
 
 port = process.env.PORT || 5000;
