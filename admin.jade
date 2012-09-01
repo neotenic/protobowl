@@ -1,0 +1,73 @@
+doctype 5
+html(lang="en")
+	head
+		title STALKERMODE
+		style
+			* {
+				font-family: sans-serif;
+			}
+			.offline {
+				color: #BBB;
+			}
+	body
+		mixin score(user)
+			| #{user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5}
+
+		mixin time(timestamp)
+			- var secs = (new Date - timestamp) / 1000
+			if secs > 60 * 60
+				| #{Math.floor(secs / 60 / 60)} hours 
+			if secs > 60
+				| #{Math.floor(secs / 60) % 60} minutes 
+			| #{Math.floor(secs % 60)} seconds
+			| ago
+			
+			
+		mixin display_user(user)
+			li <b>#{user.name}</b> 
+				| (last seen 
+				mixin time(user.last_action)
+				| )
+				ul
+					li score: 
+						mixin score(user)
+						|  (correct: #{user.correct} guesses: #{user.guesses})
+
+
+		h1 STALKERMODE ENGAGED
+		p #{mem}
+		p Server started 
+			mixin time(start)
+		ul
+			li
+				a(href="/superstalkers?ninjagod") annuit coeptis
+			each room, room_name in rooms
+				li
+					a(href="/#{room_name}") #{room_name}
+					| 
+					a(href="/#{room_name}?ninja") (ninja mode)
+					ul Difficulty/Subject: #{room.difficulty || "All"} #{room.category || "Pot"}
+					ul
+						each user, id in room.users
+							if user.sockets.length > 0
+								mixin display_user(user)
+					ul.offline
+						each user, id in room.users
+							if user.sockets.length == 0
+								mixin display_user(user)
+		hr
+		form(action="/stalkermode/announce", method="post")
+			label(for="name") Name
+			input#name(name="name", type="text", value="protobowl_announcement", style="width: 200px")
+			br
+			label(for="message") Message
+			input#message(type="text", name="message", style="width:500px")
+			button(type="submit") Announce
+		
+		hr
+
+		form(action="/stalkermode/update", method="post")
+			button(type="submit") Trigger Application Update
+
+		form(action="/stalkermode/forceupdate", method="post")
+			button(type="submit") Force Application Update
