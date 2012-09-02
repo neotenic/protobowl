@@ -7,6 +7,7 @@
     "socket.io": "0.9.x",
     "jade": "0.26.x",
     "markdown": "0.4.x",
+	"cookies": "0.3.x",
     "mongoose": "3.0.x"
   },
   "engines": {

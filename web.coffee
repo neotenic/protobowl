@@ -5,13 +5,31 @@ syllables = require('./lib/syllable').syllables
 parseCookie = require('express/node_modules/connect').utils.parseCookie
 crypto = require('crypto')
 
-app = express.createServer express.logger()
+app = express.createServer() 
 io = require('socket.io').listen(app)
 
+Cookies = require('cookies')
 app.use require('less-middleware')({src: __dirname})
 app.use express.favicon()
-app.use express.cookieParser()
-app.use express.session {secret: 'should probably make this more secretive', cookie: {httpOnly: false}}
+app.use (req, res, next) ->
+	console.log req, res, next
+	cookies = new Cookies(req, res)
+	unless cookies.get 'protocookie'
+		seed = "proto" + Math.random() + "bowl" + Math.random() + "client" + req.headers['user-agent']
+		expire_date = new Date()
+		expire_date.setFullYear expire_date.getFullYear() + 2
+		cookies.set 'protocookie', sha1(seed), {
+			expires: expire_date,
+			httpOnly: false,
+			signed: false,
+			secure: false,
+			path: '/'
+		}
+	console.log 'triggering middleware'
+	next()
+	
+#app.use express.cookieParser()
+#app.use express.session {secret: 'should probably make this more secretive', cookie: {httpOnly: false}}
 app.use express.static(__dirname)
 
 if app.settings.env is 'development'
@@ -49,13 +67,13 @@ io.configure ->
 	# io.set "connect timeout", 2000
 	# io.set "max reconnection attempts", 1
 	io.set "authorization", (data, fn) ->
+		console.log data
 		if !data.headers.cookie
 			return fn 'No cookie header', false
 		cookie = parseCookie(data.headers.cookie)
-		if cookie
+		if cookie and cookie['protocookie']
 			console.log "GOT COOKIE", data.headers.cookie
-
-			data.sessionID = cookie['connect.sid']
+			data.sessionID = cookie['protocookie']
 			fn null, true #woot
 		fn 'No cookie found', false
 
@@ -780,6 +798,7 @@ app.get '/', (req, res) ->
 app.get '/:channel', (req, res) ->
 	name = req.params.channel
 	# init_channel name
+	console.log "Requested /#{req.params.channel}", req.headers['user-agent']
 	res.render 'index.jade', { name, env: app.settings.env }
 
 
