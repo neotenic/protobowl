@@ -28,7 +28,6 @@ app.use(express.favicon());
 
 app.use(function(req, res, next) {
   var cookies, expire_date, seed;
-  console.log(req, res, next);
   cookies = new Cookies(req, res);
   if (!cookies.get('protocookie')) {
     seed = "proto" + Math.random() + "bowl" + Math.random() + "client" + req.headers['user-agent'];
@@ -42,7 +41,6 @@ app.use(function(req, res, next) {
       path: '/'
     });
   }
-  console.log('triggering middleware');
   return next();
 });
 
@@ -816,8 +814,7 @@ setInterval(function() {
 }, 1000 * 10);
 
 clearInactive = function(threshold) {
-  var len, long_time_ago, name, room, user, username, _ref, _results;
-  long_time_ago = new Date - threshold;
+  var len, name, room, user, username, _ref, _results;
   _results = [];
   for (name in rooms) {
     room = rooms[name];
@@ -826,10 +823,12 @@ clearInactive = function(threshold) {
     for (username in _ref) {
       user = _ref[username];
       len++;
-      if (user.last_action < long_time_ago && user.sockets.length === 0) {
-        console.log('kicking user of inactivity', user.name);
-        len--;
-        delete room.users[username];
+      if (user.sockets.length === 0) {
+        if (user.last_action < new Date - threshold || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0)) {
+          console.log('kicking user of inactivity', user.name);
+          len--;
+          delete room.users[username];
+        }
       }
     }
     if (len === 0) {

@@ -12,7 +12,6 @@ Cookies = require('cookies')
 app.use require('less-middleware')({src: __dirname})
 app.use express.favicon()
 app.use (req, res, next) ->
-	console.log req, res, next
 	cookies = new Cookies(req, res)
 	unless cookies.get 'protocookie'
 		seed = "proto" + Math.random() + "bowl" + Math.random() + "client" + req.headers['user-agent']
@@ -25,7 +24,6 @@ app.use (req, res, next) ->
 			secure: false,
 			path: '/'
 		}
-	console.log 'triggering middleware'
 	next()
 	
 #app.use express.cookieParser()
@@ -735,15 +733,15 @@ setInterval ->
 
 clearInactive = (threshold) ->
 	# garbazhe collectour
-	long_time_ago = new Date - threshold
 	for name, room of rooms
 		len = 0
 		for username, user of room.users
 			len++
-			if user.last_action < long_time_ago and user.sockets.length is 0
-				console.log 'kicking user of inactivity', user.name
-				len--
-				delete room.users[username]
+			if user.sockets.length is 0
+				if user.last_action < new Date - threshold or (user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0)
+					console.log 'kicking user of inactivity', user.name
+					len--
+					delete room.users[username]
 		if len is 0
 			console.log 'removing empty room', name
 			delete rooms[name]
