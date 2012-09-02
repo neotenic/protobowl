@@ -810,7 +810,7 @@ io.sockets.on('connection', function(sock) {
 });
 
 setInterval(function() {
-  return clearInactive(1000 * 60 * 60 * 12);
+  return clearInactive(1000 * 60 * 60 * 24);
 }, 1000 * 10);
 
 clearInactive = function(threshold) {

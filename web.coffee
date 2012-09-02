@@ -725,9 +725,7 @@ io.sockets.on 'connection', (sock) ->
 
 
 setInterval ->
-	
-	clearInactive 1000 * 60 * 60 * 12 # 12 hours
-
+	clearInactive 1000 * 60 * 60 * 24 
 , 1000 * 10 # every ten seconds
 
 
