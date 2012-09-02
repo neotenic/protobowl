@@ -873,6 +873,11 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			ruling.addClass('label-info').text('Prompt')
 		else if correct
 			ruling.addClass('label-success').text('Correct')
+			if user is public_id # if the person who got it right was me
+				my_score = computeScore(users[public_id])
+				magic_number = 1000 
+				if magic_number - 15 <= my_score <= magic_number + 15
+					$('body').fireworks()
 		else
 			ruling.addClass('label-warning').text('Wrong')
 
@@ -1105,6 +1110,47 @@ $('.categories').change ->
 
 $('.difficulties').change ->
 	sock.emit 'difficulty', $('.difficulties').val()
+
+
+jQuery.fn.fireworks = ->
+	for i in [0...5]
+		@.delay(Math.random() * 1000).queue =>
+			{top, left} = @position()
+			left += jQuery(window).width() * Math.random()
+			top += jQuery(window).height() * Math.random()
+			color = '#'+Math.random().toString(16).slice(2,8)
+			@dequeue()
+			for j in [0...50]
+				ang = Math.random() * 6.294
+				speed = Math.min(100, 150 * Math.random())
+				
+				vx = speed * Math.cos(ang)
+				vy = speed * Math.sin(ang)
+
+				seconds = 2 * Math.random()
+				size = 5
+				end_size = Math.random() * size
+				jQuery('<div>')
+				.css({
+					"position": 'fixed',
+					"background-color": color,
+					'width': size,
+					'height': size,
+					'border-radius': size,
+					'top': top,
+					'left': left
+				})
+				.appendTo('body')
+				.animate {
+					left: "+=#{vx * seconds}",
+					top: "+=#{vy * seconds}",
+					width: end_size,
+					height: end_size
+				}, {
+					duration: seconds * 1000,
+					complete: ->
+						$(this).remove()
+				}
 
 # possibly this should be replaced by something smarter using CSS calc()
 # but that would be a 
