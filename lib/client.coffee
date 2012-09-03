@@ -873,10 +873,12 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 
 	if done
 		ruling = line.find('.ruling').show().css('display', 'inline')
-
+		decision = ""
 		if correct is "prompt"
 			ruling.addClass('label-info').text('Prompt')
+			decision = "prompt"
 		else if correct
+			decision = "correct"
 			ruling.addClass('label-success').text('Correct')
 			if user is public_id # if the person who got it right was me
 				my_score = computeScore(users[public_id])
@@ -884,11 +886,12 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 				if magic_number - 15 <= my_score <= magic_number + 15
 					$('body').fireworks()
 		else
+			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
 
 		answer = sync.answer
 		ruling.click ->
-			sock.emit 'report_answer', {guess: text, answer: answer}
+			sock.emit 'report_answer', {guess: text, answer: answer, ruling: decision}
 			createAlert ruling.parents('.bundle'), 'Reported Answer', 'You have successfully told me that my algorithm sucks. Thanks, and I might fix it eventually.'
 
 			# $('#review .review-judgement')
