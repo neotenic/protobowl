@@ -299,6 +299,8 @@ class QuizRoom
 				interrupts: 0,
 				early: 0,
 				correct: 0,
+				seen: 0,
+				time_spent: 0,
 				last_action: 0
 			}
 		user = @users[id]
@@ -313,11 +315,15 @@ class QuizRoom
 		@sync()
 
 	touch: (id) ->
+		elapsed = @serverTime() - @users[id].last_action
+		if elapsed < 1000 * 60 * 10
+			@users[id].time_spent += elapsed
 		@users[id].last_action = @serverTime()
 
 	del_socket: (id, socket) ->
 		user = @users[id]
 		if user
+			@touch(id)
 			user.sockets = (sock for sock in user.sockets when sock isnt socket)
 
 	time: ->
@@ -387,6 +393,10 @@ class QuizRoom
 			@set_speed @rate #do the math with speeds
 			# @cumulative = cumsum @timing, @rate #todo: comment out
 			# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
+			for user, id of @users
+				if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
+					user.seen++
+
 			@sync(2)
 
 	set_speed: (rate) ->
@@ -713,7 +723,7 @@ io.sockets.on 'connection', (sock) ->
 			
 			room.emit 'log', {user: publicID + '-' + room.users[publicID].name, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
 
-			u.interrupts = u.guesses = u.correct = u.early = 0
+			u.seen = u.interrupts = u.guesses = u.correct = u.early = 0
 			room.sync(1)
 
 

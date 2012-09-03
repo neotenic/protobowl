@@ -308,6 +308,8 @@ QuizRoom = (function() {
         interrupts: 0,
         early: 0,
         correct: 0,
+        seen: 0,
+        time_spent: 0,
         last_action: 0
       };
     }
@@ -325,6 +327,11 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.touch = function(id) {
+    var elapsed;
+    elapsed = this.serverTime() - this.users[id].last_action;
+    if (elapsed < 1000 * 60 * 10) {
+      this.users[id].time_spent += elapsed;
+    }
     return this.users[id].last_action = this.serverTime();
   };
 
@@ -332,6 +339,7 @@ QuizRoom = (function() {
     var sock, user;
     user = this.users[id];
     if (user) {
+      this.touch(id);
       return user.sockets = (function() {
         var _i, _len, _ref, _results;
         _ref = user.sockets;
@@ -408,7 +416,7 @@ QuizRoom = (function() {
     var _this = this;
     this.generating_question = true;
     return this.get_question(function(question) {
-      var word;
+      var id, user, word, _ref;
       delete _this.generating_question;
       _this.attempt = null;
       _this.info = {
@@ -433,6 +441,13 @@ QuizRoom = (function() {
         return _results;
       }).call(_this);
       _this.set_speed(_this.rate);
+      _ref = _this.users;
+      for (user in _ref) {
+        id = _ref[user];
+        if (user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10) {
+          user.seen++;
+        }
+      }
       return _this.sync(2);
     });
   };
@@ -804,7 +819,7 @@ io.sockets.on('connection', function(sock) {
         user: publicID + '-' + room.users[publicID].name,
         verb: "was reset from " + u.correct + " correct of " + u.guesses + " guesses"
       });
-      u.interrupts = u.guesses = u.correct = u.early = 0;
+      u.seen = u.interrupts = u.guesses = u.correct = u.early = 0;
       return room.sync(1);
     }
   });
