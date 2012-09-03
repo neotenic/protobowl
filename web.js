@@ -458,12 +458,16 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.skip = function() {
-    return this.new_question();
+    if (!this.attempt) {
+      return this.new_question();
+    }
   };
 
   QuizRoom.prototype.next = function() {
     if (this.time() > this.end_time - this.answer_duration && !this.generating_question) {
-      return this.new_question();
+      if (!this.attempt) {
+        return this.new_question();
+      }
     }
   };
 
@@ -492,6 +496,10 @@ QuizRoom = (function() {
         this.attempt.start = this.time();
         this.attempt.text = '';
         this.attempt.duration = 10 * 1000;
+        io.sockets["in"](this.name).emit('log', {
+          user: this.attempt.user,
+          verb: "won the lottery, hooray! 0.1% of all buzzes are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."
+        });
         this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
           return _this.end_buzz(session);
         });

@@ -417,11 +417,11 @@ class QuizRoom
 
 
 	skip: ->
-		@new_question()
+		@new_question() unless @attempt
 
 	next: ->
 		if @time() > @end_time - @answer_duration and !@generating_question
-			@new_question()
+			@new_question() unless @attempt
 
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
@@ -450,7 +450,7 @@ class QuizRoom
 				@attempt.text = ''
 				@attempt.duration = 10 * 1000
 
-				# io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "got a prompt"}
+				io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "won the lottery, hooray! 0.1% of all buzzes are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."}
 				
 				@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 					@end_buzz session
