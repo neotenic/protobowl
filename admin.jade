@@ -39,10 +39,12 @@ html(lang="en")
 				| (last seen 
 				mixin time(user.last_action)
 				| )
+				| online for 
+				mixin duration(user.time_spent)
 				ul
 					li score: 
 						mixin score(user)
-						|  (correct: #{user.correct} guesses: #{user.guesses})
+						|  (correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early})
 
 
 		h1 STALKERMODE ENGAGED
@@ -59,7 +61,13 @@ html(lang="en")
 					- time_spent += user.time_spent
 			if active
 				- active_rooms++
-		p Users Online: #{online}, Total Points: #{points}, Total Rooms: #{room_num}, Active Rooms: #{active_rooms}, Time Spent: #{duration(time_spent)}
+		p 
+			| Users Online: #{online}, 
+			| Total Points: #{points}, 
+			| Total Rooms: #{room_num}, 
+			| Active Rooms: #{active_rooms}, 
+			| Time Spent: 
+			mixin duration(time_spent)
 		p Server started 
 			mixin time(start)
 		ul

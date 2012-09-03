@@ -68,6 +68,17 @@ io.configure ->
 	# io.set "max reconnection attempts", 1
 	io.set "authorization", (data, fn) ->
 		# console.log data
+		
+		#############################################
+		###IT MIGHT BE A GOOD IDEA FOR A FUTURE #####
+		###REVISION OF THIS TO SWITCH FROM USING#####
+		###A TWO PART HANDSHAKE (SENDING THE JOIN####
+		###MESSAGE TO SEND URL COMPONENTS TO USE#####
+		###DATA.HEADERS.REFERER IN ORDER TO PARSE####
+		###OUT THESE REFERERS AND TO FEED THE DATA###
+		#############################################
+		# however, more research is needed
+
 		if !data.headers.cookie
 			return fn 'No cookie header', false
 		cookie = parseCookie(data.headers.cookie)
@@ -305,7 +316,8 @@ class QuizRoom
 			}
 		user = @users[id]
 		user.id = id
-		user.last_action = @serverTime()
+		@touch(id, true)
+		# user.last_action = @serverTime()
 		unless socket in user.sockets
 			user.sockets.push socket
 
@@ -314,10 +326,11 @@ class QuizRoom
 		@users[id][action] = val
 		@sync()
 
-	touch: (id) ->
-		elapsed = @serverTime() - @users[id].last_action
-		if elapsed < 1000 * 60 * 10
-			@users[id].time_spent += elapsed
+	touch: (id, no_add_time) ->
+		unless no_add_time
+			elapsed = @serverTime() - @users[id].last_action
+			if elapsed < 1000 * 60 * 10
+				@users[id].time_spent += elapsed
 		@users[id].last_action = @serverTime()
 
 	del_socket: (id, socket) ->
@@ -393,7 +406,7 @@ class QuizRoom
 			@set_speed @rate #do the math with speeds
 			# @cumulative = cumsum @timing, @rate #todo: comment out
 			# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
-			for user, id of @users
+			for id, user of @users
 				if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
 					user.seen++
 
@@ -629,6 +642,7 @@ io.sockets.on 'connection', (sock) ->
 		rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
 		room = rooms[room_name]
 		room.add_socket publicID, sock.id
+
 		if data.ninja
 			room.users[publicID].ninja = true
 			room.users[publicID].name = publicID

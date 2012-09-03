@@ -84,6 +84,24 @@ setTimeout(function() {
 io.configure(function() {
   io.set("log level", 2);
   return io.set("authorization", function(data, fn) {
+    /*IT MIGHT BE A GOOD IDEA FOR A FUTURE
+    */
+
+    /*REVISION OF THIS TO SWITCH FROM USING
+    */
+
+    /*A TWO PART HANDSHAKE (SENDING THE JOIN
+    */
+
+    /*MESSAGE TO SEND URL COMPONENTS TO USE
+    */
+
+    /*DATA.HEADERS.REFERER IN ORDER TO PARSE
+    */
+
+    /*OUT THESE REFERERS AND TO FEED THE DATA
+    */
+
     var cookie;
     if (!data.headers.cookie) {
       return fn('No cookie header', false);
@@ -315,7 +333,7 @@ QuizRoom = (function() {
     }
     user = this.users[id];
     user.id = id;
-    user.last_action = this.serverTime();
+    this.touch(id, true);
     if (__indexOf.call(user.sockets, socket) < 0) {
       return user.sockets.push(socket);
     }
@@ -326,11 +344,13 @@ QuizRoom = (function() {
     return this.sync();
   };
 
-  QuizRoom.prototype.touch = function(id) {
+  QuizRoom.prototype.touch = function(id, no_add_time) {
     var elapsed;
-    elapsed = this.serverTime() - this.users[id].last_action;
-    if (elapsed < 1000 * 60 * 10) {
-      this.users[id].time_spent += elapsed;
+    if (!no_add_time) {
+      elapsed = this.serverTime() - this.users[id].last_action;
+      if (elapsed < 1000 * 60 * 10) {
+        this.users[id].time_spent += elapsed;
+      }
     }
     return this.users[id].last_action = this.serverTime();
   };
@@ -442,8 +462,8 @@ QuizRoom = (function() {
       }).call(_this);
       _this.set_speed(_this.rate);
       _ref = _this.users;
-      for (user in _ref) {
-        id = _ref[user];
+      for (id in _ref) {
+        user = _ref[id];
         if (user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10) {
           user.seen++;
         }
