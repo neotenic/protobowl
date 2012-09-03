@@ -709,7 +709,7 @@ io.sockets.on 'connection', (sock) ->
 		if room and room.users[publicID]
 			u = room.users[publicID]
 			
-			room.emit 'log', {user: publicID, verb: "was reset from #{u.correct} correct of #{u.guesses}"}
+			room.emit 'log', {user: publicID, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
 
 			u.interrupts = u.guesses = u.correct = u.early = 0
 			room.sync(1)

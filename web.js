@@ -803,7 +803,7 @@ io.sockets.on('connection', function(sock) {
       u = room.users[publicID];
       room.emit('log', {
         user: publicID,
-        verb: "was reset from " + u.correct + " correct of " + u.guesses
+        verb: "was reset from " + u.correct + " correct of " + u.guesses + " guesses"
       });
       u.interrupts = u.guesses = u.correct = u.early = 0;
       return room.sync(1);
