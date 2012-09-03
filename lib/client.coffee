@@ -996,13 +996,14 @@ $('.buzzbtn').click ->
 	# some server query to confirm control of the textbox) it wont actualy
 	# bring up the keyboard, so the solution here is to first open it up
 	# and ask nicely for forgiveness otherwise
+	submit_time = +new Date
 	sock.emit 'buzz', 'yay', (status) ->
 		if status is 'http://www.whosawesome.com/'
 			$('.guess_input').removeClass('disabled')
-			_gaq.push ['_trackEvent', 'Game', 'Buzz Accepted'] if window._gaq
+			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Accepted', new Date - submit_time] if window._gaq
 		else
 			setActionMode ''
-			_gaq.push ['_trackEvent', 'Game', 'Buzz Rejected'] if window._gaq
+			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Rejected', new Date - submit_time] if window._gaq
 
 $('.score-reset').click ->
 	sock.emit 'resetscore', 'yay'
