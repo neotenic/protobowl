@@ -1,5 +1,14 @@
 #ProtoBowl
 
+# Todo
+
+* Add sounds.
+* Enable/Disable multiple buzzzes
+* record the number of questions seen
+* record the position of the question when buzzed
+* check that it's the last name which is common
+
+
 Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions.
 
 #Manual
