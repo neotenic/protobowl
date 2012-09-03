@@ -485,7 +485,7 @@ QuizRoom = (function() {
       this.clear_timeout();
       this.attempt.done = true;
       this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
-      log('buzz', [this.name, this.attempt.user, this.attempt.text, this.answer, this.attempt.correct]);
+      log('buzz', [this.name, this.attempt.user + '-' + this.users[this.attempt.user].name, this.attempt.text, this.answer, this.attempt.correct]);
       if (Math.random() > 0.999) {
         this.attempt.correct = "prompt";
         this.sync();
@@ -741,7 +741,7 @@ io.sockets.on('connection', function(sock) {
     room.difficulty = data;
     room.reset_schedule();
     room.sync();
-    log('difficulty', [room.name, publicID, room.difficulty]);
+    log('difficulty', [room.name, publicID + '-' + room.users[publicID].name, room.difficulty]);
     return countQuestions(room.difficulty, room.category, function(count) {
       return room.emit('log', {
         user: publicID,
@@ -754,7 +754,7 @@ io.sockets.on('connection', function(sock) {
       room.category = data;
       room.reset_schedule();
       room.sync();
-      log('category', [room.name, publicID, room.category]);
+      log('category', [room.name, publicID + '-' + room.users[publicID].name, room.category]);
       return countQuestions(room.difficulty, room.category, function(count) {
         return room.emit('log', {
           user: publicID,
@@ -785,7 +785,7 @@ io.sockets.on('connection', function(sock) {
     if (room) {
       room.touch(publicID);
       if (done) {
-        log('chat', [room.name, publicID, text]);
+        log('chat', [room.name, publicID + '-' + room.users[publicID].name, text]);
       }
       return room.emit('chat', {
         text: text,
@@ -801,7 +801,7 @@ io.sockets.on('connection', function(sock) {
     if (room && room.users[publicID]) {
       u = room.users[publicID];
       room.emit('log', {
-        user: publicID,
+        user: publicID + '-' + room.users[publicID].name,
         verb: "was reset from " + u.correct + " correct of " + u.guesses + " guesses"
       });
       u.interrupts = u.guesses = u.correct = u.early = 0;
@@ -809,10 +809,18 @@ io.sockets.on('connection', function(sock) {
     }
   });
   sock.on('report_question', function(data) {
-    return log('report_question', data);
+    if (room) {
+      data.room = room.name;
+      data.user = publicID + '-' + room.users[publicID].name;
+      return log('report_question', data);
+    }
   });
   sock.on('report_answer', function(data) {
-    return log('report_answer', data);
+    if (room) {
+      data.room = room.name;
+      data.user = publicID + '-' + room.users[publicID].name;
+      return log('report_answer', data);
+    }
   });
   return sock.on('disconnect', function() {
     console.log("someone", publicID, sock.id, "left");
