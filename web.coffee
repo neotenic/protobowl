@@ -647,6 +647,7 @@ io.sockets.on 'connection', (sock) ->
 		# room.sync() if room
 		# room.vote publicID, 'skip', vote
 		room.skip()
+		room.emit 'log', {user: publicID, verb: 'skipped a question'}
 
 	sock.on 'next', ->
 		room.next() # its a more restricted kind of skip

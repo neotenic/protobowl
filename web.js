@@ -707,7 +707,11 @@ io.sockets.on('connection', function(sock) {
     }
   });
   sock.on('skip', function(vote) {
-    return room.skip();
+    room.skip();
+    return room.emit('log', {
+      user: publicID,
+      verb: 'skipped a question'
+    });
   });
   sock.on('next', function() {
     return room.next();
