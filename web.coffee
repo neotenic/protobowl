@@ -636,9 +636,10 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'rename', (name) ->
 		# sock.set 'name', name
-		room.users[publicID].name = name
-		room.touch(publicID)
-		room.sync(1) if room
+		if room
+			room.users[publicID].name = name
+			room.touch(publicID)
+			room.sync(1)
 
 	sock.on 'skip', (vote) ->
 		# sock.set 'skip', vote
@@ -646,8 +647,9 @@ io.sockets.on 'connection', (sock) ->
 		# room.users[publicID].skip = vote
 		# room.sync() if room
 		# room.vote publicID, 'skip', vote
-		room.skip()
-		room.emit 'log', {user: publicID, verb: 'skipped a question'}
+		if room
+			room.skip()
+			room.emit 'log', {user: publicID, verb: 'skipped a question'}
 
 	sock.on 'next', ->
 		room.next() # its a more restricted kind of skip
@@ -657,8 +659,9 @@ io.sockets.on 'connection', (sock) ->
 		# room.users[publicID].pause = vote
 		
 		# room.vote publicID, 'pause', vote
-		room.pause()
-		room.sync() if room
+		if room
+			room.pause()
+			room.sync()
 
 	sock.on 'unpause', (vote) ->
 		# sock.set 'unpause', vote
@@ -677,16 +680,18 @@ io.sockets.on 'connection', (sock) ->
 		
 
 	sock.on 'category', (data) ->
-		room.category = data
-		room.reset_schedule()
-		room.sync()
-		log 'category', [room.name, publicID, room.category]
-		countQuestions room.difficulty, room.category, (count) ->
-			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
+		if room
+			room.category = data
+			room.reset_schedule()
+			room.sync()
+			log 'category', [room.name, publicID, room.category]
+			countQuestions room.difficulty, room.category, (count) ->
+				room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
 	sock.on 'speed', (data) ->
-		room.set_speed data
-		room.sync()
+		if room
+			room.set_speed data
+			room.sync()
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz(publicID, fn) if room

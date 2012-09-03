@@ -708,25 +708,27 @@ io.sockets.on('connection', function(sock) {
     return callback(+(new Date));
   });
   sock.on('rename', function(name) {
-    room.users[publicID].name = name;
-    room.touch(publicID);
     if (room) {
+      room.users[publicID].name = name;
+      room.touch(publicID);
       return room.sync(1);
     }
   });
   sock.on('skip', function(vote) {
-    room.skip();
-    return room.emit('log', {
-      user: publicID,
-      verb: 'skipped a question'
-    });
+    if (room) {
+      room.skip();
+      return room.emit('log', {
+        user: publicID,
+        verb: 'skipped a question'
+      });
+    }
   });
   sock.on('next', function() {
     return room.next();
   });
   sock.on('pause', function(vote) {
-    room.pause();
     if (room) {
+      room.pause();
       return room.sync();
     }
   });
@@ -749,20 +751,24 @@ io.sockets.on('connection', function(sock) {
     });
   });
   sock.on('category', function(data) {
-    room.category = data;
-    room.reset_schedule();
-    room.sync();
-    log('category', [room.name, publicID, room.category]);
-    return countQuestions(room.difficulty, room.category, function(count) {
-      return room.emit('log', {
-        user: publicID,
-        verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'
+    if (room) {
+      room.category = data;
+      room.reset_schedule();
+      room.sync();
+      log('category', [room.name, publicID, room.category]);
+      return countQuestions(room.difficulty, room.category, function(count) {
+        return room.emit('log', {
+          user: publicID,
+          verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'
+        });
       });
-    });
+    }
   });
   sock.on('speed', function(data) {
-    room.set_speed(data);
-    return room.sync();
+    if (room) {
+      room.set_speed(data);
+      return room.sync();
+    }
   });
   sock.on('buzz', function(data, fn) {
     if (room) {
