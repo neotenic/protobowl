@@ -104,6 +104,9 @@ virtual_server = {
 	skip: ->
 		@new_question()
 
+	next: ->
+		@new_question()
+
 	###### THE ABOVE SECTION IS PRACTICALLY VERBATIM
 	connect: ->
 		console.log "initializing server!"

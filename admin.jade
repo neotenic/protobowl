@@ -56,9 +56,9 @@ html(lang="en")
 			each user, id in room.users
 				if user.sockets.length > 0
 					- online++
-					- points += (user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5)
 					- active = true
-					- time_spent += user.time_spent
+				- points += (user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5)
+				- time_spent += user.time_spent
 			if active
 				- active_rooms++
 		p 
