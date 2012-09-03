@@ -49,13 +49,15 @@ html(lang="en")
 
 		h1 STALKERMODE ENGAGED
 		p #{mem}
-		- var online = 0, points = 0, room_num = 0, active_rooms = 0, time_spent = 0
+		- var online = 0, active_users = 0, points = 0, room_num = 0, active_rooms = 0, time_spent = 0
 		each room, room_name in rooms
 			- room_num++
 			- var active = false;
 			each user, id in room.users
 				if user.sockets.length > 0
 					- online++
+					if new Date - user.last_action < 1000 * 60 * 10
+						- active_users++
 					- active = true
 				- points += (user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5)
 				- time_spent += user.time_spent
@@ -63,6 +65,7 @@ html(lang="en")
 				- active_rooms++
 		p 
 			| Users Online: #{online}, 
+			| Active Users: #{active_users}, 
 			| Total Points: #{points}, 
 			| Total Rooms: #{room_num}, 
 			| Active Rooms: #{active_rooms}, 
