@@ -85,7 +85,6 @@ io.configure(function() {
   io.set("log level", 2);
   return io.set("authorization", function(data, fn) {
     var cookie;
-    console.log(data);
     if (!data.headers.cookie) {
       return fn('No cookie header', false);
     }
@@ -715,7 +714,7 @@ io.sockets.on('connection', function(sock) {
     }
   });
   sock.on('skip', function(vote) {
-    if (room) {
+    if (room && !room.attempt) {
       room.skip();
       return room.emit('log', {
         user: publicID,

@@ -11,6 +11,8 @@ io = require('socket.io').listen(app)
 Cookies = require('cookies')
 app.use require('less-middleware')({src: __dirname})
 app.use express.favicon()
+
+# this injects cookies into things, woot
 app.use (req, res, next) ->
 	cookies = new Cookies(req, res)
 	unless cookies.get 'protocookie'
@@ -65,7 +67,7 @@ io.configure ->
 	# io.set "connect timeout", 2000
 	# io.set "max reconnection attempts", 1
 	io.set "authorization", (data, fn) ->
-		console.log data
+		# console.log data
 		if !data.headers.cookie
 			return fn 'No cookie header', false
 		cookie = parseCookie(data.headers.cookie)
@@ -647,7 +649,7 @@ io.sockets.on 'connection', (sock) ->
 		# room.users[publicID].skip = vote
 		# room.sync() if room
 		# room.vote publicID, 'skip', vote
-		if room
+		if room and !room.attempt
 			room.skip()
 			room.emit 'log', {user: publicID, verb: 'skipped a question'}
 

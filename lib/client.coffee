@@ -60,7 +60,11 @@ jQuery.fn.disable = (value) ->
 	if current != value
 		$(this).attr 'disabled', value
 
-mobileLayout = -> matchMedia('(max-width: 768px)').matches
+mobileLayout = -> 
+	if window.matchMedia
+		matchMedia('(max-width: 768px)').matches
+	else
+		return false
 
 avg = (list) ->
 	sum(list) / list.length
@@ -608,11 +612,12 @@ renderTimer = ->
 		elapsed = serverTime() - sync.attempt.realTime
 		ms = sync.attempt.duration - elapsed
 		progress = elapsed / sync.attempt.duration
-		$('.pausebtn, .buzzbtn').disable true
+		$('.pausebtn, .buzzbtn, .skipbtn, .nextbtn').disable true
 	else
 		ms = sync.end_time - time()
 		elapsed = (time() - sync.begin_time)
 		progress = elapsed/(sync.end_time - sync.begin_time)
+		$('.skipbtn, .nextbtn').disable false
 		$('.pausebtn').disable (ms < 0)
 		$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
@@ -960,6 +965,7 @@ $('.chatbtn').click ->
 	# create a new input session id, which helps syncing work better
 	$('.chat_input')
 		.data('input_session', Math.random().toString(36).slice(3))
+		.data('begin_time', +new Date)
 		.val('')
 		.focus()
 
@@ -990,10 +996,10 @@ $('.buzzbtn').click ->
 	sock.emit 'buzz', 'yay', (status) ->
 		if status is 'http://www.whosawesome.com/'
 			$('.guess_input').removeClass('disabled')
-			_gaq.push ['_trackEvent', 'Game', 'Buzz Accepted']
+			_gaq.push ['_trackEvent', 'Game', 'Buzz Accepted'] if window._gaq
 		else
 			setActionMode ''
-			_gaq.push ['_trackEvent', 'Game', 'Buzz Rejected']
+			_gaq.push ['_trackEvent', 'Game', 'Buzz Rejected'] if window._gaq
 
 $('.score-reset').click ->
 	sock.emit 'resetscore', 'yay'
@@ -1034,6 +1040,8 @@ $('.chat_form').submit (e) ->
 	}
 	e.preventDefault()
 	setActionMode ''
+	time = new Date - $('.chat_input').data('begin_time')
+	_gaq.push ['_trackEvent', 'Chat', 'Typing Time', 'Posted Message', time] if window._gaq
 
 $('.guess_input').keyup (e) ->
 	return if e.keyCode is 13
@@ -1113,7 +1121,7 @@ $('.difficulties').change ->
 
 
 jQuery.fn.fireworks = ->
-	for i in [0...5]
+	for i in [0...8]
 		@.delay(Math.random() * 1000).queue =>
 			{top, left} = @position()
 			left += jQuery(window).width() * Math.random()
