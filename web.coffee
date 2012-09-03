@@ -437,7 +437,7 @@ class QuizRoom
 			@clear_timeout()
 			@attempt.done = true
 			@attempt.correct = checkAnswer @attempt.text, @answer, @question
-			log 'buzz', [@name, @attempt.user, @attempt.text, @answer, @attempt.correct]
+			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, @attempt.correct]
 			# conditionally set this based on stuff
 			if Math.random() > 0.999
 				@attempt.correct = "prompt" # quasi hack i know
@@ -676,7 +676,7 @@ io.sockets.on 'connection', (sock) ->
 		room.difficulty = data
 		room.reset_schedule()
 		room.sync()
-		log 'difficulty', [room.name, publicID, room.difficulty]
+		log 'difficulty', [room.name, publicID + '-' + room.users[publicID].name, room.difficulty]
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
 		
@@ -686,7 +686,7 @@ io.sockets.on 'connection', (sock) ->
 			room.category = data
 			room.reset_schedule()
 			room.sync()
-			log 'category', [room.name, publicID, room.category]
+			log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
 			countQuestions room.difficulty, room.category, (count) ->
 				room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
@@ -704,24 +704,30 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'chat', ({text, done, session}) ->
 		if room
 			room.touch publicID
-			log 'chat', [room.name, publicID, text] if done
+			log 'chat', [room.name, publicID + '-' + room.users[publicID].name, text] if done
 			room.emit 'chat', {text: text, session:  session, user: publicID, done: done, time: room.serverTime()}
 
 	sock.on 'resetscore', ->
 		if room and room.users[publicID]
 			u = room.users[publicID]
 			
-			room.emit 'log', {user: publicID, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
+			room.emit 'log', {user: publicID + '-' + room.users[publicID].name, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
 
 			u.interrupts = u.guesses = u.correct = u.early = 0
 			room.sync(1)
 
 
 	sock.on 'report_question', (data) ->
-		log 'report_question', data
+		if room
+			data.room = room.name
+			data.user = publicID + '-' + room.users[publicID].name
+			log 'report_question', data
 
 	sock.on 'report_answer', (data) ->
-		log 'report_answer', data
+		if room
+			data.room = room.name
+			data.user = publicID + '-' + room.users[publicID].name
+			log 'report_answer', data
 
 	sock.on 'disconnect', ->
 		# id = sock.id
