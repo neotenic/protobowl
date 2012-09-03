@@ -845,7 +845,7 @@ clearInactive = function(threshold) {
       user = _ref[username];
       len++;
       if (user.sockets.length === 0) {
-        if (user.last_action < new Date - threshold || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0)) {
+        if (user.last_action < new Date - threshold || (user.last_action < new Date - 1000 * 60 * 30 && user.correct === 0)) {
           console.log('kicking user of inactivity', user.name);
           len--;
           delete room.users[username];
