@@ -887,7 +887,10 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					if updated_score is old_score
 						setTimeout checkScoreUpdate, 100
 						return
-					magic_number = 1000
+
+					magic_multiple = 1000
+					magic_number = Math.round(old_score / magic_multiple) * magic_multiple
+					
 					if old_score < magic_number and updated_score >= magic_number
 						$('body').fireworks()
 				checkScoreUpdate()
