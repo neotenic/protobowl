@@ -881,10 +881,16 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "correct"
 			ruling.addClass('label-success').text('Correct')
 			if user is public_id # if the person who got it right was me
-				my_score = computeScore(users[public_id])
-				magic_number = 1000 
-				if magic_number - 15 <= my_score <= magic_number + 15
-					$('body').fireworks()
+				old_score = computeScore(users[public_id])
+				checkScoreUpdate = ->
+					updated_score = computeScore(users[public_id])
+					if updated_score is old_score
+						setTimeout checkScoreUpdate, 100
+						return
+					magic_number = 1000
+					if old_score < magic_number and updated_score >= magic_number
+						$('body').fireworks()
+				checkScoreUpdate()
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
@@ -1044,8 +1050,8 @@ $('.chat_form').submit (e) ->
 	}
 	e.preventDefault()
 	setActionMode ''
-	time = new Date - $('.chat_input').data('begin_time')
-	_gaq.push ['_trackEvent', 'Chat', 'Typing Time', 'Posted Message', time] if window._gaq
+	time_delta = new Date - $('.chat_input').data('begin_time')
+	_gaq.push ['_trackEvent', 'Chat', 'Typing Time', 'Posted Message', time_delta] if window._gaq
 
 $('.guess_input').keyup (e) ->
 	return if e.keyCode is 13
@@ -1124,8 +1130,8 @@ $('.difficulties').change ->
 	sock.emit 'difficulty', $('.difficulties').val()
 
 
-jQuery.fn.fireworks = ->
-	for i in [0...8]
+jQuery.fn.fireworks = (times = 5) ->
+	for i in [0...times]
 		@.delay(Math.random() * 1000).queue =>
 			{top, left} = @position()
 			left += jQuery(window).width() * Math.random()
