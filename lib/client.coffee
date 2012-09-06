@@ -328,6 +328,7 @@ createStatSheet = (user, full) ->
 	row "Early", user.early  if full
 	row "Incorrect", user.guesses - user.correct  if full
 	row "Guesses", user.guesses 
+	row "Seen", user.seen
 	row "ID", user.id.slice(0, 10) if full
 	row "Last Seen", formatTime(user.last_action) if full
 	return table
@@ -557,6 +558,8 @@ renderTimer = ->
 		$('.offline').fadeIn()
 
 	if sync.time_freeze
+		$('.buzzbtn').disable true
+
 		if sync.attempt
 			do ->
 				cumulative = cumsum sync.timing, sync.rate
@@ -573,8 +576,11 @@ renderTimer = ->
 		else
 			$('.label.pause').fadeIn()
 			$('.label.buzz').hide()
+			
 
+		# show the resume button
 		if $('.pausebtn').hasClass('btn-warning')
+
 			$('.pausebtn .resume').show()
 			$('.pausebtn .pause').hide()
 
@@ -583,6 +589,7 @@ renderTimer = ->
 			.removeClass('btn-warning')
 
 	else
+		# show the pause button
 		$('.label.pause').fadeOut()
 		$('.label.buzz').fadeOut()
 		if $('.pausebtn').hasClass('btn-success')
@@ -619,7 +626,8 @@ renderTimer = ->
 		progress = elapsed/(sync.end_time - sync.begin_time)
 		$('.skipbtn, .nextbtn').disable false
 		$('.pausebtn').disable (ms < 0)
-		$('.buzzbtn').disable (ms < 0 or elapsed < 100)
+		unless sync.time_freeze
+			$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
 			$('.bundle.active').find('.answer').css('display', 'inline').css('visibility', 'visible')
 	
@@ -890,13 +898,20 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 
 					magic_multiple = 1000
 					magic_number = Math.round(old_score / magic_multiple) * magic_multiple
-					
-					if old_score < magic_number and updated_score >= magic_number
-						$('body').fireworks()
+					# console.log updated_score, old_score
+					return if magic_number is 0 # 0 is hardly an accomplishment
+					if magic_number > 0
+						if old_score < magic_number and updated_score >= magic_number
+							$('body').fireworks(magic_number / magic_multiple * 5)
+							createAlert ruling.parents('.bundle'), 'Congratulations', "You have over #{magic_number} points! Here's some fireworks to set the mood."
 				checkScoreUpdate()
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
+			old_score = computeScore(users[public_id])
+			if old_score < -500 # just a little way of saying "you suck"
+				createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. like you are seriously a turd if you have under a negative thousand points.'
+
 
 		answer = sync.answer
 		ruling.click ->
@@ -1135,7 +1150,8 @@ $('.difficulties').change ->
 
 jQuery.fn.fireworks = (times = 5) ->
 	for i in [0...times]
-		@.delay(Math.random() * 1000).queue =>
+		duration = Math.random() * 2000
+		@.delay(duration).queue =>
 			{top, left} = @position()
 			left += jQuery(window).width() * Math.random()
 			top += jQuery(window).height() * Math.random()
