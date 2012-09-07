@@ -14,6 +14,10 @@ do ->
 	stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold luke matthew"
 	# commwords = "war battle river"
 
+	log = (args...)->
+		if exports.log
+			exports.log(args...)
+
 	parseAnswer = (answer) ->
 		answer = answer.replace(/[\[\]\<\>\{\}][\w\-]+?[\[\]\<\>\{\}]/g, '')
 
@@ -27,16 +31,16 @@ do ->
 			part = part.replace(/-/g, ' ')
 			
 			if /equivalent|word form|other wrong/.test part
-				# console.log 'equiv-', part
+				# log 'equiv-', part
 			else if /do not|dont/.test part
-				# console.log 'neg-', part
+				# log 'neg-', part
 				neg.push part
 			else if /accept/.test part 
 				comp = part.split(/before|until/)
 				if comp.length > 1
 					neg.push comp[1]
 				pos.push comp[0]
-				# console.log 'pos-', comp
+				# log 'pos-', comp
 			else
 				pos.push part
 		[pos, neg]
@@ -84,7 +88,7 @@ do ->
 		scores = scores.sort (a, b) -> a[0] - b[0]
 		[score, real, len, valid] = scores[0] 
 		frac = real / len
-		console.log word, valid, list, len, score, frac
+		log word, valid, list, len, score, frac
 		if len > 4
 			if frac >= 0.65
 				return valid
@@ -113,7 +117,7 @@ do ->
 			else
 				invalid_count += value
 
-		console.log "ADVANCED", valid_count, invalid_count, inputText.length
+		log "ADVANCED", valid_count, invalid_count, inputText.length
 		return valid_count - invalid_count >= 1
 
 		
@@ -129,16 +133,16 @@ do ->
 		diff = levens compare.slice(0, minlen), p.slice(0, minlen)
 		accuracy = 1 - (diff / minlen)
 
-		console.log "RAW LEVENSHTEIN", diff, minlen, accuracy
+		log "RAW LEVENSHTEIN", diff, minlen, accuracy
 
 		if minlen >= 4 and accuracy >= 0.70
-			return true
+			return "prompt" # turns out raw levenshtein is working out worse than it really helps
 
 		return false
 
 
 	checkAnswer = (compare, answer, question = '') ->
-		console.log '---------------------------'
+		log '---------------------------'
 
 		question = removeDiacritics(question).trim()
 		answer = removeDiacritics(answer).trim()
@@ -149,14 +153,14 @@ do ->
 
 		[pos, neg] = parseAnswer(answer.trim())
 
-		console.log "ACCEPT", pos, "REJECT", neg
+		log "ACCEPT", pos, "REJECT", neg
 		for p in pos
 			# checking years because theyre numbers
 			if compare.replace(/[^0-9]/g, '').length == 4
 
 				year = compare.replace(/[^0-9]/g, '')
 				compyr = p.replace(/[^0-9]/g, '')
-				console.log "YEAR COMPARE", year, compyr
+				log "YEAR COMPARE", year, compyr
 				if year == compyr
 					return true
 			else
@@ -172,7 +176,7 @@ do ->
 		try
 			return checkAnswer(compare, answer, question)
 		catch error
-			console.log "ERROR", error
+			log "ERROR", error
 			return false
 	stopnames = splitWords stopnames
 	exports.checkAnswer = safeCheckAnswer

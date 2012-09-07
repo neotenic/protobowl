@@ -130,7 +130,7 @@ virtual_server = {
 	join: (data) ->
 		publicID = "offline"
 		publicName = require('lib/names').generateName()
-		console.log "joining stuff", data
+		# console.log "joining stuff", data
 		
 		sync.answer_duration = 1000 * 5
 		sync.time_offset = 0
@@ -140,6 +140,7 @@ virtual_server = {
 			early: 0,
 			correct: 0,
 			last_action: 0,
+			seen: 0,
 			id: publicID,
 			name: publicName
 		}]
@@ -226,6 +227,7 @@ virtual_server = {
 		# sync.end_time = sync.begin_time + cumulative[cumulative.length - 1] + sync.answer_duration
 		# @sync(2)
 		@set_speed sync.rate
+		sync.users[0].seen++
 		synchronize()
 
 	speed: (rate) ->
@@ -267,6 +269,9 @@ virtual_server = {
 				@end_buzz sync.attempt.session
 			synchronize()
 
+	finish: ->
+		@set_time sync.end_time
+
 	end_buzz: (session) ->
 		if sync.attempt?.session is session
 			sync.attempt.done = true
@@ -280,7 +285,8 @@ virtual_server = {
 				users[public_id].correct++
 				if sync.attempt.early 
 					users[public_id].early++
-				@set_time sync.end_time
+				@finish()
+				
 			else if sync.attempt.interrupt
 				users[public_id].interrupts++
 			sync.attempt = null

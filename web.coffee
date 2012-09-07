@@ -12,6 +12,8 @@ Cookies = require('cookies')
 app.use require('less-middleware')({src: __dirname})
 app.use express.favicon()
 
+
+
 # this injects cookies into things, woot
 app.use (req, res, next) ->
 	cookies = new Cookies(req, res)
@@ -60,12 +62,6 @@ setTimeout ->
 , 1000 * 30
 
 io.configure ->
-	# now this is meant to run on nodejitsu rather than heroku
-	#io.set "transports", ["xhr-polling"]
-	#io.set "polling duration", 10
-	io.set "log level", 2
-	# io.set "connect timeout", 2000
-	# io.set "max reconnection attempts", 1
 	io.set "authorization", (data, fn) ->
 		# console.log data
 		
@@ -88,7 +84,11 @@ io.configure ->
 			fn null, true #woot
 		fn 'No cookie found', false
 
+io.configure 'production', ->
+	io.set "log level", 0
 
+io.configure 'development', ->
+	io.set "log level", 3
 
 app.set 'views', __dirname
 app.set 'view options', {
@@ -98,6 +98,8 @@ app.set 'view options', {
 mongoose = require('mongoose')
 # oh noes, plz dont hacxxors me
 db = mongoose.createConnection 'mongodb://nodejitsu:87a9e43f3edd8929ef1e48ede1f0fc6d@alex.mongohq.com:10056/nodejitsudb560367656797'
+db.on 'error', (err) ->
+	console.log 'DB ERROR', err
 
 QuestionSchema = new mongoose.Schema {
 	category: String,
@@ -257,6 +259,8 @@ class QuizRoom
 		@difficulty = ''
 		@category = ''
 
+		@max_buzz = null
+
 		# the following are nasty database hacks
 		@question_schedule = []
 		@history = []
@@ -312,7 +316,8 @@ class QuizRoom
 				correct: 0,
 				seen: 0,
 				time_spent: 0,
-				last_action: 0
+				last_action: 0,
+				times_buzzed: 0
 			}
 		user = @users[id]
 		user.id = id
@@ -407,6 +412,7 @@ class QuizRoom
 			# @cumulative = cumsum @timing, @rate #todo: comment out
 			# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
 			for id, user of @users
+				user.times_buzzed = 0
 				if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
 					user.seen++
 
@@ -451,6 +457,8 @@ class QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
 
+	finish: ->
+		@set_time @end_time
 
 	end_buzz: (session) -> #killit, killitwithfire
 		return unless @attempt?.session is session
@@ -494,9 +502,21 @@ class QuizRoom
 				@users[@attempt.user].correct++
 				if @attempt.early 
 					@users[@attempt.user].early++
-				@set_time @end_time
-			else if @attempt.interrupt
-				@users[@attempt.user].interrupts++
+				@finish()
+			else # incorrect
+				if @attempt.interrupt
+					@users[@attempt.user].interrupts++
+				
+				for id, user of @users
+					buzzed = 0
+					pool = 0
+					if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
+						if @max_buzz isnt null and user.times_buzzed >= @max_buzz
+							buzzed++
+						pool++
+				if buzzed >= pool
+					@finish() # if everyone's buzzed and nobody can buzz, then why continue reading
+
 			@attempt = null #g'bye
 			@sync(1) #two syncs in one request!
 
@@ -507,6 +527,7 @@ class QuizRoom
 			fn 'http://www.whosawesome.com/' if fn
 			session = Math.random().toString(36).slice(2)
 			early_index = @question.replace(/[^ \*]/g, '').indexOf('*')
+
 
 			@attempt = {
 				user: user,
@@ -520,6 +541,7 @@ class QuizRoom
 				done: false
 			}
 
+			@users[user].times_buzzed++
 			@users[user].guesses++
 			
 			@freeze()
@@ -538,15 +560,15 @@ class QuizRoom
 			# buzzes, you always have room locking anyway
 			if data.done
 				# do done stuff
-				console.log 'omg done clubs are so cool ~ zuck'
+				# console.log 'omg finals clubs are so cool ~ zuck'
 				@end_buzz @attempt.session
 			else
 				@sync()
 
 	sync: (level = 0) ->
 		data = {
-			real_time: +new Date,
-			voting: {}
+			real_time: +new Date #,
+			# voting: {}
 		}
 		# voting = ['skip', 'pause', 'unpause']
 		# for action in voting
@@ -603,6 +625,7 @@ sha1 = (text) ->
 
 http = require('http')
 log = (action, obj) ->
+	return if app.settings.env is 'development'
 	req = http.request {
 		host: 'inception.pi.antimatter15.com',
 		port: 3140,
@@ -676,6 +699,10 @@ io.sockets.on 'connection', (sock) ->
 		if room and !room.attempt
 			room.skip()
 			room.emit 'log', {user: publicID, verb: 'skipped a question'}
+
+	sock.on 'finish', (vote) ->
+		if room and !room.attempt
+			room.finish()
 
 	sock.on 'next', ->
 		room.next() # its a more restricted kind of skip
@@ -771,6 +798,18 @@ setInterval ->
 , 1000 * 10 # every ten seconds
 
 
+reaped = {
+	name: "__reaped",
+	users: 0,
+	rooms: 0,
+	seen: 0,
+	correct: 0,
+	guesses: 0,
+	interrupts: 0,
+	early: 0
+}
+
+
 clearInactive = (threshold) ->
 	# garbazhe collectour
 	for name, room of rooms
@@ -780,11 +819,18 @@ clearInactive = (threshold) ->
 			if user.sockets.length is 0
 				if user.last_action < new Date - threshold or (user.last_action < new Date - 1000 * 60 * 30 and user.correct is 0)
 					console.log 'kicking user of inactivity', user.name
+					reaped.users++
+					reaped.seen += user.seen
+					reaped.guesses += user.guesses
+					reaped.early += user.early
+					reaped.interrupts += user.interrupts
+					reaped.correct += user.correct
 					len--
 					delete room.users[username]
 		if len is 0
 			console.log 'removing empty room', name
 			delete rooms[name]
+			reaped.rooms++
 
 uptime_begin = +new Date
 

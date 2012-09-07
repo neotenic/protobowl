@@ -84,3 +84,5 @@ z 'poisson', 'Paul Cézanne'
 z 'chrysanthemum and the sword', 'The Chrysanthemum and the Sword: Patterns of Japanese Culture'
 z "Debs","Eugene Victor Debs"
 z "Battle","Battle of Bunker Hill [or Battle of Breed's Hill before it is read]"
+z "Symphony in F", "Symphony in D minor"
+z "B flat", "E flat"
