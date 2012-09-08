@@ -96,6 +96,20 @@ input[type=range] {
 	height: 30px;
 }
 
+.settings {
+	.checkbox {
+		text-align: left;
+		padding-left: 33px;
+		input[type=checkbox] {
+			margin-left: -24px;
+		}
+	}
+	hr {
+		margin-top: 7px;
+		margin-bottom: 7px;
+	}
+}
+
 
 
 .bundle {
@@ -103,6 +117,10 @@ input[type=range] {
 		.author { font-weight: bold; }
 		.typing { opacity: 0.7; }
 		.log { font-style: italic;}
+		.typing.buffer {
+			font-style: italic;
+			.author { font-weight: normal; }
+		}
 	}
 	.bookmark {
 		margin-left: 5px;

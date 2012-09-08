@@ -30,7 +30,7 @@ sock = {
 			if $('.active .not-loaded').length > 0
 				el = $('.active .not-loaded')
 			else
-				el = $('<p>').addClass('not-loaded')
+				el = $('<p>').addClass('not-loaded well')
 				addImportant el
 			el.data 'num', (el.data('num') || 0) + 1
 			el.text("Offline component not loaded ")
@@ -159,17 +159,13 @@ sock.on 'connect', ->
 	$('.timer').removeClass 'disabled'
 	$('.disconnect-notice').slideUp()
 
-	sock.emit 'join', {
-		old_socket: localStorage.old_socket,
-		ninja: /ninja/.test(location.search),
-		god: /god/.test(location.search),
-		room_name: channel_name
-	}, (data) ->
-		public_name = data.name
-		public_id = data.id
-		$('#username').val public_name
-		$('#username').disable false
-		# $('.settings').slideDown()
+	sock.emit 'disco', {old_socket: localStorage.old_socket}
+
+sock.on 'joined', (data) ->
+	public_name = data.name
+	public_id = data.id
+	$('#username').val public_name
+	$('#username').disable false
 
 
 
@@ -220,6 +216,7 @@ synchronize = (data) ->
 
 	$('.categories').val sync.category
 	$('.difficulties').val sync.difficulty
+	$('.multibuzz').attr 'checked', !sync.max_buzz
 
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
@@ -908,9 +905,10 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
-			old_score = computeScore(users[public_id])
-			if old_score < -500 # just a little way of saying "you suck"
-				createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. like you are seriously a turd if you have under a negative thousand points.'
+			if user is public_id and public_id of users
+				old_score = computeScore(users[public_id])
+				if old_score < -500 # just a little way of saying "you suck"
+					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. like you are seriously a turd if you have under a negative thousand points.'
 
 
 		answer = sync.answer
@@ -944,12 +942,18 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			.appendTo line
 		addAnnotation line
 	if done
+		line.removeClass('buffer')
 		if text is ''
 			line.find('.comment').html('<em>(no message)</em>')
 		else
 			line.find('.comment').text(text)
 	else
-		line.find('.comment').text(text)
+		if !$('.livechat')[0].checked or text is '(typing)'
+			line.addClass('buffer')
+			line.find('.comment').text(' is typing...')
+		else
+			line.removeClass('buffer')
+			line.find('.comment').text(text)
 	line.toggleClass 'typing', !done
 
 # sock.on 'introduce', ({user}) ->
@@ -995,6 +999,7 @@ $('.chatbtn').click ->
 		.data('begin_time', +new Date)
 		.val('')
 		.focus()
+		.keyup()
 
 skip = ->
 	removeSplash()
@@ -1043,6 +1048,8 @@ $('.pausebtn').click ->
 $('.chat_input').keydown (e) ->
 	if e.keyCode in [47, 111, 191] and $(this).val().length is 0
 		e.preventDefault()
+	if e.keyCode in [27] #escape key
+		$('.chat_form').submit()
 
 
 $('input').keydown (e) ->
@@ -1054,11 +1061,20 @@ $('input').keydown (e) ->
 
 $('.chat_input').keyup (e) ->
 	return if e.keyCode is 13
-	sock.emit 'chat', {
-		text: $('.chat_input').val(), 
-		session: $('.chat_input').data('input_session'), 
-		done: false
-	}
+	if $('.livechat')[0].checked
+		sock.emit 'chat', {
+			text: $('.chat_input').val(), 
+			session: $('.chat_input').data('input_session'), 
+			done: false
+		}
+	else if $('.chat_input').data('sent_typing') isnt $('.chat_input').data('input_session')
+		sock.emit 'chat', {
+			text: '(typing)', 
+			session: $('.chat_input').data('input_session'), 
+			done: false
+		}
+		$('.chat_input').data 'sent_typing', $('.chat_input').data('input_session')
+
 
 $('.chat_form').submit (e) ->
 	sock.emit 'chat', {
@@ -1147,6 +1163,8 @@ $('.categories').change ->
 $('.difficulties').change ->
 	sock.emit 'difficulty', $('.difficulties').val()
 
+$('.multibuzz').change ->
+	sock.emit 'max_buzz', (if $('.multibuzz')[0].checked then null else 1)
 
 jQuery.fn.fireworks = (times = 5) ->
 	for i in [0...times]

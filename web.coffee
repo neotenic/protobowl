@@ -8,11 +8,13 @@ crypto = require('crypto')
 app = express.createServer() 
 io = require('socket.io').listen(app)
 
+url = require('url')
+
 Cookies = require('cookies')
 app.use require('less-middleware')({src: __dirname})
 app.use express.favicon()
 
-
+names = require('./lib/names')
 
 # this injects cookies into things, woot
 app.use (req, res, next) ->
@@ -61,28 +63,29 @@ setTimeout ->
 	io.sockets.emit 'application_update', +new Date
 , 1000 * 30
 
-io.configure ->
-	io.set "authorization", (data, fn) ->
-		# console.log data
-		
-		#############################################
-		###IT MIGHT BE A GOOD IDEA FOR A FUTURE #####
-		###REVISION OF THIS TO SWITCH FROM USING#####
-		###A TWO PART HANDSHAKE (SENDING THE JOIN####
-		###MESSAGE TO SEND URL COMPONENTS TO USE#####
-		###DATA.HEADERS.REFERER IN ORDER TO PARSE####
-		###OUT THESE REFERERS AND TO FEED THE DATA###
-		#############################################
-		# however, more research is needed
+# io.configure ->
+# 	io.set "authorization", (data, fn) ->
+# 		if !data.headers.cookie
+# 			return fn 'No cookie header', false
 
-		if !data.headers.cookie
-			return fn 'No cookie header', false
-		cookie = parseCookie(data.headers.cookie)
-		if cookie and cookie['protocookie']
-			console.log "GOT COOKIE", data.headers.cookie
-			data.sessionID = cookie['protocookie']
-			fn null, true #woot
-		fn 'No cookie found', false
+# 		if !data.headers.referer
+# 			return fn 'No referer header', false
+
+# 		config = url.parse(data.headers.referer)
+# 		room = config.pathname.replace(/\//g, '')
+# 		ninjamode = /ninja/.test config.search
+# 		godmode = /god/.test config.search
+
+# 		cookie = parseCookie(data.headers.cookie)
+# 		if cookie and cookie['protocookie'] and room
+# 			# console.log "GOT COOKIE", data.headers.cookie
+# 			data.sessionID = cookie['protocookie']
+# 			data.room_name = room
+# 			data.god = godmode
+# 			data.ninja = ninjamode
+# 			fn null, true #woot
+
+# 		fn 'No cookie found', false
 
 io.configure 'production', ->
 	io.set "log level", 0
@@ -470,7 +473,7 @@ class QuizRoom
 			@attempt.correct = checkAnswer @attempt.text, @answer, @question
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, @attempt.correct]
 			# conditionally set this based on stuff
-			if Math.random() > 0.999
+			if Math.random() > 0.99 and @attempt.correct is false
 				@attempt.correct = "prompt" # quasi hack i know
 
 				@sync() # sync to create a new line in the annotats
@@ -483,7 +486,7 @@ class QuizRoom
 				@attempt.text = ''
 				@attempt.duration = 10 * 1000
 
-				io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "won the lottery, hooray! 0.1% of all buzzes are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."}
+				io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "won the lottery, hooray! 1% of buzzes which would otherwise be deemed wrong are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."}
 				
 				@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 					@end_buzz session
@@ -511,10 +514,10 @@ class QuizRoom
 					buzzed = 0
 					pool = 0
 					if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
-						if @max_buzz isnt null and user.times_buzzed >= @max_buzz
+						if user.times_buzzed >= @max_buzz
 							buzzed++
 						pool++
-				if buzzed >= pool
+				if @max_buzz isnt null and buzzed >= pool 
 					@finish() # if everyone's buzzed and nobody can buzz, then why continue reading
 
 			@attempt = null #g'bye
@@ -640,45 +643,77 @@ log = (action, obj) ->
 
 
 rooms = {}
+
+io.configure ->
+	io.set "authorization", (data, fn) ->
+		if !data.headers.cookie
+			return fn 'No cookie header', false
+
+		if !data.headers.referer
+			return fn 'No referer header', false
+
+		config = url.parse(data.headers.referer)
+		room = config.pathname.replace(/\//g, '')
+		ninjamode = /ninja/.test config.search
+		godmode = /god/.test config.search
+
+		cookie = parseCookie(data.headers.cookie)
+		if cookie and cookie['protocookie'] and room
+			# console.log "GOT COOKIE", data.headers.cookie
+			data.sessionID = cookie['protocookie']
+			data.room_name = room
+			data.god = godmode
+			data.ninja = ninjamode
+			fn null, true #woot
+
+		fn 'No cookie found', false
+
 io.sockets.on 'connection', (sock) ->
-	sessionID = sock.handshake.sessionID
-	publicID = null
-	room = null
+	# read the headers and parse them with library functions
+	config = url.parse(sock.handshake.headers.referer)
+	cookie = parseCookie(sock.handshake.headers.cookie)
+	# set the config stuff
+	is_god = /god/.test config.search
+	is_ninja = /ninja/.test config.search
+	# configger the things which are derived from said parsed stuff
+	room_name = config.pathname.replace(/\//g, '')
+	publicID = sha1(cookie.protocookie + room_name)
+	publicID = "__secret_ninja" if is_ninja
+	publicID += "_god" if is_god
+	# create the room if it doesn't exist
+	rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
+	room = rooms[room_name]
+	room.add_socket publicID, sock.id
+	# actually join the room socket
+	if is_god
+		sock.join room for room of rooms
+	else
+		sock.join room_name
+	# look up this user in the room
+	user = room.users[publicID]
+	if is_ninja
+		user.ninja = true
+		user.name = publicID
+	# give the user a stupid name
+	user.name ||= names.generateName()
+	# tell the user of his new moniker
+	sock.emit 'joined', {
+		id: publicID,
+		name: user.name
+	}
+	# tell that there's a new person at the partaay
+	room.sync(3)
+	room.emit 'log', {user: publicID, verb: 'joined the room'} unless is_ninja
+
 
 	sock.on 'join', (data, fn) ->
+		sock.emit 'application_update', +new Date
+		sock.emit 'log', {user: publicID, verb: 'is using an outdated (and incompatible) version of ProtoBowl'}
+		sock.disconnect()
+		
+	sock.on 'disco', (data) ->
 		if data.old_socket and io.sockets.socket(data.old_socket)
 			io.sockets.socket(data.old_socket).disconnect()
-		
-		room_name = data.room_name
-		if data.ninja
-			publicID = '__secret_ninja' # no spaces
-		else
-			publicID = sha1(sessionID + room_name) #preserves a sense of privacy
-		
-		if data.god
-			publicID += "_god"
-			for room of rooms
-				sock.join room
-		else
-			sock.join room_name
-
-		rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
-		room = rooms[room_name]
-		room.add_socket publicID, sock.id
-
-		if data.ninja
-			room.users[publicID].ninja = true
-			room.users[publicID].name = publicID
-
-		unless 'name' of room.users[publicID]
-			room.users[publicID].name = require('./lib/names').generateName()
-		fn {
-			id: publicID,
-			name: room.users[publicID].name
-		}
-		room.sync(3)
-		unless data.ninja
-			room.emit 'log', {user: publicID, verb: 'joined the room'}
 
 	sock.on 'echo', (data, callback) =>
 		callback +new Date
@@ -741,6 +776,11 @@ io.sockets.on 'connection', (sock) ->
 			countQuestions room.difficulty, room.category, (count) ->
 				room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
+	sock.on 'max_buzz', (data) ->
+		if room #actually the recent updates probably means that these room existence checks are useless
+			room.max_buzz = data
+			room.sync()
+
 	sock.on 'speed', (data) ->
 		if room
 			room.set_speed data
@@ -762,11 +802,10 @@ io.sockets.on 'connection', (sock) ->
 		if room and room.users[publicID]
 			u = room.users[publicID]
 			
-			room.emit 'log', {user: publicID + '-' + room.users[publicID].name, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
+			room.emit 'log', {user: publicID, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
 
 			u.seen = u.interrupts = u.guesses = u.correct = u.early = 0
 			room.sync(1)
-
 
 	sock.on 'report_question', (data) ->
 		if room
@@ -817,7 +856,7 @@ clearInactive = (threshold) ->
 		for username, user of room.users
 			len++
 			if user.sockets.length is 0
-				if user.last_action < new Date - threshold or (user.last_action < new Date - 1000 * 60 * 30 and user.correct is 0)
+				if user.last_action < new Date - threshold or (user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0)
 					console.log 'kicking user of inactivity', user.name
 					reaped.users++
 					reaped.seen += user.seen
