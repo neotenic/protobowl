@@ -61,7 +61,7 @@ io.configure 'production', ->
 	io.set "log level", 0
 
 io.configure 'development', ->
-	io.set "log level", 3
+	io.set "log level", 2
 
 app.set 'views', __dirname
 app.set 'view options', {
@@ -272,7 +272,7 @@ class QuizRoom
 					criterion.difficulty = @difficulty
 				if @category
 					criterion.category = @category
-				console.log 'FISHER YATES SCHEDULED', index, 'REMAINING', @question_schedule.length
+				# console.log 'FISHER YATES SCHEDULED', index, 'REMAINING', @question_schedule.length
 				Question.find(criterion).skip(index).limit(1).exec (err, docs) ->
 					cb(docs[0] || error_question)
 
@@ -292,13 +292,14 @@ class QuizRoom
 				last_action: 0,
 				times_buzzed: 0
 			}
+			journal @name
 		user = @users[id]
 		user.id = id
 		@touch(id, true)
 		# user.last_action = @serverTime()
 		unless socket in user.sockets
 			user.sockets.push socket
-		@journal()
+		
 
 	# vote: (id, action, val) ->
 	# 	# room.add_socket publicID, sock.id
@@ -317,7 +318,7 @@ class QuizRoom
 		if user
 			@touch(id)
 			user.sockets = (sock for sock in user.sockets when sock isnt socket)
-		@journal()
+		journal @name
 
 	time: ->
 		return if @time_freeze then @time_freeze else @serverTime() - @time_offset
@@ -491,7 +492,7 @@ class QuizRoom
 						pool++
 				if @max_buzz isnt null and buzzed >= pool 
 					@finish() # if everyone's buzzed and nobody can buzz, then why continue reading
-
+			journal @name
 			@attempt = null #g'bye
 			@sync(1) #two syncs in one request!
 
@@ -591,7 +592,7 @@ class QuizRoom
 			
 		io.sockets.in(@name).emit 'sync', data
 	
-	journal: ->
+	journal_backup: ->
 		# this is like a simplified sync
 		data = {}
 		# user data!
@@ -602,11 +603,11 @@ class QuizRoom
 				user[attr] = @users[id][attr]
 			user
 		# global room settings
-		settings = ["difficulty", "category", "rate", "answer_duration", "max_buzz"]
+		settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz"]
 		for field in settings
 			data[field] = @[field]
 		# actually save stuff
-		journal @name, data
+		return data
 
 
 
@@ -633,36 +634,68 @@ log = (action, obj) ->
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
 	req.end()
 
+log 'server_restart', {}
 
-journal = (room, sync) ->
+journal_config = {
+	host: 'localhost',
+	port: 15865
+}
+
+journal_queue = {}
+journal = (name) ->
+	# console.trace()
+	journal_queue[name] = +new Date
+
+
+process_journal_queue = ->
+	room_names = Object.keys(journal_queue).sort (a, b) -> journal_queue[a] - journal_queue[b]
+	return if room_names.length is 0
+	first = room_names[0]
+	delete journal_queue[first]
+	if first of rooms
+		partial_journal first
+	else
+		console.log 'processing', first
+
+setInterval process_journal_queue, 1000
+
+partial_journal = (name) ->
 	# return if app.settings.env is 'development'
-	req = http.request {
-		host: 'localhost',
-		port: 15865,
-		path: '/journal',
-		method: 'POST'
-	}, ->
-		console.log "committed journal"
+	journal_config.path = '/journal'
+	journal_config.method = 'POST'
+	req = http.request journal_config, (res) ->
+		res.setEncoding 'utf8'
+		console.log "committed journal for ", name
+		res.on 'data', (chunk) ->
+			if chunk == 'do_full_sync'
+				console.log 'got trigger for doing a full journal sync'
+				full_journal_sync()
 	req.on 'error', ->
 		console.log "journal error"
-	req.write(JSON.stringify({
-		data: sync,
-		room: room
-	}))
+	req.write(JSON.stringify(rooms[name].journal_backup()))
 	req.end()
 
+full_journal_sync = ->
+	backup = for name, room of rooms
+		room.journal_backup()
+	journal_config.path = '/full_sync'
+	journal_config.method = 'POST'
+	req = http.request journal_config, (res) ->
+		console.log "done full sync"
+		
+	req.on 'error', ->
+		console.log "full sync error error"
+	req.write(JSON.stringify(backup))
+	req.end()
 
 rooms = {}
 
 # this is actually really quite hacky
 
-restoreJournal = (callback) ->
-	req = http.request {
-		host: 'localhost',
-		port: 15865,
-		path: '/retrieve',
-		method: 'GET'
-	}, (res) ->
+restore_journal = (callback) ->
+	journal_config.path = '/retrieve'
+	journal_config.method = 'GET'
+	req = http.request journal_config, (res) ->
 		console.log 'GOT JOURNAL RESPONSE'
 		res.setEncoding 'utf8'
 		packet = ''
@@ -676,7 +709,7 @@ restoreJournal = (callback) ->
 			fields = ["difficulty", "category", "rate", "answer_duration", "max_buzz"]
 			for name, data of json
 				# console.log data
-				unless name of rooms or !data.question
+				unless name of rooms
 					console.log 'restoring', name
 					rooms[name] = new QuizRoom(name)
 					room = rooms[name]
@@ -713,6 +746,7 @@ io.sockets.on 'connection', (sock) ->
 	# create the room if it doesn't exist
 	rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
 	room = rooms[room_name]
+	existing_user = (publicID of room.users)
 	room.add_socket publicID, sock.id
 	# actually join the room socket
 	if is_god
@@ -735,7 +769,7 @@ io.sockets.on 'connection', (sock) ->
 	room.sync(3)
 	room.emit 'log', {user: publicID, verb: 'joined the room'} unless is_ninja
 	# detect if the server had been recently restarted
-	if new Date - uptime_begin < 1000 * 60
+	if new Date - uptime_begin < 1000 * 60 and existing_user
 		sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental and not necessarily reliable). The journal does not record the current question, chat messages, or current attempts, so you may need to manually advance a question. This may have been part of a server or client software update, or the result of an unexpected server crash. We apologize for any inconvienience this may have caused.'}
 		sock.emit 'application_update', +new Date # check for updates in case it was an update
 
@@ -755,7 +789,7 @@ io.sockets.on 'connection', (sock) ->
 		room.users[publicID].name = name
 		room.touch(publicID)
 		room.sync(1)
-		room.journal()
+		journal room.name
 
 	sock.on 'skip', (vote) ->
 		if room and !room.attempt
@@ -781,7 +815,7 @@ io.sockets.on 'connection', (sock) ->
 		room.difficulty = data
 		room.reset_schedule()
 		room.sync()
-		room.journal()
+		journal room.name
 		log 'difficulty', [room.name, publicID + '-' + room.users[publicID].name, room.difficulty]
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
@@ -791,7 +825,7 @@ io.sockets.on 'connection', (sock) ->
 		room.category = data
 		room.reset_schedule()
 		room.sync()
-		room.journal()
+		journal room.name
 		log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
@@ -799,12 +833,12 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'max_buzz', (data) ->
 		room.max_buzz = data
 		room.sync()
-		room.journal()
+		journal room.name
 
 	sock.on 'speed', (data) ->
 		room.set_speed data
 		room.sync()
-		room.journal()
+		journal room.name
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz(publicID, fn) if room
@@ -824,7 +858,7 @@ io.sockets.on 'connection', (sock) ->
 
 		u.seen = u.interrupts = u.guesses = u.correct = u.early = 0
 		room.sync(1)
-		room.journal()
+		journal room.name
 
 	sock.on 'report_question', (data) ->
 		data.room = room.name
@@ -925,7 +959,7 @@ app.get '/stalkermode', (req, res) ->
 
 
 app.get '/new', (req, res) ->
-	res.redirect '/' + require('./lib/names').generatePage()
+	res.redirect '/' + names.generatePage()
 
 
 app.get '/', (req, res) ->
@@ -942,7 +976,7 @@ app.get '/:channel', (req, res) ->
 port = process.env.PORT || 5000
 
 
-restoreJournal ->
+restore_journal ->
 	app.listen port, ->
 		console.log "listening on", port
 

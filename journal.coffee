@@ -23,8 +23,15 @@
 # online, the main application resumes sending things to the journal.
 
 http = require 'http'
-
+util = require 'util'
 rooms = {}
+last_full_sync = 0
+
+sync_room = (json) ->
+	console.log 'room sync', json.name
+	rooms[json.name] ||= {}
+	for field, value of json
+		rooms[json.name][field] = value
 
 server = http.createServer (req, res) ->
 	if req.url is '/journal' and req.method is 'POST'
@@ -34,17 +41,37 @@ server = http.createServer (req, res) ->
 		req.on 'data', (chunk) ->
 			packet += chunk
 		req.on 'end', ->
-			json = JSON.parse(packet)
-			rooms[json.room] ||= {}
-			for field, value of json.data
-				rooms[json.room][field] = value
+			console.log 'doing partial sync'
+			sync_room JSON.parse(packet)
 		res.writeHead 200, {'Content-Type': 'text/plain'}
-		res.end 'saved'
+		if new Date - last_full_sync < 1000 * 60 * 30
+			res.end 'saved'
+		else
+			console.log 'requesting full synchronization'
+			res.end 'do_full_sync'
+
+	if req.url is '/full_sync' and req.method is 'POST'
+		req.setEncoding 'utf-8'
+		packet = ''
+		req.on 'data', (chunk) ->
+			packet += chunk
+		req.on 'end', ->
+			last_full_sync = +new Date
+			console.log 'doing full sync'
+			rooms = {} # reset the rooms after a full sync
+			sync_room(json) for json in JSON.parse(packet)
+
+		res.writeHead 200, {'Content-Type': 'text/plain'}
+		res.end 'done full sync'
+
 	else if req.url is '/retrieve'
 		res.writeHead 200, {'Content-Type': 'application/json'}
 		res.end JSON.stringify rooms
-	else	
+	else
 		res.writeHead 200, {'Content-Type': 'text/plain'}
-		res.end JSON.stringify rooms, null, '  '
+		res.end util.inspect(process.memoryUsage()) + '\n\n' + JSON.stringify rooms, null, '  '
 
-server.listen 15865
+
+port = process.env.PORT || 15865
+console.log 'trying to listen on', port
+server.listen port
