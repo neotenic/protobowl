@@ -305,7 +305,8 @@ QuizRoom = (function() {
         seen: 0,
         time_spent: 0,
         last_action: 0,
-        times_buzzed: 0
+        times_buzzed: 0,
+        show_typing: true
       };
       journal(this.name);
     }
@@ -712,10 +713,17 @@ log = function(action, obj) {
 
 log('server_restart', {});
 
-journal_config = {
-  host: 'localhost',
-  port: 15865
-};
+if (app.settings.env === 'development') {
+  journal_config = {
+    host: 'localhost',
+    port: 15865
+  };
+} else {
+  journal_config = {
+    host: 'protobowl-journal.herokuapp.com',
+    port: 80
+  };
+}
 
 journal_queue = {};
 
@@ -930,7 +938,8 @@ io.sockets.on('connection', function(sock) {
   });
   sock.on('finish', function(vote) {
     if (room && !room.attempt) {
-      return room.finish();
+      room.finish();
+      return room.sync(1);
     }
   });
   sock.on('next', function() {
@@ -973,6 +982,11 @@ io.sockets.on('connection', function(sock) {
   sock.on('max_buzz', function(data) {
     room.max_buzz = data;
     room.sync();
+    return journal(room.name);
+  });
+  sock.on('show_typing', function(data) {
+    room.users[publicID].show_typing = data;
+    room.sync(2);
     return journal(room.name);
   });
   sock.on('speed', function(data) {
@@ -1041,7 +1055,7 @@ io.sockets.on('connection', function(sock) {
 });
 
 setInterval(function() {
-  return clearInactive(1000 * 60 * 60 * 24);
+  return clearInactive(1000 * 60 * 60 * 48);
 }, 1000 * 10);
 
 reaped = {
@@ -1052,7 +1066,9 @@ reaped = {
   correct: 0,
   guesses: 0,
   interrupts: 0,
-  early: 0
+  time_spent: 0,
+  early: 0,
+  last_action: +(new Date)
 };
 
 clearInactive = function(threshold) {
@@ -1074,6 +1090,8 @@ clearInactive = function(threshold) {
           reaped.early += user.early;
           reaped.interrupts += user.interrupts;
           reaped.correct += user.correct;
+          reaped.time_spent += user.time_spent;
+          reaped.last_action = +(new Date);
           len--;
           delete room.users[username];
         }
@@ -1109,6 +1127,11 @@ app.post('/stalkermode/kickoffline', function(req, res) {
   return res.redirect('/stalkermode');
 });
 
+app.post('/stalkermode/fullsync', function(req, res) {
+  full_journal_sync();
+  return res.redirect('/stalkermode');
+});
+
 app.post('/stalkermode/announce', express.bodyParser(), function(req, res) {
   io.sockets.emit('chat', {
     text: req.body.message,
@@ -1127,6 +1150,8 @@ app.get('/stalkermode', function(req, res) {
     env: app.settings.env,
     mem: util.inspect(process.memoryUsage()),
     start: uptime_begin,
+    reaped: reaped,
+    queue: Object.keys(journal_queue).length,
     rooms: rooms
   });
 });

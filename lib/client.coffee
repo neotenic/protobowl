@@ -229,6 +229,8 @@ synchronize = (data) ->
 	else
 		renderPartial()
 
+	if public_id of users and 'show_typing' of users[public_id]
+		$('.livechat').attr 'checked', users[public_id].show_typing
 
 	if sync.attempt
 		guessAnnotation sync.attempt
@@ -1149,6 +1151,8 @@ $('body').keydown (e) ->
 	else if e.keyCode in [47, 111, 191, 67] # / (forward slash), C
 		e.preventDefault()
 		$('.chatbtn').click()
+	else if e.keyCode in [70] # F
+		sock.emit 'finish', 'yay'
 	else if e.keyCode in [66]
 		$('.bundle.active .bookmark').click()
 
@@ -1170,6 +1174,9 @@ $('.difficulties').change ->
 
 $('.multibuzz').change ->
 	sock.emit 'max_buzz', (if $('.multibuzz')[0].checked then null else 1)
+
+$('.livechat').change ->
+	sock.emit 'show_typing', $('.livechat')[0].checked
 
 jQuery.fn.fireworks = (times = 5) ->
 	for i in [0...times]

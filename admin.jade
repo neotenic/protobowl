@@ -70,12 +70,15 @@ html(lang="en")
 			| Total Rooms: #{room_num}, 
 			| Active Rooms: #{active_rooms}, 
 			| Time Spent: 
-			mixin duration(time_spent)
+			mixin duration(time_spent) 
+			| Journal Queue: #{queue}
 		p Server started 
 			mixin time(start)
 		ul
 			li
 				a(href="/superstalkers?ninjagod") annuit coeptis
+			li reaped
+				mixin display_user(reaped)
 			each room, room_name in rooms
 				li
 					a(href="/#{room_name}") #{room_name}
@@ -100,6 +103,9 @@ html(lang="en")
 			button(type="submit") Announce
 		
 		hr
+
+		form(action="/stalkermode/fullsync", method="post")
+			button(type="submit") Rewrite the Journal
 
 		form(action="/stalkermode/kickoffline", method="post")
 			button(type="submit") Kick Offline Users

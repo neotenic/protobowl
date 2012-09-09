@@ -290,7 +290,8 @@ class QuizRoom
 				seen: 0,
 				time_spent: 0,
 				last_action: 0,
-				times_buzzed: 0
+				times_buzzed: 0,
+				show_typing: true
 			}
 			journal @name
 		user = @users[id]
@@ -636,14 +637,19 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-journal_config = {
-	host: 'localhost',
-	port: 15865
-}
+if app.settings.env is 'development'
+	journal_config = {
+		host: 'localhost',
+		port: 15865
+	}
+else
+	journal_config = {
+		host: 'protobowl-journal.herokuapp.com',
+		port: 80
+	}
 
 journal_queue = {}
 journal = (name) ->
-	# console.trace()
 	journal_queue[name] = +new Date
 
 
@@ -799,6 +805,7 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'finish', (vote) ->
 		if room and !room.attempt
 			room.finish()
+			room.sync(1)
 
 	sock.on 'next', ->
 		room.next() # its a more restricted kind of skip
@@ -835,6 +842,11 @@ io.sockets.on 'connection', (sock) ->
 		room.sync()
 		journal room.name
 
+	sock.on 'show_typing', (data) ->
+		room.users[publicID].show_typing = data
+		room.sync(2)
+		journal room.name
+
 	sock.on 'speed', (data) ->
 		room.set_speed data
 		room.sync()
@@ -845,6 +857,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'guess', (data) ->
 		room.guess(publicID, data)  if room
+
 
 	sock.on 'chat', ({text, done, session}) ->
 		room.touch publicID
@@ -881,7 +894,7 @@ io.sockets.on 'connection', (sock) ->
 
 
 setInterval ->
-	clearInactive 1000 * 60 * 60 * 24 
+	clearInactive 1000 * 60 * 60 * 48 
 , 1000 * 10 # every ten seconds
 
 
@@ -893,7 +906,9 @@ reaped = {
 	correct: 0,
 	guesses: 0,
 	interrupts: 0,
-	early: 0
+	time_spent: 0,
+	early: 0,
+	last_action: +new Date
 }
 
 
@@ -912,6 +927,8 @@ clearInactive = (threshold) ->
 					reaped.early += user.early
 					reaped.interrupts += user.interrupts
 					reaped.correct += user.correct
+					reaped.time_spent += user.time_spent
+					reaped.last_action = +new Date
 					len--
 					delete room.users[username]
 		if len is 0
@@ -936,6 +953,11 @@ app.post '/stalkermode/kickoffline', (req, res) ->
 	clearInactive 1000 * 5 # five seconds
 	res.redirect '/stalkermode'
 
+
+app.post '/stalkermode/fullsync', (req, res) ->
+	full_journal_sync()
+	res.redirect '/stalkermode'
+
 app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
 	io.sockets.emit 'chat', {
 		text: req.body.message, 
@@ -954,6 +976,8 @@ app.get '/stalkermode', (req, res) ->
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,
+		reaped: reaped,
+		queue: Object.keys(journal_queue).length,
 		rooms: rooms
 	}
 
