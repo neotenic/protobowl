@@ -110,8 +110,42 @@ virtual_server = {
 	###### THE ABOVE SECTION IS PRACTICALLY VERBATIM
 	connect: ->
 		console.log "initializing server!"
-		loadQuestions ->
+		loadQuestions =>
 			sock.server_emit "connect"
+			publicID = "offline"
+			publicName = require('lib/names').generateName()
+			# console.log "joining stuff", data
+			
+			sync.answer_duration = 1000 * 5
+			sync.time_offset = 0
+			sync.users = [{ #you're the only one here, solipsistic eh?
+				guesses: 0,
+				interrupts: 0,
+				early: 0,
+				correct: 0,
+				last_action: 0,
+				seen: 0,
+				id: publicID,
+				name: publicName
+			}]
+			sync.rate = Math.round(1000 * 60 / 3 / 300)
+
+			@freeze()
+			@new_question()
+
+			# sock.server_emit 'introduce', {user: publicID}
+			sock.server_emit 'log', {user: publicID, verb: 'joined the room'}
+			
+			sync.categories = listProps('category')
+			sync.difficulties = listProps('difficulty')
+
+			setTimeout ->
+				synchronize()
+			, 10
+			sock.server_emit 'joined', {
+				name: publicName,
+				id: publicID
+			}
 			
 	init_offline: -> #this function does not exist server side
 		loadQuestions()
@@ -128,40 +162,7 @@ virtual_server = {
 		sock.server_emit 'log', {user: public_id, verb: ' set category to ' + (data || 'more pot') + " (#{countMatches()} questions)"}
 
 	join: (data) ->
-		publicID = "offline"
-		publicName = require('lib/names').generateName()
-		# console.log "joining stuff", data
-		
-		sync.answer_duration = 1000 * 5
-		sync.time_offset = 0
-		sync.users = [{ #you're the only one here, solipsistic eh?
-			guesses: 0,
-			interrupts: 0,
-			early: 0,
-			correct: 0,
-			last_action: 0,
-			seen: 0,
-			id: publicID,
-			name: publicName
-		}]
-		sync.rate = Math.round(1000 * 60 / 3 / 300)
-
-		@freeze()
-		@new_question()
-
-		# sock.server_emit 'introduce', {user: publicID}
-		sock.server_emit 'log', {user: publicID, verb: 'joined the room'}
-		
-		sync.categories = listProps('category')
-		sync.difficulties = listProps('difficulty')
-
-		setTimeout ->
-			synchronize()
-		, 10
-		return {
-			name: publicName,
-			id: publicID
-		}
+		alert('deprecated')
 
 	chat: (msg) ->
 		sock.server_emit 'chat', {text: msg.text, session: msg.session, user: public_id, done: msg.done, time: serverTime()}
@@ -312,6 +313,7 @@ virtual_server = {
 			@freeze()
 			@timeout serverTime, sync.attempt.realTime + sync.attempt.duration, =>
 				@end_buzz session
+			return 'http://www.whosawesome.com/'
 
 	timeout: (metric, time, callback) ->
 		diff = time - metric()
