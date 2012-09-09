@@ -185,7 +185,7 @@ getQuestion = (difficulty, category, cb) ->
 		if doc is null
 			cb error_question
 			return
-		console.log "RANDOM PICK", rand, doc.random_loc[0], doc.random_loc[0] - rand
+		# console.log "RANDOM PICK", rand, doc.random_loc[0], doc.random_loc[0] - rand
 		cb(doc) if cb
 
 
@@ -628,14 +628,16 @@ sha1 = (text) ->
 
 http = require('http')
 log = (action, obj) ->
+	# no logs in dev
 	return if app.settings.env is 'development'
+
 	req = http.request {
 		host: 'inception.pi.antimatter15.com',
 		port: 3140,
 		path: '/log',
 		method: 'POST'
 	}, ->
-		console.log "saved log"
+		# console.log "saved log"
 	req.on 'error', ->
 		console.log "logging error"
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')

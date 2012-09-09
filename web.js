@@ -171,7 +171,6 @@ getQuestion = function(difficulty, category, cb) {
       cb(error_question);
       return;
     }
-    console.log("RANDOM PICK", rand, doc.random_loc[0], doc.random_loc[0] - rand);
     if (cb) {
       return cb(doc);
     }
@@ -684,9 +683,7 @@ log = function(action, obj) {
     port: 3140,
     path: '/log',
     method: 'POST'
-  }, function() {
-    return console.log("saved log");
-  });
+  }, function() {});
   req.on('error', function() {
     return console.log("logging error");
   });
