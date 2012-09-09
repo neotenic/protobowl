@@ -693,31 +693,6 @@ log = function(action, obj) {
 
 rooms = {};
 
-io.configure(function() {
-  return io.set("authorization", function(data, fn) {
-    var config, cookie, godmode, ninjamode, room;
-    if (!data.headers.cookie) {
-      return fn('No cookie header', false);
-    }
-    if (!data.headers.referer) {
-      return fn('No referer header', false);
-    }
-    config = url.parse(data.headers.referer);
-    room = config.pathname.replace(/\//g, '');
-    ninjamode = /ninja/.test(config.search);
-    godmode = /god/.test(config.search);
-    cookie = parseCookie(data.headers.cookie);
-    if (cookie && cookie['protocookie'] && room) {
-      data.sessionID = cookie['protocookie'];
-      data.room_name = room;
-      data.god = godmode;
-      data.ninja = ninjamode;
-      fn(null, true);
-    }
-    return fn('No cookie found', false);
-  });
-});
-
 io.sockets.on('connection', function(sock) {
   var config, cookie, is_god, is_ninja, publicID, room, room_name, user,
     _this = this;
@@ -779,11 +754,9 @@ io.sockets.on('connection', function(sock) {
     return callback(+(new Date));
   });
   sock.on('rename', function(name) {
-    if (room) {
-      room.users[publicID].name = name;
-      room.touch(publicID);
-      return room.sync(1);
-    }
+    room.users[publicID].name = name;
+    room.touch(publicID);
+    return room.sync(1);
   });
   sock.on('skip', function(vote) {
     if (room && !room.attempt) {
@@ -803,16 +776,12 @@ io.sockets.on('connection', function(sock) {
     return room.next();
   });
   sock.on('pause', function(vote) {
-    if (room) {
-      room.pause();
-      return room.sync();
-    }
+    room.pause();
+    return room.sync();
   });
   sock.on('unpause', function(vote) {
     room.unpause();
-    if (room) {
-      return room.sync();
-    }
+    return room.sync();
   });
   sock.on('difficulty', function(data) {
     room.difficulty = data;
@@ -827,30 +796,24 @@ io.sockets.on('connection', function(sock) {
     });
   });
   sock.on('category', function(data) {
-    if (room) {
-      room.category = data;
-      room.reset_schedule();
-      room.sync();
-      log('category', [room.name, publicID + '-' + room.users[publicID].name, room.category]);
-      return countQuestions(room.difficulty, room.category, function(count) {
-        return room.emit('log', {
-          user: publicID,
-          verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'
-        });
+    room.category = data;
+    room.reset_schedule();
+    room.sync();
+    log('category', [room.name, publicID + '-' + room.users[publicID].name, room.category]);
+    return countQuestions(room.difficulty, room.category, function(count) {
+      return room.emit('log', {
+        user: publicID,
+        verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'
       });
-    }
+    });
   });
   sock.on('max_buzz', function(data) {
-    if (room) {
-      room.max_buzz = data;
-      return room.sync();
-    }
+    room.max_buzz = data;
+    return room.sync();
   });
   sock.on('speed', function(data) {
-    if (room) {
-      room.set_speed(data);
-      return room.sync();
-    }
+    room.set_speed(data);
+    return room.sync();
   });
   sock.on('buzz', function(data, fn) {
     if (room) {
@@ -865,58 +828,48 @@ io.sockets.on('connection', function(sock) {
   sock.on('chat', function(_arg) {
     var done, session, text;
     text = _arg.text, done = _arg.done, session = _arg.session;
-    if (room) {
-      room.touch(publicID);
-      if (done) {
-        log('chat', [room.name, publicID + '-' + room.users[publicID].name, text]);
-      }
-      return room.emit('chat', {
-        text: text,
-        session: session,
-        user: publicID,
-        done: done,
-        time: room.serverTime()
-      });
+    room.touch(publicID);
+    if (done) {
+      log('chat', [room.name, publicID + '-' + room.users[publicID].name, text]);
     }
+    return room.emit('chat', {
+      text: text,
+      session: session,
+      user: publicID,
+      done: done,
+      time: room.serverTime()
+    });
   });
   sock.on('resetscore', function() {
     var u;
-    if (room && room.users[publicID]) {
-      u = room.users[publicID];
-      room.emit('log', {
-        user: publicID,
-        verb: "was reset from " + u.correct + " correct of " + u.guesses + " guesses"
-      });
-      u.seen = u.interrupts = u.guesses = u.correct = u.early = 0;
-      return room.sync(1);
-    }
+    u = room.users[publicID];
+    room.emit('log', {
+      user: publicID,
+      verb: "was reset from " + u.correct + " correct of " + u.guesses + " guesses"
+    });
+    u.seen = u.interrupts = u.guesses = u.correct = u.early = 0;
+    return room.sync(1);
   });
   sock.on('report_question', function(data) {
-    if (room) {
-      data.room = room.name;
-      data.user = publicID + '-' + room.users[publicID].name;
-      return log('report_question', data);
-    }
+    data.room = room.name;
+    data.user = publicID + '-' + room.users[publicID].name;
+    return log('report_question', data);
   });
   sock.on('report_answer', function(data) {
-    if (room) {
-      data.room = room.name;
-      data.user = publicID + '-' + room.users[publicID].name;
-      return log('report_answer', data);
-    }
+    data.room = room.name;
+    data.user = publicID + '-' + room.users[publicID].name;
+    return log('report_answer', data);
   });
   return sock.on('disconnect', function() {
     console.log("someone", publicID, sock.id, "left");
-    if (room) {
-      log('disconnect', [room.name, publicID, sock.id]);
-      room.del_socket(publicID, sock.id);
-      room.sync(1);
-      if (room.users[publicID].sockets.length === 0 && !room.users[publicID].ninja) {
-        return room.emit('log', {
-          user: publicID,
-          verb: 'left the room'
-        });
-      }
+    log('disconnect', [room.name, publicID, sock.id]);
+    room.del_socket(publicID, sock.id);
+    room.sync(1);
+    if (room.users[publicID].sockets.length === 0 && !room.users[publicID].ninja) {
+      return room.emit('log', {
+        user: publicID,
+        verb: 'left the room'
+      });
     }
   });
 });

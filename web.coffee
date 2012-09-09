@@ -646,30 +646,6 @@ log = (action, obj) ->
 
 rooms = {}
 
-io.configure ->
-	io.set "authorization", (data, fn) ->
-		if !data.headers.cookie
-			return fn 'No cookie header', false
-
-		if !data.headers.referer
-			return fn 'No referer header', false
-
-		config = url.parse(data.headers.referer)
-		room = config.pathname.replace(/\//g, '')
-		ninjamode = /ninja/.test config.search
-		godmode = /god/.test config.search
-
-		cookie = parseCookie(data.headers.cookie)
-		if cookie and cookie['protocookie'] and room
-			# console.log "GOT COOKIE", data.headers.cookie
-			data.sessionID = cookie['protocookie']
-			data.room_name = room
-			data.god = godmode
-			data.ninja = ninjamode
-			fn null, true #woot
-
-		fn 'No cookie found', false
-
 io.sockets.on 'connection', (sock) ->
 	# read the headers and parse them with library functions
 	config = url.parse(sock.handshake.headers.referer)
@@ -707,7 +683,6 @@ io.sockets.on 'connection', (sock) ->
 	room.sync(3)
 	room.emit 'log', {user: publicID, verb: 'joined the room'} unless is_ninja
 
-
 	sock.on 'join', (data, fn) ->
 		sock.emit 'application_update', +new Date
 		sock.emit 'log', {user: publicID, verb: 'is using an outdated (and incompatible) version of ProtoBowl'}
@@ -721,18 +696,11 @@ io.sockets.on 'connection', (sock) ->
 		callback +new Date
 
 	sock.on 'rename', (name) ->
-		# sock.set 'name', name
-		if room
-			room.users[publicID].name = name
-			room.touch(publicID)
-			room.sync(1)
+		room.users[publicID].name = name
+		room.touch(publicID)
+		room.sync(1)
 
 	sock.on 'skip', (vote) ->
-		# sock.set 'skip', vote
-		# room.add_socket publicID, sock.id
-		# room.users[publicID].skip = vote
-		# room.sync() if room
-		# room.vote publicID, 'skip', vote
 		if room and !room.attempt
 			room.skip()
 			room.emit 'log', {user: publicID, verb: 'skipped a question'}
@@ -745,20 +713,12 @@ io.sockets.on 'connection', (sock) ->
 		room.next() # its a more restricted kind of skip
 
 	sock.on 'pause', (vote) ->
-		# sock.set 'pause', vote
-		# room.users[publicID].pause = vote
-		
-		# room.vote publicID, 'pause', vote
-		if room
-			room.pause()
-			room.sync()
+		room.pause()
+		room.sync()
 
 	sock.on 'unpause', (vote) ->
-		# sock.set 'unpause', vote
-		# room.vote publicID, 'unpause', vote
 		room.unpause()
-		# room.users[publicID].unpause = vote
-		room.sync() if room
+		room.sync()
 
 	sock.on 'difficulty', (data) ->
 		room.difficulty = data
@@ -770,23 +730,20 @@ io.sockets.on 'connection', (sock) ->
 		
 
 	sock.on 'category', (data) ->
-		if room
-			room.category = data
-			room.reset_schedule()
-			room.sync()
-			log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
-			countQuestions room.difficulty, room.category, (count) ->
-				room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
+		room.category = data
+		room.reset_schedule()
+		room.sync()
+		log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
+		countQuestions room.difficulty, room.category, (count) ->
+			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
 	sock.on 'max_buzz', (data) ->
-		if room #actually the recent updates probably means that these room existence checks are useless
-			room.max_buzz = data
-			room.sync()
+		room.max_buzz = data
+		room.sync()
 
 	sock.on 'speed', (data) ->
-		if room
-			room.set_speed data
-			room.sync()
+		room.set_speed data
+		room.sync()
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz(publicID, fn) if room
@@ -795,43 +752,36 @@ io.sockets.on 'connection', (sock) ->
 		room.guess(publicID, data)  if room
 
 	sock.on 'chat', ({text, done, session}) ->
-		if room
-			room.touch publicID
-			log 'chat', [room.name, publicID + '-' + room.users[publicID].name, text] if done
-			room.emit 'chat', {text: text, session:  session, user: publicID, done: done, time: room.serverTime()}
+		room.touch publicID
+		log 'chat', [room.name, publicID + '-' + room.users[publicID].name, text] if done
+		room.emit 'chat', {text: text, session:  session, user: publicID, done: done, time: room.serverTime()}
 
 	sock.on 'resetscore', ->
-		if room and room.users[publicID]
-			u = room.users[publicID]
-			
-			room.emit 'log', {user: publicID, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
+		u = room.users[publicID]
+		
+		room.emit 'log', {user: publicID, verb: "was reset from #{u.correct} correct of #{u.guesses} guesses"}
 
-			u.seen = u.interrupts = u.guesses = u.correct = u.early = 0
-			room.sync(1)
+		u.seen = u.interrupts = u.guesses = u.correct = u.early = 0
+		room.sync(1)
 
 	sock.on 'report_question', (data) ->
-		if room
-			data.room = room.name
-			data.user = publicID + '-' + room.users[publicID].name
-			log 'report_question', data
+		data.room = room.name
+		data.user = publicID + '-' + room.users[publicID].name
+		log 'report_question', data
 
 	sock.on 'report_answer', (data) ->
-		if room
-			data.room = room.name
-			data.user = publicID + '-' + room.users[publicID].name
-			log 'report_answer', data
+		data.room = room.name
+		data.user = publicID + '-' + room.users[publicID].name
+		log 'report_answer', data
 
 	sock.on 'disconnect', ->
-		# id = sock.id
-		
 		console.log "someone", publicID, sock.id, "left"
-		if room
-			log 'disconnect', [room.name, publicID, sock.id]
+		log 'disconnect', [room.name, publicID, sock.id]
 
-			room.del_socket publicID, sock.id
-			room.sync(1)
-			if room.users[publicID].sockets.length is 0 and !room.users[publicID].ninja
-				room.emit 'log', {user: publicID, verb: 'left the room'}
+		room.del_socket publicID, sock.id
+		room.sync(1)
+		if room.users[publicID].sockets.length is 0 and !room.users[publicID].ninja
+			room.emit 'log', {user: publicID, verb: 'left the room'}
 
 
 setInterval ->
