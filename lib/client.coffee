@@ -970,9 +970,14 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 sock.on 'log', ({user, verb}) ->
 	line = $('<p>').addClass 'log'
-	line.append userSpan(user)
-	line.append " " + verb
+	if user
+		line.append userSpan(user)
+		line.append " " + verb
+	else
+		line.append verb
 	addAnnotation line
+
+
 
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()

@@ -57,36 +57,6 @@ if app.settings.env is 'development'
 	fs.watch __dirname + "/lib", watcher
 	fs.watch __dirname + "/less", watcher
 	
-
-setTimeout ->
-	# when the server reboots, check for update in clients
-	io.sockets.emit 'application_update', +new Date
-, 1000 * 30
-
-# io.configure ->
-# 	io.set "authorization", (data, fn) ->
-# 		if !data.headers.cookie
-# 			return fn 'No cookie header', false
-
-# 		if !data.headers.referer
-# 			return fn 'No referer header', false
-
-# 		config = url.parse(data.headers.referer)
-# 		room = config.pathname.replace(/\//g, '')
-# 		ninjamode = /ninja/.test config.search
-# 		godmode = /god/.test config.search
-
-# 		cookie = parseCookie(data.headers.cookie)
-# 		if cookie and cookie['protocookie'] and room
-# 			# console.log "GOT COOKIE", data.headers.cookie
-# 			data.sessionID = cookie['protocookie']
-# 			data.room_name = room
-# 			data.god = godmode
-# 			data.ninja = ninjamode
-# 			fn null, true #woot
-
-# 		fn 'No cookie found', false
-
 io.configure 'production', ->
 	io.set "log level", 0
 
@@ -328,11 +298,12 @@ class QuizRoom
 		# user.last_action = @serverTime()
 		unless socket in user.sockets
 			user.sockets.push socket
+		@journal()
 
-	vote: (id, action, val) ->
-		# room.add_socket publicID, sock.id
-		@users[id][action] = val
-		@sync()
+	# vote: (id, action, val) ->
+	# 	# room.add_socket publicID, sock.id
+	# 	@users[id][action] = val
+	# 	@sync()
 
 	touch: (id, no_add_time) ->
 		unless no_add_time
@@ -346,6 +317,7 @@ class QuizRoom
 		if user
 			@touch(id)
 			user.sockets = (sock for sock in user.sockets when sock isnt socket)
+		@journal()
 
 	time: ->
 		return if @time_freeze then @time_freeze else @serverTime() - @time_offset
@@ -594,7 +566,7 @@ class QuizRoom
 		# 		delete @users[id][action] for id of @users
 		# 		this[action]()
 		
-		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout"]
+		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question"]
 		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
@@ -618,6 +590,24 @@ class QuizRoom
 			data.difficulties = difficulties
 			
 		io.sockets.in(@name).emit 'sync', data
+	
+	journal: ->
+		# this is like a simplified sync
+		data = {}
+		# user data!
+		user_blacklist = ["sockets"]
+		data.users = for id of @users
+			user = {}
+			for attr of @users[id] when attr not in user_blacklist
+				user[attr] = @users[id][attr]
+			user
+		# global room settings
+		settings = ["difficulty", "category", "rate", "answer_duration", "max_buzz"]
+		for field in settings
+			data[field] = @[field]
+		# actually save stuff
+		journal @name, data
+
 
 
 sha1 = (text) ->
@@ -644,12 +634,74 @@ log = (action, obj) ->
 	req.end()
 
 
+journal = (room, sync) ->
+	# return if app.settings.env is 'development'
+	req = http.request {
+		host: 'localhost',
+		port: 15865,
+		path: '/journal',
+		method: 'POST'
+	}, ->
+		console.log "committed journal"
+	req.on 'error', ->
+		console.log "journal error"
+	req.write(JSON.stringify({
+		data: sync,
+		room: room
+	}))
+	req.end()
+
+
 rooms = {}
+
+# this is actually really quite hacky
+
+restoreJournal = (callback) ->
+	req = http.request {
+		host: 'localhost',
+		port: 15865,
+		path: '/retrieve',
+		method: 'GET'
+	}, (res) ->
+		console.log 'GOT JOURNAL RESPONSE'
+		res.setEncoding 'utf8'
+		packet = ''
+		res.on 'data', (chunk) ->
+			packet += chunk
+		res.on 'end', ->
+			console.log "GOT DATA"
+			json = JSON.parse(packet)
+
+			# a new question's gonna be pickt, so just restore settings 
+			fields = ["difficulty", "category", "rate", "answer_duration", "max_buzz"]
+			for name, data of json
+				# console.log data
+				unless name of rooms or !data.question
+					console.log 'restoring', name
+					rooms[name] = new QuizRoom(name)
+					room = rooms[name]
+					for user in data.users
+						id = user.id
+						room.users[id] = user
+						room.users[id].sockets = []
+
+					for field in fields
+						room[field] = data[field]
+			console.log 'restored journal'
+			callback() if callback
+	req.on 'error', ->
+		console.log "COULD NOT RESTORE FROM JOURNAL"
+		callback() if callback
+	req.end()
+
 
 io.sockets.on 'connection', (sock) ->
 	# read the headers and parse them with library functions
-	config = url.parse(sock.handshake.headers.referer)
-	cookie = parseCookie(sock.handshake.headers.cookie)
+	headers = sock.handshake.headers
+	return sock.disconnect() unless headers.referer and headers.cookie
+	config = url.parse(headers.referer)
+	cookie = parseCookie(headers.cookie)
+	return sock.disconnect() unless cookie.protocookie and config.pathname
 	# set the config stuff
 	is_god = /god/.test config.search
 	is_ninja = /ninja/.test config.search
@@ -682,6 +734,10 @@ io.sockets.on 'connection', (sock) ->
 	# tell that there's a new person at the partaay
 	room.sync(3)
 	room.emit 'log', {user: publicID, verb: 'joined the room'} unless is_ninja
+	# detect if the server had been recently restarted
+	if new Date - uptime_begin < 1000 * 60
+		sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental and not necessarily reliable). The journal does not record the current question, chat messages, or current attempts, so you may need to manually advance a question. This may have been part of a server or client software update, or the result of an unexpected server crash. We apologize for any inconvienience this may have caused.'}
+		sock.emit 'application_update', +new Date # check for updates in case it was an update
 
 	sock.on 'join', (data, fn) ->
 		sock.emit 'application_update', +new Date
@@ -699,6 +755,7 @@ io.sockets.on 'connection', (sock) ->
 		room.users[publicID].name = name
 		room.touch(publicID)
 		room.sync(1)
+		room.journal()
 
 	sock.on 'skip', (vote) ->
 		if room and !room.attempt
@@ -724,6 +781,7 @@ io.sockets.on 'connection', (sock) ->
 		room.difficulty = data
 		room.reset_schedule()
 		room.sync()
+		room.journal()
 		log 'difficulty', [room.name, publicID + '-' + room.users[publicID].name, room.difficulty]
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
@@ -733,6 +791,7 @@ io.sockets.on 'connection', (sock) ->
 		room.category = data
 		room.reset_schedule()
 		room.sync()
+		room.journal()
 		log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
 		countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
@@ -740,10 +799,12 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'max_buzz', (data) ->
 		room.max_buzz = data
 		room.sync()
+		room.journal()
 
 	sock.on 'speed', (data) ->
 		room.set_speed data
 		room.sync()
+		room.journal()
 
 	sock.on 'buzz', (data, fn) ->
 		room.buzz(publicID, fn) if room
@@ -763,6 +824,7 @@ io.sockets.on 'connection', (sock) ->
 
 		u.seen = u.interrupts = u.guesses = u.correct = u.early = 0
 		room.sync(1)
+		room.journal()
 
 	sock.on 'report_question', (data) ->
 		data.room = room.name
@@ -878,6 +940,9 @@ app.get '/:channel', (req, res) ->
 
 
 port = process.env.PORT || 5000
-app.listen port, ->
-	console.log "listening on", port
+
+
+restoreJournal ->
+	app.listen port, ->
+		console.log "listening on", port
 
