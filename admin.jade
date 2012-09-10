@@ -54,11 +54,12 @@ html(lang="en")
 
 		h1 STALKERMODE ENGAGED
 		p #{mem}
-		- var online = 0, active_users = 0, points = 0, room_num = 0, active_rooms = 0, time_spent = 0
+		- var online = 0, active_users = 0, points = 0, room_num = 0, active_rooms = 0, time_spent = 0, total_users = 0
 		each room, room_name in rooms
 			- room_num++
 			- var active = false;
 			each user, id in room.users
+				- total_users++
 				if user.sockets.length > 0
 					- online++
 					if new Date - user.last_action < 1000 * 60 * 10
@@ -71,11 +72,12 @@ html(lang="en")
 		p 
 			| Users Online: #{online}, 
 			| Active Users: #{active_users}, 
+			| Total Users: #{total_users}, 
 			| Total Points: #{points}, 
 			| Total Rooms: #{room_num}, 
 			| Active Rooms: #{active_rooms}, 
 			| Time Spent: 
-			mixin duration(time_spent) 
+			mixin duration(time_spent), 
 			| Journal Queue: #{queue}
 		p Server started 
 			mixin time(start)
