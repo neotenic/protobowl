@@ -3,7 +3,6 @@
 # Todo
 
 * Add sounds.
-* Enable/Disable multiple buzzzes
 * record the position of the question when buzzed
 * check that it's the last name which is common
 

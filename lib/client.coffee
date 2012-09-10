@@ -176,27 +176,15 @@ $('#username').keyup (e) ->
 	if $(this).val().length > 0
 		sock.emit 'rename', $(this).val()
 
+
+
 synchronize = (data) ->
 	if data
 		# console.log JSON.stringify(data)
 
-		#here is the rather complicated code to calculate
-		#then offsets of the time synchronization stuff
-		#it's totally not necessary to do this, but whatever
-		#it might make the stuff work better when on an
-		#apple iOS device where screen drags pause the
-		#recieving of sockets/xhrs meaning that the sync
-		#might be artificially inflated, so this could
-		#counteract that. since it's all numerical math
-		#hopefully it'll be fast even if sync_offsets becomes
-		#really really huge
-
 		sync_offsets.push +new Date - data.real_time
-		thresh = avg sync_offsets
-		below = (item for item in sync_offsets when item <= thresh)
-		sync_offset = avg(below)
 
-		$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + " (#{sync_offsets.length})")
+		compute_sync_offset()
 
 		# console.log 'sync', data
 		for attr of data
@@ -273,15 +261,53 @@ testLatency = ->
 			CSC1 = recieveTime - initialTime
 			CSC2 = secondTime - recieveTime
 			SCS1 = secondServerTime - firstServerTime
+
+			sync_offsets.push recieveTime - firstServerTime
+			sync_offsets.push secondTime - secondServerTime
+
 			latency_log.push CSC1
 			latency_log.push SCS1
 			latency_log.push CSC2
 			# console.log CSC1, SCS1, CSC2
 
+			compute_sync_offset()
+
+			if latency_log.length > 0
+				$('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + " (#{latency_log.length})")
+
+
 setTimeout ->
 	testLatency()
 	setInterval testLatency, 30 * 1000
-, 2500
+, 2000
+
+compute_sync_offset = ->
+	#here is the rather complicated code to calculate
+	#then offsets of the time synchronization stuff
+	#it's totally not necessary to do this, but whatever
+	#it might make the stuff work better when on an
+	#apple iOS device where screen drags pause the
+	#recieving of sockets/xhrs meaning that the sync
+	#might be artificially inflated, so this could
+	#counteract that. since it's all numerical math
+	#hopefully it'll be fast even if sync_offsets becomes
+	#really really huge
+
+	
+	sync_offsets = sync_offsets.slice(-20)
+
+	thresh = avg sync_offsets
+	below = (item for item in sync_offsets when item <= thresh)
+	sync_offset = avg(below)
+	# console.log 'frst iter', below
+	thresh = avg below
+	below = (item for item in sync_offsets when item <= thresh)
+	sync_offset = avg(below)
+
+	# console.log 'sec iter', below
+	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + '/' + stdev(sync_offsets).toFixed(1))
+
+
 
 last_question = null
 
@@ -334,9 +360,6 @@ createStatSheet = (user, full) ->
 
 
 renderState = ->
-	if latency_log.length > 0
-		$('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + " (#{latency_log.length})")
-
 	# render the user list and that stuff
 	if sync.users
 		for user in sync.users
@@ -1008,9 +1031,12 @@ $('.chatbtn').click ->
 		.focus()
 		.keyup()
 
+last_skip = 0
 skip = ->
 	removeSplash()
-	sock.emit 'skip', 'yay'
+	if new Date - last_skip > 100
+		last_skip = +new Date
+		sock.emit 'skip', 'yay'
 
 next = ->
 	removeSplash()
@@ -1148,7 +1174,7 @@ $('body').keydown (e) ->
 		next()
 	else if e.keyCode in [80, 82] # P, R
 		$('.pausebtn').click()
-	else if e.keyCode in [47, 111, 191, 67] # / (forward slash), C
+	else if e.keyCode in [47, 111, 191, 67, 65] # / (forward slash), C, A
 		e.preventDefault()
 		$('.chatbtn').click()
 	else if e.keyCode in [70] # F

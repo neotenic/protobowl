@@ -490,7 +490,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.end_buzz = function(session) {
-    var buzzed, id, pool, user, _ref, _ref1,
+    var buzzed, do_prompt, id, pool, user, _ref, _ref1,
       _this = this;
     if (((_ref = this.attempt) != null ? _ref.session : void 0) !== session) {
       return;
@@ -500,8 +500,16 @@ QuizRoom = (function() {
       this.clear_timeout();
       this.attempt.done = true;
       this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
-      log('buzz', [this.name, this.attempt.user + '-' + this.users[this.attempt.user].name, this.attempt.text, this.answer, this.attempt.correct]);
+      do_prompt = false;
+      if (this.attempt.correct === 'prompt') {
+        do_prompt = true;
+        this.attempt.correct = false;
+      }
       if (Math.random() > 0.99 && this.attempt.correct === false) {
+        do_prompt = true;
+      }
+      log('buzz', [this.name, this.attempt.user + '-' + this.users[this.attempt.user].name, this.attempt.text, this.answer, this.attempt.correct]);
+      if (do_prompt === true) {
         this.attempt.correct = "prompt";
         this.sync();
         this.attempt.prompt = true;
@@ -522,6 +530,9 @@ QuizRoom = (function() {
     } else {
       this.attempt.done = true;
       this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
+      if (this.attempt.correct === 'prompt') {
+        this.attempt.correct = false;
+      }
       this.sync();
     }
     if (this.attempt.done) {
@@ -748,7 +759,7 @@ process_journal_queue = function() {
   }
 };
 
-setInterval(process_journal_queue, 1000);
+setInterval(process_journal_queue, 2000);
 
 partial_journal = function(name) {
   var req;
@@ -756,10 +767,10 @@ partial_journal = function(name) {
   journal_config.method = 'POST';
   req = http.request(journal_config, function(res) {
     res.setEncoding('utf8');
-    console.log("committed journal for ", name);
     return res.on('data', function(chunk) {
       if (chunk === 'do_full_sync') {
         console.log('got trigger for doing a full journal sync');
+        journal_queue = {};
         return full_journal_sync();
       }
     });
@@ -848,7 +859,7 @@ restore_journal = function(callback) {
 };
 
 io.sockets.on('connection', function(sock) {
-  var config, cookie, existing_user, headers, is_god, is_ninja, publicID, room, room_name, user,
+  var config, cookie, existing_user, headers, is_god, is_ninja, publicID, r_name, room, room_name, user,
     _this = this;
   headers = sock.handshake.headers;
   if (!(headers.referer && headers.cookie)) {
@@ -869,15 +880,15 @@ io.sockets.on('connection', function(sock) {
   if (is_god) {
     publicID += "_god";
   }
-  if (!(room_name in rooms)) {
+  if (!rooms[room_name]) {
     rooms[room_name] = new QuizRoom(room_name);
   }
   room = rooms[room_name];
   existing_user = publicID in room.users;
   room.add_socket(publicID, sock.id);
   if (is_god) {
-    for (room in rooms) {
-      sock.join(room);
+    for (r_name in rooms) {
+      sock.join(r_name);
     }
   } else {
     sock.join(room_name);
@@ -1041,7 +1052,6 @@ io.sockets.on('connection', function(sock) {
     return log('report_answer', data);
   });
   return sock.on('disconnect', function() {
-    console.log("someone", publicID, sock.id, "left");
     log('disconnect', [room.name, publicID, sock.id]);
     room.del_socket(publicID, sock.id);
     room.sync(1);
@@ -1130,6 +1140,13 @@ app.post('/stalkermode/kickoffline', function(req, res) {
 app.post('/stalkermode/fullsync', function(req, res) {
   full_journal_sync();
   return res.redirect('/stalkermode');
+});
+
+app.post('/stalkermode/crash', function(req, res) {
+  res.redirect('/stalkermode');
+  return setTimeout(function() {
+    throw 'fatal error';
+  }, 1000);
 });
 
 app.post('/stalkermode/announce', express.bodyParser(), function(req, res) {

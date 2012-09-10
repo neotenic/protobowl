@@ -9,6 +9,9 @@ html(lang="en")
 			.offline {
 				color: #BBB;
 			}
+			.idle {
+				color: #F89406;
+			}
 	body
 		mixin score(user)
 			| #{user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5}
@@ -44,8 +47,10 @@ html(lang="en")
 				ul
 					li score: 
 						mixin score(user)
-						|  (correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early})
-
+						|  (correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early}) 
+					if user.users || user.rooms
+						li
+							| users: #{user.users} rooms: #{user.rooms}
 
 		h1 STALKERMODE ENGAGED
 		p #{mem}
@@ -77,8 +82,8 @@ html(lang="en")
 		ul
 			li
 				a(href="/superstalkers?ninjagod") annuit coeptis
-			li reaped
-				mixin display_user(reaped)
+			mixin display_user(reaped)
+
 			each room, room_name in rooms
 				li
 					a(href="/#{room_name}") #{room_name}
@@ -87,7 +92,11 @@ html(lang="en")
 					ul Difficulty/Subject: #{room.difficulty || "All"} #{room.category || "Pot"}
 					ul
 						each user, id in room.users
-							if user.sockets.length > 0
+							if user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10
+								mixin display_user(user)
+					ul.idle
+						each user, id in room.users
+							if user.sockets.length > 0 && new Date - user.last_action > 1000 * 60 * 10
 								mixin display_user(user)
 					ul.offline
 						each user, id in room.users
@@ -116,3 +125,6 @@ html(lang="en")
 
 		form(action="/stalkermode/forceupdate", method="post")
 			button(type="submit") Force Application Update
+
+		form(action="/stalkermode/crash", method="post")
+			button(type="submit") Crash Server

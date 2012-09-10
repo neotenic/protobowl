@@ -445,9 +445,18 @@ class QuizRoom
 			@clear_timeout()
 			@attempt.done = true
 			@attempt.correct = checkAnswer @attempt.text, @answer, @question
+			do_prompt = false
+			
+			if @attempt.correct is 'prompt'
+				do_prompt = true
+				@attempt.correct = false
+			
+			if Math.random() > 0.99 and @attempt.correct is false
+				do_prompt = true
+
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, @attempt.correct]
 			# conditionally set this based on stuff
-			if Math.random() > 0.99 and @attempt.correct is false
+			if do_prompt is true
 				@attempt.correct = "prompt" # quasi hack i know
 
 				@sync() # sync to create a new line in the annotats
@@ -469,6 +478,9 @@ class QuizRoom
 			# io.sockets.in(@name).emit 'log', {user: @attempt.user, verb: "lost prompt powers"}
 			@attempt.done = true
 			@attempt.correct = checkAnswer @attempt.text, @answer, @question
+			
+			if @attempt.correct is 'prompt'
+				@attempt.correct = false
 
 			@sync()
 
@@ -663,7 +675,7 @@ process_journal_queue = ->
 	else
 		console.log 'processing', first
 
-setInterval process_journal_queue, 1000
+setInterval process_journal_queue, 2000
 
 partial_journal = (name) ->
 	# return if app.settings.env is 'development'
@@ -671,10 +683,11 @@ partial_journal = (name) ->
 	journal_config.method = 'POST'
 	req = http.request journal_config, (res) ->
 		res.setEncoding 'utf8'
-		console.log "committed journal for ", name
+		# console.log "committed journal for", name
 		res.on 'data', (chunk) ->
 			if chunk == 'do_full_sync'
 				console.log 'got trigger for doing a full journal sync'
+				journal_queue = {} # full syncs clear queue
 				full_journal_sync()
 	req.on 'error', ->
 		console.log "journal error"
@@ -688,7 +701,6 @@ full_journal_sync = ->
 	journal_config.method = 'POST'
 	req = http.request journal_config, (res) ->
 		console.log "done full sync"
-		
 	req.on 'error', ->
 		console.log "full sync error error"
 	req.write(JSON.stringify(backup))
@@ -750,13 +762,13 @@ io.sockets.on 'connection', (sock) ->
 	publicID = "__secret_ninja" if is_ninja
 	publicID += "_god" if is_god
 	# create the room if it doesn't exist
-	rooms[room_name] = new QuizRoom(room_name) unless room_name of rooms
+	rooms[room_name] = new QuizRoom(room_name) unless rooms[room_name]
 	room = rooms[room_name]
 	existing_user = (publicID of room.users)
 	room.add_socket publicID, sock.id
 	# actually join the room socket
 	if is_god
-		sock.join room for room of rooms
+		sock.join r_name for r_name of rooms
 	else
 		sock.join room_name
 	# look up this user in the room
@@ -884,7 +896,7 @@ io.sockets.on 'connection', (sock) ->
 		log 'report_answer', data
 
 	sock.on 'disconnect', ->
-		console.log "someone", publicID, sock.id, "left"
+		# console.log "someone", publicID, sock.id, "left"
 		log 'disconnect', [room.name, publicID, sock.id]
 
 		room.del_socket publicID, sock.id
@@ -957,6 +969,12 @@ app.post '/stalkermode/kickoffline', (req, res) ->
 app.post '/stalkermode/fullsync', (req, res) ->
 	full_journal_sync()
 	res.redirect '/stalkermode'
+
+app.post '/stalkermode/crash', (req, res) ->
+	res.redirect '/stalkermode'
+	setTimeout ->
+		throw 'fatal error'
+	, 1000
 
 app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
 	io.sockets.emit 'chat', {

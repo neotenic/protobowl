@@ -130,6 +130,11 @@ html(lang="en", manifest="offline.appcache")
 										span.add-on(style="width:21px", title="Public name", rel='tooltip')
 											i.icon-user
 										input#username(type='text', value='', disabled)
+								div.expando
+									div.input-prepend
+										span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
+											i.icon-trash
+										button.btn.input.score-reset Reset My Score 
 								label.checkbox
 									input.livechat(type="checkbox", checked)
 									| Show chat messages while typing
@@ -146,13 +151,7 @@ html(lang="en", manifest="offline.appcache")
 											i.icon-briefcase
 										select.padd-on.difficulties(style="width: 60px; border-right: 0")
 										select.input.categories(style="border-left: 0")
-								div.expando
-									div.input-prepend
-										span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
-											i.icon-trash
-										button.btn.input.score-reset Reset My Score 
-								//- hr(style="border-top:1px solid #CCC;margin-top:15px;margin-bottom: 10px")
-								
+
 								label.checkbox
 									input.multibuzz(type="checkbox", checked)
 									| Allow users to buzz multiple times
