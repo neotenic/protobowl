@@ -51,6 +51,31 @@ html(lang="en")
 					if user.users || user.rooms
 						li
 							| users: #{user.users} rooms: #{user.rooms}
+		- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].sockets.length > 0})}
+		- function get_active(room){return get_online(room).filter(function(e){return room.users[e].last_action > new Date - 1000 * 60 * 10})}
+		- function count_online(room) {return get_online(room).length}
+		- function count_active(room) {return get_active(room).length}
+		mixin display_room(room, room_name)
+			li
+				a(href="/#{room_name}") #{room_name}
+				| 
+				a(href="/#{room_name}?ninja") (ninja mode) 
+				| #{Object.keys(room.users).length} users,
+				| #{count_online(room)} online
+				| #{count_active(room)} active
+				ul Difficulty/Subject: #{room.difficulty || "All"} #{room.category || "Pot"}
+				ul
+					each user, id in room.users
+						if user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10
+							mixin display_user(user)
+				ul.idle
+					each user, id in room.users
+						if user.sockets.length > 0 && new Date - user.last_action > 1000 * 60 * 10
+							mixin display_user(user)
+				ul.offline
+					each user, id in room.users
+						if user.sockets.length == 0
+							mixin display_user(user)
 
 		h1 STALKERMODE ENGAGED
 		p #{mem}
@@ -87,23 +112,12 @@ html(lang="en")
 			mixin display_user(reaped)
 
 			each room, room_name in rooms
-				li
-					a(href="/#{room_name}") #{room_name}
-					| 
-					a(href="/#{room_name}?ninja") (ninja mode)
-					ul Difficulty/Subject: #{room.difficulty || "All"} #{room.category || "Pot"}
-					ul
-						each user, id in room.users
-							if user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10
-								mixin display_user(user)
-					ul.idle
-						each user, id in room.users
-							if user.sockets.length > 0 && new Date - user.last_action > 1000 * 60 * 10
-								mixin display_user(user)
-					ul.offline
-						each user, id in room.users
-							if user.sockets.length == 0
-								mixin display_user(user)
+				if count_active(room) > 0
+					mixin display_room(room, room_name)
+			each room, room_name in rooms
+				if count_active(room) == 0
+					mixin display_room(room, room_name)
+				
 		hr
 		form(action="/stalkermode/announce", method="post")
 			label(for="name") Name

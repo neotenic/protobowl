@@ -8,6 +8,7 @@
 * add support for superpower [+]
 * statistical skill metrics i.e. score/interrupts
 * support ties on the leaderboard
+* make the 'report answer' buttons slightly less annoying (i.e. only showing them when the answer is revealed)
 
 
 Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions.

@@ -759,7 +759,7 @@ process_journal_queue = function() {
   }
 };
 
-setInterval(process_journal_queue, 2000);
+setInterval(process_journal_queue, 1000);
 
 partial_journal = function(name) {
   var req;

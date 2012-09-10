@@ -651,7 +651,17 @@ renderTimer = ->
 		unless sync.time_freeze
 			$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
-			$('.bundle.active').find('.answer').css('display', 'inline').css('visibility', 'visible')
+			$('.bundle.active').find('.answer')
+				.css('display', 'inline')
+				.css('visibility', 'visible')
+			ruling = $('.bundle.active').find('.ruling')
+			unless ruling.data('shown_tooltip')
+				ruling.data('shown_tooltip', true)
+				$('.bundle.active').find('.ruling').first()
+					.tooltip({
+						trigger: "manual"
+					})
+					.tooltip('show')
 	
 	if $('.progress .bar').hasClass 'pull-right'
 		$('.progress .bar').width (1 - progress) * 100 + '%'
@@ -694,6 +704,8 @@ changeQuestion = ->
 	cutoff = 15
 	#smaller cutoff for phones which dont place things in parallel
 	cutoff = 1 if mobileLayout()
+	$('.bundle .ruling').tooltip('destroy')
+
 	#remove the old crap when it's really old (and turdy)
 	$('.bundle:not(.bookmarked)').slice(cutoff).slideUp 'normal', -> 
 			$(this).remove()
@@ -846,6 +858,9 @@ userSpan = (user) ->
 			.text(users[user]?.name || "[name missing]")
 
 addAnnotation = (el) ->
+	# destroy the tooltip
+	$('.bundle .ruling').tooltip('destroy')
+
 	el.css('display', 'none').prependTo $('#history .bundle.active .annotations')
 	el.slideDown()
 	return el
@@ -893,7 +908,6 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			.hide()
 			.attr('href', '#')
 			.attr('title', 'Click to Report')
-			.attr('rel', 'tooltip')
 			.data('placement', 'right')
 		line.append ' '
 		line.append ruling
@@ -909,12 +923,12 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 
 	if done
 		ruling = line.find('.ruling').show().css('display', 'inline')
-		setTimeout ->
-			ruling.tooltip('show')
-		, 100
-		setTimeout ->
-			ruling.tooltip('hide')
-		, 1000
+		# setTimeout ->
+		# 	ruling.tooltip('show')
+		# , 100
+		# setTimeout ->
+		# 	ruling.tooltip('hide')
+		# , 1000
 		decision = ""
 		if correct is "prompt"
 			ruling.addClass('label-info').text('Prompt')

@@ -675,7 +675,7 @@ process_journal_queue = ->
 	else
 		console.log 'processing', first
 
-setInterval process_journal_queue, 2000
+setInterval process_journal_queue, 1000
 
 partial_journal = (name) ->
 	# return if app.settings.env is 'development'
