@@ -888,7 +888,13 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			.addClass('comment')
 			.appendTo line
 
-		ruling = $('<a>').addClass('label ruling').hide().attr('href', '#')
+		ruling = $('<a>')
+			.addClass('label ruling')
+			.hide()
+			.attr('href', '#')
+			.attr('title', 'Click to Report')
+			.attr('rel', 'tooltip')
+			.data('placement', 'right')
 		line.append ' '
 		line.append ruling
 		addAnnotation line
