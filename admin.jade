@@ -110,20 +110,16 @@ html(lang="en")
 			li
 				a(href="/superstalkers?ninjagod") annuit coeptis
 			mixin display_user(reaped)
-
-			each room, room_name in rooms
-				if count_active(room) > 0
-					mixin display_room(room, room_name)
-			each room, room_name in rooms
-				if count_active(room) == 0
-					mixin display_room(room, room_name)
-				
+			- var sorted_names = Object.keys(rooms).sort(function(b,a){return count_online(rooms[a]) - count_online(rooms[b])})
+			each room_name in sorted_names
+				- var room = rooms[room_name]
+				mixin display_room(room, room_name)
 		hr
 		form(action="/stalkermode/announce", method="post")
-			label(for="name") Name
+			label(for="name") Name (no spaces!) 
 			input#name(name="name", type="text", value="protobowl_announcement", style="width: 200px")
 			br
-			label(for="message") Message
+			label(for="message") Message 
 			input#message(type="text", name="message", style="width:500px")
 			button(type="submit") Announce
 		
