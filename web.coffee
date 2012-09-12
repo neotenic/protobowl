@@ -930,8 +930,12 @@ clearInactive = (threshold) ->
 		len = 0
 		for username, user of room.users
 			len++
+			overcrowded_room = Object.keys(room.users).length > 20
 			if user.sockets.length is 0
-				if user.last_action < new Date - threshold or (user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0)
+				if user.last_action < new Date - threshold or 
+					(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or 
+					(user.last_action < new Date - 1000 * 60 * 60 * 12 and overcrowded_room)
+
 					console.log 'kicking user of inactivity', user.name
 					reaped.users++
 					reaped.seen += user.seen
