@@ -951,7 +951,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					if magic_number > 0
 						if old_score < magic_number and updated_score >= magic_number
 							$('body').fireworks(magic_number / magic_multiple * 5)
-							createAlert ruling.parents('.bundle'), 'Congratulations', "You have over #{magic_number} points! Here's some fireworks to set the mood."
+							createAlert ruling.parents('.bundle'), 'Congratulations', "You have over #{magic_number} points! Here's some fireworks."
 				checkScoreUpdate()
 		else
 			decision = "wrong"
@@ -965,7 +965,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		answer = sync.answer
 		ruling.click ->
 			sock.emit 'report_answer', {guess: text, answer: answer, ruling: decision}
-			createAlert ruling.parents('.bundle'), 'Reported Answer', "You have successfully told me that my algorithm sucks. Thanks, I'll fix it eventually, but keep on reporting problems that you see. "
+			createAlert ruling.parents('.bundle'), 'Reported Answer', "You have successfully told me that my algorithm sucks. Thanks, I'll fix it eventually. "
 			# I've been informed that this green box might make you feel bad and that I should change the wording so that it doesn't induce a throbbing pang of guilt in your gut. But the truth is that I really do appreciate flagging this stuff, it helps improve this product and with moar data, I can do science with it.
 
 			# $('#review .review-judgement')
