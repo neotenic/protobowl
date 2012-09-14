@@ -1,6 +1,6 @@
 {
   "name": "protobowl",
-  "version": "0.0.2-108",
+  "version": "0.0.3",
   "dependencies": {
     "less-middleware": "0.1.x",
     "express": "2.5.x",
@@ -14,6 +14,9 @@
     "node": ">=0.4"
   },
   "subdomain": "protobowl",
+  "domains": [
+    "protobowl.com", "www.protobowl.com", "demo.protobowl.com"
+  ],
   "scripts": {
     "start": "web.js"
   }

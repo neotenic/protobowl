@@ -126,7 +126,7 @@ serverTime = -> new Date - sync_offset
 window.onbeforeunload = ->
 	if inner_socket?
 		localStorage.old_socket = inner_socket.socket.sessionid
-	return void(0)
+	return undefined
 
 sock.on 'echo', (data, fn) ->
 	fn 'alive'
@@ -160,6 +160,13 @@ sock.on 'connect', ->
 	$('.disconnect-notice').slideUp()
 
 	sock.emit 'disco', {old_socket: localStorage.old_socket}
+
+sock.on 'redirect', (url) ->
+	window.location = url
+
+sock.on 'alert', (text) ->
+	console.log 'got alert', text
+	window.alert(text)
 
 sock.on 'joined', (data) ->
 	public_name = data.name

@@ -10,7 +10,7 @@ do ->
 	stemmer = require('./porter').stemmer
 	# stopwords = 'lol,dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
 	# some people like to append "lol" to every answer
-	stopwords = "derp rofl lmao lawl lole lol the on of is a in on that have for at so it do or de y by accept any and".split(' ')
+	stopwords = "derp rofl lmao lawl lole lol the prompt on of is a in on that have for at so it do or de y by accept any and".split(' ')
 	stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold luke matthew"
 	# commwords = "war battle river"
 

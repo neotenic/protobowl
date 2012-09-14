@@ -751,6 +751,16 @@ io.sockets.on 'connection', (sock) ->
 	headers = sock.handshake.headers
 	return sock.disconnect() unless headers.referer and headers.cookie
 	config = url.parse(headers.referer)
+
+	# if config.host isnt 'demo.protobowl.com'
+	# 	# console.log "BLAHFOJWEOIJFSDF", config.host
+	# 	# sock.emit 'alert', {verb: "asodfjowaiejfasdf"}
+	# 	config.host = 'demo.protobowl.com'
+	# 	sock.emit 'application_update', +new Date
+	# 	sock.emit 'redirect', url.format(config)
+	# 	sock.disconnect()
+	# 	return
+
 	cookie = parseCookie(headers.cookie)
 	return sock.disconnect() unless cookie.protocookie and config.pathname
 	# set the config stuff
@@ -928,15 +938,14 @@ clearInactive = (threshold) ->
 	# garbazhe collectour
 	for name, room of rooms
 		len = 0
+		overcrowded_room = Object.keys(room.users).length > 20
 		for username, user of room.users
 			len++
-			overcrowded_room = Object.keys(room.users).length > 20
 			if user.sockets.length is 0
-				if user.last_action < new Date - threshold or 
-					(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or 
-					(user.last_action < new Date - 1000 * 60 * 60 * 12 and overcrowded_room)
-
-					console.log 'kicking user of inactivity', user.name
+				if (user.last_action < new Date - threshold) or 
+				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or 
+				(user.last_action < new Date - 1000 * 60 * 60 * 12 and overcrowded_room)
+					# console.log 'kicking user of inactivity', user.name
 					reaped.users++
 					reaped.seen += user.seen
 					reaped.guesses += user.guesses
@@ -1013,9 +1022,18 @@ app.get '/', (req, res) ->
 
 
 app.get '/:channel', (req, res) ->
+
+	console.log 'HOST', req.headers.host, req.url
+	# if req.headers.host isnt "demo.protobowl.com"
+	# 	options = url.parse(req.url)
+	# 	options.host = 'demo.protobowl.com'
+	# 	res.writeHead 301, {Location: url.format(options)}
+	# 	res.end()
+	# 	return
+
 	name = req.params.channel
 	# init_channel name
-	console.log "Requested /#{req.params.channel}", req.headers['user-agent']
+	# console.log "Requested /#{req.params.channel}", req.headers['user-agent']
 	res.render 'index.jade', { name, env: app.settings.env }
 
 

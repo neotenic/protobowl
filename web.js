@@ -1082,18 +1082,18 @@ reaped = {
 };
 
 clearInactive = function(threshold) {
-  var len, name, room, user, username, _ref, _results;
+  var len, name, overcrowded_room, room, user, username, _ref, _results;
   _results = [];
   for (name in rooms) {
     room = rooms[name];
     len = 0;
+    overcrowded_room = Object.keys(room.users).length > 20;
     _ref = room.users;
     for (username in _ref) {
       user = _ref[username];
       len++;
       if (user.sockets.length === 0) {
-        if (user.last_action < new Date - threshold || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0)) {
-          console.log('kicking user of inactivity', user.name);
+        if ((user.last_action < new Date - threshold) || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0) || (user.last_action < new Date - 1000 * 60 * 60 * 12 && overcrowded_room)) {
           reaped.users++;
           reaped.seen += user.seen;
           reaped.guesses += user.guesses;
@@ -1183,8 +1183,8 @@ app.get('/', function(req, res) {
 
 app.get('/:channel', function(req, res) {
   var name;
+  console.log('HOST', req.headers.host, req.url);
   name = req.params.channel;
-  console.log("Requested /" + req.params.channel, req.headers['user-agent']);
   return res.render('index.jade', {
     name: name,
     env: app.settings.env
