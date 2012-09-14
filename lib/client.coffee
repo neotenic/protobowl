@@ -126,7 +126,7 @@ serverTime = -> new Date - sync_offset
 window.onbeforeunload = ->
 	if inner_socket?
 		localStorage.old_socket = inner_socket.socket.sessionid
-	return null
+	return void(0)
 
 sock.on 'echo', (data, fn) ->
 	fn 'alive'
