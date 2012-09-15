@@ -1,3 +1,5 @@
+remote = require('./lib/remote')
+
 express = require('express')
 fs = require('fs')
 checkAnswer = require('./lib/answerparse').checkAnswer
@@ -16,7 +18,6 @@ app.use express.favicon(__dirname + '/img/favicon.ico')
 
 names = require('./lib/names')
 
-remote = require('./remote')
 
 # this injects cookies into things, woot
 app.use (req, res, next) ->
@@ -699,7 +700,7 @@ io.sockets.on 'connection', (sock) ->
 		callback +new Date
 
 	sock.on 'rename', (name) ->
-		room.users[publicID].name = name
+		room.users[publicID].name = name.slice(0, 140) # limit on username size, tweet sized
 		room.touch(publicID)
 		room.sync(1)
 		journal room.name

@@ -2,6 +2,8 @@
 var Cookies, QuizRoom, app, checkAnswer, clearInactive, crypto, cumsum, error_question, express, fisher_yates, fs, full_journal_sync, http, io, journal, journal_config, journal_queue, log, log_config, names, parseCookie, partial_journal, port, process_journal_queue, reaped, remote, restore_journal, rooms, scheduledUpdate, sha1, syllables, updateCache, uptime_begin, url, watcher,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
+remote = require('./lib/remote');
+
 express = require('express');
 
 fs = require('fs');
@@ -29,8 +31,6 @@ app.use(require('less-middleware')({
 app.use(express.favicon(__dirname + '/img/favicon.ico'));
 
 names = require('./lib/names');
-
-remote = require('./remote');
 
 app.use(function(req, res, next) {
   var cookies, expire_date, seed;
@@ -868,7 +868,7 @@ io.sockets.on('connection', function(sock) {
     return callback(+(new Date));
   });
   sock.on('rename', function(name) {
-    room.users[publicID].name = name;
+    room.users[publicID].name = name.slice(0, 140);
     room.touch(publicID);
     room.sync(1);
     return journal(room.name);
