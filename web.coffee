@@ -12,9 +12,11 @@ url = require('url')
 
 Cookies = require('cookies')
 app.use require('less-middleware')({src: __dirname})
-app.use express.favicon()
+app.use express.favicon(__dirname + '/img/favicon.ico')
 
 names = require('./lib/names')
+
+remote = require('./remote')
 
 # this injects cookies into things, woot
 app.use (req, res, next) ->
@@ -48,7 +50,7 @@ if app.settings.env is 'development'
 				scheduledUpdate = null
 
 	watcher = (event, filename) ->
-		return if filename in ["offline.appcache", "web.js", "web.coffee", "config.coffee", "config.js"] or /\.css$/.test(filename)
+		return if filename in ["offline.appcache", "web.js", "web.coffee", "remote.coffee", "remote.js"] or /\.css$/.test(filename)
 		console.log "changed file", filename
 		unless scheduledUpdate
 			scheduledUpdate = setTimeout updateCache, 500
@@ -68,11 +70,30 @@ app.set 'view options', {
   layout: false
 }
 
+error_question = {
+	'category': '$0x40000',
+	'difficulty': 'segmentation fault',
+	'num': 'NaN',
+	'tournament': 'Guru Meditation Cup',
+	'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
+	'answer': 'error',
+	'year': 1970,
+	'round': '0x080483ba'
+}
+
 cumsum = (list, rate) ->
 	sum = 0 #start nonzero, allow pause before rendering
 	for num in [5].concat(list).slice(0, -1)
 		sum += Math.round(num) * rate #always round!
 
+
+fisher_yates = (i) ->
+	return [] if i is 0
+	arr = [0...i]
+	while --i
+		j = Math.floor(Math.random() * (i+1))
+		[arr[i], arr[j]] = [arr[j], arr[i]] 
+	arr
 
 class QuizRoom
 	constructor: (name) ->
@@ -99,7 +120,7 @@ class QuizRoom
 	# a database, so I don't really care how disgustingly un-cool and bad
 	# this is
 	reset_schedule: ->
-		countQuestions @difficulty, @category, (num) =>
+		remote.countQuestions @difficulty, @category, (num) =>
 			if num < 300
 				@question_schedule = fisher_yates(num)
 			else
@@ -109,15 +130,15 @@ class QuizRoom
 		num_attempts = 0
 		attemptQuestion = =>
 			num_attempts++
-			getQuestion @difficulty, @category, (question) =>
+			remote.getQuestion @difficulty, @category, (question) =>
 				# console.log(typeof question._id, @history,  "ATTEMPTS", num_attempts)
 				if question._id.toString() in @history and num_attempts < 15
 					return attemptQuestion()
 				@history.splice 100
 				@history.splice 0, 0, question._id.toString()
-				cb(question)
+				cb(question || error_question)
 
-		countQuestions @difficulty, @category, (num) =>
+		remote.countQuestions @difficulty, @category, (num) =>
 			if num < 300
 				if @question_schedule.length is 0
 					@question_schedule = fisher_yates(num)
@@ -129,8 +150,8 @@ class QuizRoom
 				if @category
 					criterion.category = @category
 				# console.log 'FISHER YATES SCHEDULED', index, 'REMAINING', @question_schedule.length
-				Question.find(criterion).skip(index).limit(1).exec (err, docs) ->
-					cb(docs[0] || error_question)
+				remote.getAtIndex criterion, index, (doc) ->
+					cb doc || error_question
 
 			else
 				attemptQuestion()
@@ -465,8 +486,8 @@ class QuizRoom
 			data.info = @info
 
 		if level >= 3
-			data.categories = categories
-			data.difficulties = difficulties
+			data.categories = remote.getCategories()
+			data.difficulties = remote.getDifficulties()
 			
 		io.sockets.in(@name).emit 'sync', data
 	
@@ -503,6 +524,11 @@ log_config = {
 		host: 'localhost',
 		port: 18228
 	}
+
+if app.settings.env isnt 'development'
+	log_config = remote.deploy.log
+	journal_config = remote.deploy.journal
+	console.log 'set to deployment defaults'
 
 http = require('http')
 log = (action, obj) ->
@@ -705,7 +731,7 @@ io.sockets.on 'connection', (sock) ->
 		room.sync()
 		journal room.name
 		log 'difficulty', [room.name, publicID + '-' + room.users[publicID].name, room.difficulty]
-		countQuestions room.difficulty, room.category, (count) ->
+		remote.countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
 		
 
@@ -715,7 +741,7 @@ io.sockets.on 'connection', (sock) ->
 		room.sync()
 		journal room.name
 		log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
-		countQuestions room.difficulty, room.category, (count) ->
+		remote.countQuestions room.difficulty, room.category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
 	sock.on 'max_buzz', (data) ->
