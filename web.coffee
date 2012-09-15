@@ -48,7 +48,7 @@ if app.settings.env is 'development'
 				scheduledUpdate = null
 
 	watcher = (event, filename) ->
-		return if filename in ["offline.appcache", "web.js", "web.coffee"] or /\.css$/.test(filename)
+		return if filename in ["offline.appcache", "web.js", "web.coffee", "config.coffee", "config.js"] or /\.css$/.test(filename)
 		console.log "changed file", filename
 		unless scheduledUpdate
 			scheduledUpdate = setTimeout updateCache, 500
@@ -67,150 +67,6 @@ app.set 'views', __dirname
 app.set 'view options', {
   layout: false
 }
-
-mongoose = require('mongoose')
-# oh noes, plz dont hacxxors me
-db = mongoose.createConnection 'mongodb://nodejitsu:87a9e43f3edd8929ef1e48ede1f0fc6d@alex.mongohq.com:10056/nodejitsudb560367656797'
-db.on 'error', (err) ->
-	console.log 'DB ERROR', err
-
-QuestionSchema = new mongoose.Schema {
-	category: String,
-	num: Number,
-	tournament: String,
-	question: String,
-	answer: String,
-	difficulty: String,
-	year: Number,
-	round: String,
-	random_loc: {type: [Number, Number], index: '2d'}
-}
-
-Question = db.model 'Question', QuestionSchema
-
-fisher_yates = (i) ->
-	return [] if i is 0
-	arr = [0...i]
-	while --i
-		j = Math.floor(Math.random() * (i+1))
-		[arr[i], arr[j]] = [arr[j], arr[i]] 
-	arr
-
-error_question = {
-	'category': '$0x40000',
-	'difficulty': 'segmentation fault',
-	'num': 'NaN',
-	'tournament': 'Guru Meditation Cup',
-	'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
-	'answer': 'error',
-	'year': 1970,
-	'round': '0x080483ba'
-}
-
-# getQuestion = (last_answer, difficulty, category, cb) ->
-# 	# countQuestions difficulty, category, (count) ->
-# 	# 	if count < 1000
-# 	# TODO: use fisher yates
-
-# 	num_attempts = 0
-
-# 	runQuery = ->
-# 		rand = Math.random()
-# 		num_attempts++
-# 		criterion = {
-# 			random_loc: {
-# 				$near: [rand, 0]
-# 			}
-# 		}
-# 		if difficulty
-# 			criterion.difficulty = difficulty
-# 		if category
-# 			criterion.category = category
-
-# 		Question.findOne criterion, (err, doc) ->
-# 			console.log rand, num_attempts, doc
-# 			if doc is null
-# 				cb error_question
-# 				return
-# 			if doc.answer is last_answer and num_attempts < 10
-# 				runQuery()
-# 			else
-# 				cb(doc) if cb
-# 	runQuery()
-
-
-getQuestion = (difficulty, category, cb) ->
-	rand = Math.random()
-	criterion = {
-		random_loc: {
-			$near: [rand, 0]
-		}
-	}
-	if difficulty
-		criterion.difficulty = difficulty
-	if category
-		criterion.category = category
-
-	Question.findOne criterion, (err, doc) ->
-		if doc is null
-			cb error_question
-			return
-		# console.log "RANDOM PICK", rand, doc.random_loc[0], doc.random_loc[0] - rand
-		cb(doc) if cb
-
-
-countCache = {}
-countQuestions = (difficulty, category, cb) ->
-	id = difficulty+'-'+category
-	if id of countCache
-		return cb(countCache[id])
-	criterion = {}
-	if difficulty
-		criterion.difficulty = difficulty
-	if category
-		criterion.category = category
-	Question.count criterion, (err, doc) ->
-		countCache[id] = doc
-		cb(doc)
-
-# Question.collection.drop()
-# questions = []
-# count = 0
-# fs.readFile '../quiz/questions.json', 'utf8', (err, data) ->
-# 	throw err if err
-# 	# questions = (JSON.parse(line) for line in data.split("\n"))
-
-# 	for line in data.split("\n")
-# 		# console.log line
-# 		continue if line is ''
-# 		j = JSON.parse(line)
-# 		silence = new Question {
-# 			category: j.category,
-# 			num: j.question_num,
-# 			tournament: j.tournament,
-# 			question: j.question,
-# 			difficulty: j.difficulty,
-# 			answer: j.answer,
-# 			year: j.year,
-# 			round: j.round,
-# 			random_loc: [Math.random(), 0]
-# 		}
-# 		silence.save (err) ->
-# 			console.log 'meow', count++
-# 	# questions = (q for q in questions when q.question.indexOf('*') != -1)
-# 	# questions = [{answer: "ponies", question: "tu tu to galvanizationationationationation to galvanization to galvin to galvanization to galvanization two galvanization moo galvanization"}]
-
-
-categories = []
-difficulties = []
-
-Question.collection.distinct 'category', (err, docs) ->
-	categories = docs
-
-Question.collection.distinct 'difficulty', (err, docs) ->
-	difficulties = docs
-
-Question.collection.ensureIndex { random: 1, category: 1, difficulty: 1, random_loc: '2d' }
 
 cumsum = (list, rate) ->
 	sum = 0 #start nonzero, allow pause before rendering
@@ -638,18 +494,22 @@ sha1 = (text) ->
 	hash.update(text)
 	hash.digest('hex')
 
+journal_config = {
+		host: 'localhost',
+		port: 15865
+	}
+
+log_config = {
+		host: 'localhost',
+		port: 18228
+	}
 
 http = require('http')
 log = (action, obj) ->
 	# no logs in dev
 	return if app.settings.env is 'development'
 
-	req = http.request {
-		host: 'inception.pi.antimatter15.com',
-		port: 3140,
-		path: '/log',
-		method: 'POST'
-	}, ->
+	req = http.request log_config, ->
 		# console.log "saved log"
 	req.on 'error', ->
 		console.log "logging error"
@@ -658,16 +518,7 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-if app.settings.env is 'development'
-	journal_config = {
-		host: 'localhost',
-		port: 15865
-	}
-else
-	journal_config = {
-		host: 'protobowl-journal.herokuapp.com',
-		port: 80
-	}
+
 
 journal_queue = {}
 journal = (name) ->
