@@ -547,20 +547,22 @@ QuizRoom = (function() {
         if (this.attempt.interrupt) {
           this.users[this.attempt.user].interrupts++;
         }
+        buzzed = 0;
+        pool = 0;
         _ref1 = this.users;
         for (id in _ref1) {
           user = _ref1[id];
-          buzzed = 0;
-          pool = 0;
-          if (user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10) {
-            if (user.times_buzzed >= this.max_buzz) {
+          if (user.sockets.length > 0 && (new Date - user.last_action) < 1000 * 60 * 10) {
+            if (user.times_buzzed >= this.max_buzz && this.max_buzz) {
               buzzed++;
             }
             pool++;
           }
         }
-        if (this.max_buzz !== null && buzzed >= pool) {
-          this.finish();
+        if (this.max_buzz) {
+          if (buzzed >= pool) {
+            this.finish();
+          }
         }
       }
       journal(this.name);
@@ -573,7 +575,15 @@ QuizRoom = (function() {
     var early_index, session,
       _this = this;
     this.touch(user);
-    if (this.attempt === null && this.time() <= this.end_time) {
+    if (this.max_buzz && this.users[user].times_buzzed >= this.max_buzz) {
+      if (fn) {
+        fn('THE BUZZES ARE TOO DAMN HIGH');
+      }
+      return io.sockets["in"](this.name).emit('log', {
+        user: user,
+        verb: 'has already buzzed'
+      });
+    } else if (this.attempt === null && this.time() <= this.end_time) {
       if (fn) {
         fn('http://www.whosawesome.com/');
       }
@@ -598,6 +608,10 @@ QuizRoom = (function() {
         return _this.end_buzz(session);
       });
     } else {
+      io.sockets["in"](this.name).emit('log', {
+        user: user,
+        verb: 'lost the buzzer race'
+      });
       if (fn) {
         return fn('THE GAME');
       }
@@ -1183,7 +1197,6 @@ app.get('/', function(req, res) {
 
 app.get('/:channel', function(req, res) {
   var name;
-  console.log('HOST', req.headers.host, req.url);
   name = req.params.channel;
   return res.render('index.jade', {
     name: name,

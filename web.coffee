@@ -496,15 +496,18 @@ class QuizRoom
 				if @attempt.interrupt
 					@users[@attempt.user].interrupts++
 				
+				buzzed = 0
+				pool = 0
 				for id, user of @users
-					buzzed = 0
-					pool = 0
-					if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
-						if user.times_buzzed >= @max_buzz
+					if user.sockets.length > 0 and (new Date - user.last_action) < 1000 * 60 * 10
+						if user.times_buzzed >= @max_buzz and @max_buzz
 							buzzed++
 						pool++
-				if @max_buzz isnt null and buzzed >= pool 
-					@finish() # if everyone's buzzed and nobody can buzz, then why continue reading
+				if @max_buzz
+					# console.log 'people buzzed', buzzed, 'of', pool
+					if buzzed >= pool 
+						@finish() # if everyone's buzzed and nobody can buzz, then why continue reading
+
 			journal @name
 			@attempt = null #g'bye
 			@sync(1) #two syncs in one request!
@@ -512,7 +515,12 @@ class QuizRoom
 
 	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
 		@touch user
-		if @attempt is null and @time() <= @end_time
+		if @max_buzz and @users[user].times_buzzed >= @max_buzz
+			# console.log @max_buzz
+			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
+			io.sockets.in(@name).emit 'log', {user: user, verb: 'has already buzzed'}
+
+		else if @attempt is null and @time() <= @end_time
 			fn 'http://www.whosawesome.com/' if fn
 			session = Math.random().toString(36).slice(2)
 			early_index = @question.replace(/[^ \*]/g, '').indexOf('*')
@@ -538,6 +546,7 @@ class QuizRoom
 			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
 		else
+			io.sockets.in(@name).emit 'log', {user: user, verb: 'lost the buzzer race'}
 			fn 'THE GAME' if fn
 
 	guess: (user, data) ->
@@ -1022,8 +1031,7 @@ app.get '/', (req, res) ->
 
 
 app.get '/:channel', (req, res) ->
-
-	console.log 'HOST', req.headers.host, req.url
+	# console.log 'HOST', req.headers.host, req.url
 	# if req.headers.host isnt "demo.protobowl.com"
 	# 	options = url.parse(req.url)
 	# 	options.host = 'demo.protobowl.com'
