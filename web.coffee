@@ -1054,7 +1054,7 @@ app.get '/:channel', (req, res) ->
 
 	# init_channel name
 	# console.log "Requested /#{req.params.channel}", req.headers['user-agent']
-	res.render 'index.jade', { name, env: app.settings.env }
+	res.render 'room.jade', { name, env: app.settings.env }
 
 
 port = process.env.PORT || 5000

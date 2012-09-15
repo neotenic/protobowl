@@ -1238,7 +1238,7 @@ app.get('/:channel', function(req, res) {
       return;
     }
   }
-  return res.render('index.jade', {
+  return res.render('room.jade', {
     name: name,
     env: app.settings.env
   });
