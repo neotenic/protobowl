@@ -498,7 +498,7 @@ class QuizRoom
 				
 				buzzed = 0
 				pool = 0
-				for id, user of @users
+				for id, user of @users when id[0] isnt "_" # skip secret ninja
 					if user.sockets.length > 0 and (new Date - user.last_action) < 1000 * 60 * 10
 						if user.times_buzzed >= @max_buzz and @max_buzz
 							buzzed++
@@ -761,14 +761,13 @@ io.sockets.on 'connection', (sock) ->
 	return sock.disconnect() unless headers.referer and headers.cookie
 	config = url.parse(headers.referer)
 
-	# if config.host isnt 'demo.protobowl.com'
-	# 	# console.log "BLAHFOJWEOIJFSDF", config.host
-	# 	# sock.emit 'alert', {verb: "asodfjowaiejfasdf"}
-	# 	config.host = 'demo.protobowl.com'
-	# 	sock.emit 'application_update', +new Date
-	# 	sock.emit 'redirect', url.format(config)
-	# 	sock.disconnect()
-	# 	return
+	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development'
+		console.log "Sending Upgrade Request", headers.referer
+		config.host = 'protobowl.com'
+		sock.emit 'application_update', +new Date
+		sock.emit 'redirect', url.format(config)
+		sock.disconnect()
+		return
 
 	cookie = parseCookie(headers.cookie)
 	return sock.disconnect() unless cookie.protocookie and config.pathname
@@ -1011,6 +1010,12 @@ app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
 
 
 app.get '/stalkermode', (req, res) ->
+	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'
+		options = url.parse(req.url)
+		options.host = 'protobowl.com'
+		res.writeHead 301, {Location: url.format(options)}
+		res.end()
+		return
 	util = require('util')
 	res.render 'admin.jade', {
 		env: app.settings.env,
@@ -1027,19 +1032,26 @@ app.get '/new', (req, res) ->
 
 
 app.get '/', (req, res) ->
+	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'
+		options = url.parse(req.url)
+		options.host = 'protobowl.com'
+		res.writeHead 301, {Location: url.format(options)}
+		res.end()
+		return
 	res.redirect '/lobby'
 
 
 app.get '/:channel', (req, res) ->
-	# console.log 'HOST', req.headers.host, req.url
-	# if req.headers.host isnt "demo.protobowl.com"
-	# 	options = url.parse(req.url)
-	# 	options.host = 'demo.protobowl.com'
-	# 	res.writeHead 301, {Location: url.format(options)}
-	# 	res.end()
-	# 	return
-
 	name = req.params.channel
+	if name isnt "offline"
+		# console.log 'HOST', req.headers.host, req.url
+		if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'
+			options = url.parse(req.url)
+			options.host = 'protobowl.com'
+			res.writeHead 301, {Location: url.format(options)}
+			res.end()
+			return
+
 	# init_channel name
 	# console.log "Requested /#{req.params.channel}", req.headers['user-agent']
 	res.render 'index.jade', { name, env: app.settings.env }
