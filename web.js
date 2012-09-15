@@ -552,11 +552,13 @@ QuizRoom = (function() {
         _ref1 = this.users;
         for (id in _ref1) {
           user = _ref1[id];
-          if (user.sockets.length > 0 && (new Date - user.last_action) < 1000 * 60 * 10) {
-            if (user.times_buzzed >= this.max_buzz && this.max_buzz) {
-              buzzed++;
+          if (id[0] !== "_") {
+            if (user.sockets.length > 0 && (new Date - user.last_action) < 1000 * 60 * 10) {
+              if (user.times_buzzed >= this.max_buzz && this.max_buzz) {
+                buzzed++;
+              }
+              pool++;
             }
-            pool++;
           }
         }
         if (this.max_buzz) {
@@ -880,6 +882,14 @@ io.sockets.on('connection', function(sock) {
     return sock.disconnect();
   }
   config = url.parse(headers.referer);
+  if (config.host !== 'protobowl.com' && app.settings.env !== 'development') {
+    console.log("Sending Upgrade Request", headers.referer);
+    config.host = 'protobowl.com';
+    sock.emit('application_update', +(new Date));
+    sock.emit('redirect', url.format(config));
+    sock.disconnect();
+    return;
+  }
   cookie = parseCookie(headers.cookie);
   if (!(cookie.protocookie && config.pathname)) {
     return sock.disconnect();
@@ -1175,7 +1185,16 @@ app.post('/stalkermode/announce', express.bodyParser(), function(req, res) {
 });
 
 app.get('/stalkermode', function(req, res) {
-  var util;
+  var options, util;
+  if (req.headers.host !== "protobowl.com" && app.settings.env !== 'development') {
+    options = url.parse(req.url);
+    options.host = 'protobowl.com';
+    res.writeHead(301, {
+      Location: url.format(options)
+    });
+    res.end();
+    return;
+  }
   util = require('util');
   return res.render('admin.jade', {
     env: app.settings.env,
@@ -1192,12 +1211,33 @@ app.get('/new', function(req, res) {
 });
 
 app.get('/', function(req, res) {
+  var options;
+  if (req.headers.host !== "protobowl.com" && app.settings.env !== 'development') {
+    options = url.parse(req.url);
+    options.host = 'protobowl.com';
+    res.writeHead(301, {
+      Location: url.format(options)
+    });
+    res.end();
+    return;
+  }
   return res.redirect('/lobby');
 });
 
 app.get('/:channel', function(req, res) {
-  var name;
+  var name, options;
   name = req.params.channel;
+  if (name !== "offline") {
+    if (req.headers.host !== "protobowl.com" && app.settings.env !== 'development') {
+      options = url.parse(req.url);
+      options.host = 'protobowl.com';
+      res.writeHead(301, {
+        Location: url.format(options)
+      });
+      res.end();
+      return;
+    }
+  }
   return res.render('index.jade', {
     name: name,
     env: app.settings.env
