@@ -46,6 +46,26 @@ do ->
 		[pos, neg]
 
 
+	replaceNumber = (word) ->
+		if /\d+nd/.test(word) or /\d+st/.test(word)
+			return parseInt(word, 10)
+		return 0 if word in ['zero', 'zeroeth', 'zeroth']
+		return 1 if word in ['one', 'first', 'i']
+		return 2 if word in ['two', 'second', 'twoth', 'ii'] # someone might say twoth
+		return 3 if word in ['three', 'third', 'turd', 'iii', 'iiv']
+		return 4 if word in ['forth', 'fourth', 'four', 'iiii', 'iv']
+		return 5 if word in ['fifth', 'five', 'v']
+		return 6 if word in ['sixth', 'six', 'vi', 'emacs']
+		return 7 if word in ['seventh', 'seven', 'vii']
+		return 8 if word in ['eight', 'eighth', 'viii', 'iix']
+		return 9 if word in ['nine', 'nein', 'ninth', 'ix', 'viiii']
+		return 10 if word in ['tenth', 'ten', 'x']
+		return 11 if word in ['eleventh', 'eleven', 'xi']
+		return 12 if word in ['twelfth', 'twelveth', 'twelve', 'xii']
+		return 13 if word in ['thirteenth', 'thirteen', 'xiii', 'iixv']
+		return 14 if word in ['fourteenth', 'fourteen', 'ixv', 'xiiii']
+		return word
+
 
 
 	stem = (word) ->
