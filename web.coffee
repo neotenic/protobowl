@@ -1,5 +1,3 @@
-remote = require('./lib/remote')
-
 express = require('express')
 fs = require('fs')
 checkAnswer = require('./lib/answerparse').checkAnswer
@@ -18,6 +16,35 @@ app.use express.favicon(__dirname + '/img/favicon.ico')
 
 names = require('./lib/names')
 
+try 
+	remote = require('./lib/remotes')
+catch err
+	questions = []
+	count = 0
+	fs.readFile 'sample.txt', 'utf8', (err, data) ->
+		throw err if err
+		questions = (JSON.parse(line) for line in data.split("\n"))
+
+	listProps = (prop) ->
+		propmap = {}
+		for q in questions
+			propmap[q[prop]] = 1
+		return (p for p of propmap)
+
+	filterQuestions = (diff, cat) ->
+		questions.filter (q) ->
+			return false if diff and q.difficulty != diff
+			return false if cat and q.category != cat
+			return true
+
+	remote = {
+		countQuestions: (diff, cat, cb) ->
+			cb filterQuestions(diff, cat).length, 42
+		getAtIndex: (diff, cat, index, cb) ->
+			cb filterQuestions(diff, cat)[index]
+		getCategories: -> listProps('category')
+		getDifficulties: -> listProps('difficulty')
+	}
 
 # this injects cookies into things, woot
 app.use (req, res, next) ->
@@ -103,6 +130,10 @@ class QuizRoom
 		@time_offset = 0
 		@rate = 1000 * 60 / 5 / 200
 		@__timeout = -1
+		
+		# the following are nasty database hacks
+		@question_schedule = []
+		@history = []
 
 		@freeze()
 		@new_question()
@@ -112,10 +143,7 @@ class QuizRoom
 
 		@max_buzz = null
 
-		# the following are nasty database hacks
-		@question_schedule = []
-		@history = []
-
+		
 	# this function really doesn't belong in here, because it sort of screws
 	# up the database abstractions, but this app wasn't even supposed to have
 	# a database, so I don't really care how disgustingly un-cool and bad
@@ -139,19 +167,14 @@ class QuizRoom
 				@history.splice 0, 0, question._id.toString()
 				cb(question || error_question)
 
-		remote.countQuestions @difficulty, @category, (num) =>
-			if num < 300
+		remote.countQuestions @difficulty, @category, (num, no_db) =>
+			if num < 300 or no_db is 42
 				if @question_schedule.length is 0
 					@question_schedule = fisher_yates(num)
 
 				index = @question_schedule.shift()
-				criterion = {}
-				if @difficulty
-					criterion.difficulty = @difficulty
-				if @category
-					criterion.category = @category
-				# console.log 'FISHER YATES SCHEDULED', index, 'REMAINING', @question_schedule.length
-				remote.getAtIndex criterion, index, (doc) ->
+				
+				remote.getAtIndex @difficulty, @category, index, (doc) ->
 					cb doc || error_question
 
 			else
@@ -577,7 +600,7 @@ partial_journal = (name) ->
 				journal_queue = {} # full syncs clear queue
 				full_journal_sync()
 	req.on 'error', ->
-		console.log "journal error"
+		# console.log "journal error"
 	req.write(JSON.stringify(rooms[name].journal_backup()))
 	req.end()
 
@@ -628,7 +651,7 @@ restore_journal = (callback) ->
 			console.log 'restored journal'
 			callback() if callback
 	req.on 'error', ->
-		console.log "COULD NOT RESTORE FROM JOURNAL"
+		console.log "Journal not accessible. Starting with defaults."
 		callback() if callback
 	req.end()
 
@@ -937,8 +960,7 @@ app.get '/:channel', (req, res) ->
 
 port = process.env.PORT || 5000
 
-
 restore_journal ->
 	app.listen port, ->
-		console.log "listening on", port
+		console.log "listening on port", port
 
