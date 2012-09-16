@@ -17,7 +17,7 @@ app.use express.favicon(__dirname + '/img/favicon.ico')
 names = require('./lib/names')
 
 try 
-	remote = require('./lib/remotes')
+	remote = require('./lib/remote')
 catch err
 	questions = []
 	count = 0
@@ -95,7 +95,7 @@ io.configure 'development', ->
 
 app.set 'views', __dirname
 app.set 'view options', {
-  layout: false
+	layout: false
 }
 
 error_question = {
@@ -202,6 +202,12 @@ class QuizRoom
 		unless socket in user.sockets
 			user.sockets.push socket
 		
+	emit_user: (id, args...) ->
+		if id of @users
+			for sock in @users[id].sockets
+				s = io.sockets.socket(sock)
+				s.emit args...
+
 
 	# vote: (id, action, val) ->
 	# 	# room.add_socket publicID, sock.id
