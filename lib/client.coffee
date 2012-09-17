@@ -957,7 +957,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					return if magic_number is 0 # 0 is hardly an accomplishment
 					if magic_number > 0
 						if old_score < magic_number and updated_score >= magic_number
-							$('body').fireworks(magic_number / magic_multiple * 5)
+							$('body').fireworks(magic_number / magic_multiple * 10)
 							createAlert ruling.parents('.bundle'), 'Congratulations', "You have over #{magic_number} points! Here's some fireworks."
 				checkScoreUpdate()
 		else

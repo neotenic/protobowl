@@ -854,12 +854,21 @@ clearInactive = (threshold) ->
 	for name, room of rooms
 		len = 0
 		overcrowded_room = Object.keys(room.users).length > 20
+		oldest_user = ''
+		if overcrowded_room
+			oldest = Object.keys(room.users).sort (a, b) -> 
+				return room.users[a].last_action - room.users[b].last_action
+			oldest_user = oldest[0]
+
 		for username, user of room.users
 			len++
 			if user.sockets.length is 0
-				if (user.last_action < new Date - threshold) or 
-				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or 
-				(user.last_action < new Date - 1000 * 60 * 60 * 12 and overcrowded_room)
+				evict_user = false
+				if overcrowded_room and username is oldest_user
+					evict_user = true
+				if (user.last_action < new Date - threshold) or evict_user or
+				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or
+				(overcrowded_room and user.correct < 10 and user.last_action < new Date - 1000 * 60 * 30)
 					# console.log 'kicking user of inactivity', user.name
 					reaped.users++
 					reaped.seen += user.seen
@@ -871,6 +880,7 @@ clearInactive = (threshold) ->
 					reaped.last_action = +new Date
 					len--
 					delete room.users[username]
+					overcrowded_room = false
 		if len is 0
 			console.log 'removing empty room', name
 			delete rooms[name]

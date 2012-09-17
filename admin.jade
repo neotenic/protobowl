@@ -47,7 +47,8 @@ html(lang="en")
 				ul
 					li score: 
 						mixin score(user)
-						|  (correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early}) 
+						- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001)), f_score = 2 * (precision * recall) / (precision + recall + 0.001);
+						|  (correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early} precision: #{precision.toFixed(2)} recall: #{recall.toFixed(2)} F1 score: #{f_score.toFixed(2)}) 
 					if user.users || user.rooms
 						li
 							| users: #{user.users} rooms: #{user.rooms}

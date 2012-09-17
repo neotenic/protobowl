@@ -1086,18 +1086,29 @@ reaped = {
 };
 
 clearInactive = function(threshold) {
-  var len, name, overcrowded_room, room, user, username, _ref, _results;
+  var evict_user, len, name, oldest, oldest_user, overcrowded_room, room, user, username, _ref, _results;
   _results = [];
   for (name in rooms) {
     room = rooms[name];
     len = 0;
     overcrowded_room = Object.keys(room.users).length > 20;
+    oldest_user = '';
+    if (overcrowded_room) {
+      oldest = Object.keys(room.users).sort(function(a, b) {
+        return room.users[a].last_action - room.users[b].last_action;
+      });
+      oldest_user = oldest[0];
+    }
     _ref = room.users;
     for (username in _ref) {
       user = _ref[username];
       len++;
       if (user.sockets.length === 0) {
-        if ((user.last_action < new Date - threshold) || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0) || (user.last_action < new Date - 1000 * 60 * 60 * 12 && overcrowded_room)) {
+        evict_user = false;
+        if (overcrowded_room && username === oldest_user) {
+          evict_user = true;
+        }
+        if ((user.last_action < new Date - threshold) || evict_user || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0) || (overcrowded_room && user.correct < 10 && user.last_action < new Date - 1000 * 60 * 30)) {
           reaped.users++;
           reaped.seen += user.seen;
           reaped.guesses += user.guesses;
@@ -1108,6 +1119,7 @@ clearInactive = function(threshold) {
           reaped.last_action = +(new Date);
           len--;
           delete room.users[username];
+          overcrowded_room = false;
         }
       }
     }
