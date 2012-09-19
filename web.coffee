@@ -290,6 +290,13 @@ class QuizRoom
 				.replace(/\<\w\w\>/g, '')
 				.replace(/\[\w\w\]/g, '')
 
+			# console.log @info
+			# @qid = question.question
+			@qid = "pb" + @info.year + "-" + @info.num + "-" + 
+			@info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" +
+			@answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20)
+			# console.log @qid
+
 			@begin_time = @time()
 			@timing = (syllables(word) + 1 for word in @question.split(" "))
 			@set_speed @rate #do the math with speeds

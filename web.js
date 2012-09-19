@@ -407,6 +407,7 @@ QuizRoom = (function() {
       };
       _this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ').replace(/\s+/g, ' ');
       _this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
+      _this.qid = "pb" + _this.info.year + "-" + _this.info.num + "-" + _this.info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" + _this.answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20);
       _this.begin_time = _this.time();
       _this.timing = (function() {
         var _i, _len, _ref, _results;

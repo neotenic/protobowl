@@ -448,7 +448,7 @@ renderState = ->
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
-		if sync.users.length > 1 and connected()
+		if sync.users.length > 1 and connected() or sync.users[0].id isnt public_id
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
 		else
@@ -693,8 +693,8 @@ renderTimer = ->
 
 
 removeSplash = (fn) ->
-	bundle = $('.bundle.active')
-	start = bundle.find('.start-page')
+	start = $('.bundle .start-page')
+	bundle = start.parent(".bundle")
 	if start.length > 0
 		bundle.find('.readout')
 			.width(start.width())
@@ -1065,12 +1065,31 @@ $('.chatbtn').click ->
 		.focus()
 		.keyup()
 
-last_skip = 0
+recent_actions = [0]
+rate_limit_ceiling = 0
+rate_limit_check = ->
+	current_time = +new Date
+	filtered_actions = []
+	rate_limited = false
+	for action in recent_actions when current_time - action < 5000
+		# only look at past 5 seconds
+		filtered_actions.push action
+	if filtered_actions.length > 6
+		rate_limited = true
+	if rate_limit_ceiling > current_time
+		rate_limited = true
+	recent_actions = filtered_actions.slice(-10)
+	recent_actions.push current_time
+	if rate_limited
+		rate_limit_ceiling = current_time + 5000
+		createAlert $('.bundle.active'), 'Rate Limited', "You been rate limited for doing too many things in the past five seconds. "
+	return rate_limited
+
+# last_skip = 0
 skip = ->
 	removeSplash()
-	if new Date - last_skip > 100
-		last_skip = +new Date
-		sock.emit 'skip', 'yay'
+	return if rate_limit_check()
+	sock.emit 'skip', 'yay'
 
 next = ->
 	removeSplash()
@@ -1082,6 +1101,7 @@ $('.nextbtn').click next
 
 $('.buzzbtn').click ->
 	return if $('.buzzbtn').attr('disabled') is 'disabled'
+	return if rate_limit_check()
 	setActionMode 'guess'
 	$('.guess_input')
 		.val('')
@@ -1113,7 +1133,7 @@ $('.pausebtn').click ->
 
 
 $('.chat_input').keydown (e) ->
-	if e.keyCode in [47, 111, 191] and $(this).val().length is 0
+	if e.keyCode in [47, 111, 191] and $(this).val().length is 0 and !e.shiftKey
 		e.preventDefault()
 	if e.keyCode in [27] #escape key
 		$('.chat_form').submit()
