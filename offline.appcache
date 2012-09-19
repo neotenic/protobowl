@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# INSERT_DATE Wed Sep 19 2012 18:42:43 GMT-0400 (EDT)
+# INSERT_DATE Wed Sep 19 2012 19:34:42 GMT-0400 (EDT)
 
 CACHE:
 /favicon.ico
@@ -21,6 +21,7 @@ less/responsive.css
 less/protobowl.css
 less/dust.png
 img/fontawesome-webfont.woff
+img/ding.wav
 //ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 
 

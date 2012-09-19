@@ -192,7 +192,8 @@ class QuizRoom
 				time_spent: 0,
 				last_action: 0,
 				times_buzzed: 0,
-				show_typing: true
+				show_typing: true,
+				buzz_sound: false
 			}
 			journal @name
 		user = @users[id]
@@ -503,7 +504,7 @@ class QuizRoom
 		# 		delete @users[id][action] for id of @users
 		# 		this[action]()
 		
-		blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question"]
+		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question"]
 		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
@@ -788,6 +789,11 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'show_typing', (data) ->
 		room.users[publicID].show_typing = data
+		room.sync(2)
+		journal room.name
+
+	sock.on 'sounds', (data) ->
+		room.users[publicID].sounds = data
 		room.sync(2)
 		journal room.name
 

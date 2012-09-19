@@ -274,7 +274,8 @@ QuizRoom = (function() {
         time_spent: 0,
         last_action: 0,
         times_buzzed: 0,
-        show_typing: true
+        show_typing: true,
+        buzz_sound: false
       };
       journal(this.name);
     }
@@ -625,7 +626,7 @@ QuizRoom = (function() {
     data = {
       real_time: +(new Date)
     };
-    blacklist = ["name", "question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question"];
+    blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question"];
     user_blacklist = ["sockets"];
     for (attr in this) {
       if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0) {
@@ -1002,6 +1003,11 @@ io.sockets.on('connection', function(sock) {
   });
   sock.on('show_typing', function(data) {
     room.users[publicID].show_typing = data;
+    room.sync(2);
+    return journal(room.name);
+  });
+  sock.on('sounds', function(data) {
+    room.users[publicID].sounds = data;
     room.sync(2);
     return journal(room.name);
   });

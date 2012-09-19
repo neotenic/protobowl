@@ -226,6 +226,7 @@ synchronize = (data) ->
 
 	if public_id of users and 'show_typing' of users[public_id]
 		$('.livechat').attr 'checked', users[public_id].show_typing
+		$('.sounds').attr 'checked', users[public_id].sounds
 
 	if sync.attempt
 		guessAnnotation sync.attempt
@@ -375,6 +376,7 @@ renderState = ->
 				if user.id in sync.voting[action]
 					votes.push action
 			user.votes = votes.join(', ')
+			user.room = sync.name
 			users[user.id] = user
 
 			# user.name + " (" + user.id + ") " + votes.join(", ")
@@ -385,7 +387,11 @@ renderState = ->
 
 		for user in sync.users.sort((a, b) -> computeScore(b) - computeScore(a))
 			# console.log user.name, count
-			$('.user-' + user.id).text(user.name)
+			
+			# user.name
+			
+			# $('.user-' + user.id).text(user.name)
+			userSpan(user.id)
 			count++
 			row = list.find '.sockid-' + user.id
 			list.append row			
@@ -448,7 +454,7 @@ renderState = ->
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
-		if sync.users.length > 1 and connected() or sync.users[0].id isnt public_id
+		if sync.users.length > 1 and connected() or (sync.users.length is 1 and sync.users[0].id isnt public_id)
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
 		else
@@ -777,7 +783,7 @@ createAlert = (bundle, title, message) ->
 	
 
 createBundle = ->
-	bundle = $('<div>').addClass('bundle')
+	bundle = $('<div>').addClass('bundle').attr('name', sync.qid)
 	important = $('<div>').addClass 'important'
 	bundle.append(important)
 	breadcrumb = $('<ul>')
@@ -855,24 +861,29 @@ createBundle = ->
 
 
 userSpan = (user) ->
+	prefix = ''
+
+	if public_id and public_id.slice(0, 2) == "__"
+		prefix = (users[user]?.room || 'unknown') + '/'
+
 	if user.slice(0, 2) == "__"
 		$('<span>')
 			.addClass('user-'+user)
-			.text(user.slice(2))
+			.text(prefix + user.slice(2))
 	else
 		$('<span>')
 			.addClass('user-'+user)
-			.text(users[user]?.name || "[name missing]")
+			.text(prefix + (users[user]?.name || "[name missing]"))
 
 addAnnotation = (el) ->
 	# destroy the tooltip
 	$('.bundle .ruling').tooltip('destroy')
-
 	el.css('display', 'none').prependTo $('#history .bundle.active .annotations')
 	el.slideDown()
 	return el
 
 addImportant = (el) ->
+	$('.bundle .ruling').tooltip('destroy')
 	el.css('display', 'none').prependTo $('#history .bundle.active .important')
 	el.slideDown()
 	return el
@@ -918,7 +929,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			.data('placement', 'right')
 		line.append ' '
 		line.append ruling
-		addAnnotation line
+		# addAnnotation line
+		line.css('display', 'none').prependTo $('#history .bundle[name="' + sync.qid + '"]').eq(0).find('.annotations')
+		line.slideDown()
 	if done
 		if text is ''
 			line.find('.comment').html('<em>(blank)</em>')
@@ -1099,6 +1112,11 @@ $('.skipbtn').click skip
 
 $('.nextbtn').click next
 
+try
+	ding_sound = new Audio('img/ding.wav')
+catch e
+	# do nothing
+
 $('.buzzbtn').click ->
 	return if $('.buzzbtn').attr('disabled') is 'disabled'
 	return if rate_limit_check()
@@ -1116,6 +1134,10 @@ $('.buzzbtn').click ->
 	sock.emit 'buzz', 'yay', (status) ->
 		if status is 'http://www.whosawesome.com/'
 			$('.guess_input').removeClass('disabled')
+			if $('.sounds')[0].checked
+				
+				
+				ding_sound.play() if ding_sound
 			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Accepted', new Date - submit_time] if window._gaq
 		else
 			setActionMode ''
@@ -1257,6 +1279,9 @@ $('.multibuzz').change ->
 
 $('.livechat').change ->
 	sock.emit 'show_typing', $('.livechat')[0].checked
+
+$('.sounds').change ->
+	sock.emit 'sounds', $('.sounds')[0].checked
 
 jQuery.fn.fireworks = (times = 5) ->
 	for i in [0...times]
