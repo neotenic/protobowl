@@ -894,6 +894,18 @@ clearInactive = (threshold) ->
 				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or
 				(overcrowded_room and user.correct < 10 and user.last_action < new Date - 1000 * 60 * 30)
 					# console.log 'kicking user of inactivity', user.name
+					log 'reap_user', {
+						seen: user.seen, 
+						guesses: user.guesses, 
+						early: user.early, 
+						interrupts: user.interrupts, 
+						correct: user.correct, 
+						time_spent: user.time_spent,
+						last_action: user.last_action,
+						room: name,
+						id: user.id,
+						name: user.name
+					}
 					reaped.users++
 					reaped.seen += user.seen
 					reaped.guesses += user.guesses
@@ -907,6 +919,7 @@ clearInactive = (threshold) ->
 					overcrowded_room = false
 		if len is 0
 			console.log 'removing empty room', name
+			log 'reap_room', name
 			delete rooms[name]
 			reaped.rooms++
 

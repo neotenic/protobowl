@@ -469,6 +469,7 @@ renderState = ->
 
 
 checkAlone = ->
+	return unless connected()
 	public_rooms = ['lobby', 'hsquizbowl']
 	active_count = 0
 	for user in sync.users

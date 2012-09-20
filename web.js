@@ -1134,6 +1134,18 @@ clearInactive = function(threshold) {
           evict_user = true;
         }
         if ((user.last_action < new Date - threshold) || evict_user || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0) || (overcrowded_room && user.correct < 10 && user.last_action < new Date - 1000 * 60 * 30)) {
+          log('reap_user', {
+            seen: user.seen,
+            guesses: user.guesses,
+            early: user.early,
+            interrupts: user.interrupts,
+            correct: user.correct,
+            time_spent: user.time_spent,
+            last_action: user.last_action,
+            room: name,
+            id: user.id,
+            name: user.name
+          });
           reaped.users++;
           reaped.seen += user.seen;
           reaped.guesses += user.guesses;
@@ -1150,6 +1162,7 @@ clearInactive = function(threshold) {
     }
     if (len === 0) {
       console.log('removing empty room', name);
+      log('reap_room', name);
       delete rooms[name];
       _results.push(reaped.rooms++);
     } else {
