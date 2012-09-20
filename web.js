@@ -1062,6 +1062,24 @@ io.sockets.on('connection', function(sock) {
     data.user = publicID + '-' + room.users[publicID].name;
     return log('report_answer', data);
   });
+  sock.on('check_rooms', function(checklist, fn) {
+    var check_name, output, udat, uid, _i, _len, _ref, _ref1;
+    output = {};
+    for (_i = 0, _len = checklist.length; _i < _len; _i++) {
+      check_name = checklist[_i];
+      output[check_name] = 0;
+      if ((_ref = rooms[check_name]) != null ? _ref.users : void 0) {
+        _ref1 = rooms[check_name].users;
+        for (uid in _ref1) {
+          udat = _ref1[uid];
+          if (udat.sockets.length > 0 && new Date - udat.last_action < 10 * 60 * 1000) {
+            output[check_name]++;
+          }
+        }
+      }
+    }
+    return fn(output);
+  });
   return sock.on('disconnect', function() {
     log('disconnect', [room.name, publicID, sock.id]);
     room.del_socket(publicID, sock.id);

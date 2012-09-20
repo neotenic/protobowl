@@ -2,7 +2,6 @@
 
 # Todo
 
-* Add sounds.
 * record the position of the question when buzzed
 * check that it's the last name which is common
 * add support for superpower [+]

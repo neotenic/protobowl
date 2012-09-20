@@ -127,6 +127,7 @@ html(lang="en", manifest="offline.appcache")
 						div.progress.progress-striped
 							div.bar(style="width:0%")
 
+
 					div.span3.leaderboard(style="display:none; margin: 0")
 						div.span3.thumbnail
 							table.table
@@ -136,6 +137,7 @@ html(lang="en", manifest="offline.appcache")
 										th Name
 										th Negs
 								tbody
+
 					div.span3.singleuser(style="display:none; margin: 0")
 						div.span3.thumbnail
 							h5
@@ -144,6 +146,15 @@ html(lang="en", manifest="offline.appcache")
 								span.label.label-important.offline(style="display:none") Offline
 							div.stats
 								table
+
+					div.span3.foreveralone(style="margin: 0;display:none")
+						div.span3.thumbnail
+							h5
+								i.icon-globe
+								| Feeling Lonely?
+							div(style="margin: 5px")	
+								| Consider joining a public room such as <span class="roomlist"></span>
+
 
 					div.span3.settings(style="display:none; margin: 0")
 						div.span3.thumbnail
@@ -192,11 +203,10 @@ html(lang="en", manifest="offline.appcache")
 							i.icon-info-sign
 							| Directions
 						ul
-							li Press <code>p</code> to begin or pause
+							li Press <code>p</code> or <code>r</code> to pause or resume
 							li Press <code>space</code> to buzz
 							li Press <code>j</code> or <code>n</code> to advance to next question (<code>s</code> to skip)
 							li Press <code>/</code> or <code>a</code> to chat
-							li Click the "Correct" or "Wrong" badges to report a question
 							li Invite other people to this URL for multiplayer
 							li This page works offline on browsers supporting HTML5
 

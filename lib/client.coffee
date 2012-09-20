@@ -460,11 +460,34 @@ renderState = ->
 		else
 			$('.leaderboard').slideUp()
 			$('.singleuser').slideDown()
-			
+		
+		checkAlone()
+
 	#fix all the expandos
 	$(window).resize()
 	renderPartial()
 
+
+checkAlone = ->
+	public_rooms = ['lobby', 'hsquizbowl']
+	active_count = 0
+	for user in sync.users
+		if user.online and serverTime() - user.last_action < 1000 * 60 * 10
+			active_count++
+	if active_count is 1
+		sock.emit 'check_rooms', public_rooms, (data) ->
+			suggested_candidates = []
+			for room, count of data
+				if count > 0 and room isnt sync.name
+					suggested_candidates.push room
+			if suggested_candidates.length > 0
+				links = (can.link("/" + can) + " (#{data[can]}) " for can in suggested_candidates)
+				$('.foreveralone .roomlist').html links.join(' or ')
+				$('.foreveralone').slideDown()
+			else
+				$('.foreveralone').slideUp()
+	else
+		$('.foreveralone').slideUp()
 
 $('.singleuser').click ->
 	$('.singleuser .stats').slideUp().queue ->

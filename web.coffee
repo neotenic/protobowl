@@ -833,6 +833,17 @@ io.sockets.on 'connection', (sock) ->
 		data.user = publicID + '-' + room.users[publicID].name
 		log 'report_answer', data
 
+	sock.on 'check_rooms', (checklist, fn) ->
+		output = {}
+		for check_name in checklist
+			output[check_name] = 0
+			if rooms[check_name]?.users
+				for uid, udat of rooms[check_name].users
+					if udat.sockets.length > 0 and new Date - udat.last_action < 10 * 60 * 1000
+						output[check_name]++
+		fn output
+
+
 	sock.on 'disconnect', ->
 		# console.log "someone", publicID, sock.id, "left"
 		log 'disconnect', [room.name, publicID, sock.id]
