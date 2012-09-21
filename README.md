@@ -1,5 +1,7 @@
 #ProtoBowl
 
+[Try out Protobowl on a public room!](http://protobowl.com/hsquizbowl)
+
 # Todo
 
 * record the position of the question when buzzed
