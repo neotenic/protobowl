@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# INSERT_DATE Thu Sep 20 2012 16:23:52 GMT-0400 (EDT)
+# INSERT_DATE Sun Sep 23 2012 10:05:11 GMT-0400 (EDT)
 
 CACHE:
 /favicon.ico
@@ -23,7 +23,7 @@ less/dust.png
 img/fontawesome-webfont.woff
 img/ding.wav
 //ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
-
+https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif
 
 NETWORK:
 /socket.io

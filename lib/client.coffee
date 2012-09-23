@@ -3,6 +3,7 @@ sync = {}
 users = {}
 sync_offsets = []
 sync_offset = 0
+public_rooms = ['lobby', 'hsquizbowl']
 
 sock = {
 	listeners: {},
@@ -454,7 +455,7 @@ renderState = ->
 		list.find('tr.to_remove').remove()
 		# console.log users.join ', '
 		# document.querySelector('#users').innerText = users.join(', ')
-		if sync.users.length > 1 and connected() or (sync.users.length is 1 and sync.users[0].id isnt public_id)
+		if sync.users.length > 1 and connected() or (sync.users.length is 1 and sync.users[0].id isnt public_id and connected())
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
 		else
@@ -470,7 +471,6 @@ renderState = ->
 
 checkAlone = ->
 	return unless connected()
-	public_rooms = ['lobby', 'hsquizbowl']
 	active_count = 0
 	for user in sync.users
 		if user.online and serverTime() - user.last_action < 1000 * 60 * 10
@@ -1105,13 +1105,19 @@ $('.chatbtn').click ->
 recent_actions = [0]
 rate_limit_ceiling = 0
 rate_limit_check = ->
+	online_count = (user for user in sync.users when user.online and user.last_action > new Date - 1000 * 60 * 10).length
+	rate_threshold = 7
+	if online_count > 1
+		rate_threshold = 3
+	if online_count > 3
+		rate_threshold = 2
 	current_time = +new Date
 	filtered_actions = []
 	rate_limited = false
 	for action in recent_actions when current_time - action < 5000
 		# only look at past 5 seconds
 		filtered_actions.push action
-	if filtered_actions.length > 6
+	if filtered_actions.length >= rate_threshold
 		rate_limited = true
 	if rate_limit_ceiling > current_time
 		rate_limited = true
