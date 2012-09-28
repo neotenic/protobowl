@@ -193,7 +193,7 @@ class QuizRoom
 				last_action: 0,
 				times_buzzed: 0,
 				show_typing: true,
-				buzz_sound: false
+				sounds: false
 			}
 			journal @name
 		user = @users[id]
@@ -311,6 +311,8 @@ class QuizRoom
 			@sync(2)
 
 	set_speed: (rate) ->
+		return unless rate # prevent weird instances where you set_speed to null
+
 		now = @time() # take a snapshot of time to do math with
 		#first thing's first, recalculate the cumulative array
 		@cumulative = cumsum @timing, @rate
@@ -798,7 +800,8 @@ io.sockets.on 'connection', (sock) ->
 		journal room.name
 
 	sock.on 'speed', (data) ->
-		room.set_speed data
+		if data
+			room.set_speed data
 		room.sync()
 		journal room.name
 
@@ -877,10 +880,11 @@ clearInactive = (threshold) ->
 	# garbazhe collectour
 	for name, room of rooms
 		len = 0
-		overcrowded_room = Object.keys(room.users).length > 20
+		offline_pool = (username for username, user of room.users when user.sockets.length is 0)
+		overcrowded_room = offline_pool.length > 10
 		oldest_user = ''
 		if overcrowded_room
-			oldest = Object.keys(room.users).sort (a, b) -> 
+			oldest = offline_pool.sort (a, b) -> 
 				return room.users[a].last_action - room.users[b].last_action
 			oldest_user = oldest[0]
 
@@ -892,7 +896,7 @@ clearInactive = (threshold) ->
 					evict_user = true
 				if (user.last_action < new Date - threshold) or evict_user or
 				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or
-				(overcrowded_room and user.correct < 10 and user.last_action < new Date - 1000 * 60 * 30)
+				(overcrowded_room and user.correct < 10 and user.last_action < new Date - 1000 * 60 * 15)
 					# console.log 'kicking user of inactivity', user.name
 					log 'reap_user', {
 						seen: user.seen, 

@@ -275,7 +275,7 @@ QuizRoom = (function() {
         last_action: 0,
         times_buzzed: 0,
         show_typing: true,
-        buzz_sound: false
+        sounds: false
       };
       journal(this.name);
     }
@@ -435,6 +435,9 @@ QuizRoom = (function() {
 
   QuizRoom.prototype.set_speed = function(rate) {
     var done, duration, elapsed, new_duration, now, remainder;
+    if (!rate) {
+      return;
+    }
     now = this.time();
     this.cumulative = cumsum(this.timing, this.rate);
     elapsed = now - this.begin_time;
@@ -1012,7 +1015,9 @@ io.sockets.on('connection', function(sock) {
     return journal(room.name);
   });
   sock.on('speed', function(data) {
-    room.set_speed(data);
+    if (data) {
+      room.set_speed(data);
+    }
     room.sync();
     return journal(room.name);
   });
@@ -1111,15 +1116,27 @@ reaped = {
 };
 
 clearInactive = function(threshold) {
-  var evict_user, len, name, oldest, oldest_user, overcrowded_room, room, user, username, _ref, _results;
+  var evict_user, len, name, offline_pool, oldest, oldest_user, overcrowded_room, room, user, username, _ref, _results;
   _results = [];
   for (name in rooms) {
     room = rooms[name];
     len = 0;
-    overcrowded_room = Object.keys(room.users).length > 20;
+    offline_pool = (function() {
+      var _ref, _results1;
+      _ref = room.users;
+      _results1 = [];
+      for (username in _ref) {
+        user = _ref[username];
+        if (user.sockets.length === 0) {
+          _results1.push(username);
+        }
+      }
+      return _results1;
+    })();
+    overcrowded_room = offline_pool.length > 10;
     oldest_user = '';
     if (overcrowded_room) {
-      oldest = Object.keys(room.users).sort(function(a, b) {
+      oldest = offline_pool.sort(function(a, b) {
         return room.users[a].last_action - room.users[b].last_action;
       });
       oldest_user = oldest[0];
@@ -1133,7 +1150,7 @@ clearInactive = function(threshold) {
         if (overcrowded_room && username === oldest_user) {
           evict_user = true;
         }
-        if ((user.last_action < new Date - threshold) || evict_user || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0) || (overcrowded_room && user.correct < 10 && user.last_action < new Date - 1000 * 60 * 30)) {
+        if ((user.last_action < new Date - threshold) || evict_user || (user.last_action < new Date - 1000 * 60 * 30 && user.guesses === 0) || (overcrowded_room && user.correct < 10 && user.last_action < new Date - 1000 * 60 * 15)) {
           log('reap_user', {
             seen: user.seen,
             guesses: user.guesses,

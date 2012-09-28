@@ -1109,14 +1109,13 @@ rate_limit_check = ->
 	rate_threshold = 7
 	if online_count > 1
 		rate_threshold = 3
-	if online_count > 3
-		rate_threshold = 2
 	current_time = +new Date
 	filtered_actions = []
 	rate_limited = false
 	for action in recent_actions when current_time - action < 5000
 		# only look at past 5 seconds
 		filtered_actions.push action
+	# console.log filtered_actions.length, rate_threshold
 	if filtered_actions.length >= rate_threshold
 		rate_limited = true
 	if rate_limit_ceiling > current_time
