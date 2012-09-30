@@ -450,117 +450,109 @@ createStatSheet = (user, full) ->
 	return table
 
 
-teams = {}
-
 renderState = ->
 	# render the user list and that stuff
-	if sync.users
-		teams = {}
-		for user in sync.users
-			# votes = []
-			# for action of sync.voting
-			# 	if user.id in sync.voting[action]
-			# 		votes.push action
-			# user.votes = votes.join(', ')
-			# user.room = sync.name
-			# users[user.id] = user
-			if user.team
-				teams[user.team] = [] unless user.team of teams
-				teams[user.team].push user.id
-			
-			#teams[user.team || user.id] = [] unless teams[user.team || ''] 
-			#teams[user.team || user.id].push user.id
-
-			userSpan(user.id, true) # do a global update!
-
-
-			# user.name + " (" + user.id + ") " + votes.join(", ")
+	return unless sync.users
+	#console.time('render state')
+	teams = {}
+	team_hash = ''
+	for user in sync.users
+		# votes = []
+		# for action of sync.voting
+		# 	if user.id in sync.voting[action]
+		# 		votes.push action
+		# user.votes = votes.join(', ')
+		# user.room = sync.name
+		# users[user.id] = user
+		if user.team
+			teams[user.team] = [] unless user.team of teams
+			teams[user.team].push user.id
+			team_hash += user.team + user.id
 		
-		list = $('.leaderboard tbody')
-		# list.find('tr').remove() #abort all people
-		ranking = 1
+		#teams[user.team || user.id] = [] unless teams[user.team || ''] 
+		#teams[user.team || user.id].push user.id
 
-		entities = sync.users
+		userSpan(user.id, true) # do a global update!
 
-		if $('.teams').val() or public_id.slice(0,2) == "__"
-			entities = for team, members of teams
-				attrs = {}
-				for member in members
 
-					for attr, val of users[member]
-						if typeof val is 'number'
-							attrs[attr] = 0 unless attr of attrs
-							attrs[attr] += val
-
-				attrs.id = 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, '')
-				attrs.members = members
-				
-				attrs.name = team
-				attrs
-				
-			for user in sync.users when !user.team 
-				entities.push user # add all the unaffiliated users
-
-			list.empty()
-			for user, user_index in entities.sort((a, b) -> computeScore(b) - computeScore(a))
-				# if the score is worse, increment ranks
-				ranking++ if entities[user_index - 1] and computeScore(user) < computeScore(entities[user_index - 1])
-				row = $('<tr>').data('entity', user).appendTo list
-				row.click -> 1
-				badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
-				if public_id in (user.members || [user.id])
-					badge.addClass('badge-info').attr('title', 'You')
-				else
-					idle_count = 0
-					active_count = 0
-					for member in (user.members || [user.id])
-						if users[member].online
-							if serverTime() - users[member].last_action > 1000 * 60 * 10
-								idle_count++
-							else
-								active_count++
-					if active_count > 0
-						badge.addClass('badge-success').attr('title', 'Online')
-					else if idle_count > 0
-						badge.addClass('badge-warning').attr('title', 'Idle')
-						
-							
-				$('<td>').css('white-space', 'nowrap').text(ranking).append('&nbsp;').append(badge).appendTo row
-				name = $('<td>').appendTo row
-				
-				$('<td>').text(user.interrupts).appendTo row
-				
-				if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
-					name.append($('<span>').text(user.name).css('font-weight', 'bold'))
-				else
-					name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
-				
-					for member in user.members.sort((a, b) -> computeScore(users[b]) - computeScore(users[a]))
-						user = users[member]
-						row = $('<tr>').data('entity', user).appendTo list
-						row.click -> 1
-						badge = $('<span>').addClass('badge pull-right subordinate').text(computeScore(user))
-						if user.id is public_id
-							badge.addClass('badge-info').attr('title', 'You')
-						else
-							if user.online
-								if serverTime() - user.last_action > 1000 * 60 * 10
-									badge.addClass('badge-warning').attr('title', 'Idle')
-								else
-									badge.addClass('badge-success').attr('title', 'Online')
+		# user.name + " (" + user.id + ") " + votes.join(", ")
 	
-						$('<td>').css("border", 0).append(badge).appendTo row
-						name = $('<td>').text(user.name)
-						name.appendTo row
-						$('<td>').text(user.interrupts).appendTo row
+	if $('.teams').data('teamhash') isnt team_hash
+		$('.teams').data('teamhash', team_hash)
+		$('.teams').empty()
+		$('.teams')[0].options.add new Option('Individual', '')
+		for team, members of teams
+			$('.teams')[0].options.add new Option("#{team} (#{members.length})", team)
+		$('.teams')[0].options.add new Option('Create Team', 'create')
+		if public_id of users
+			$('.teams').val(users[public_id].team)
+	
+	#console.time('draw board')
+	list = $('.leaderboard tbody')
+	# list.find('tr').remove() #abort all people
+	ranking = 1
+	
+	entities = sync.users
+	team_count = 0
+	if $('.teams').val() or public_id.slice(0,2) == "__"
+		entities = for team, members of teams
+			attrs = {}
+			team_count++
+			for member in members
+				for attr, val of users[member]
+					if typeof val is 'number'
+						attrs[attr] = 0 unless attr of attrs
+						attrs[attr] += val
+
+			attrs.id = 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, '')
+			attrs.members = members
+			
+			attrs.name = team
+			attrs
+			
+		for user in sync.users when !user.team 
+			entities.push user # add all the unaffiliated users
+
+	list.empty()
+	for user, user_index in entities.sort((a, b) -> computeScore(b) - computeScore(a))
+		# if the score is worse, increment ranks
+		ranking++ if entities[user_index - 1] and computeScore(user) < computeScore(entities[user_index - 1])
+		row = $('<tr>').data('entity', user).appendTo list
+		row.click -> 1
+		badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+		if public_id in (user.members || [user.id])
+			badge.addClass('badge-info').attr('title', 'You')
 		else
-			list.empty()
-			for user, user_index in entities.sort((a, b) -> computeScore(b) - computeScore(a))
-				# if the score is worse, increment ranks
-				ranking++ if entities[user_index - 1] and computeScore(user) < computeScore(entities[user_index - 1])
+			idle_count = 0
+			active_count = 0
+			for member in (user.members || [user.id])
+				if users[member].online
+					if serverTime() - users[member].last_action > 1000 * 60 * 10
+						idle_count++
+					else
+						active_count++
+			if active_count > 0
+				badge.addClass('badge-success').attr('title', 'Online')
+			else if idle_count > 0
+				badge.addClass('badge-warning').attr('title', 'Idle')
+				
+					
+		$('<td>').css('white-space', 'nowrap').text(ranking).append('&nbsp;').append(badge).appendTo row
+		name = $('<td>').appendTo row
+		
+		$('<td>').text(user.interrupts).appendTo row
+		if team_count is 0
+			name.append($('<span>').text(user.name))
+		else if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
+			name.append($('<span>').text(user.name).css('font-weight', 'bold'))
+		else
+			name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
+		
+			for member in user.members.sort((a, b) -> computeScore(users[b]) - computeScore(users[a]))
+				user = users[member]
 				row = $('<tr>').data('entity', user).appendTo list
 				row.click -> 1
-				badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+				badge = $('<span>').addClass('badge pull-right subordinate').text(computeScore(user))
 				if user.id is public_id
 					badge.addClass('badge-info').attr('title', 'You')
 				else
@@ -570,26 +562,32 @@ renderState = ->
 						else
 							badge.addClass('badge-success').attr('title', 'Online')
 
-				$('<td>').css('white-space', 'nowrap').text(ranking).append('&nbsp;').append(badge).appendTo row
+				$('<td>').css("border", 0).append(badge).appendTo row
 				name = $('<td>').text(user.name)
 				name.appendTo row
 				$('<td>').text(user.interrupts).appendTo row
 
-		
-
-		if sync.users.length > 1 and connected() or (sync.users.length is 1 and sync.users[0].id isnt public_id and connected())
+	#console.timeEnd('draw board')
+	# this if clause is ~5msecs
+	if sync.users.length > 1 and connected() or (sync.users.length is 1 and sync.users[0].id isnt public_id and connected())
+		if $('.leaderboard').is(':hidden')
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
-		else
-			$('.singleuser .stats table').replaceWith(createStatSheet(users[public_id], !!$('.singleuser').data('full')))
+	else
+		$('.singleuser .stats table').replaceWith(createStatSheet(users[public_id], !!$('.singleuser').data('full')))
+		if $('.singleuser').is(':hidden')
 			$('.leaderboard').slideUp()
 			$('.singleuser').slideDown()
-		
-		checkAlone()
-
-	#fix all the expandos
-	$(window).resize()
+	# turns out doing this resize is like the slowest part!
+	# console.time('resize')
+	# $(window).resize() #fix all the expandos
+	# console.timeEnd('resize')
+	checkAlone() # ~ 1 msec
+	
+	#console.time('partial')
 	renderPartial()
+	#console.timeEnd('partial')
+	#console.timeEnd('render state')
 
 
 checkAlone = ->
@@ -1020,14 +1018,23 @@ userSpan = (user, global) ->
 		text = prefix + user.slice(2)
 	else
 		text = prefix + (users[user]?.name || "[name missing]")
-		
+	
+	hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
+	
 	if global
-		scope = $(".user-#{user}")
+		scope = $(".user-#{user}:not(.#{hash})")
+		# get rid of the old hashes
+		for el in scope
+			for c in $(el).attr('class').split('\s') when c.slice(0, 8) is 'userhash'
+				$(el).removeClass(c)
+			
 	else
 		scope = $('<span>')
-			.addClass('user-'+user)
-			.addClass('username')
-	scope.text(text)
+	scope
+		.addClass(hash)
+		.addClass('user-'+user)
+		.addClass('username')
+		.text(text)
 
 addAnnotation = (el) ->
 	# destroy the tooltip
@@ -1439,7 +1446,10 @@ $('.difficulties').change ->
 	sock.emit 'difficulty', $('.difficulties').val()
 
 $('.teams').change ->
-	sock.emit 'team', $('.teams').val()
+	if $('.teams').val() is 'create'
+		sock.emit 'team', prompt('Enter Team Name') || ''
+	else
+		sock.emit 'team', $('.teams').val()
 
 $('.multibuzz').change ->
 	sock.emit 'max_buzz', (if $('.multibuzz')[0].checked then null else 1)
