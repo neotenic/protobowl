@@ -1,4 +1,4 @@
-var Cookies, QuizRoom, app, checkAnswer, clearInactive, count, crypto, cumsum, default_distribution, error_question, express, filterQuestions, fisher_yates, fs, full_journal_sync, http, io, journal, journal_config, journal_queue, listProps, log, log_config, names, parseCookie, partial_journal, port, process_journal_queue, questions, reaped, remote, restore_journal, rooms, scheduledUpdate, sha1, syllables, updateCache, uptime_begin, url, watcher,
+var AliasMethod, Cookies, QuizRoom, app, checkAnswer, clearInactive, count, crypto, cumsum, default_distribution, error_question, express, filterQuestions, fisher_yates, fs, full_journal_sync, http, io, journal, journal_config, journal_queue, listProps, log, log_config, names, parseCookie, partial_journal, port, process_journal_queue, questions, reaped, remote, restore_journal, rooms, scheduledUpdate, sha1, syllables, updateCache, uptime_begin, url, watcher,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
   __slice = [].slice;
 
@@ -212,6 +212,8 @@ default_distribution = {
   "Social Science": 1
 };
 
+AliasMethod = require("./lib/sample").AliasMethod;
+
 QuizRoom = (function() {
 
   function QuizRoom(name) {
@@ -220,6 +222,7 @@ QuizRoom = (function() {
     this.time_offset = 0;
     this.rate = 1000 * 60 / 5 / 200;
     this.__timeout = -1;
+    this.distribution = default_distribution;
     this.question_schedule = [];
     this.history = [];
     this.freeze();
@@ -227,7 +230,6 @@ QuizRoom = (function() {
     this.users = {};
     this.difficulty = '';
     this.category = '';
-    this.distribution = default_distribution;
     this.max_buzz = null;
   }
 
@@ -243,12 +245,17 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.get_question = function(cb) {
-    var attemptQuestion, num_attempts,
+    var attemptQuestion, current_category, num_attempts, sampler,
       _this = this;
+    current_category = this.category;
+    if (this.category === "custom" || !this.category) {
+      sampler = new AliasMethod(this.distribution);
+      current_category = sampler.next();
+    }
     num_attempts = 0;
     attemptQuestion = function() {
       num_attempts++;
-      return remote.getQuestion(_this.difficulty, _this.category, function(question) {
+      return remote.getQuestion(_this.difficulty, current_category, function(question) {
         var _ref;
         if ((_ref = question._id.toString(), __indexOf.call(_this.history, _ref) >= 0) && num_attempts < 15) {
           return attemptQuestion();
@@ -258,14 +265,14 @@ QuizRoom = (function() {
         return cb(question || error_question);
       });
     };
-    return remote.countQuestions(this.difficulty, this.category, function(num, no_db) {
+    return remote.countQuestions(this.difficulty, current_category, function(num, no_db) {
       var index;
       if (num < 300 || no_db === 42) {
         if (_this.question_schedule.length === 0) {
           _this.question_schedule = fisher_yates(num);
         }
         index = _this.question_schedule.shift();
-        return remote.getAtIndex(_this.difficulty, _this.category, index, function(doc) {
+        return remote.getAtIndex(_this.difficulty, current_category, index, function(doc) {
           return cb(doc || error_question);
         });
       } else {

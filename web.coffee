@@ -132,6 +132,8 @@ fisher_yates = (i) ->
 
 default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
+AliasMethod = require("./lib/sample").AliasMethod
+
 class QuizRoom
 	constructor: (name) ->
 		@name = name
@@ -139,17 +141,17 @@ class QuizRoom
 		@time_offset = 0
 		@rate = 1000 * 60 / 5 / 200
 		@__timeout = -1
+		@distribution = default_distribution
 		
 		# the following are nasty database hacks
 		@question_schedule = []
 		@history = []
-
+		
 		@freeze()
 		@new_question()
 		@users = {}
 		@difficulty = ''
 		@category = ''
-		@distribution = default_distribution
 		
 		@max_buzz = null
 
@@ -166,10 +168,17 @@ class QuizRoom
 				@question_schedule = []
 
 	get_question: (cb) ->
+		current_category = @category
+		if @category is "custom" or !@category
+			sampler = new AliasMethod(@distribution)
+			# a rather inefficient way to do this, mind you
+			# should probably cache aliasmethod objects 
+			current_category = sampler.next()
+			#console.log 'sampled distribution', sampler, current_category
 		num_attempts = 0
 		attemptQuestion = =>
 			num_attempts++
-			remote.getQuestion @difficulty, @category, (question) =>
+			remote.getQuestion @difficulty, current_category, (question) =>
 				# console.log(typeof question._id, @history,  "ATTEMPTS", num_attempts)
 				if question._id.toString() in @history and num_attempts < 15
 					return attemptQuestion()
@@ -177,14 +186,14 @@ class QuizRoom
 				@history.splice 0, 0, question._id.toString()
 				cb(question || error_question)
 
-		remote.countQuestions @difficulty, @category, (num, no_db) =>
+		remote.countQuestions @difficulty, current_category, (num, no_db) =>
 			if num < 300 or no_db is 42
 				if @question_schedule.length is 0
 					@question_schedule = fisher_yates(num)
 
 				index = @question_schedule.shift()
 				
-				remote.getAtIndex @difficulty, @category, index, (doc) ->
+				remote.getAtIndex @difficulty, current_category, index, (doc) ->
 					cb doc || error_question
 
 			else

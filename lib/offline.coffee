@@ -114,7 +114,11 @@ virtual_server = {
 			sock.server_emit "connect"
 			publicID = "offline"
 			publicName = require('lib/names').generateName()
-			# console.log "joining stuff", data
+			sock.server_emit 'joined', {
+    			name: publicName,
+				id: publicID
+			}
+            # console.log "joining stuff", data
 			
 			sync.answer_duration = 1000 * 5
 			sync.time_offset = 0
@@ -142,10 +146,7 @@ virtual_server = {
 			setTimeout ->
 				synchronize()
 			, 10
-			sock.server_emit 'joined', {
-				name: publicName,
-				id: publicID
-			}
+			
 			
 	init_offline: -> #this function does not exist server side
 		loadQuestions()

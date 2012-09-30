@@ -184,10 +184,11 @@ $('#username').keyup (e) ->
 	if $(this).val().length > 0
 		sock.emit 'rename', $(this).val()
 
-#distribution = {"Fine Arts":3,"Literature":5,"History":5,"Science":4,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
-
 createCategoryList = ->
 	$('.custom-category').empty()
+	
+	return unless sync.distribution
+	
 	for cat in sync.categories
 		item = $('<div>').addClass('category-item').appendTo('.custom-category').data('value', cat)
 		
@@ -207,6 +208,7 @@ createCategoryList = ->
 		renderCategoryItem(item)
 
 renderCategoryItem = (item) ->
+	return unless sync.distribution
 	s = 0
 	s += val for cat, val of sync.distribution
 	value = $(item).data('value')
@@ -226,6 +228,7 @@ renderCategoryItem = (item) ->
 		
 
 $('.dist-picker .increase').live 'click', (e) ->
+	return unless sync.distribution
 	item = $(this).parents('.category-item')
 	sync.distribution[$(item).data('value')]++
 	sock.emit 'distribution', sync.distribution
@@ -233,6 +236,7 @@ $('.dist-picker .increase').live 'click', (e) ->
 		renderCategoryItem(item)
 
 $('.dist-picker .decrease').live 'click', (e) ->
+	return unless sync.distribution
 	item = $(this).parents('.category-item')
 	s = 0
 	s += val for cat, val of sync.distribution
