@@ -169,7 +169,7 @@ class QuizRoom
 
 	get_question: (cb) ->
 		current_category = @category
-		if @category is "custom" or !@category
+		if @category is "custom"
 			sampler = new AliasMethod(@distribution)
 			# a rather inefficient way to do this, mind you
 			# should probably cache aliasmethod objects 
@@ -695,7 +695,7 @@ restore_journal = (callback) ->
 						room.users[id].sockets = []
 
 					for field in fields
-						room[field] = data[field]
+						room[field] = data[field] if field of data
 			console.log 'restored journal'
 			callback() if callback
 	req.on 'error', ->

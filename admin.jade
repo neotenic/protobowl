@@ -38,7 +38,7 @@ html(lang="en")
 			| #{Math.floor(secs % 60)} seconds
 
 		mixin display_user(user)
-			li <b>#{user.name}</b> 
+			li #{user.team || ''} <b>#{user.name}</b> 
 				| (last seen 
 				mixin time(user.last_action)
 				| )
