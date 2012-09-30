@@ -8,9 +8,21 @@
 * check that it's the last name which is common
 * add support for superpower [+]
 * statistical skill metrics i.e. score/interrupts
-* support ties on the leaderboard
-* make leaderboard faster
+* make single-buzz restriction support teams
 * have question reports include miscategorization
+* Keep Offline mode in-sync with protocol revisions
+
+# In Progress
+* support arbitrary question distributions
+
+
+# Mostly Done
+* support teams (mostly done)
+* Add sounds
+* make leaderboard faster (mostly done)
+
+# Done
+* support ties on the leaderboard (done)
 
 Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions.
 

@@ -193,6 +193,7 @@ class QuizRoom
 				last_action: 0,
 				times_buzzed: 0,
 				show_typing: true,
+				team: '',
 				sounds: false
 			}
 			journal @name
@@ -788,6 +789,17 @@ io.sockets.on 'connection', (sock) ->
 		room.max_buzz = data
 		room.sync()
 		journal room.name
+
+	sock.on 'team', (data) ->
+		if data
+			room.emit 'log', {user: publicID, verb: "switched to team #{data}"}
+		else
+			room.emit 'log', {user: publicID, verb: "is playing as an individual"}
+			
+		room.users[publicID].team = data
+		room.sync(2)
+		journal room.name
+
 
 	sock.on 'show_typing', (data) ->
 		room.users[publicID].show_typing = data

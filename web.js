@@ -275,6 +275,7 @@ QuizRoom = (function() {
         last_action: 0,
         times_buzzed: 0,
         show_typing: true,
+        team: '',
         sounds: false
       };
       journal(this.name);
@@ -1002,6 +1003,22 @@ io.sockets.on('connection', function(sock) {
   sock.on('max_buzz', function(data) {
     room.max_buzz = data;
     room.sync();
+    return journal(room.name);
+  });
+  sock.on('team', function(data) {
+    if (data) {
+      room.emit('log', {
+        user: publicID,
+        verb: "switched to team " + data
+      });
+    } else {
+      room.emit('log', {
+        user: publicID,
+        verb: "is playing as an individual"
+      });
+    }
+    room.users[publicID].team = data;
+    room.sync(2);
     return journal(room.name);
   });
   sock.on('show_typing', function(data) {

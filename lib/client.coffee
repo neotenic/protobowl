@@ -184,6 +184,66 @@ $('#username').keyup (e) ->
 	if $(this).val().length > 0
 		sock.emit 'rename', $(this).val()
 
+distribution = {"Fine Arts":3,"Literature":5,"History":5,"Science":4,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
+
+createCategoryList = ->
+	$('.custom-category').empty()
+	for cat in sync.categories
+		item = $('<div>').addClass('category-item').appendTo('.custom-category').data('value', cat)
+		
+		$('<span>').addClass('name').text(cat).appendTo item
+		
+		picker = $('<div>').addClass('btn-group pull-right dist-picker').appendTo item
+		
+		$('<button>').addClass('btn btn-small decrease disabled')
+			.append($('<i>').addClass('icon-minus'))
+			.appendTo(picker)
+		
+		# $('<button>').addClass('btn btn-small disabled monitor')
+		# 	.append('0%')
+		# 	.appendTo(picker)
+
+		$('<button>').addClass('btn btn-small increase disabled')
+			.append($('<i>').addClass('icon-plus'))
+			.appendTo(picker)
+
+		$('<span>').addClass('percentage pull-right').css('color', 'gray').appendTo item
+		renderCategoryItem(item)
+
+renderCategoryItem = (item) ->
+	s = 0
+	s += val for cat, val of distribution
+	value = $(item).data('value')
+
+	percentage = distribution[value] / s
+	$(item).find('.percentage').html("#{Math.round(100 * percentage)}% &nbsp;")
+	$(item).find('.increase').removeClass('disabled')
+
+	if percentage > 0 and s > 1
+		$(item).find('.decrease').removeClass('disabled')
+	else
+		$(item).find('.decrease').addClass('disabled')
+		$(item).find('.name').css('font-weight', 'normal')
+	
+	if percentage > 0
+		$(item).find('.name').css('font-weight', 'bold')
+		
+
+$('.dist-picker .increase').live 'click', (e) ->
+	item = $(this).parents('.category-item')
+	distribution[$(item).data('value')]++
+	for item in $('.custom-category .category-item')
+		renderCategoryItem(item)
+
+$('.dist-picker .decrease').live 'click', (e) ->
+	item = $(this).parents('.category-item')
+	s = 0
+	s += val for cat, val of distribution
+
+	if distribution[$(item).data('value')] > 0 and s > 1
+		distribution[$(item).data('value')]--
+	for item in $('.custom-category .category-item')
+		renderCategoryItem(item)
 
 
 synchronize = (data) ->
@@ -207,11 +267,14 @@ synchronize = (data) ->
 
 		$('.categories option').remove()
 		$('.categories')[0].options.add new Option('Everything', '')
+		$('.categories')[0].options.add new Option('Custom', 'custom')
+
 		for cat in sync.categories
 			$('.categories')[0].options.add new Option(cat, cat)
-
+		
 	$('.categories').val sync.category
 	$('.difficulties').val sync.difficulty
+
 	$('.multibuzz').attr 'checked', !sync.max_buzz
 
 	if $('.settings').is(':hidden')
@@ -219,16 +282,24 @@ synchronize = (data) ->
 	
 	if sync.attempt
 		updateTextAnnotations()
+	
+	if !data or 'users' of data
+		for user in sync.users
+			user.room = sync.name
+			users[user.id] = user
+
+	if public_id of users and 'show_typing' of users[public_id]
+		$('.livechat').attr 'checked', users[public_id].show_typing
+		$('.sounds').attr 'checked', users[public_id].sounds
+		$('.teams').val users[public_id].team
+
 
 	if !data or 'users' of data
 		renderState()
 	else
 		renderPartial()
 
-	if public_id of users and 'show_typing' of users[public_id]
-		$('.livechat').attr 'checked', users[public_id].show_typing
-		$('.sounds').attr 'checked', users[public_id].sounds
-
+	
 	if sync.attempt
 		guessAnnotation sync.attempt
 
@@ -368,97 +439,138 @@ createStatSheet = (user, full) ->
 	return table
 
 
+teams = {}
+
 renderState = ->
 	# render the user list and that stuff
 	if sync.users
+		teams = {}
 		for user in sync.users
-			votes = []
-			for action of sync.voting
-				if user.id in sync.voting[action]
-					votes.push action
-			user.votes = votes.join(', ')
-			user.room = sync.name
-			users[user.id] = user
+			# votes = []
+			# for action of sync.voting
+			# 	if user.id in sync.voting[action]
+			# 		votes.push action
+			# user.votes = votes.join(', ')
+			# user.room = sync.name
+			# users[user.id] = user
+			if user.team
+				teams[user.team] = [] unless user.team of teams
+				teams[user.team].push user.id
+			
+			#teams[user.team || user.id] = [] unless teams[user.team || ''] 
+			#teams[user.team || user.id].push user.id
+
+			userSpan(user.id, true) # do a global update!
+
 
 			# user.name + " (" + user.id + ") " + votes.join(", ")
+		
 		list = $('.leaderboard tbody')
 		# list.find('tr').remove() #abort all people
-		count = 0
-		list.find('tr').addClass 'to_remove'
+		ranking = 1
 
-		for user in sync.users.sort((a, b) -> computeScore(b) - computeScore(a))
-			# console.log user.name, count
-			
-			# user.name
-			
-			# $('.user-' + user.id).text(user.name)
-			userSpan(user.id)
-			count++
-			row = list.find '.sockid-' + user.id
-			list.append row			
-			if row.length < 1
-				# console.log 'recreating user'
-				row = $('<tr>').appendTo list 
+		entities = sync.users
 
-				row.popover {
-					placement: ->
-						if mobileLayout()
-							return "top"
+		if $('.teams').val()
+			entities = for team, members of teams
+				attrs = {}
+				for member in members
+
+					for attr, val of users[member]
+						if typeof val is 'number'
+							attrs[attr] = 0 unless attr of attrs
+							attrs[attr] += val
+
+				attrs.id = 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, '')
+				attrs.members = members
+				
+				attrs.name = team
+				attrs
+				
+			for user in sync.users when !user.team 
+				entities.push user # add all the unaffiliated users
+
+			list.empty()
+			for user, user_index in entities.sort((a, b) -> computeScore(b) - computeScore(a))
+				# if the score is worse, increment ranks
+				ranking++ if entities[user_index - 1] and computeScore(user) < computeScore(entities[user_index - 1])
+				row = $('<tr>').data('entity', user).appendTo list
+				row.click -> 1
+				badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+				if public_id in (user.members || [user.id])
+					badge.addClass('badge-info').attr('title', 'You')
+				else
+					idle_count = 0
+					active_count = 0
+					for member in (user.members || [user.id])
+						if users[member].online
+							if serverTime() - users[member].last_action > 1000 * 60 * 10
+								idle_count++
+							else
+								active_count++
+					if active_count > 0
+						badge.addClass('badge-success').attr('title', 'Online')
+					else if idle_count > 0
+						badge.addClass('badge-warning').attr('title', 'Idle')
+						
+							
+				$('<td>').css('white-space', 'nowrap').text(ranking).append('&nbsp;').append(badge).appendTo row
+				name = $('<td>').appendTo row
+				
+				$('<td>').text(user.interrupts).appendTo row
+				
+				if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
+					name.append($('<span>').text(user.name).css('font-weight', 'bold'))
+				else
+					name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
+				
+					for member in user.members.sort((a, b) -> computeScore(users[b]) - computeScore(users[a]))
+						user = users[member]
+						row = $('<tr>').data('entity', user).appendTo list
+						row.click -> 1
+						badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+						if user.id is public_id
+							badge.addClass('badge-info').attr('title', 'You')
 						else
-							return "left"
-					, 
-					trigger: 'manual'
-				}
-				row.click ->
-					$('.leaderboard tbody tr').not(this).popover 'hide'
-					$(this).popover 'toggle'
+							if user.online
+								if serverTime() - user.last_action > 1000 * 60 * 10
+									badge.addClass('badge-warning').attr('title', 'Idle')
+								else
+									badge.addClass('badge-success').attr('title', 'Online')
+	
+						$('<td>').append(badge).appendTo row
+						name = $('<td>').text(user.name)
+						name.appendTo row
+						$('<td>').text(user.interrupts).appendTo row
+		else
+			list.empty()
+			for user, user_index in entities.sort((a, b) -> computeScore(b) - computeScore(a))
+				# if the score is worse, increment ranks
+				ranking++ if entities[user_index - 1] and computeScore(user) < computeScore(entities[user_index - 1])
+				row = $('<tr>').data('entity', user).appendTo list
+				row.click -> 1
+				badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+				if user.id is public_id
+					badge.addClass('badge-info').attr('title', 'You')
+				else
+					if user.online
+						if serverTime() - user.last_action > 1000 * 60 * 10
+							badge.addClass('badge-warning').attr('title', 'Idle')
+						else
+							badge.addClass('badge-success').attr('title', 'Online')
 
-				# row.mouseover (e) ->
-				# 	$('.leaderboard tbody tr').not(this).popover 'hide'
-				# 	if $(this).data('popover'),$(this).data('popover').tip().hasClass('out')
-				# 		$(this).popover 'show'
-				# row.mouseout (e) ->
-				# 	console.log $(this).data('popover'),$(this).data('popover').tip().hasClass('in')
-				# 	# $(this).popover 'hide'
-			row.attr 'data-original-title', "<span class='user-#{user.id}'>#{user.name}</span>'s stats"
+				$('<td>').css('white-space', 'nowrap').text(ranking).append('&nbsp;').append(badge).appendTo row
+				name = $('<td>').text(user.name)
+				name.appendTo row
+				$('<td>').text(user.interrupts).appendTo row
 
-			row.attr 'data-content', $('<div>').append(createStatSheet(user, true)).html()
-			row.find('td').remove()
-			row.addClass 'sockid-' + user.id
-			row.removeClass 'to_remove'
-			badge = $('<span>').addClass('badge').text(computeScore(user))
-			if user.id is public_id
-				#its me, you idiot
-				badge.addClass 'badge-info'
-				badge.attr 'title', 'You'
-				$('.singleuser .stats table').replaceWith(createStatSheet(user, !!$('.singleuser').data('full')))
-			else
-				if user.online
-					if serverTime() - user.last_action > 1000 * 60 * 10
-						#the user is idle
-						badge.addClass 'badge-warning'
-						badge.attr 'title', 'Idle'
-					else
-						# the user is online
-						badge.addClass 'badge-success' 
-						badge.attr 'title', 'Online'
+		
 
-			$('<td>').text(count).append('&nbsp;').append(badge).appendTo row
-			name = $('<td>').text(user.name)
-			# if public_id is user.id
-			# 	name.append " "
-			# 	name.append $('<span>').addClass('label').text('me')
-			name.appendTo row
-			$('<td>').text(user.interrupts).appendTo row
-			# $('<td>').text(7).appendTo row
-
-		list.find('tr.to_remove').remove()
-		# console.log users.join ', '
-		# document.querySelector('#users').innerText = users.join(', ')
 		if sync.users.length > 1 and connected() or (sync.users.length is 1 and sync.users[0].id isnt public_id and connected())
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
 		else
+			$('.singleuser .stats table').replaceWith(createStatSheet(users[public_id], !!$('.singleuser').data('full')))
 			$('.leaderboard').slideUp()
 			$('.singleuser').slideDown()
 		
@@ -884,20 +996,25 @@ createBundle = ->
 		.append(annotations)
 
 
-userSpan = (user) ->
+userSpan = (user, global) ->
 	prefix = ''
 
 	if public_id and public_id.slice(0, 2) == "__"
 		prefix = (users[user]?.room || 'unknown') + '/'
+	text = ''
 
 	if user.slice(0, 2) == "__"
-		$('<span>')
-			.addClass('user-'+user)
-			.text(prefix + user.slice(2))
+		text = prefix + user.slice(2)
 	else
-		$('<span>')
+		text = prefix + (users[user]?.name || "[name missing]")
+		
+	if global
+		scope = $(".user-#{user}")
+	else
+		scope = $('<span>')
 			.addClass('user-'+user)
-			.text(prefix + (users[user]?.name || "[name missing]"))
+			.addClass('username')
+	scope.text(text)
 
 addAnnotation = (el) ->
 	# destroy the tooltip
@@ -1298,10 +1415,18 @@ $('.speed').change ->
 	# console.log rate
 		
 $('.categories').change ->
-	sock.emit 'category', $('.categories').val()
+	if  $('.categories').val() is 'custom'
+		createCategoryList()
+		$('.custom-category').slideDown()
+	else
+		$('.custom-category').slideUp()
+		sock.emit 'category', $('.categories').val()
 
 $('.difficulties').change ->
 	sock.emit 'difficulty', $('.difficulties').val()
+
+$('.teams').change ->
+	sock.emit 'team', $('.teams').val()
 
 $('.multibuzz').change ->
 	sock.emit 'max_buzz', (if $('.multibuzz')[0].checked then null else 1)
@@ -1391,11 +1516,30 @@ if !Modernizr.touch and !mobileLayout()
 	$('.actionbar button').click -> 
 		$('.actionbar button').tooltip 'hide'
 
-	$('#history, .settings').tooltip({
+	$('#history, .settings').tooltip {
 		selector: "[rel=tooltip]", 
 		placement: -> 
 			if mobileLayout() then "error" else "left"
-	})
+	}
+
+$(".leaderboard tbody tr").live 'click', (e) ->
+	tmp = $('.popover')
+	# allow time delay so that things can be faded out before you kill them
+	setTimeout ->
+		tmp.remove()
+	, 1000
+	user = $(this).data('entity')
+	$(this).popover {
+		placement: if mobileLayout() then "top" else "left"
+		trigger: "manual",
+		title: "#{user.name}'s Stats",
+		content: ->
+			createStatSheet(user, true)
+	}
+	
+	$('.leaderboard tbody tr').not(this).popover 'destroy'
+	
+	$(this).popover 'toggle'
 
 
 if Modernizr.touch

@@ -170,6 +170,15 @@ html(lang="en", manifest="offline.appcache")
 										input#username(type='text', value='', disabled)
 								div.expando
 									div.input-prepend
+										span.add-on(style="width:21px", title="Teams", rel='tooltip')
+											i.icon-group
+										select.input.teams
+											option(value="") Individual
+											option(value="Team A") Team A (experimental)
+											option(value="Team B") Team B (experimental)
+											option(value="Team C") Team C (experimental)
+								div.expando
+									div.input-prepend
 										span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
 											i.icon-trash
 										button.btn.input.score-reset Reset My Score 
@@ -193,6 +202,23 @@ html(lang="en", manifest="offline.appcache")
 										select.padd-on.difficulties(style="width: 60px; border-right: 0")
 										select.input.categories(style="border-left: 0")
 
+								div.custom-category(style="display:none")
+									//- div.category-item
+									//- 	span Physics
+									//- 	div.btn-group.pull-right.dist-picker
+									//- 		button.btn.btn-small
+									//- 			i.icon-minus
+									//- 		button.btn.btn-small
+									//- 			i.icon-plus
+									//- 	span.pull-right(style="color:gray") 10% &nbsp;
+									//- div.category-item
+									//- 	span Stamp Collecting
+									//- 	div.btn-group.pull-right.dist-picker
+									//- 		button.btn.btn-small.disabled
+									//- 			i.icon-minus
+									//- 		button.btn.btn-small.disabled.monitor 0%
+									//- 		button.btn.btn-small
+									//- 			i.icon-plus
 								label.checkbox
 									input.multibuzz(type="checkbox", checked)
 									| Allow users to buzz multiple times
