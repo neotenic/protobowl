@@ -367,7 +367,9 @@ testLatency = ->
 
 setTimeout ->
 	testLatency()
-	setInterval testLatency, 30 * 1000
+	setInterval -> 
+		testLatency()
+	, 30 * 1000
 , 2000
 
 compute_sync_offset = ->
@@ -537,7 +539,7 @@ renderState = ->
 						user = users[member]
 						row = $('<tr>').data('entity', user).appendTo list
 						row.click -> 1
-						badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+						badge = $('<span>').addClass('badge pull-right subordinate').text(computeScore(user))
 						if user.id is public_id
 							badge.addClass('badge-info').attr('title', 'You')
 						else
@@ -547,7 +549,7 @@ renderState = ->
 								else
 									badge.addClass('badge-success').attr('title', 'Online')
 	
-						$('<td>').append(badge).appendTo row
+						$('<td>').css("border", 0).append(badge).appendTo row
 						name = $('<td>').text(user.name)
 						name.appendTo row
 						$('<td>').text(user.interrupts).appendTo row
@@ -723,7 +725,9 @@ window.requestAnimationFrame ||=
       callback(+new Date())
     , 1000 / 60)
 
-setInterval renderState, 15000
+setInterval ->
+	renderState()
+, 15000
 
 # setInterval renderPartial, 50
 
