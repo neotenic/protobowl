@@ -435,11 +435,15 @@ class QuizRoom
 				
 				buzzed = 0
 				pool = 0
+				teams = {}
 				for id, user of @users when id[0] isnt "_" # skip secret ninja
 					if user.sockets.length > 0 and (new Date - user.last_action) < 1000 * 60 * 10
-						if user.times_buzzed >= @max_buzz and @max_buzz
-							buzzed++
-						pool++
+						teams[user.team || id] = (teams[user.team || id] || 0)
+						teams[user.team || id] += user.times_buzzed
+				for team, times_buzzed of teams
+					if times_buzzed >= @max_buzz and @max_buzz
+						buzzed++
+					pool++
 				if @max_buzz
 					# console.log 'people buzzed', buzzed, 'of', pool
 					if buzzed >= pool 
@@ -452,10 +456,17 @@ class QuizRoom
 
 	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
 		@touch user
+		team_buzzed = 0
+		for id, member of @users when (member.team || id) is (@users[user].team || user)
+            team_buzzed += member.times_buzzed
+            
 		if @max_buzz and @users[user].times_buzzed >= @max_buzz
-			# console.log @max_buzz
 			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
 			io.sockets.in(@name).emit 'log', {user: user, verb: 'has already buzzed'}
+
+		else if @max_buzz and team_buzzed >= @max_buzz
+			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
+			io.sockets.in(@name).emit 'log', {user: user, verb: 'is in a team which has already buzzed'}
 
 		else if @attempt is null and @time() <= @end_time
 			fn 'http://www.whosawesome.com/' if fn

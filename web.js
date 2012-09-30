@@ -499,7 +499,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.end_buzz = function(session) {
-    var buzzed, do_prompt, id, pool, user, _ref, _ref1,
+    var buzzed, do_prompt, id, pool, team, teams, times_buzzed, user, _ref, _ref1,
       _this = this;
     if (((_ref = this.attempt) != null ? _ref.session : void 0) !== session) {
       return;
@@ -558,17 +558,23 @@ QuizRoom = (function() {
         }
         buzzed = 0;
         pool = 0;
+        teams = {};
         _ref1 = this.users;
         for (id in _ref1) {
           user = _ref1[id];
           if (id[0] !== "_") {
             if (user.sockets.length > 0 && (new Date - user.last_action) < 1000 * 60 * 10) {
-              if (user.times_buzzed >= this.max_buzz && this.max_buzz) {
-                buzzed++;
-              }
-              pool++;
+              teams[user.team || id] = teams[user.team || id] || 0;
+              teams[user.team || id] += user.times_buzzed;
             }
           }
+        }
+        for (team in teams) {
+          times_buzzed = teams[team];
+          if (times_buzzed >= this.max_buzz && this.max_buzz) {
+            buzzed++;
+          }
+          pool++;
         }
         if (this.max_buzz) {
           if (buzzed >= pool) {
@@ -583,9 +589,17 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.buzz = function(user, fn) {
-    var early_index, session,
+    var early_index, id, member, session, team_buzzed, _ref,
       _this = this;
     this.touch(user);
+    team_buzzed = 0;
+    _ref = this.users;
+    for (id in _ref) {
+      member = _ref[id];
+      if ((member.team || id) === (this.users[user].team || user)) {
+        team_buzzed += member.times_buzzed;
+      }
+    }
     if (this.max_buzz && this.users[user].times_buzzed >= this.max_buzz) {
       if (fn) {
         fn('THE BUZZES ARE TOO DAMN HIGH');
@@ -593,6 +607,14 @@ QuizRoom = (function() {
       return io.sockets["in"](this.name).emit('log', {
         user: user,
         verb: 'has already buzzed'
+      });
+    } else if (this.max_buzz && team_buzzed >= this.max_buzz) {
+      if (fn) {
+        fn('THE BUZZES ARE TOO DAMN HIGH');
+      }
+      return io.sockets["in"](this.name).emit('log', {
+        user: user,
+        verb: 'is in a team which has already buzzed'
       });
     } else if (this.attempt === null && this.time() <= this.end_time) {
       if (fn) {
