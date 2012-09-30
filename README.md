@@ -14,7 +14,7 @@
 
 # In Progress
 * support arbitrary question distributions
-
+* Create teams
 
 # Mostly Done
 * support teams (mostly done)
