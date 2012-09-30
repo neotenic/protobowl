@@ -925,6 +925,8 @@ clearInactive = (threshold) ->
 		len = 0
 		offline_pool = (username for username, user of room.users when user.sockets.length is 0)
 		overcrowded_room = offline_pool.length > 10
+		big_room = Object.keys(room.users).length > 10
+		
 		oldest_user = ''
 		if overcrowded_room
 			oldest = offline_pool.sort (a, b) -> 
@@ -939,7 +941,7 @@ clearInactive = (threshold) ->
 					evict_user = true
 				if (user.last_action < new Date - threshold) or evict_user or
 				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or
-				(overcrowded_room and user.correct < 10 and user.last_action < new Date - 1000 * 60 * 15)
+				(big_room and user.correct < 2 and user.last_action < new Date - 1000 * 60 * 10)
 					# console.log 'kicking user of inactivity', user.name
 					log 'reap_user', {
 						seen: user.seen, 

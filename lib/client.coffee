@@ -482,7 +482,7 @@ renderState = ->
 
 		entities = sync.users
 
-		if $('.teams').val()
+		if $('.teams').val() or public_id.slice(0,2) == "__"
 			entities = for team, members of teams
 				attrs = {}
 				for member in members
