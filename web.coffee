@@ -122,6 +122,15 @@ fisher_yates = (i) ->
 		j = Math.floor(Math.random() * (i+1))
 		[arr[i], arr[j]] = [arr[j], arr[i]] 
 	arr
+    
+# i really wanted to have it calculate the distribution of things dynamically and generate this
+# but the problem is that I don't have a system which is based on absolute percentages, so the
+# problem is that you can't quite change absolute percentages or something
+# i mean, technically it's possible to do the computation and it'd be pretty cool to be
+# able to do that, and actually it's fairly trivial, but it's more effort than I'm currently
+# willing to exert
+
+default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
 class QuizRoom
 	constructor: (name) ->
@@ -140,7 +149,8 @@ class QuizRoom
 		@users = {}
 		@difficulty = ''
 		@category = ''
-
+		@distribution = default_distribution
+		
 		@max_buzz = null
 
 		
@@ -507,7 +517,7 @@ class QuizRoom
 		# 		delete @users[id][action] for id of @users
 		# 		this[action]()
 		
-		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question"]
+		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question", "distribution"]
 		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
@@ -529,6 +539,7 @@ class QuizRoom
 		if level >= 3
 			data.categories = remote.getCategories()
 			data.difficulties = remote.getDifficulties()
+			data.distribution = @distribution
 			
 		io.sockets.in(@name).emit 'sync', data
 	
@@ -543,7 +554,7 @@ class QuizRoom
 				user[attr] = @users[id][attr]
 			user
 		# global room settings
-		settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz"]
+		settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"]
 		for field in settings
 			data[field] = @[field]
 		# actually save stuff
@@ -651,7 +662,7 @@ restore_journal = (callback) ->
 			json = JSON.parse(packet)
 
 			# a new question's gonna be pickt, so just restore settings 
-			fields = ["difficulty", "category", "rate", "answer_duration", "max_buzz"]
+			fields = ["difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz"]
 			for name, data of json
 				# console.log data
 				unless name of rooms
@@ -755,6 +766,10 @@ io.sockets.on 'connection', (sock) ->
 			room.finish()
 			room.sync(1)
 
+	sock.on 'distribution', (data) ->
+		room.distribution = data || default_distribution
+		room.sync(3)
+
 	sock.on 'next', ->
 		room.next() # its a more restricted kind of skip
 
@@ -781,9 +796,16 @@ io.sockets.on 'connection', (sock) ->
 		room.reset_schedule()
 		room.sync()
 		journal room.name
+		
+		if !data
+			room.distribution = default_distribution # reset to the default question distribution 
 		log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
-		remote.countQuestions room.difficulty, room.category, (count) ->
-			room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
+		if data is "custom"
+			room.emit 'log', {user: publicID, verb: 'enabled a custom category distribution'}
+			room.sync(3)
+		else
+			remote.countQuestions room.difficulty, room.category, (count) ->
+				room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
 	sock.on 'max_buzz', (data) ->
 		room.max_buzz = data

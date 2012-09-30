@@ -184,7 +184,7 @@ $('#username').keyup (e) ->
 	if $(this).val().length > 0
 		sock.emit 'rename', $(this).val()
 
-distribution = {"Fine Arts":3,"Literature":5,"History":5,"Science":4,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
+#distribution = {"Fine Arts":3,"Literature":5,"History":5,"Science":4,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
 createCategoryList = ->
 	$('.custom-category').empty()
@@ -199,10 +199,6 @@ createCategoryList = ->
 			.append($('<i>').addClass('icon-minus'))
 			.appendTo(picker)
 		
-		# $('<button>').addClass('btn btn-small disabled monitor')
-		# 	.append('0%')
-		# 	.appendTo(picker)
-
 		$('<button>').addClass('btn btn-small increase disabled')
 			.append($('<i>').addClass('icon-plus'))
 			.appendTo(picker)
@@ -212,10 +208,10 @@ createCategoryList = ->
 
 renderCategoryItem = (item) ->
 	s = 0
-	s += val for cat, val of distribution
+	s += val for cat, val of sync.distribution
 	value = $(item).data('value')
 
-	percentage = distribution[value] / s
+	percentage = sync.distribution[value] / s
 	$(item).find('.percentage').html("#{Math.round(100 * percentage)}% &nbsp;")
 	$(item).find('.increase').removeClass('disabled')
 
@@ -231,17 +227,19 @@ renderCategoryItem = (item) ->
 
 $('.dist-picker .increase').live 'click', (e) ->
 	item = $(this).parents('.category-item')
-	distribution[$(item).data('value')]++
+	sync.distribution[$(item).data('value')]++
+	sock.emit 'distribution', sync.distribution
 	for item in $('.custom-category .category-item')
 		renderCategoryItem(item)
 
 $('.dist-picker .decrease').live 'click', (e) ->
 	item = $(this).parents('.category-item')
 	s = 0
-	s += val for cat, val of distribution
+	s += val for cat, val of sync.distribution
 
-	if distribution[$(item).data('value')] > 0 and s > 1
-		distribution[$(item).data('value')]--
+	if sync.distribution[$(item).data('value')] > 0 and s > 1
+		sync.distribution[$(item).data('value')]--
+		sock.emit 'distribution', sync.distribution
 	for item in $('.custom-category .category-item')
 		renderCategoryItem(item)
 
@@ -271,8 +269,15 @@ synchronize = (data) ->
 
 		for cat in sync.categories
 			$('.categories')[0].options.add new Option(cat, cat)
+			
+		createCategoryList()
 		
+	if sync.category is 'custom'
+		$('.custom-category').slideDown()
+	
 	$('.categories').val sync.category
+	
+	
 	$('.difficulties').val sync.difficulty
 
 	$('.multibuzz').attr 'checked', !sync.max_buzz
@@ -1420,7 +1425,7 @@ $('.categories').change ->
 		$('.custom-category').slideDown()
 	else
 		$('.custom-category').slideUp()
-		sock.emit 'category', $('.categories').val()
+	sock.emit 'category', $('.categories').val()
 
 $('.difficulties').change ->
 	sock.emit 'difficulty', $('.difficulties').val()
