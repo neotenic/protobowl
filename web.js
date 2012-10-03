@@ -297,6 +297,7 @@ QuizRoom = (function() {
         times_buzzed: 0,
         show_typing: true,
         team: '',
+        banned: false,
         sounds: false
       };
       journal(this.name);
@@ -322,6 +323,15 @@ QuizRoom = (function() {
       }
       return _results;
     }
+  };
+
+  QuizRoom.prototype.ban = function(id) {
+    this.users[id].banned = true;
+    this.emit_user(id, 'redirect', "/" + this.name + "-banned");
+    return io.sockets["in"](this.name).emit('log', {
+      user: id,
+      verb: 'was banned from this room'
+    });
   };
 
   QuizRoom.prototype.touch = function(id, no_add_time) {
@@ -941,6 +951,11 @@ io.sockets.on('connection', function(sock) {
   }
   room = rooms[room_name];
   existing_user = publicID in room.users;
+  if (existing_user && room.users[publicID].banned) {
+    sock.emit('redirect', "/" + room_name + "-banned");
+    sock.disconnect();
+    return;
+  }
   room.add_socket(publicID, sock.id);
   if (is_god) {
     for (r_name in rooms) {
@@ -1307,6 +1322,11 @@ app.post('/stalkermode/announce', express.bodyParser(), function(req, res) {
     done: true,
     time: +(new Date)
   });
+  return res.redirect('/stalkermode');
+});
+
+app.post('/stalkermode/ban', express.bodyParser(), function(req, res) {
+  rooms[req.body.room].ban(req.body.user);
   return res.redirect('/stalkermode');
 });
 

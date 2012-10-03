@@ -37,7 +37,7 @@ html(lang="en")
 				| #{Math.floor(secs / 60) % 60} minutes 
 			| #{Math.floor(secs % 60)} seconds
 
-		mixin display_user(user)
+		mixin display_user(user, room)
 			li #{user.team || ''} <b>#{user.name}</b> 
 				| (last seen 
 				mixin time(user.last_action)
@@ -52,6 +52,9 @@ html(lang="en")
 					if user.users || user.rooms
 						li
 							| users: #{user.users} rooms: #{user.rooms}
+					if user.banned
+						li
+							| BANNED BANNED BANNED BANNED BANNED BANNED BANNED BANNED
 		- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].sockets.length > 0})}
 		- function get_active(room){return get_online(room).filter(function(e){return room.users[e].last_action > new Date - 1000 * 60 * 10})}
 		- function count_online(room) {return get_online(room).length}
@@ -70,6 +73,12 @@ html(lang="en")
 					each user, id in room.users
 						if user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10
 							mixin display_user(user)
+
+							li
+								form(action="/stalkermode/ban", method="post")
+									input(type="hidden", name="room", value="#{room.name}")
+									input(type="hidden", name="user", value="#{id}")
+									input(type="submit", value="Ban #{user.name} from #{room.name}")
 				ul.idle
 					each user, id in room.users
 						if user.sockets.length > 0 && new Date - user.last_action > 1000 * 60 * 10

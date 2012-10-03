@@ -213,6 +213,7 @@ class QuizRoom
 				times_buzzed: 0,
 				show_typing: true,
 				team: '',
+				banned: false,
 				sounds: false
 			}
 			journal @name
@@ -229,6 +230,11 @@ class QuizRoom
 				s = io.sockets.socket(sock)
 				s.emit args...
 
+	ban: (id) ->
+		@users[id].banned = true
+		@emit_user id, 'redirect', "/#{@name}-banned"
+		io.sockets.in(@name).emit 'log', {user: id, verb: 'was banned from this room'}
+		
 
 	# vote: (id, action, val) ->
 	# 	# room.add_socket publicID, sock.id
@@ -732,6 +738,11 @@ io.sockets.on 'connection', (sock) ->
 	rooms[room_name] = new QuizRoom(room_name) unless rooms[room_name]
 	room = rooms[room_name]
 	existing_user = (publicID of room.users)
+	if existing_user and room.users[publicID].banned
+		sock.emit 'redirect', "/#{room_name}-banned"
+		sock.disconnect()
+		return
+
 	room.add_socket publicID, sock.id
 	# actually join the room socket
 	if is_god
@@ -1021,7 +1032,9 @@ app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
 	}
 	res.redirect '/stalkermode'
 
-
+app.post '/stalkermode/ban', express.bodyParser(), (req, res) ->
+	rooms[req.body.room].ban req.body.user
+	res.redirect '/stalkermode'
 
 app.get '/stalkermode', (req, res) ->
 	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'

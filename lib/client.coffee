@@ -631,9 +631,8 @@ renderState = ->
 				badge.addClass('badge-success').attr('title', 'Online')
 			else if idle_count > 0
 				badge.addClass('badge-warning').attr('title', 'Idle')
-				
-		# .css('white-space', 'nowrap')
-		$('<td>').text(ranking).append('&nbsp;').append(badge).appendTo row
+		
+		$('<td>').addClass('rank').append(badge).append(ranking).appendTo row
 		name = $('<td>').appendTo row
 		
 		$('<td>').text(user.interrupts).appendTo row
@@ -1233,8 +1232,8 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			ruling.addClass('label-warning').text('Wrong')
 			if user is public_id and public_id of users
 				old_score = computeScore(users[public_id])
-				if old_score < -500 # just a little way of saying "you suck"
-					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. like you are seriously a turd if you have under a negative thousand points.'
+				if old_score < -100 # just a little way of saying "you suck"
+					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.'
 
 
 		answer = sync.answer
@@ -1648,23 +1647,24 @@ $('body').click (e) ->
 
 $(".leaderboard tbody tr").live 'click', (e) ->
 	# console.log this
-	tmp = $('.popover')
+	# tmp = $('.popover')
 	# allow time delay so that things can be faded out before you kill them
 	# setTimeout ->
 	# 	tmp.remove()
 	# , 1000
 	user = $(this).data('entity')
-	$(this).popover {
-		placement: if mobileLayout() then "top" else "left"
-		trigger: "manual",
-		title: "#{user.name}'s Stats",
-		content: ->
-			createStatSheet(user, true)
-	}
-	
-	$('.leaderboard tbody tr').not(this).popover 'destroy'
-	
-	$(this).popover 'toggle'
+	enabled = $(this).data('popover')?.enabled
+	# console.log $('.leaderboard tbody tr').not(this).popover 'toggle'
+	$('.leaderboard tbody tr').popover 'destroy'
+	unless enabled
+		$(this).popover {
+			placement: if mobileLayout() then "top" else "left"
+			trigger: "manual",
+			title: "#{user.name}'s Stats",
+			content: ->
+				createStatSheet(user, true)
+		}
+		$(this).popover 'toggle'
 
 
 if Modernizr.touch
