@@ -1254,6 +1254,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		if actionMode is 'guess'
 			setActionMode ''
 	# line.toggleClass 'typing', !done
+	return line
 
 chatAnnotation = ({session, text, user, done, time}) ->
 	id = user + '-' + session

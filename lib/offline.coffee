@@ -207,6 +207,7 @@ virtual_server = {
 			year: question.year, 
 			round: question.round
 		}
+		sync.qid = "offline"+Math.random().toString().slice(3)
 		sync.question = question.question
 			.replace(/FTP/g, 'For 10 points')
 			.replace(/^\[.*?\]/, '')
