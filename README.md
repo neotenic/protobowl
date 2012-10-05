@@ -8,20 +8,21 @@
 * check that it's the last name which is common
 * add support for superpower [+]
 * statistical skill metrics i.e. score/interrupts
-* have question reports include miscategorization
 * Keep Offline mode in-sync with protocol revisions
+* Add more questions, create new parser in order to do so
 
 # In Progress
-* support arbitrary question distributions
-* Create teams
+* Support different question sets
+* have question reports include miscategorization
 
 # Mostly Done
-
-* support teams (mostly done)
+* Create teams
+* support arbitrary question distributions
 * Add sounds
 * make leaderboard faster (mostly done)
 
 # Done
+* support teams (mostly done)
 * make single-buzz restriction support teams
 * support ties on the leaderboard (done)
 

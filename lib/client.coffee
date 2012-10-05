@@ -1,4 +1,6 @@
-inner_socket = io.connect() if io?
+inner_socket = io.connect(location.hostname, {
+	"connect timeout": 2000
+}) if io?
 sync = {}
 users = {}
 sync_offsets = []
@@ -412,7 +414,8 @@ sock.on 'chat', (data) ->
 ###
 
 computeScore = (user) ->
-	
+	return 0 if !user
+
 	CORRECT = 10
 	EARLY = 15
 	INTERRUPT = -5
@@ -666,7 +669,7 @@ renderState = ->
 		if $('.leaderboard').is(':hidden')
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
-	else
+	else if users[public_id]
 		$('.singleuser .stats table').replaceWith(createStatSheet(users[public_id], !!$('.singleuser').data('full')))
 		if $('.singleuser').is(':hidden')
 			$('.leaderboard').slideUp()
@@ -1023,7 +1026,7 @@ createAlert = (bundle, title, message) ->
 	
 
 createBundle = ->
-	bundle = $('<div>').addClass('bundle').attr('name', sync.qid)
+	bundle = $('<div>').addClass('bundle').attr('name', sync.qid).addClass('room-'+sync.name?.replace(/[^a-z0-9]/g, ''))
 	important = $('<div>').addClass 'important'
 	bundle.append(important)
 	breadcrumb = $('<ul>')
@@ -1055,6 +1058,9 @@ createBundle = ->
 			el.addClass('hidden-phone')
 		else
 			el.addClass('visible-phone')
+
+	if (public_id + '').slice(0, 2) is "__"
+		addInfo 'Room', sync.name
 	
 	addInfo 'Category', sync.info.category
 	addInfo 'Difficulty', sync.info.difficulty
@@ -1080,8 +1086,49 @@ createBundle = ->
 	breadcrumb.append $('<li>').addClass('clickable hidden-phone').text('Report').click (e) ->
 		# console.log 'report question'
 		# $('#report-question').modal('show')
-		createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
-		sock.emit 'report_question', bundle.data 'report_info'
+		info = bundle.data 'report_info'
+
+		div = $("<div>").addClass("alert alert-block alert-info")
+			.insertBefore(bundle.find(".annotations")).hide()
+		div.append $("<button>")
+			.attr("data-dismiss", "alert")
+			.attr("type", "button")
+			.html("&times;")
+			.addClass("close")
+		div.append $("<h4>").text "Report Question"
+		form = document.createElement('form')
+		$(form).addClass('form-horizontal').appendTo div
+		rtype = $('<div>').addClass('control-group').appendTo(form)
+		rtype.append $("<label>").addClass('control-label').text('Description')
+		controls = $("<div>").addClass('controls').appendTo rtype
+		for option in ["Wrong category", "Wrong details", "Bad question", "Broken formatting"]
+			controls.append $("<label>")
+				.addClass("radio")
+				.append($("<input type=radio name=description>").val(option))
+				.append(option)
+		
+		ctype = $('<div>').addClass('control-group').appendTo(form)
+		ctype.append $("<label>").addClass('control-label').text('Category')
+		cat_list = $('<select>')
+		ctype.append $("<div>").addClass('controls').append cat_list
+		
+		controls.find('input:radio')[0].checked = true
+
+		cat_list.append new Option(cat) for cat in sync.categories
+		cat_list.val(info.category)
+		stype = $('<div>').addClass('control-group').appendTo(form)
+
+		$("<div>").addClass('controls').appendTo(stype)
+			.append($('<button type=submit>').addClass('btn btn-primary').text('Submit'))
+
+		$(form).submit ->
+			console.log 'on submit'
+			return false
+		div.slideDown()
+
+		# createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
+		# sock.emit 'report_question', bundle.data 'report_info'
+
 		e.stopPropagation()
 		e.preventDefault()
 
@@ -1129,10 +1176,13 @@ userSpan = (user, global) ->
 		.addClass('username')
 		.text(text)
 
-addAnnotation = (el) ->
+addAnnotation = (el, name = sync.name) ->
 	# destroy the tooltip
 	$('.bundle .ruling').tooltip('destroy')
-	el.css('display', 'none').prependTo $('#history .bundle.active .annotations')
+	current_bundle = $('.room-' + (name || '').replace(/[^a-z0-9]/g, ''))
+	if current_bundle.length is 0
+		current_bundle = $('#history .bundle.active')
+	el.css('display', 'none').prependTo current_bundle.eq(0).find('.annotations')
 	el.slideDown()
 	return el
 
@@ -1267,33 +1317,40 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		$('<span>')
 			.addClass('comment')
 			.appendTo line
-		addAnnotation line
+		addAnnotation line, users[user]?.room
+
+	url_regex = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig
+	html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+	.replace(/(^|\s+)(\/[a-z0-9\-]+)(\s+|$)/g, (all, pre, room, post) ->
+		# console.log all, pre, room, post
+		return pre + "<a href='#{room}'>#{room}</a>" + post
+	).replace(url_regex, (url) ->
+		real_url = url
+		real_url = "http://#{url}" unless /:\//.test(url)
+		if /\.(jpe?g|gif|png)$/.test(url)
+			return "<img src='#{real_url}' alt='#{url}'>"
+		else
+			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
+	)
+	# console.log html
 	if done
 		line.removeClass('buffer')
 		if text is ''
 			line.find('.comment').html('<em>(no message)</em>')
 		else
-			line.find('.comment').text(text)
+			line.find('.comment').html html
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
 			line.addClass('buffer')
 			line.find('.comment').text(' is typing...')
 		else
 			line.removeClass('buffer')
-			line.find('.comment').text(text)
+			# line.find('.comment').text(text)
+
+			line.find('.comment').html html
+
 	line.toggleClass 'typing', !done
 
-# sock.on 'introduce', ({user}) ->
-# 	line = $('<p>').addClass 'log'
-# 	line.append userSpan(user)
-# 	line.append " joined the room"
-# 	addAnnotation line
-
-# sock.on 'leave', ({user}) ->
-# 	line = $('<p>').addClass 'log'
-# 	line.append userSpan(user)
-# 	line.append " left the room"
-# 	addAnnotation line
 
 sock.on 'log', ({user, verb}) ->
 	line = $('<p>').addClass 'log'
@@ -1627,7 +1684,15 @@ $(window).resize()
 #ugh, this is fugly, maybe i should have used calc
 setTimeout ->
 	$(window).resize()
-, 762 
+, 762
+
+setTimeout ->
+	$(window).resize()
+, 2718
+
+setTimeout ->
+	$(window).resize()
+, 6022
 
 #display a tooltip for keyboard shortcuts on keyboard machines
 if !Modernizr.touch and !mobileLayout()

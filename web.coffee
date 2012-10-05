@@ -36,14 +36,36 @@ catch err
 			return false if diff and q.difficulty != diff
 			return false if cat and q.category != cat
 			return true
+	
+	fisher_yates = (i) ->
+		return [] if i is 0
+		arr = [0...i]
+		while --i
+			j = Math.floor(Math.random() * (i+1))
+			[arr[i], arr[j]] = [arr[j], arr[i]] 
+		arr
+	current_category = ''
+	current_difficulty = ''
+	current_queue = []
 
 	remote = {
-		countQuestions: (diff, cat, cb) ->
-			cb filterQuestions(diff, cat).length, 42
-		getAtIndex: (diff, cat, index, cb) ->
-			cb filterQuestions(diff, cat)[index]
-		getCategories: -> listProps('category')
-		getDifficulties: -> listProps('difficulty')
+		initialize_remote: (cb) -> 
+			cb()
+		get_question: (type, diff, cat, cb) ->
+			if diff == current_difficulty and cat == current_category and current_queue.length > 0
+				cb current_queue.shift()
+			else
+				current_difficulty = diff
+				current_category = cat
+				temp_filtered = filterQuestions(diff, cat)
+				current_queue = (temp_filtered[index] for index in fisher_yates(temp_filtered.length))
+				cb current_queue.shift()
+		get_difficulties: (type) ->
+			listProps 'difficulty'
+		get_categories: (type) ->
+			listProps 'category'
+		count_questions: (type, diff, cat, cb) ->
+			cb filterQuestions(diff, cat).length
 	}
 
 # this injects cookies into things, woot
@@ -74,7 +96,9 @@ if app.settings.env is 'development'
 			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
 			fs.writeFile __dirname + '/offline.appcache', data, (err) ->
 				throw err if err
-				io.sockets.emit 'application_update', +new Date
+				setTimeout ->
+					io.sockets.emit 'application_update', +new Date
+				, 1000
 				scheduledUpdate = null
 
 	watcher = (event, filename) ->
@@ -115,14 +139,7 @@ cumsum = (list, rate) ->
 		sum += Math.round(num) * rate #always round!
 
 
-fisher_yates = (i) ->
-	return [] if i is 0
-	arr = [0...i]
-	while --i
-		j = Math.floor(Math.random() * (i+1))
-		[arr[i], arr[j]] = [arr[j], arr[i]] 
-	arr
-    
+
 # i really wanted to have it calculate the distribution of things dynamically and generate this
 # but the problem is that I don't have a system which is based on absolute percentages, so the
 # problem is that you can't quite change absolute percentages or something
@@ -132,20 +149,18 @@ fisher_yates = (i) ->
 
 default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
-AliasMethod = require("./lib/sample").AliasMethod
+# AliasMethod = require("./lib/sample").AliasMethod
 
 class QuizRoom
 	constructor: (name) ->
 		@name = name
+		@type = "qb"
 		@answer_duration = 1000 * 5
 		@time_offset = 0
 		@rate = 1000 * 60 / 5 / 200
 		@__timeout = -1
 		@distribution = default_distribution
 		
-		# the following are nasty database hacks
-		@question_schedule = []
-		@history = []
 		
 		@freeze()
 		@new_question()
@@ -155,49 +170,11 @@ class QuizRoom
 		
 		@max_buzz = null
 
-		
-	# this function really doesn't belong in here, because it sort of screws
-	# up the database abstractions, but this app wasn't even supposed to have
-	# a database, so I don't really care how disgustingly un-cool and bad
-	# this is
-	reset_schedule: ->
-		remote.countQuestions @difficulty, @category, (num) =>
-			if num < 300
-				@question_schedule = fisher_yates(num)
-			else
-				@question_schedule = []
 
 	get_question: (cb) ->
-		current_category = @category
-		if @category is "custom"
-			sampler = new AliasMethod(@distribution)
-			# a rather inefficient way to do this, mind you
-			# should probably cache aliasmethod objects 
-			current_category = sampler.next()
-			#console.log 'sampled distribution', sampler, current_category
-		num_attempts = 0
-		attemptQuestion = =>
-			num_attempts++
-			remote.getQuestion @difficulty, current_category, (question) =>
-				# console.log(typeof question._id, @history,  "ATTEMPTS", num_attempts)
-				if question._id.toString() in @history and num_attempts < 15
-					return attemptQuestion()
-				@history.splice 100
-				@history.splice 0, 0, question._id.toString()
-				cb(question || error_question)
-
-		remote.countQuestions @difficulty, current_category, (num, no_db) =>
-			if num < 300 or no_db is 42
-				if @question_schedule.length is 0
-					@question_schedule = fisher_yates(num)
-
-				index = @question_schedule.shift()
-				
-				remote.getAtIndex @difficulty, current_category, index, (doc) ->
-					cb doc || error_question
-
-			else
-				attemptQuestion()
+		category = (if @category is 'custom' then @distribution else @category)
+		remote.get_question @type, @difficulty, category, (question) =>
+			cb(question || error_question)
 
 	add_socket: (id, socket) ->
 		unless id of @users
@@ -543,7 +520,7 @@ class QuizRoom
 		# 		delete @users[id][action] for id of @users
 		# 		this[action]()
 		
-		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "question_schedule", "history", "__timeout", "generating_question", "distribution"]
+		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "__timeout", "generating_question", "distribution"]
 		user_blacklist = ["sockets"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
 			data[attr] = this[attr]
@@ -563,8 +540,8 @@ class QuizRoom
 			data.info = @info
 
 		if level >= 3
-			data.categories = remote.getCategories()
-			data.difficulties = remote.getDifficulties()
+			data.difficulties = remote.get_difficulties(@type)
+			data.categories = remote.get_categories(@type, @difficulty)
 			data.distribution = @distribution
 			
 		io.sockets.in(@name).emit 'sync', data
@@ -594,14 +571,14 @@ sha1 = (text) ->
 	hash.digest('hex')
 
 journal_config = {
-		host: 'localhost',
-		port: 15865
-	}
+	host: 'localhost',
+	port: 15865
+}
 
 log_config = {
-		host: 'localhost',
-		port: 18228
-	}
+	host: 'localhost',
+	port: 18228
+}
 
 if app.settings.env isnt 'development'
 	log_config = remote.deploy.log
@@ -730,7 +707,7 @@ io.sockets.on 'connection', (sock) ->
 	is_god = /god/.test config.search
 	is_ninja = /ninja/.test config.search
 	# configger the things which are derived from said parsed stuff
-	room_name = config.pathname.replace(/\//g, '')
+	room_name = config.pathname.replace(/\//g, '').toLowerCase()
 	publicID = sha1(cookie.protocookie + room_name)
 	publicID = "__secret_ninja" if is_ninja
 	publicID += "_god" if is_god
@@ -798,6 +775,11 @@ io.sockets.on 'connection', (sock) ->
 			room.sync(1)
 
 	sock.on 'distribution', (data) ->
+		for cat, count of (data || default_distribution)
+			if room.distribution[cat] == 0 and count > 0
+				room.emit 'log', {user: publicID, verb: 'enabled category ' + cat}
+			if room.distribution[cat] > 0 and count == 0
+				room.emit 'log', {user: publicID, verb: 'disabled category ' + cat}
 		room.distribution = data || default_distribution
 		room.sync(3)
 
@@ -814,17 +796,18 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'difficulty', (data) ->
 		room.difficulty = data
-		room.reset_schedule()
+		# room.reset_schedule()
 		room.sync()
 		journal room.name
 		log 'difficulty', [room.name, publicID + '-' + room.users[publicID].name, room.difficulty]
-		remote.countQuestions room.difficulty, room.category, (count) ->
+		category = (if @category is 'custom' then @distribution else @category)
+		remote.count_questions room.type, room.difficulty, category, (count) ->
 			room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
-		
+			room.sync(3)
 
 	sock.on 'category', (data) ->
 		room.category = data
-		room.reset_schedule()
+		# room.reset_schedule()
 		room.sync()
 		journal room.name
 		
@@ -832,10 +815,12 @@ io.sockets.on 'connection', (sock) ->
 			room.distribution = default_distribution # reset to the default question distribution 
 		log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
 		if data is "custom"
-			room.emit 'log', {user: publicID, verb: 'enabled a custom category distribution'}
+			category = (if @category is 'custom' then @distribution else @category)
+			remote.count_questions room.type, room.difficulty, category, (count) ->
+				room.emit 'log', {user: publicID, verb: 'enabled a custom category distribution' + ' (' + count + ' questions)'}
 			room.sync(3)
 		else
-			remote.countQuestions room.difficulty, room.category, (count) ->
+			remote.count_questions room.type, room.difficulty, room.category, (count) ->
 				room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
 		
 	sock.on 'max_buzz', (data) ->
@@ -1087,6 +1072,7 @@ app.get '/:channel', (req, res) ->
 port = process.env.PORT || 5000
 
 restore_journal ->
-	app.listen port, ->
-		console.log "listening on port", port
+	remote.initialize_remote ->
+		app.listen port, ->
+			console.log "listening on port", port
 
