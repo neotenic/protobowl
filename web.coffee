@@ -296,7 +296,7 @@ class QuizRoom
 
 			# console.log @info
 			# @qid = question.question
-			@qid = "pb" + @info.year + "-" + @info.num + "-" + 
+			@qid = question._id.toString()
 			@info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" +
 			@answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20)
 			# console.log @qid
@@ -879,6 +879,7 @@ io.sockets.on 'connection', (sock) ->
 	sock.on 'report_question', (data) ->
 		data.room = room.name
 		data.user = publicID + '-' + room.users[publicID].name
+		remote.handle_report data if remote.handle_report
 		log 'report_question', data
 
 	sock.on 'report_answer', (data) ->

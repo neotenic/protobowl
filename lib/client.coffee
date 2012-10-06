@@ -1077,9 +1077,10 @@ createBundle = ->
 		year: sync.info.year, 
 		difficulty: sync.info.difficulty, 
 		category: sync.info.category, 
-		tournament: sync.info.turnament,
+		tournament: sync.info.tournament,
 		round: sync.info.round,
 		num: sync.info.num,
+		qid: sync.qid,
 		question: sync.question,
 		answer: sync.answer
 	}
@@ -1096,16 +1097,22 @@ createBundle = ->
 			.html("&times;")
 			.addClass("close")
 		div.append $("<h4>").text "Report Question"
-		form = document.createElement('form')
-		$(form).addClass('form-horizontal').appendTo div
+		form = $("<form>")
+		form.addClass('form-horizontal').appendTo div
 		rtype = $('<div>').addClass('control-group').appendTo(form)
 		rtype.append $("<label>").addClass('control-label').text('Description')
 		controls = $("<div>").addClass('controls').appendTo rtype
 		for option in ["Wrong category", "Wrong details", "Bad question", "Broken formatting"]
 			controls.append $("<label>")
 				.addClass("radio")
-				.append($("<input type=radio name=description>").val(option))
+				.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))
 				.append(option)
+
+		form.find(":radio").change ->
+			if form.find(":radio:checked").val() is 'category'
+				ctype.slideDown()
+			else
+				ctype.slideUp()
 		
 		ctype = $('<div>').addClass('control-group').appendTo(form)
 		ctype.append $("<label>").addClass('control-label').text('Category')
@@ -1122,7 +1129,14 @@ createBundle = ->
 			.append($('<button type=submit>').addClass('btn btn-primary').text('Submit'))
 
 		$(form).submit ->
-			console.log 'on submit'
+			describe = form.find(":radio:checked").val()
+			if describe is 'category'
+				info.fixed_category = cat_list.val()
+			info.describe = describe
+			sock.emit 'report_question', info
+			
+			createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
+			div.slideUp()
 			return false
 		div.slideDown()
 
