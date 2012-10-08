@@ -2605,7 +2605,6 @@ QuizPlayer = (function() {
   function QuizPlayer(room, id) {
     this.id = id;
     this.room = room;
-    this.sockets = [];
     this.guesses = 0;
     this.interrupts = 0;
     this.early = 0;
@@ -2618,14 +2617,6 @@ QuizPlayer = (function() {
     this.banned = false;
     this.sounds = false;
   }
-
-  QuizPlayer.prototype.add_socket = function() {
-    return console.log('not implemented');
-  };
-
-  QuizPlayer.prototype.emit = function() {
-    return console.log('not implemented');
-  };
 
   QuizPlayer.prototype.touch = function() {
     return this.last_action = +(new Date);
@@ -3216,7 +3207,7 @@ QuizRoom = (function() {
     }
     if (level >= 1) {
       data.users = (function() {
-        var _results;
+        var _ref, _results;
         _results = [];
         for (id in this.users) {
           if (!(!this.users[id].ninja)) {
@@ -3224,7 +3215,7 @@ QuizRoom = (function() {
           }
           user = {};
           for (attr in this.users[id]) {
-            if (__indexOf.call(user_blacklist, attr) < 0) {
+            if (__indexOf.call(user_blacklist, attr) < 0 && ((_ref = typeof this.users[id][attr]) !== 'function' && _ref !== 'object')) {
               user[attr] = this.users[id][attr];
             }
           }
@@ -4062,6 +4053,71 @@ var __slice = [].slice,
 
 
 
+var renderParameters, renderUpdate;
+
+renderParameters = function() {
+  var cat, dif, _i, _j, _len, _len1, _ref, _ref1;
+  $('.difficulties option').remove();
+  $('.difficulties')[0].options.add(new Option("Any", ''));
+  _ref = sync.difficulties;
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    dif = _ref[_i];
+    $('.difficulties')[0].options.add(new Option(dif, dif));
+  }
+  $('.categories option').remove();
+  $('.categories')[0].options.add(new Option('Everything', ''));
+  $('.categories')[0].options.add(new Option('Custom', 'custom'));
+  _ref1 = sync.categories;
+  for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+    cat = _ref1[_j];
+    $('.categories')[0].options.add(new Option(cat, cat));
+  }
+  return createCategoryList();
+};
+
+renderUpdate = function() {
+  var wpm;
+  if (sync.category === 'custom') {
+    $('.custom-category').slideDown();
+  }
+  $('.categories').val(sync.category);
+  $('.difficulties').val(sync.difficulty);
+  $('.multibuzz').attr('checked', !sync.max_buzz);
+  if ($('.settings').is(':hidden')) {
+    $('.settings').slideDown();
+  }
+  if (public_id in users && 'show_typing' in users[public_id]) {
+    $('.livechat').attr('checked', users[public_id].show_typing);
+    $('.sounds').attr('checked', users[public_id].sounds);
+    $('.teams').val(users[public_id].team);
+  }
+  if (sync.attempt) {
+    guessAnnotation(sync.attempt);
+  }
+  wpm = Math.round(1000 * 60 / 5 / sync.rate);
+  if (!$('.speed').data('last_update') || new Date - $(".speed").data("last_update") > 1337) {
+    if (Math.abs($('.speed').val() - wpm) > 1) {
+      $('.speed').val(wpm);
+    }
+  }
+  if (!sync.attempt || sync.attempt.user !== public_id) {
+    if (actionMode === 'guess' || actionMode === 'prompt') {
+      return setActionMode('');
+    }
+  } else {
+    if (sync.attempt.prompt) {
+      if (actionMode !== 'prompt') {
+        setActionMode('prompt');
+        return $('.prompt_input').val('').focus();
+      }
+    } else {
+      if (actionMode !== 'guess') {
+        return setActionMode('guess');
+      }
+    }
+  }
+};
+
 var formatRelativeTime, formatTime, getTimeSpan;
 
 getTimeSpan = (function() {
@@ -4172,13 +4228,10 @@ formatTime = function(timestamp) {
   return (date.getHours() % 12) + ':' + ('0' + date.getMinutes()).substr(-2, 2) + (date.getHours() > 12 ? "pm" : "am");
 };
 
-var avg, connected, public_id, public_name, serverTime, sock, stdev, sum, sync, synchronize, time;
+var RemoteQuizPlayer, avg, compute_sync_offset, connected, latency_log, me, serverTime, sock, stdev, sum, sync, sync_offsets, synchronize, testLatency, time,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 sync = {};
-
-public_id = 'uninitialized';
-
-public_name = 'adjective animal';
 
 time = function() {
   if (sync.time_freeze) {
@@ -4188,12 +4241,12 @@ time = function() {
   }
 };
 
-connected = function() {
-  return (typeof inner_socket !== "undefined" && inner_socket !== null) && inner_socket.socket.connected;
-};
-
 serverTime = function() {
   return new Date - sync_offset;
+};
+
+connected = function() {
+  return true;
 };
 
 avg = function(list) {
@@ -4226,6 +4279,30 @@ stdev = function(list) {
 
 sock = io.connect();
 
+RemoteQuizPlayer = (function() {
+
+  RemoteQuizPlayer.prototype.emit_action = function(name) {
+    return this[name] = function(data, callback) {
+      return sock.emit(name, data, callback);
+    };
+  };
+
+  function RemoteQuizPlayer() {
+    var attr, blacklist;
+    blacklist = [];
+    for (attr in QuizPlayer.prototype) {
+      if (__indexOf.call(blacklist, attr) < 0) {
+        this.emit_action(attr);
+      }
+    }
+  }
+
+  return RemoteQuizPlayer;
+
+})();
+
+me = new RemoteQuizPlayer();
+
 sock.on('echo', function(data, fn) {
   return fn('alive');
 });
@@ -4239,7 +4316,7 @@ sock.on('disconnect', function() {
   line.append($('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), " from the server for some reason. ", $('<em>').text(new Date)));
   line.append($('<p>').append("This may be due to a drop in the network 			connectivity or a malfunction in the server. The client will automatically 			attempt to reconnect to the server and in the mean time, the app has automatically transitioned			into <b>offline mode</b>. You can continue playing alone with a limited offline set			of questions without interruption. However, you might want to try <a href=''>reloading</a>."));
   addImportant($('<div>').addClass('log disconnect-notice').append(line));
-  return sock.emit('init_offline', 'yay');
+  return room.emit('init_offline', 'yay');
 });
 
 sock.on('application_update', function() {
@@ -4260,10 +4337,6 @@ sock.on('alert', function(text) {
   return window.alert(text);
 });
 
-sock.on('sync', function(data) {
-  return synchronize(data);
-});
-
 sock.on('chat', function(data) {
   return chatAnnotation(data);
 });
@@ -4272,11 +4345,116 @@ sock.on('log', function(data) {
   return verbAnnotation(data);
 });
 
+sock.on('sync', function(data) {
+  return synchronize(data);
+});
+
 sock.on('joined', function(data) {
+  var public_id, public_name;
   public_name = data.name;
   public_id = data.id;
   $('#username').val(public_name);
   return $('#username').disable(false);
 });
 
-synchronize = function() {};
+sync = {};
+
+sync_offsets = [];
+
+latency_log = [];
+
+synchronize = function(data) {
+  var attr, user, val, _i, _len, _ref;
+  if (data) {
+    sync_offsets.push(+(new Date) - data.real_time);
+    compute_sync_offset();
+    for (attr in data) {
+      val = data[attr];
+      sync[attr] = val;
+    }
+  }
+  if (!data || 'users' in data) {
+    _ref = sync.users;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      user = _ref[_i];
+      user.room = sync.name;
+      users[user.id] = user;
+    }
+  }
+  if ((data && 'difficulties' in data) || ($('.difficulties')[0].options.length === 0 && sync.difficulties)) {
+    renderParameters();
+  }
+  renderUpdate();
+  if (!data || 'users' in data) {
+    return renderState();
+  } else {
+    return renderPartial();
+  }
+};
+
+compute_sync_offset = function() {
+  var below, item, sync_offset, thresh;
+  sync_offsets = sync_offsets.slice(-20);
+  thresh = avg(sync_offsets);
+  below = (function() {
+    var _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = sync_offsets.length; _i < _len; _i++) {
+      item = sync_offsets[_i];
+      if (item <= thresh) {
+        _results.push(item);
+      }
+    }
+    return _results;
+  })();
+  sync_offset = avg(below);
+  thresh = avg(below);
+  below = (function() {
+    var _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = sync_offsets.length; _i < _len; _i++) {
+      item = sync_offsets[_i];
+      if (item <= thresh) {
+        _results.push(item);
+      }
+    }
+    return _results;
+  })();
+  sync_offset = avg(below);
+  return $('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + '/' + stdev(sync_offsets).toFixed(1));
+};
+
+testLatency = function() {
+  var initialTime;
+  if (!connected()) {
+    return;
+  }
+  initialTime = +(new Date);
+  return sock.emit('echo', {}, function(firstServerTime) {
+    var recieveTime;
+    recieveTime = +(new Date);
+    return sock.emit('echo', {}, function(secondServerTime) {
+      var CSC1, CSC2, SCS1, secondTime;
+      secondTime = +(new Date);
+      CSC1 = recieveTime - initialTime;
+      CSC2 = secondTime - recieveTime;
+      SCS1 = secondServerTime - firstServerTime;
+      sync_offsets.push(recieveTime - firstServerTime);
+      sync_offsets.push(secondTime - secondServerTime);
+      latency_log.push(CSC1);
+      latency_log.push(SCS1);
+      latency_log.push(CSC2);
+      compute_sync_offset();
+      if (latency_log.length > 0) {
+        return $('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + (" (" + latency_log.length + ")"));
+      }
+    });
+  });
+};
+
+setTimeout(function() {
+  testLatency();
+  return setInterval(function() {
+    return testLatency();
+  }, 30 * 1000);
+}, 2000);

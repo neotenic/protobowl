@@ -9,7 +9,6 @@ class QuizPlayer
 	constructor: (room, id) ->
 		@id = id
 		@room = room
-		@sockets = []
 		@guesses = 0
 		@interrupts = 0
 		@early = 0
@@ -22,12 +21,6 @@ class QuizPlayer
 		@banned = false
 		@sounds = false
 
-
-	add_socket: ->
-		console.log 'not implemented'
-
-	emit: ->
-		console.log 'not implemented'
 
 	touch: ->
 		@last_action = +new Date
@@ -174,13 +167,11 @@ class QuizRoom
 		@__timeout = -1
 		@distribution = default_distribution
 		
-		
 		@freeze()
 		@new_question()
 		@users = {}
 		@difficulty = ''
 		@category = ''
-		
 		@max_buzz = null
 
 	get_difficulties: ->
@@ -562,7 +553,7 @@ class QuizRoom
 		if level >= 1
 			data.users = for id of @users when !@users[id].ninja
 				user = {}
-				for attr of @users[id] when attr not in user_blacklist
+				for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function', 'object']
 					user[attr] = @users[id][attr] 
 				user.online = @users[id].sockets.length > 0
 				user

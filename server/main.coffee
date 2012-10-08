@@ -90,7 +90,7 @@ remote = require './remote'
 
 class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
-		console.log 'emitting shit', @name, name, data
+		console.log 'emitting shit', @name, name
 		io.sockets.in(@name).emit name, data
 	
 	get_question: (cb) ->
@@ -102,11 +102,16 @@ class SocketQuizRoom extends QuizRoom
 	get_categories: (type, difficulty) -> remote.get_categories(type, difficulty)
 
 class SocketQuizPlayer extends QuizPlayer
+	constructor: (room, id) ->
+		super(room, id)
+		@sockets = []
+
 	add_socket: (sock) ->
 		@sockets.push sock.id unless sock.id in @sockets
-		blacklist = ['add_socket', 'verb', 'touch', 'constructor', 'emit']
+		blacklist = ['add_socket', 'emit']
 		sock.emit 'log', 'moo'
-		for attr in this when this[attr] is 'function' and attr not in blacklist
+		
+		for attr of this when typeof this[attr] is 'function' and attr not in blacklist
 			sock.on attr, this[attr]
 
 	emit: (name, data) ->
@@ -140,7 +145,7 @@ io.sockets.on 'connection', (sock) ->
 	room = rooms[room_name]
 
 	# get the user's identity
-	room.users[publicID] = new SocketQuizPlayer(room_name, publicID) unless room.users[publicID]
+	room.users[publicID] = new SocketQuizPlayer(room, publicID) unless room.users[publicID]
 	user = room.users[publicID]
 	user.add_socket sock
 	sock.join room_name
