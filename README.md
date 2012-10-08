@@ -2,6 +2,15 @@
 
 [Try out Protobowl on a public room!](http://protobowl.com/hsquizbowl)
 
+
+# VERSION 3 YO
+
+doesnt work btw
+
+# WARNING IT DOESNT WORK
+
+DOES NOT WORK. AT ALL. NOPE.
+
 # Todo
 
 * record the position of the question when buzzed
