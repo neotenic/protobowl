@@ -11,6 +11,11 @@ doesnt work btw
 
 DOES NOT WORK. AT ALL. NOPE.
 
+
+# TODO IN REWRITE
+
+* Trolling voting interface
+
 # Todo
 
 * record the position of the question when buzzed

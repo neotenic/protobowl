@@ -1,3 +1,4 @@
+#= require ../shared/player.coffee
 #= require ../shared/room.coffee
 #= require ../shared/names.coffee
 #= require ../shared/removeDiacritics.js

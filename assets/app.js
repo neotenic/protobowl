@@ -2031,6 +2031,14 @@
 
 }(window.jQuery);
 
+jQuery.fn.disable = function(value) {
+  var current;
+  current = $(this).attr('disabled') === 'disabled';
+  if (current !== value) {
+    return $(this).attr('disabled', value);
+  }
+};
+
 jQuery.fn.fireworks = function(times) {
   var duration, i, _i, _results,
     _this = this;
@@ -2082,7 +2090,79 @@ jQuery.fn.fireworks = function(times) {
   return _results;
 };
 
-var addAnnotation, addImportant, chatAnnotation, guessAnnotation, logAnnotation, verbAnnotation;
+$(window).resize(function() {
+  return $('.expando').each(function() {
+    var add, i, input, outer, size, _i, _len, _ref;
+    add = 0;
+    _ref = $(this).find('.add-on, .padd-on');
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      i = _ref[_i];
+      add += $(i).outerWidth();
+    }
+    size = $(this).width();
+    input = $(this).find('input, .input');
+    if (input.hasClass('input')) {
+      outer = 0;
+    } else {
+      outer = input.outerWidth() - input.width();
+    }
+    if (Modernizr.csscalc) {
+      input.css('width', "-webkit-calc(100% - " + (outer + add) + "px)");
+      input.css('width', "-moz-calc(100% - " + (outer + add) + "px)");
+      input.css('width', "-o-calc(100% - " + (outer + add) + "px)");
+      return input.css('width', "calc(100% - " + (outer + add) + "px)");
+    } else {
+      return input.width(size - outer - add);
+    }
+  });
+});
+
+$(window).resize();
+
+setTimeout(function() {
+  return $(window).resize();
+}, 762);
+
+setTimeout(function() {
+  return $(window).resize();
+}, 2718);
+
+setTimeout(function() {
+  return $(window).resize();
+}, 6022);
+
+var addAnnotation, addImportant, chatAnnotation, guessAnnotation, logAnnotation, userSpan, verbAnnotation;
+
+userSpan = function(user, global) {
+  var c, el, hash, prefix, scope, text, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+  prefix = '';
+  if (me.id && me.id.slice(0, 2) === "__") {
+    prefix = (((_ref = users[user]) != null ? _ref.room : void 0) || 'unknown') + '/';
+  }
+  text = '';
+  if (user.slice(0, 2) === "__") {
+    text = prefix + user.slice(2);
+  } else {
+    text = prefix + (((_ref1 = users[user]) != null ? _ref1.name : void 0) || "[name missing]");
+  }
+  hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (global) {
+    scope = $(".user-" + user + ":not(." + hash + ")");
+    for (_i = 0, _len = scope.length; _i < _len; _i++) {
+      el = scope[_i];
+      _ref2 = $(el).attr('class').split('\s');
+      for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+        c = _ref2[_j];
+        if (c.slice(0, 8) === 'userhash') {
+          $(el).removeClass(c);
+        }
+      }
+    }
+  } else {
+    scope = $('<span>');
+  }
+  return scope.addClass(hash).addClass('user-' + user).addClass('username').text(text);
+};
 
 addAnnotation = function(el, name) {
   var current_block, current_bundle;
@@ -2165,11 +2245,11 @@ guessAnnotation = function(_arg) {
     } else if (correct) {
       decision = "correct";
       ruling.addClass('label-success').text('Correct');
-      if (user === public_id) {
-        old_score = computeScore(users[public_id]);
+      if (user === me.id) {
+        old_score = computeScore(users[me.id]);
         checkScoreUpdate = function() {
           var magic_multiple, magic_number, updated_score;
-          updated_score = computeScore(users[public_id]);
+          updated_score = computeScore(users[me.id]);
           if (updated_score === old_score) {
             setTimeout(checkScoreUpdate, 100);
             return;
@@ -2191,8 +2271,8 @@ guessAnnotation = function(_arg) {
     } else {
       decision = "wrong";
       ruling.addClass('label-warning').text('Wrong');
-      if (user === public_id && public_id in users) {
-        old_score = computeScore(users[public_id]);
+      if (user === me.id && me.id in users) {
+        old_score = computeScore(users[me.id]);
         if (old_score < -100) {
           createAlert(ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.');
         }
@@ -2282,14 +2362,14 @@ logAnnotation = function(text) {
   return addAnnotation(line);
 };
 
-var actionMode, next, rate_limit_ceiling, rate_limit_check, recent_actions, setActionMode, skip;
+var actionMode, mobileLayout, next, rate_limit_ceiling, rate_limit_check, recent_actions, setActionMode, skip;
 
 $('#username').keyup(function(e) {
   if (e.keyCode === 13) {
     $(this).blur();
   }
   if ($(this).val().length > 0) {
-    return sock.emit('rename', $(this).val());
+    return me.set_name($(this).val());
   }
 });
 
@@ -2371,12 +2451,12 @@ skip = function() {
   if (rate_limit_check()) {
     return;
   }
-  return sock.emit('skip', 'yay');
+  return me.skip();
 };
 
 next = function() {
   removeSplash();
-  return sock.emit('next', 'yay');
+  return me.next();
 };
 
 $('.skipbtn').click(skip);
@@ -2394,7 +2474,7 @@ $('.buzzbtn').click(function() {
   setActionMode('guess');
   $('.guess_input').val('').addClass('disabled').focus();
   submit_time = +(new Date);
-  return sock.emit('buzz', 'yay', function(status) {
+  return me.buzz('yay', function(status) {
     if (status === 'http://www.whosawesome.com/') {
       $('.guess_input').removeClass('disabled');
       if ($('.sounds')[0].checked) {
@@ -2415,17 +2495,15 @@ $('.buzzbtn').click(function() {
 });
 
 $('.score-reset').click(function() {
-  return sock.emit('resetscore', 'yay');
+  return me.reset_score();
 });
 
 $('.pausebtn').click(function() {
-  return removeSplash(function() {
-    if (!!sync.time_freeze) {
-      return sock.emit('unpause', 'yay');
-    } else {
-      return sock.emit('pause', 'yay');
-    }
-  });
+  if (!!sync.time_freeze) {
+    return me.unpause();
+  } else {
+    return me.pause();
+  }
 });
 
 $('.chat_input').keydown(function(e) {
@@ -2450,13 +2528,13 @@ $('.chat_input').keyup(function(e) {
     return;
   }
   if ($('.livechat')[0].checked) {
-    return sock.emit('chat', {
+    return me.chat({
       text: $('.chat_input').val(),
       session: $('.chat_input').data('input_session'),
       done: false
     });
   } else if ($('.chat_input').data('sent_typing') !== $('.chat_input').data('input_session')) {
-    sock.emit('chat', {
+    me.chat({
       text: '(typing)',
       session: $('.chat_input').data('input_session'),
       done: false
@@ -2467,7 +2545,7 @@ $('.chat_input').keyup(function(e) {
 
 $('.chat_form').submit(function(e) {
   var time_delta;
-  sock.emit('chat', {
+  me.chat({
     text: $('.chat_input').val(),
     session: $('.chat_input').data('input_session'),
     done: true
@@ -2484,14 +2562,14 @@ $('.guess_input').keyup(function(e) {
   if (e.keyCode === 13) {
     return;
   }
-  return sock.emit('guess', {
+  return me.guess({
     text: $('.guess_input').val(),
     done: false
   });
 });
 
 $('.guess_form').submit(function(e) {
-  sock.emit('guess', {
+  me.guess({
     text: $('.guess_input').val(),
     done: true
   });
@@ -2503,14 +2581,14 @@ $('.prompt_input').keyup(function(e) {
   if (e.keyCode === 13) {
     return;
   }
-  return sock.emit('guess', {
+  return me.guess({
     text: $('.prompt_input').val(),
     done: false
   });
 });
 
 $('.prompt_form').submit(function(e) {
-  sock.emit('guess', {
+  me.guess({
     text: $('.prompt_input').val(),
     done: true
   });
@@ -2546,7 +2624,7 @@ $('body').keydown(function(e) {
     e.preventDefault();
     return $('.chatbtn').click();
   } else if ((_ref4 = e.keyCode) === 70) {
-    return sock.emit('finish', 'yay');
+    return me.finish();
   } else if ((_ref5 = e.keyCode) === 66) {
     return $('.bundle.active .bookmark').click();
   }
@@ -2557,7 +2635,7 @@ $('.speed').change(function() {
   $('.speed').not(this).val($(this).val());
   $('.speed').data("last_update", +(new Date));
   rate = 1000 * 60 / 5 / Math.round($(this).val());
-  return sock.emit('speed', rate);
+  return me.set_speed(rate);
 });
 
 $('.categories').change(function() {
@@ -2567,18 +2645,18 @@ $('.categories').change(function() {
   } else {
     $('.custom-category').slideUp();
   }
-  return sock.emit('category', $('.categories').val());
+  return me.set_category($('.categories').val());
 });
 
 $('.difficulties').change(function() {
-  return sock.emit('difficulty', $('.difficulties').val());
+  return me.set_difficulty($('.difficulties').val());
 });
 
 $('.teams').change(function() {
   if ($('.teams').val() === 'create') {
-    return sock.emit('team', prompt('Enter Team Name') || '');
+    return me.set_team(prompt('Enter Team Name') || '');
   } else {
-    return sock.emit('team', $('.teams').val());
+    return me.set_team($('.teams').val());
   }
 });
 
@@ -2594,11 +2672,64 @@ $('.sounds').change(function() {
   return sock.emit('sounds', $('.sounds')[0].checked);
 });
 
-"QuizRoom 2 Design:\nroom = new QuizRoom(name)\nusers = new User()";
+mobileLayout = function() {
+  if (window.matchMedia) {
+    return matchMedia('(max-width: 768px)').matches;
+  } else {
+    return false;
+  }
+};
 
-var QuizPlayer, QuizRoom, default_distribution,
-  __slice = [].slice,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+if (!Modernizr.touch && !mobileLayout()) {
+  $('.actionbar button').tooltip();
+  $('.actionbar button').click(function() {
+    return $('.actionbar button').tooltip('hide');
+  });
+  $('#history, .settings').tooltip({
+    selector: "[rel=tooltip]",
+    placement: function() {
+      if (mobileLayout()) {
+        return "error";
+      } else {
+        return "left";
+      }
+    }
+  });
+}
+
+$('body').click(function(e) {
+  if ($(e.target).parents('.leaderboard, .popover').length === 0) {
+    return $('.popover').remove();
+  }
+});
+
+$(".leaderboard tbody tr").live('click', function(e) {
+  var enabled, user, _ref;
+  user = $(this).data('entity');
+  enabled = (_ref = $(this).data('popover')) != null ? _ref.enabled : void 0;
+  $('.leaderboard tbody tr').popover('destroy');
+  if (!enabled) {
+    $(this).popover({
+      placement: mobileLayout() ? "top" : "left",
+      trigger: "manual",
+      title: "" + user.name + "'s Stats",
+      content: function() {
+        return createStatSheet(user, true);
+      }
+    });
+    return $(this).popover('toggle');
+  }
+});
+
+if (Modernizr.touch) {
+  $('.show-keyboard').hide();
+  $('.show-touch').show();
+} else {
+  $('.show-keyboard').show();
+  $('.show-touch').hide();
+}
+
+var QuizPlayer;
 
 QuizPlayer = (function() {
 
@@ -2770,6 +2901,25 @@ QuizPlayer = (function() {
 
 })();
 
+if (typeof exports !== "undefined" && exports !== null) {
+  exports.QuizPlayer = QuizPlayer;
+}
+
+var QuizRoom, default_distribution, error_question,
+  __slice = [].slice,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+error_question = {
+  'category': '$0x40000',
+  'difficulty': 'segmentation fault',
+  'num': 'NaN',
+  'tournament': 'Guru Meditation Cup',
+  'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
+  'answer': 'error',
+  'year': 1970,
+  'round': '0x080483ba'
+};
+
 default_distribution = {
   "Fine Arts": 2,
   "Literature": 4,
@@ -2790,30 +2940,26 @@ QuizRoom = (function() {
     this.type = "qb";
     this.answer_duration = 1000 * 5;
     this.time_offset = 0;
+    this.sync_offset = 0;
     this.rate = 1000 * 60 / 5 / 200;
     this.__timeout = -1;
     this.distribution = default_distribution;
     this.freeze();
-    this.new_question();
     this.users = {};
     this.difficulty = '';
     this.category = '';
     this.max_buzz = null;
   }
 
-  QuizRoom.prototype.get_difficulties = function() {
-    return this.emit('log', {
-      verb: 'NOT IMPLEMENTED (not async)'
+  QuizRoom.prototype.get_parameters = function(type, difficulty, cb) {
+    this.emit('log', {
+      verb: 'NOT IMPLEMENTED (async get params)'
     });
-  };
-
-  QuizRoom.prototype.get_categories = function() {
-    return this.emit('log', {
-      verb: 'NOT IMPLEMENTED (not async)'
-    });
+    return cb(['HS', 'MS'], ['Science', 'Trash']);
   };
 
   QuizRoom.prototype.get_question = function(cb) {
+    cb(error_question);
     return this.emit('log', {
       verb: 'NOT IMPLEMENTED (async) get question'
     });
@@ -2878,7 +3024,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.serverTime = function() {
-    return +(new Date);
+    return new Date - this.sync_offset;
   };
 
   QuizRoom.prototype.freeze = function() {
@@ -3015,9 +3161,7 @@ QuizRoom = (function() {
 
   QuizRoom.prototype.next = function() {
     if (this.time() > this.end_time - this.answer_duration && !this.generating_question) {
-      if (!this.attempt) {
-        return this.new_question();
-      }
+      return this.skip();
     }
   };
 
@@ -3198,10 +3342,10 @@ QuizRoom = (function() {
     data = {
       real_time: +(new Date)
     };
-    blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "__timeout", "generating_question", "distribution"];
+    blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"];
     user_blacklist = ["sockets"];
     for (attr in this) {
-      if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0) {
+      if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0 && attr[0] !== "_") {
         data[attr] = this[attr];
       }
     }
@@ -3232,37 +3376,15 @@ QuizRoom = (function() {
       data.info = this.info;
     }
     if (level >= 3) {
-      data.difficulties = this.get_difficulties(this.type);
-      data.categories = this.get_categories(this.type, this.difficulty);
       data.distribution = this.distribution;
+      return this.get_parameters(this.type, this.difficulty, function(difficulties, categories) {
+        data.difficulties = difficulties;
+        data.categories = categories;
+        return this.emit('sync', data);
+      });
+    } else {
+      return this.emit('sync', data);
     }
-    return this.emit('sync', data);
-  };
-
-  QuizRoom.prototype.journal_backup = function() {
-    var attr, data, field, id, settings, user, user_blacklist, _i, _len;
-    data = {};
-    user_blacklist = ["sockets"];
-    data.users = (function() {
-      var _results;
-      _results = [];
-      for (id in this.users) {
-        user = {};
-        for (attr in this.users[id]) {
-          if (__indexOf.call(user_blacklist, attr) < 0) {
-            user[attr] = this.users[id][attr];
-          }
-        }
-        _results.push(user);
-      }
-      return _results;
-    }).call(this);
-    settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"];
-    for (_i = 0, _len = settings.length; _i < _len; _i++) {
-      field = settings[_i];
-      data[field] = this[field];
-    }
-    return data;
   };
 
   return QuizRoom;
@@ -3271,10 +3393,6 @@ QuizRoom = (function() {
 
 if (typeof exports !== "undefined" && exports !== null) {
   exports.QuizRoom = QuizRoom;
-}
-
-if (typeof exports !== "undefined" && exports !== null) {
-  exports.QuizPlayer = QuizPlayer;
 }
 
 var generateName, generatePage;
@@ -4228,7 +4346,9 @@ formatTime = function(timestamp) {
   return (date.getHours() % 12) + ':' + ('0' + date.getMinutes()).substr(-2, 2) + (date.getHours() > 12 ? "pm" : "am");
 };
 
-var RemoteQuizPlayer, avg, compute_sync_offset, connected, latency_log, me, serverTime, sock, stdev, sum, sync, sync_offsets, synchronize, testLatency, time,
+var Avg, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, compute_sync_offset, connected, latency_log, listen, me, room, serverTime, sock, sync, sync_offsets, synchronize, testLatency, time, users,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 sync = {};
@@ -4249,67 +4369,73 @@ connected = function() {
   return true;
 };
 
-avg = function(list) {
-  return sum(list) / list.length;
-};
-
-sum = function(list) {
-  var item, s, _i, _len;
-  s = 0;
-  for (_i = 0, _len = list.length; _i < _len; _i++) {
-    item = list[_i];
-    s += item;
-  }
-  return s;
-};
-
-stdev = function(list) {
-  var item, mu;
-  mu = avg(list);
-  return Math.sqrt(avg((function() {
-    var _i, _len, _results;
-    _results = [];
-    for (_i = 0, _len = list.length; _i < _len; _i++) {
-      item = list[_i];
-      _results.push((item - mu) * (item - mu));
-    }
-    return _results;
-  })()));
-};
-
 sock = io.connect();
 
-RemoteQuizPlayer = (function() {
+QuizPlayerSlave = (function(_super) {
 
-  RemoteQuizPlayer.prototype.emit_action = function(name) {
+  __extends(QuizPlayerSlave, _super);
+
+  QuizPlayerSlave.prototype.envelop_action = function(name) {
+    var master_action;
+    master_action = this[name];
     return this[name] = function(data, callback) {
-      return sock.emit(name, data, callback);
+      if (connected()) {
+        return sock.emit(name, data, callback);
+      } else {
+        return master_action.call(this, data, callback);
+      }
     };
   };
 
-  function RemoteQuizPlayer() {
-    var attr, blacklist;
-    blacklist = [];
-    for (attr in QuizPlayer.prototype) {
-      if (__indexOf.call(blacklist, attr) < 0) {
-        this.emit_action(attr);
+  function QuizPlayerSlave(room, id) {
+    var blacklist, method, name;
+    QuizPlayerSlave.__super__.constructor.call(this, room, id);
+    blacklist = ['envelop_action'];
+    for (name in this) {
+      method = this[name];
+      if (typeof method === 'function' && __indexOf.call(blacklist, name) < 0) {
+        this.envelop_action(name);
       }
     }
   }
 
-  return RemoteQuizPlayer;
+  return QuizPlayerSlave;
 
-})();
+})(QuizPlayer);
 
-me = new RemoteQuizPlayer();
+QuizRoomSlave = (function(_super) {
 
-sock.on('echo', function(data, fn) {
-  return fn('alive');
+  __extends(QuizRoomSlave, _super);
+
+  QuizRoomSlave.prototype.emit = function(name, data) {
+    return this.__listeners[name](data);
+  };
+
+  function QuizRoomSlave(name) {
+    QuizRoomSlave.__super__.constructor.call(this, name);
+    this.__listeners = {};
+  }
+
+  return QuizRoomSlave;
+
+})(QuizRoom);
+
+room = new QuizRoomSlave();
+
+me = new QuizPlayerSlave(room, 'whatevs');
+
+sock.on('connect', function() {
+  $('.actionbar button').disable(false);
+  $('.timer').removeClass('disabled');
+  $('.disconnect-notice').slideUp();
+  return sock.emit('disco', {
+    old_socket: localStorage.old_socket
+  });
 });
 
 sock.on('disconnect', function() {
   var line, _ref;
-  if (((_ref = sync.attempt) != null ? _ref.user : void 0) !== public_id) {
+  if (((_ref = sync.attempt) != null ? _ref.user : void 0) !== me.id) {
     sync.attempt = null;
   }
   line = $('<div>').addClass('well');
@@ -4319,40 +4445,46 @@ sock.on('disconnect', function() {
   return room.emit('init_offline', 'yay');
 });
 
-sock.on('application_update', function() {
+listen = function(name, fn) {
+  sock.on(name, fn);
+  return room.__listeners[name] = fn;
+};
+
+listen('echo', function(data, fn) {
+  return fn('alive');
+});
+
+listen('application_update', function() {
   if (typeof applicationCache !== "undefined" && applicationCache !== null) {
     return applicationCache.update();
   }
 });
 
-sock.on('application_force_update', function() {
+listen('application_force_update', function() {
   return $('#update').slideDown();
 });
 
-sock.on('redirect', function(url) {
+listen('redirect', function(url) {
   return window.location = url;
 });
 
-sock.on('alert', function(text) {
+listen('alert', function(text) {
   return window.alert(text);
 });
 
-sock.on('chat', function(data) {
+listen('chat', function(data) {
   return chatAnnotation(data);
 });
 
-sock.on('log', function(data) {
+listen('log', function(data) {
   return verbAnnotation(data);
 });
 
-sock.on('sync', function(data) {
+listen('sync', function(data) {
   return synchronize(data);
 });
 
-sock.on('joined', function(data) {
-  var public_id, public_name;
-  public_name = data.name;
-  public_id = data.id;
+listen('joined', function(data) {
   $('#username').val(public_name);
   return $('#username').disable(false);
 });
@@ -4362,6 +4494,8 @@ sync = {};
 sync_offsets = [];
 
 latency_log = [];
+
+users = {};
 
 synchronize = function(data) {
   var attr, user, val, _i, _len, _ref;
@@ -4392,10 +4526,38 @@ synchronize = function(data) {
   }
 };
 
+Avg = function(list) {
+  return Sum(list) / list.length;
+};
+
+Sum = function(list) {
+  var item, s, _i, _len;
+  s = 0;
+  for (_i = 0, _len = list.length; _i < _len; _i++) {
+    item = list[_i];
+    s += item;
+  }
+  return s;
+};
+
+StDev = function(list) {
+  var item, mu;
+  mu = Avg(list);
+  return Math.sqrt(Avg((function() {
+    var _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = list.length; _i < _len; _i++) {
+      item = list[_i];
+      _results.push((item - mu) * (item - mu));
+    }
+    return _results;
+  })()));
+};
+
 compute_sync_offset = function() {
   var below, item, sync_offset, thresh;
   sync_offsets = sync_offsets.slice(-20);
-  thresh = avg(sync_offsets);
+  thresh = Avg(sync_offsets);
   below = (function() {
     var _i, _len, _results;
     _results = [];
@@ -4407,8 +4569,8 @@ compute_sync_offset = function() {
     }
     return _results;
   })();
-  sync_offset = avg(below);
-  thresh = avg(below);
+  sync_offset = Avg(below);
+  thresh = Avg(below);
   below = (function() {
     var _i, _len, _results;
     _results = [];
@@ -4420,8 +4582,8 @@ compute_sync_offset = function() {
     }
     return _results;
   })();
-  sync_offset = avg(below);
-  return $('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + '/' + stdev(sync_offsets).toFixed(1));
+  sync_offset = Avg(below);
+  return $('#sync_offset').text(sync_offset.toFixed(1) + '/' + StDev(below).toFixed(1) + '/' + StDev(sync_offsets).toFixed(1));
 };
 
 testLatency = function() {
@@ -4446,7 +4608,7 @@ testLatency = function() {
       latency_log.push(CSC2);
       compute_sync_offset();
       if (latency_log.length > 0) {
-        return $('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + (" (" + latency_log.length + ")"));
+        return $('#latency').text(Avg(latency_log).toFixed(1) + "/" + StDev(latency_log).toFixed(1) + (" (" + latency_log.length + ")"));
       }
     });
   });

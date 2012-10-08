@@ -1,156 +1,21 @@
-"""
-	QuizRoom 2 Design:
-	room = new QuizRoom(name)
-	users = new User()
-"""
-
-
-class QuizPlayer
-	constructor: (room, id) ->
-		@id = id
-		@room = room
-		@guesses = 0
-		@interrupts = 0
-		@early = 0
-		@seen = 0
-		@time_spent = 0
-		@last_action = +new Date
-		@times_buzzed = 0
-		@show_typing = true
-		@team = 0
-		@banned = false
-		@sounds = false
-
-
-	touch: ->
-		@last_action = +new Date
-
-	verb: (action) ->
-		@room.emit 'log', {user: @id, verb: action}
-
-	# disco: (data) ->
-	# 	if data.old_socket and io.sockets.socket(data.old_socket)
-	# 		io.sockets.socket(data.old_socket).disconnect()
-	
-	echo: (data, callback) ->
-		callback +new Date
-	
-	set_name: (name) ->
-		@name = name
-		@touch()
-		@room.sync(1)
-
-	skip: ->
-		unless @room.attempt
-			@room.skip()
-			@verb 'skipped a question'
-
-	finish: ->
-		unless @room.attempt
-			@room.finish()
-			@room.sync(1)
-
-	set_distribution: (data) ->
-		for cat, count of (data || default_distribution)
-			if @room.distribution[cat] == 0 and count > 0
-				@verb 'enabled category ' + cat
-			if @room.distribution[cat] > 0 and count == 0
-				@verb 'disabled category ' + cat
-		@room.distribution = data || default_distribution
-		@room.sync(3)
-
-	next: ->
-		@room.next()
-
-	pause: ->
-		@room.pause()
-		@room.sync()
-
-	unpause: ->
-		@room.unpause()
-		@room.sync()
-
-	set_difficulty: (data) ->
-		@verb 'is doing something with difficulty'
-		@room.difficulty = data
-		@room.sync()
-		# category = (if @category is 'custom' then @distribution else @category)
-		# remote.count_questions room.type, room.difficulty, category, (count) ->
-		# 	room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
-		# 	room.sync(3)
-
-	set_category: (data) ->
-		@verb 'changed the category to something which needs to be changed'
-		@room.category = data
-		@room.sync()
-		# if !data
-		# 	room.distribution = default_distribution # reset to the default question distribution 
-		# log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
-		# if data is "custom"
-		# 	category = (if @category is 'custom' then @distribution else @category)
-		# 	remote.count_questions room.type, room.difficulty, category, (count) ->
-		# 		room.emit 'log', {user: publicID, verb: 'enabled a custom category distribution' + ' (' + count + ' questions)'}
-		# 	room.sync(3)
-		# else
-		# 	remote.count_questions room.type, room.difficulty, room.category, (count) ->
-		# 		room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
-		
-	set_max_buzz: (data) ->
-		@room.max_buzz = data
-		@room.sync()
-
-	set_speed: (speed) ->
-		return unless speed
-		@room.set_speed speed
-		@room.sync()
-
-	set_team: (name) ->
-		if name
-			@verb "switched to team #{name}"
-		else
-			@verb "is playing as an individual"
-		@team = name
-		@room.sync(2)
-
-	set_show_typing: (data) ->
-		@show_typing = data
-		@room.sync(2)
-
-	set_sounds: (data) ->
-		@sounds = data
-		@room.sync(2)
-
-	buzz: (data, fn) ->
-		@room.buzz @id, fn
-
-	guess: (data) ->
-		@room.guess @id, data
-
-	chat: ({text, done, session}) ->
-		@touch()
-		@room.emit 'chat', {text, session, user: @id, done, time: +new Date}
-
-	reset_score: ->
-		@seen = @interrupts = @guesses = @correct = @early = 0
-		@room.sync(1)
-
-	report_question: ->
-		@verb "did something unimplemented (report question)"
-
-	report_answer: ->
-		@verb "did something unimplemented (report answer)"
-
-	check_public: ->
-		@verb "did something unimplemented (check public)"
-
-
-
 # i really wanted to have it calculate the distribution of things dynamically and generate this
 # but the problem is that I don't have a system which is based on absolute percentages, so the
 # problem is that you can't quite change absolute percentages or something
 # i mean, technically it's possible to do the computation and it'd be pretty cool to be
 # able to do that, and actually it's fairly trivial, but it's more effort than I'm currently
 # willing to exert
+
+
+error_question = {
+	'category': '$0x40000',
+	'difficulty': 'segmentation fault',
+	'num': 'NaN',
+	'tournament': 'Guru Meditation Cup',
+	'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
+	'answer': 'error',
+	'year': 1970,
+	'round': '0x080483ba'
+}
 
 default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
@@ -163,24 +28,28 @@ class QuizRoom
 		@type = "qb"
 		@answer_duration = 1000 * 5
 		@time_offset = 0
+		@sync_offset = 0 # always zero for master installations
+
 		@rate = 1000 * 60 / 5 / 200
 		@__timeout = -1
 		@distribution = default_distribution
 		
 		@freeze()
-		@new_question()
+		# @new_question()
 		@users = {}
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null
 
-	get_difficulties: ->
-		@emit 'log', {verb: 'NOT IMPLEMENTED (not async)'}
+	get_parameters: (type, difficulty, cb) ->
+		#  async version of get_difficulties and get_categories
+		@emit 'log', {verb: 'NOT IMPLEMENTED (async get params)'}
+		# cb(difficulties, categories)
+		cb ['HS', 'MS'], ['Science', 'Trash']
 
-	get_categories: ->
-		@emit 'log', {verb: 'NOT IMPLEMENTED (not async)'}
 
 	get_question: (cb) ->
+		cb error_question
 		@emit 'log', {verb: 'NOT IMPLEMENTED (async) get question'}
 		# category = (if @category is 'custom' then @distribution else @category)
 		# remote.get_question @type, @difficulty, category, (question) =>
@@ -251,11 +120,9 @@ class QuizRoom
 			user.sockets = (sock for sock in user.sockets when sock isnt socket)
 		# journal @name
 
-	time: ->
-		return if @time_freeze then @time_freeze else @serverTime() - @time_offset
+	time: -> if @time_freeze then @time_freeze else @serverTime() - @time_offset
 
-	serverTime: ->
-		return +new Date
+	serverTime: -> new Date - @sync_offset
 
 	freeze: ->
 		@time_freeze = @time()
@@ -378,8 +245,7 @@ class QuizRoom
 		@new_question() unless @attempt
 
 	next: ->
-		if @time() > @end_time - @answer_duration and !@generating_question
-			@new_question() unless @attempt
+		@skip() if @time() > @end_time - @answer_duration and !@generating_question
 
 	finish: ->
 		@set_time @end_time
@@ -545,9 +411,9 @@ class QuizRoom
 		# 		delete @users[id][action] for id of @users
 		# 		this[action]()
 		
-		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "__timeout", "generating_question", "distribution"]
+		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"]
 		user_blacklist = ["sockets"]
-		for attr of this when typeof this[attr] != 'function' and attr not in blacklist
+		for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
 			data[attr] = this[attr]
 
 		if level >= 1
@@ -565,28 +431,31 @@ class QuizRoom
 			data.info = @info
 
 		if level >= 3
-			data.difficulties = @get_difficulties(@type)
-			data.categories = @get_categories(@type, @difficulty)
 			data.distribution = @distribution
-			
-		@emit 'sync', data
+
+			# async stuff
+			@get_parameters @type, @difficulty, (difficulties, categories) ->
+				data.difficulties = difficulties
+				data.categories = categories
+				@emit 'sync', data
+		else
+			@emit 'sync', data
 	
-	journal_backup: ->
-		# this is like a simplified sync
-		data = {}
-		# user data!
-		user_blacklist = ["sockets"]
-		data.users = for id of @users
-			user = {}
-			for attr of @users[id] when attr not in user_blacklist
-				user[attr] = @users[id][attr]
-			user
-		# global room settings
-		settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"]
-		for field in settings
-			data[field] = @[field]
-		# actually save stuff
-		return data
+	# journal_backup: ->
+	# 	# this is like a simplified sync
+	# 	data = {}
+	# 	# user data!
+	# 	user_blacklist = ["sockets"]
+	# 	data.users = for id of @users
+	# 		user = {}
+	# 		for attr of @users[id] when attr not in user_blacklist
+	# 			user[attr] = @users[id][attr]
+	# 		user
+	# 	# global room settings
+	# 	settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"]
+	# 	for field in settings
+	# 		data[field] = @[field]
+	# 	# actually save stuff
+	# 	return data
 
 exports.QuizRoom = QuizRoom if exports?
-exports.QuizPlayer = QuizPlayer if exports?

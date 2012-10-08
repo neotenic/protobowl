@@ -3,7 +3,7 @@ $('#username').keyup (e) ->
 		$(this).blur()
 
 	if $(this).val().length > 0
-		sock.emit 'rename', $(this).val()
+		me.set_name $(this).val()
 		
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
@@ -61,11 +61,13 @@ rate_limit_check = ->
 skip = ->
 	removeSplash()
 	return if rate_limit_check()
-	sock.emit 'skip', 'yay'
+	# sock.emit 'skip', 'yay'
+	me.skip()
 
 next = ->
 	removeSplash()
-	sock.emit 'next', 'yay'
+	# sock.emit 'next', 'yay'
+	me.next()
 
 $('.skipbtn').click skip
 
@@ -90,7 +92,7 @@ $('.buzzbtn').click ->
 	# bring up the keyboard, so the solution here is to first open it up
 	# and ask nicely for forgiveness otherwise
 	submit_time = +new Date
-	sock.emit 'buzz', 'yay', (status) ->
+	me.buzz 'yay', (status) ->
 		if status is 'http://www.whosawesome.com/'
 			$('.guess_input').removeClass('disabled')
 			if $('.sounds')[0].checked
@@ -103,14 +105,17 @@ $('.buzzbtn').click ->
 			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Rejected', new Date - submit_time] if window._gaq
 
 $('.score-reset').click ->
-	sock.emit 'resetscore', 'yay'
+	# sock.emit 'resetscore', 'yay'
+	me.reset_score()
 
 $('.pausebtn').click ->
-	removeSplash ->
-		if !!sync.time_freeze
-			sock.emit 'unpause', 'yay'
-		else
-			sock.emit 'pause', 'yay'
+	# removeSplash ->
+	if !!sync.time_freeze
+		# sock.emit 'unpause', 'yay'
+		me.unpause()
+	else
+		# sock.emit 'pause', 'yay'
+		me.pause()
 
 
 $('.chat_input').keydown (e) ->
@@ -130,13 +135,13 @@ $('input').keydown (e) ->
 $('.chat_input').keyup (e) ->
 	return if e.keyCode is 13
 	if $('.livechat')[0].checked
-		sock.emit 'chat', {
+		me.chat {
 			text: $('.chat_input').val(), 
 			session: $('.chat_input').data('input_session'), 
 			done: false
 		}
 	else if $('.chat_input').data('sent_typing') isnt $('.chat_input').data('input_session')
-		sock.emit 'chat', {
+		me.chat {
 			text: '(typing)', 
 			session: $('.chat_input').data('input_session'), 
 			done: false
@@ -145,7 +150,7 @@ $('.chat_input').keyup (e) ->
 
 
 $('.chat_form').submit (e) ->
-	sock.emit 'chat', {
+	me.chat {
 		text: $('.chat_input').val(), 
 		session: $('.chat_input').data('input_session'), 
 		done: true
@@ -157,14 +162,14 @@ $('.chat_form').submit (e) ->
 
 $('.guess_input').keyup (e) ->
 	return if e.keyCode is 13
-	sock.emit 'guess', {
+	me.guess {
 		text: $('.guess_input').val(), 
 		done: false
 	}
 
 	
 $('.guess_form').submit (e) ->
-	sock.emit 'guess', {
+	me.guess {
 		text: $('.guess_input').val(), 
 		done: true
 	}
@@ -173,14 +178,14 @@ $('.guess_form').submit (e) ->
 
 $('.prompt_input').keyup (e) ->
 	return if e.keyCode is 13
-	sock.emit 'guess', {
+	me.guess {
 		text: $('.prompt_input').val(), 
 		done: false
 	}
 
 	
 $('.prompt_form').submit (e) ->
-	sock.emit 'guess', {
+	me.guess {
 		text: $('.prompt_input').val(), 
 		done: true
 	}
@@ -213,7 +218,8 @@ $('body').keydown (e) ->
 		e.preventDefault()
 		$('.chatbtn').click()
 	else if e.keyCode in [70] # F
-		sock.emit 'finish', 'yay'
+		# sock.emit 'finish', 'yay'
+		me.finish()
 	else if e.keyCode in [66]
 		$('.bundle.active .bookmark').click()
 
@@ -224,7 +230,8 @@ $('.speed').change ->
 	$('.speed').not(this).val($(this).val())
 	$('.speed').data("last_update", +new Date)
 	rate = 1000 * 60 / 5 / Math.round($(this).val())
-	sock.emit 'speed', rate
+	# sock.emit 'speed', rate
+	me.set_speed rate
 	# console.log rate
 		
 $('.categories').change ->
@@ -233,16 +240,16 @@ $('.categories').change ->
 		$('.custom-category').slideDown()
 	else
 		$('.custom-category').slideUp()
-	sock.emit 'category', $('.categories').val()
+	me.set_category $('.categories').val()
 
 $('.difficulties').change ->
-	sock.emit 'difficulty', $('.difficulties').val()
+	me.set_difficulty $('.difficulties').val()
 
 $('.teams').change ->
 	if $('.teams').val() is 'create'
-		sock.emit 'team', prompt('Enter Team Name') || ''
+		me.set_team prompt('Enter Team Name') || ''
 	else
-		sock.emit 'team', $('.teams').val()
+		me.set_team $('.teams').val()
 
 $('.multibuzz').change ->
 	sock.emit 'max_buzz', (if $('.multibuzz')[0].checked then null else 1)
@@ -254,4 +261,54 @@ $('.sounds').change ->
 	sock.emit 'sounds', $('.sounds')[0].checked
 
 
-	
+mobileLayout = -> 
+	if window.matchMedia
+		matchMedia('(max-width: 768px)').matches
+	else
+		return false
+
+#display a tooltip for keyboard shortcuts on keyboard machines
+if !Modernizr.touch and !mobileLayout()
+	$('.actionbar button').tooltip()
+	# hide crap when clicked upon
+	$('.actionbar button').click -> 
+		$('.actionbar button').tooltip 'hide'
+
+	$('#history, .settings').tooltip {
+		selector: "[rel=tooltip]", 
+		placement: -> 
+			if mobileLayout() then "error" else "left"
+	}
+
+$('body').click (e) ->
+	if $(e.target).parents('.leaderboard, .popover').length is 0
+		$('.popover').remove()
+
+$(".leaderboard tbody tr").live 'click', (e) ->
+	# console.log this
+	# tmp = $('.popover')
+	# allow time delay so that things can be faded out before you kill them
+	# setTimeout ->
+	# 	tmp.remove()
+	# , 1000
+	user = $(this).data('entity')
+	enabled = $(this).data('popover')?.enabled
+	# console.log $('.leaderboard tbody tr').not(this).popover 'toggle'
+	$('.leaderboard tbody tr').popover 'destroy'
+	unless enabled
+		$(this).popover {
+			placement: if mobileLayout() then "top" else "left"
+			trigger: "manual",
+			title: "#{user.name}'s Stats",
+			content: ->
+				createStatSheet(user, true)
+		}
+		$(this).popover 'toggle'
+
+
+if Modernizr.touch
+	$('.show-keyboard').hide()
+	$('.show-touch').show()
+else
+	$('.show-keyboard').show()
+	$('.show-touch').hide()

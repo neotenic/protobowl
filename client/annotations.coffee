@@ -1,3 +1,32 @@
+userSpan = (user, global) ->
+	prefix = ''
+
+	if me.id and me.id.slice(0, 2) == "__"
+		prefix = (users[user]?.room || 'unknown') + '/'
+	text = ''
+
+	if user.slice(0, 2) == "__"
+		text = prefix + user.slice(2)
+	else
+		text = prefix + (users[user]?.name || "[name missing]")
+	
+	hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
+	
+	if global
+		scope = $(".user-#{user}:not(.#{hash})")
+		# get rid of the old hashes
+		for el in scope
+			for c in $(el).attr('class').split('\s') when c.slice(0, 8) is 'userhash'
+				$(el).removeClass(c)
+			
+	else
+		scope = $('<span>')
+	scope
+		.addClass(hash)
+		.addClass('user-'+user)
+		.addClass('username')
+		.text(text)
+		
 addAnnotation = (el, name = sync?.name) ->
 	# destroy the tooltip
 	$('.bundle .ruling').tooltip('destroy')
@@ -88,10 +117,10 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else if correct
 			decision = "correct"
 			ruling.addClass('label-success').text('Correct')
-			if user is public_id # if the person who got it right was me
-				old_score = computeScore(users[public_id])
+			if user is me.id # if the person who got it right was me
+				old_score = computeScore(users[me.id])
 				checkScoreUpdate = ->
-					updated_score = computeScore(users[public_id])
+					updated_score = computeScore(users[me.id])
 					if updated_score is old_score
 						setTimeout checkScoreUpdate, 100
 						return
@@ -108,8 +137,8 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
-			if user is public_id and public_id of users
-				old_score = computeScore(users[public_id])
+			if user is me.id and me.id of users
+				old_score = computeScore(users[me.id])
 				if old_score < -100 # just a little way of saying "you suck"
 					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.'
 

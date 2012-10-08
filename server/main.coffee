@@ -35,7 +35,7 @@ snockets = new Snockets()
 app.use (req, res, next) ->
 	if req.url is '/app.js'
 		snockets.getConcatenation 'client/app.coffee', (err, js) ->
-			fs.writeFile 'assets/app.js', js, 'utf8', ->
+			fs.writeFile 'assets/app.js', err || js, 'utf8', ->
 				next()		
 	# else if req.url is '/protobowl.css'
 	# 	parser = new(less.Parser)({
@@ -82,7 +82,8 @@ app.use (req, res, next) ->
 url = require 'url'
 parseCookie = require('express/node_modules/connect').utils.parseCookie
 rooms = {}
-{QuizRoom, QuizPlayer} = require '../shared/room'
+{QuizRoom} = require '../shared/room'
+{QuizPlayer} = require '../shared/player'
 names = require '../shared/names'
 uptime_begin = +new Date
 
@@ -98,13 +99,13 @@ class SocketQuizRoom extends QuizRoom
 		remote.get_question @type, @difficulty, category, (question) =>
 			cb(question || error_question)
 
-	get_difficulties: (type) -> remote.get_difficulties(type)
-	get_categories: (type, difficulty) -> remote.get_categories(type, difficulty)
+	get_parameters: (type, difficulty, callback) -> remote.get_parameters(type, difficulty, callback)
 
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
 		super(room, id)
 		@sockets = []
+
 
 	add_socket: (sock) ->
 		@sockets.push sock.id unless sock.id in @sockets
@@ -112,7 +113,8 @@ class SocketQuizPlayer extends QuizPlayer
 		sock.emit 'log', 'moo'
 		
 		for attr of this when typeof this[attr] is 'function' and attr not in blacklist
-			sock.on attr, this[attr]
+			# wow this is a pretty mesed up line
+			do (attr) => sock.on attr, (args...) => this[attr](args...)
 
 	emit: (name, data) ->
 		for sock in @sockets
@@ -198,6 +200,5 @@ app.get '/:channel', (req, res) ->
 	res.render 'room.jade', { name }
 
 port = process.env.PORT || 5000
-remote.initialize_remote ->
-	app.listen port, ->
-		console.log "listening on port", port
+app.listen port, ->
+	console.log "listening on port", port

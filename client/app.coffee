@@ -1,6 +1,6 @@
 #= require modernizr.js
 #= require bootstrap.js
-#= require fireworks.coffee
+#= require plugins.coffee
 #= require annotations.coffee
 #= require buttons.coffee
 #= require offline.coffee
@@ -12,28 +12,50 @@ sync = {}
 time = -> if sync.time_freeze then sync.time_freeze else serverTime() - sync.time_offset
 serverTime = -> new Date - sync_offset
 connected = -> true
-avg = (list) -> sum(list) / list.length
-sum = (list) -> s = 0; s += item for item in list; s
-stdev = (list) -> mu = avg(list); Math.sqrt avg((item - mu) * (item - mu) for item in list)
 
 sock = io.connect()
 
 
-class RemoteQuizPlayer
-	emit_action: (name) ->
+class QuizPlayerSlave extends QuizPlayer
+	# encapsulate is such a boring word, well actually, it's pretty cool
+	# but you should be allowed to envelop actions like captain kirk 
+	# does to a mountain.
+	envelop_action: (name) ->
+		master_action = this[name]
 		this[name] = (data, callback) ->
-			sock.emit name, data, callback
-	constructor: ->
-		blacklist = []
-		@emit_action attr for attr of QuizPlayer.prototype when attr not in blacklist
+			if connected()
+				sock.emit(name, data, callback)
+			else
+				master_action.call(this, data, callback)
+
+	constructor: (room, id) ->
+		super(room, id)
+		blacklist = ['envelop_action']
+		@envelop_action name for name, method of this when typeof method is 'function' and name not in blacklist
 
 
-me = new RemoteQuizPlayer()
+class QuizRoomSlave extends QuizRoom
+	# dont know what to change
+	emit: (name, data) ->
+		# console.log 'yaaaaaaaaaaaaaaaaaayyy?', name, data
+		@__listeners[name](data)
+
+	constructor: (name) ->
+		super(name)
+		@__listeners = {}
 
 
-sock.on 'echo', (data, fn) -> fn 'alive'
+room = new QuizRoomSlave()
+me = new QuizPlayerSlave(room, 'whatevs')
+
+sock.on 'connect', ->
+	$('.actionbar button').disable false
+	$('.timer').removeClass 'disabled'
+	$('.disconnect-notice').slideUp()
+	sock.emit 'disco', {old_socket: localStorage.old_socket}
+
 sock.on 'disconnect', ->
-	sync.attempt = null if sync.attempt?.user isnt public_id # get rid of any buzzes
+	sync.attempt = null if sync.attempt?.user isnt me.id # get rid of any buzzes
 	line = $('<div>').addClass 'well'
 	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
 			" from the server for some reason. ", $('<em>').text(new Date))
@@ -47,17 +69,22 @@ sock.on 'disconnect', ->
 	# renderState()
 
 # look at all these one liner events!
-sock.on 'application_update', -> applicationCache.update() if applicationCache?
-sock.on 'application_force_update', -> $('#update').slideDown()
-sock.on 'redirect', (url) -> window.location = url
-sock.on 'alert', (text) -> window.alert text
-sock.on 'chat', (data) -> chatAnnotation data
-sock.on 'log', (data) -> verbAnnotation data
-sock.on 'sync', (data) -> synchronize data
+listen = (name, fn) ->
+	sock.on name, fn
+	room.__listeners[name] = fn
 
-sock.on 'joined', (data) ->
-	public_name = data.name
-	public_id = data.id
+listen 'echo', (data, fn) -> fn 'alive'
+listen 'application_update', -> applicationCache.update() if applicationCache?
+listen 'application_force_update', -> $('#update').slideDown()
+listen 'redirect', (url) -> window.location = url
+listen 'alert', (text) -> window.alert text
+listen 'chat', (data) -> chatAnnotation data
+listen 'log', (data) -> verbAnnotation data
+listen 'sync', (data) -> synchronize data
+
+listen 'joined', (data) ->
+	# public_name = data.name
+	# public_id = data.id
 	$('#username').val public_name
 	$('#username').disable false
 
@@ -89,6 +116,11 @@ synchronize = (data) ->
 		renderPartial()
 
 
+Avg = (list) -> Sum(list) / list.length
+Sum = (list) -> s = 0; s += item for item in list; s
+StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
+
+
 compute_sync_offset = ->
 	#here is the rather complicated code to calculate
 	#then offsets of the time synchronization stuff
@@ -104,16 +136,16 @@ compute_sync_offset = ->
 	
 	sync_offsets = sync_offsets.slice(-20)
 
-	thresh = avg sync_offsets
+	thresh = Avg sync_offsets
 	below = (item for item in sync_offsets when item <= thresh)
-	sync_offset = avg(below)
+	sync_offset = Avg(below)
 	# console.log 'frst iter', below
-	thresh = avg below
+	thresh = Avg below
 	below = (item for item in sync_offsets when item <= thresh)
-	sync_offset = avg(below)
+	sync_offset = Avg(below)
 
 	# console.log 'sec iter', below
-	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + stdev(below).toFixed(1) + '/' + stdev(sync_offsets).toFixed(1))
+	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + StDev(below).toFixed(1) + '/' + StDev(sync_offsets).toFixed(1))
 
 testLatency = ->
 	return unless connected()
@@ -137,7 +169,7 @@ testLatency = ->
 			compute_sync_offset()
 
 			if latency_log.length > 0
-				$('#latency').text(avg(latency_log).toFixed(1) + "/" + stdev(latency_log).toFixed(1) + " (#{latency_log.length})")
+				$('#latency').text(Avg(latency_log).toFixed(1) + "/" + StDev(latency_log).toFixed(1) + " (#{latency_log.length})")
 
 
 setTimeout ->
