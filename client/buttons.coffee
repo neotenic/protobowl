@@ -131,10 +131,20 @@ $('input').keydown (e) ->
 		e.preventDefault()
 
 
+$('.chat_input').typeahead {
+	source: ->
+		names = ['alphabet', 'bowl', 'chevrolet', 'darcy', 'encephalogram', 'facetious', 'glistening', 'high', 'jump rope', 'knowledge', 'loquacious', 'melanin', 'narcotic', 'obecalp', 'placebo', 'quiz', 'rapacious', 'singularity', 'time travel', 'underappreciated', 'vestigial', 'wolfram', 'xetharious', 'yonder', 'zeta function']
+		("@#{name}" for name in names)
+	matcher: (candidate) ->
+		this.query[0] == '@' and this.query.split(' ').length is 1
+}
+
 
 $('.chat_input').keyup (e) ->
 	return if e.keyCode is 13
-	if $('.livechat')[0].checked
+
+	if $('.livechat')[0].checked and $('.chat_input').val().slice(0, 1) != '@'
+		$('.chat_input').data('sent_typing', '')
 		me.chat {
 			text: $('.chat_input').val(), 
 			session: $('.chat_input').data('input_session'), 
@@ -200,6 +210,10 @@ $('body').keydown (e) ->
 	if actionMode is 'guess'
 		return $('.guess_input').focus()
 	
+	if e.keyCode is 50 and e.shiftKey
+		$('.chatbtn').click()
+		$('.chat_input').focus()
+
 	return if e.shiftKey or e.ctrlKey or e.metaKey
 
 	if e.keyCode is 32

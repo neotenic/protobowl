@@ -7,13 +7,15 @@
 #= require render.coffee
 #= require time.coffee
 
+sock = io.connect()
+# console.timeEnd("from here")
+# console.time('connect')
+
 sync = {}
 
 time = -> if sync.time_freeze then sync.time_freeze else serverTime() - sync.time_offset
 serverTime = -> new Date - sync_offset
 connected = -> true
-
-sock = io.connect()
 
 
 class QuizPlayerSlave extends QuizPlayer
@@ -49,6 +51,7 @@ room = new QuizRoomSlave()
 me = new QuizPlayerSlave(room, 'whatevs')
 
 sock.on 'connect', ->
+	# console.timeEnd('connect')
 	$('.actionbar button').disable false
 	$('.timer').removeClass 'disabled'
 	$('.disconnect-notice').slideUp()
@@ -85,6 +88,8 @@ listen 'sync', (data) -> synchronize data
 listen 'joined', (data) ->
 	# public_name = data.name
 	# public_id = data.id
+	me.id = data.id
+	me.name = data.name
 	$('#username').val public_name
 	$('#username').disable false
 

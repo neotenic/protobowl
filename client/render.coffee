@@ -25,14 +25,15 @@ renderUpdate = ->
 
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
+		$(window).resize()
 	
 	# if sync.attempt
 	# 	updateTextAnnotations()
 
-	if public_id of users and 'show_typing' of users[public_id]
-		$('.livechat').attr 'checked', users[public_id].show_typing
-		$('.sounds').attr 'checked', users[public_id].sounds
-		$('.teams').val users[public_id].team
+	if me.id of users and 'show_typing' of users[me.id]
+		$('.livechat').attr 'checked', users[me.id].show_typing
+		$('.sounds').attr 'checked', users[me.id].sounds
+		$('.teams').val users[me.id].team
 
 	if sync.attempt
 		guessAnnotation sync.attempt
@@ -43,7 +44,7 @@ renderUpdate = ->
 			$('.speed').val(wpm)
 
 	
-	if !sync.attempt or sync.attempt.user isnt public_id
+	if !sync.attempt or sync.attempt.user isnt me.id
 		setActionMode '' if actionMode in ['guess', 'prompt']
 	else
 		if sync.attempt.prompt

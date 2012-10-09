@@ -2523,11 +2523,28 @@ $('input').keydown(function(e) {
   }
 });
 
+$('.chat_input').typeahead({
+  source: function() {
+    var name, names, _i, _len, _results;
+    names = ['alphabet', 'bowl', 'chevrolet', 'darcy', 'encephalogram', 'facetious', 'glistening', 'high', 'jump rope', 'knowledge', 'loquacious', 'melanin', 'narcotic', 'obecalp', 'placebo', 'quiz', 'rapacious', 'singularity', 'time travel', 'underappreciated', 'vestigial', 'wolfram', 'xetharious', 'yonder', 'zeta function'];
+    _results = [];
+    for (_i = 0, _len = names.length; _i < _len; _i++) {
+      name = names[_i];
+      _results.push("@" + name);
+    }
+    return _results;
+  },
+  matcher: function(candidate) {
+    return this.query[0] === '@' && this.query.split(' ').length === 1;
+  }
+});
+
 $('.chat_input').keyup(function(e) {
   if (e.keyCode === 13) {
     return;
   }
-  if ($('.livechat')[0].checked) {
+  if ($('.livechat')[0].checked && $('.chat_input').val().slice(0, 1) !== '@') {
+    $('.chat_input').data('sent_typing', '');
     return me.chat({
       text: $('.chat_input').val(),
       session: $('.chat_input').data('input_session'),
@@ -2603,6 +2620,10 @@ $('body').keydown(function(e) {
   }
   if (actionMode === 'guess') {
     return $('.guess_input').focus();
+  }
+  if (e.keyCode === 50 && e.shiftKey) {
+    $('.chatbtn').click();
+    $('.chat_input').focus();
   }
   if (e.shiftKey || e.ctrlKey || e.metaKey) {
     return;
@@ -4203,11 +4224,12 @@ renderUpdate = function() {
   $('.multibuzz').attr('checked', !sync.max_buzz);
   if ($('.settings').is(':hidden')) {
     $('.settings').slideDown();
+    $(window).resize();
   }
-  if (public_id in users && 'show_typing' in users[public_id]) {
-    $('.livechat').attr('checked', users[public_id].show_typing);
-    $('.sounds').attr('checked', users[public_id].sounds);
-    $('.teams').val(users[public_id].team);
+  if (me.id in users && 'show_typing' in users[me.id]) {
+    $('.livechat').attr('checked', users[me.id].show_typing);
+    $('.sounds').attr('checked', users[me.id].sounds);
+    $('.teams').val(users[me.id].team);
   }
   if (sync.attempt) {
     guessAnnotation(sync.attempt);
@@ -4218,7 +4240,7 @@ renderUpdate = function() {
       $('.speed').val(wpm);
     }
   }
-  if (!sync.attempt || sync.attempt.user !== public_id) {
+  if (!sync.attempt || sync.attempt.user !== me.id) {
     if (actionMode === 'guess' || actionMode === 'prompt') {
       return setActionMode('');
     }
@@ -4351,6 +4373,8 @@ var Avg, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, compute_sync_offset, connec
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
+sock = io.connect();
+
 sync = {};
 
 time = function() {
@@ -4368,8 +4392,6 @@ serverTime = function() {
 connected = function() {
   return true;
 };
-
-sock = io.connect();
 
 QuizPlayerSlave = (function(_super) {
 
@@ -4485,6 +4507,8 @@ listen('sync', function(data) {
 });
 
 listen('joined', function(data) {
+  me.id = data.id;
+  me.name = data.name;
   $('#username').val(public_name);
   return $('#username').disable(false);
 });
