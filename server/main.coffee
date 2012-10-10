@@ -93,7 +93,7 @@ class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
 		console.log 'emitting shit', @name, name
 		io.sockets.in(@name).emit name, data
-	
+
 	get_question: (cb) ->
 		category = (if @category is 'custom' then @distribution else @category)
 		remote.get_question @type, @difficulty, category, (question) =>
@@ -101,10 +101,23 @@ class SocketQuizRoom extends QuizRoom
 
 	get_parameters: (type, difficulty, callback) -> remote.get_parameters(type, difficulty, callback)
 
+
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
 		super(room, id)
 		@sockets = []
+		@name = names.generateName()
+
+	disco: (data) ->
+		if data.old_socket and io.sockets.socket(data.old_socket)
+			io.sockets.socket(data.old_socket).disconnect()
+
+	disconnect: ->
+		super()
+		console.log 'HANDLING A DISCONNECT'
+
+		# room.del_socket publicID, sock.id
+		
 
 
 	add_socket: (sock) ->
@@ -182,13 +195,11 @@ io.sockets.on 'connection', (sock) ->
 	# # give the user a stupid name
 	# user.name ||= names.generateName()
 	# # tell the user of his new moniker
-	# sock.emit 'joined', {
-	# 	id: publicID,
-	# 	name: user.name
-	# }
+	sock.emit 'joined', { id: user.id, name: user.name }
 	# # tell that there's a new person at the partaay
-	# room.sync(3)
-	# room.emit 'log', {user: publicID, verb: 'joined the room'} unless is_ninja
+	room.sync(3)
+	user.verb 'joined the room'
+	# room.emit 'log', {user: publicID, verb: 'joined the room'} # unless is_ninja
 	# # detect if the server had been recently restarted
 	# if new Date - uptime_begin < 1000 * 60 and existing_user
 	# 	sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental and not necessarily reliable). The journal does not record the current question, chat messages, or current attempts, so you may need to manually advance a question. This may have been part of a server or client software update, or the result of an unexpected server crash. We apologize for any inconvienience this may have caused.'}
@@ -199,6 +210,10 @@ app.get '/:channel', (req, res) ->
 	name = req.params.channel
 	res.render 'room.jade', { name }
 
-port = process.env.PORT || 5000
+app.get '/', (req, res) ->
+	res.end 'welcome to protobowl v3 beta'
+
+remote.initialize_remote()
+port = process.env.PORT || 5555
 app.listen port, ->
 	console.log "listening on port", port

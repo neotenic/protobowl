@@ -106,43 +106,37 @@ class QuizRoom
 	# 	@users[id][action] = val
 	# 	@sync()
 
-	touch: (id, no_add_time) ->
-		unless no_add_time
-			elapsed = @serverTime() - @users[id].last_action
-			if elapsed < 1000 * 60 * 10
-				@users[id].time_spent += elapsed
-		@users[id].last_action = @serverTime()
+	# touch: (id, no_add_time) ->
+	# 	unless no_add_time
+	# 		elapsed = @serverTime() - @users[id].last_action
+	# 		if elapsed < 1000 * 60 * 10
+	# 			@users[id].time_spent += elapsed
+	# 	@users[id].last_action = @serverTime()
 
-	del_socket: (id, socket) ->
-		user = @users[id]
-		if user
-			@touch(id)
-			user.sockets = (sock for sock in user.sockets when sock isnt socket)
-		# journal @name
+	# del_socket: (id, socket) ->
+	# 	user = @users[id]
+	# 	if user
+	# 		@touch(id)
+	# 		user.sockets = (sock for sock in user.sockets when sock isnt socket)
+	# 	# journal @name
 
 	time: -> if @time_freeze then @time_freeze else @serverTime() - @time_offset
 
 	serverTime: -> new Date - @sync_offset
 
-	freeze: ->
-		@time_freeze = @time()
+	set_time: (ts) -> @time_offset = new Date - ts
+
+	freeze: -> @time_freeze = @time()
 
 	unfreeze: ->
 		if @time_freeze
-			# @time_offset = new Date - @time_freeze
 			@set_time @time_freeze
 			@time_freeze = 0
 
-	set_time: (ts) ->
-		@time_offset = new Date - ts
-
-	pause: ->
-		#no point really because being in an attempt means being frozen
-		@freeze() unless @attempt or @time() > @end_time
-			
-	unpause: ->
-		#freeze with access controls
-		@unfreeze() unless @attempt
+	pause: -> @freeze() unless @attempt or @time() > @end_time
+		
+	#freeze with access controls	
+	unpause: -> @unfreeze() unless @attempt
 	
 	timeout: (metric, time, callback) ->
 		@clear_timeout()
@@ -154,8 +148,7 @@ class QuizRoom
 				@timeout(metric, time, callback)
 			, diff
 
-	clear_timeout: ->
-		clearTimeout @__timeout
+	clear_timeout: -> clearTimeout @__timeout
 
 	new_question: ->
 		# question = questions[Math.floor(questions.length * Math.random())]
@@ -241,19 +234,17 @@ class QuizRoom
 
 
 
-	skip: ->
-		@new_question() unless @attempt
+	skip: -> @new_question() unless @attempt
+
+	finish: -> @set_time @end_time
 
 	next: ->
 		@skip() if @time() > @end_time - @answer_duration and !@generating_question
 
-	finish: ->
-		@set_time @end_time
-
 	end_buzz: (session) -> #killit, killitwithfire
 		return unless @attempt?.session is session
 		# touch the user in weird places
-		@touch @attempt.user
+		# @touch @attempt.user
 		unless @attempt.prompt
 			@clear_timeout()
 			@attempt.done = true
@@ -329,7 +320,7 @@ class QuizRoom
 
 
 	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
-		@touch user
+		# @touch user
 		team_buzzed = 0
 		for id, member of @users when (member.team || id) is (@users[user].team || user)
             team_buzzed += member.times_buzzed
@@ -367,12 +358,15 @@ class QuizRoom
 			@sync(1) #partial sync
 			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
-		else
+		else if @attempt
 			@emit 'log', {user: user, verb: 'lost the buzzer race'}
+			fn 'THE GAME' if fn
+		else
+			@emit 'log', {user: user, verb: 'attempted an invalid buzz'}
 			fn 'THE GAME' if fn
 
 	guess: (user, data) ->
-		@touch user
+		# @touch user
 		if @attempt?.user is user
 			@attempt.text = data.text
 			# lets just ignore the input session attribute
@@ -432,9 +426,8 @@ class QuizRoom
 
 		if level >= 3
 			data.distribution = @distribution
-
 			# async stuff
-			@get_parameters @type, @difficulty, (difficulties, categories) ->
+			@get_parameters @type, @difficulty, (difficulties, categories) =>
 				data.difficulties = difficulties
 				data.categories = categories
 				@emit 'sync', data

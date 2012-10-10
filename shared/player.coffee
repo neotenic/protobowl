@@ -24,42 +24,71 @@ class QuizPlayer
 		@early = 0
 		@seen = 0
 		@time_spent = 0
-		@last_action = +new Date
+		@last_action = @room.serverTime()
 		@times_buzzed = 0
 		@show_typing = true
 		@team = 0
 		@banned = false
 		@sounds = false
 
-	touch: ->
-		@last_action = +new Date
+	# keep track of how long someone's been online
+	touch: (no_add_time) ->
+		current_time = @room.serverTime() 
+		unless no_add_time
+			elapsed = current_time - @last_action
+			if elapsed < 1000 * 60 * 10
+				@time_spent += elapsed
+		@last_action = current_time
 
-	verb: (action) ->
-		@room.emit 'log', {user: @id, verb: action}
+	verb: (action) -> @room.emit 'log', {user: @id, verb: action} unless @id.toString().slice(0, 2) is '__'
+	
+	disco: -> 0 # skeleton method, not actually implemented
 
-	# disco: (data) ->
-	# 	if data.old_socket and io.sockets.socket(data.old_socket)
-	# 		io.sockets.socket(data.old_socket).disconnect()
+	disconnect: ->
+		@verb 'left the room'
+		@room.sync(1)
+
+	echo: (data, callback) -> callback @room.serverTime()
+
+	buzz: (data, fn) -> @room.buzz @id, fn
+
+	guess: (data) -> @room.guess @id, data
+
+	chat: ({text, done, session}) ->
+		@touch()
+		@room.emit 'chat', { text, session, user: @id, done, time: @room.serverTime() }	
 	
-	echo: (data, callback) ->
-		callback +new Date
-	
+	skip: ->
+		@touch()
+		unless @room.attempt
+			@room.skip()
+			@verb 'skipped a question'
+
+	next: -> @room.next()
+
+	finish: ->
+		@touch()
+		unless @room.attempt
+			@room.finish()
+			@room.sync(1)
+
+	pause: ->
+		@touch()
+		@room.pause()
+		@room.sync()
+
+	unpause: ->
+		@room.unpause()
+		@room.sync()
+
+
 	set_name: (name) ->
 		@name = name
 		@touch()
 		@room.sync(1)
 
-	skip: ->
-		unless @room.attempt
-			@room.skip()
-			@verb 'skipped a question'
-
-	finish: ->
-		unless @room.attempt
-			@room.finish()
-			@room.sync(1)
-
 	set_distribution: (data) ->
+		@touch()
 		for cat, count of (data || default_distribution)
 			if @room.distribution[cat] == 0 and count > 0
 				@verb 'enabled category ' + cat
@@ -68,18 +97,10 @@ class QuizPlayer
 		@room.distribution = data || default_distribution
 		@room.sync(3)
 
-	next: ->
-		@room.next()
 
-	pause: ->
-		@room.pause()
-		@room.sync()
-
-	unpause: ->
-		@room.unpause()
-		@room.sync()
 
 	set_difficulty: (data) ->
+		@touch()
 		@verb 'is doing something with difficulty'
 		@room.difficulty = data
 		@room.sync()
@@ -89,6 +110,7 @@ class QuizPlayer
 		# 	room.sync(3)
 
 	set_category: (data) ->
+		@touch()
 		@verb 'changed the category to something which needs to be changed'
 		@room.category = data
 		@room.sync()
@@ -106,10 +128,19 @@ class QuizPlayer
 		
 	set_max_buzz: (data) ->
 		@room.max_buzz = data
+		@touch()
+		if @room.max_buzz isnt data
+			if data is 0
+				@verb 'allowed players to buzz multiple times'
+			else if data is 1
+				@verb 'restricted players and teams to a single buzz per question'
+			else if data > 1
+				@verb "restricted players and teams to #{data} buzzes per question"
 		@room.sync()
 
 	set_speed: (speed) ->
 		return unless speed
+		@touch()
 		@room.set_speed speed
 		@room.sync()
 
@@ -128,16 +159,6 @@ class QuizPlayer
 	set_sounds: (data) ->
 		@sounds = data
 		@room.sync(2)
-
-	buzz: (data, fn) ->
-		@room.buzz @id, fn
-
-	guess: (data) ->
-		@room.guess @id, data
-
-	chat: ({text, done, session}) ->
-		@touch()
-		@room.emit 'chat', {text, session, user: @id, done, time: +new Date}
 
 	reset_score: ->
 		@seen = @interrupts = @guesses = @correct = @early = 0

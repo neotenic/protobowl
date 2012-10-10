@@ -91,7 +91,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		line.append ' '
 		line.append ruling
 		# addAnnotation line
-		line.css('display', 'none').prependTo $('#history .bundle[name="' + sync.qid + '"]').eq(0).find('.annotations')
+		line.css('display', 'none').prependTo $('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations')
 		line.slideDown()
 	if done
 		if text is ''
@@ -143,7 +143,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.'
 
 
-		answer = sync.answer
+		answer = room.answer
 		ruling.click ->
 			sock.emit 'report_answer', {guess: text, answer: answer, ruling: decision}
 			createAlert ruling.parents('.bundle'), 'Reported Answer', "You have successfully told me that my algorithm sucks. Thanks, I'll fix it eventually. "

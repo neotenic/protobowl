@@ -35,6 +35,8 @@ $('.chatbtn').click ->
 recent_actions = [0]
 rate_limit_ceiling = 0
 rate_limit_check = ->
+	return false
+
 	online_count = (user for user in sync.users when user.online and user.last_action > new Date - 1000 * 60 * 10).length
 	rate_threshold = 7
 	if online_count > 1
@@ -59,14 +61,10 @@ rate_limit_check = ->
 
 # last_skip = 0
 skip = ->
-	removeSplash()
 	return if rate_limit_check()
-	# sock.emit 'skip', 'yay'
 	me.skip()
 
 next = ->
-	removeSplash()
-	# sock.emit 'next', 'yay'
 	me.next()
 
 $('.skipbtn').click skip
@@ -104,17 +102,12 @@ $('.buzzbtn').click ->
 			setActionMode ''
 			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Rejected', new Date - submit_time] if window._gaq
 
-$('.score-reset').click ->
-	# sock.emit 'resetscore', 'yay'
-	me.reset_score()
+$('.score-reset').click -> me.reset_score()
 
 $('.pausebtn').click ->
-	# removeSplash ->
-	if !!sync.time_freeze
-		# sock.emit 'unpause', 'yay'
+	if !!room.time_freeze
 		me.unpause()
 	else
-		# sock.emit 'pause', 'yay'
 		me.pause()
 
 
@@ -133,10 +126,13 @@ $('input').keydown (e) ->
 
 $('.chat_input').typeahead {
 	source: ->
+		prefix = '@' + this.query.slice(1).split(',').slice(0, -1).join(',')
+		existing = ($.trim(option) for option in this.query.slice(1).split(',').slice(0, -1))
+		prefix += ', ' if prefix.length > 1
 		names = ['alphabet', 'bowl', 'chevrolet', 'darcy', 'encephalogram', 'facetious', 'glistening', 'high', 'jump rope', 'knowledge', 'loquacious', 'melanin', 'narcotic', 'obecalp', 'placebo', 'quiz', 'rapacious', 'singularity', 'time travel', 'underappreciated', 'vestigial', 'wolfram', 'xetharious', 'yonder', 'zeta function']
-		("@#{name}" for name in names)
+		("#{prefix}#{name}" for name in names when name not in existing)
 	matcher: (candidate) ->
-		this.query[0] == '@' and this.query.split(' ').length is 1
+		this.query[0] == '@' and this.query.split(' ').length <= this.query.split(', ').length
 }
 
 
@@ -232,7 +228,6 @@ $('body').keydown (e) ->
 		e.preventDefault()
 		$('.chatbtn').click()
 	else if e.keyCode in [70] # F
-		# sock.emit 'finish', 'yay'
 		me.finish()
 	else if e.keyCode in [66]
 		$('.bundle.active .bookmark').click()
@@ -244,7 +239,6 @@ $('.speed').change ->
 	$('.speed').not(this).val($(this).val())
 	$('.speed').data("last_update", +new Date)
 	rate = 1000 * 60 / 5 / Math.round($(this).val())
-	# sock.emit 'speed', rate
 	me.set_speed rate
 	# console.log rate
 		
@@ -256,8 +250,7 @@ $('.categories').change ->
 		$('.custom-category').slideUp()
 	me.set_category $('.categories').val()
 
-$('.difficulties').change ->
-	me.set_difficulty $('.difficulties').val()
+$('.difficulties').change -> me.set_difficulty $('.difficulties').val()
 
 $('.teams').change ->
 	if $('.teams').val() is 'create'
@@ -265,14 +258,11 @@ $('.teams').change ->
 	else
 		me.set_team $('.teams').val()
 
-$('.multibuzz').change ->
-	sock.emit 'max_buzz', (if $('.multibuzz')[0].checked then null else 1)
+$('.multibuzz').change -> me.set_max_buzz (if $('.multibuzz')[0].checked then null else 1)
 
-$('.livechat').change ->
-	sock.emit 'show_typing', $('.livechat')[0].checked
+$('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
 
-$('.sounds').change ->
-	sock.emit 'sounds', $('.sounds')[0].checked
+$('.sounds').change -> me.set_sounds $('.sounds')[0].checked
 
 
 mobileLayout = -> 

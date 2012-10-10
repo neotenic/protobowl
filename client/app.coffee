@@ -11,12 +11,7 @@ sock = io.connect()
 # console.timeEnd("from here")
 # console.time('connect')
 
-sync = {}
-
-time = -> if sync.time_freeze then sync.time_freeze else serverTime() - sync.time_offset
-serverTime = -> new Date - sync_offset
-connected = -> true
-
+connected = -> sock? and sock.socket.connected
 
 class QuizPlayerSlave extends QuizPlayer
 	# encapsulate is such a boring word, well actually, it's pretty cool
@@ -48,17 +43,21 @@ class QuizRoomSlave extends QuizRoom
 
 
 room = new QuizRoomSlave()
-me = new QuizPlayerSlave(room, 'whatevs')
+me = new QuizPlayerSlave(room, 'temporary')
 
 sock.on 'connect', ->
 	# console.timeEnd('connect')
+	# $('.chatbtn').disable(false)
 	$('.actionbar button').disable false
 	$('.timer').removeClass 'disabled'
 	$('.disconnect-notice').slideUp()
-	sock.emit 'disco', {old_socket: localStorage.old_socket}
+	# implemented in SocketQuizPlayer rather than QuizPlayer
+	# actually just new skeleeton method in place
+	me.disco { old_socket: localStorage.old_socket }
+
 
 sock.on 'disconnect', ->
-	sync.attempt = null if sync.attempt?.user isnt me.id # get rid of any buzzes
+	room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
 	line = $('<div>').addClass 'well'
 	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
 			" from the server for some reason. ", $('<em>').text(new Date))
@@ -68,7 +67,7 @@ sock.on 'disconnect', ->
 			into <b>offline mode</b>. You can continue playing alone with a limited offline set
 			of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
 	addImportant $('<div>').addClass('log disconnect-notice').append(line)
-	room.emit 'init_offline', 'yay' #obviously server wont pay attention to that
+	# room.emit 'init_offline', 'yay' #obviously server wont pay attention to that
 	# renderState()
 
 # look at all these one liner events!
@@ -76,6 +75,8 @@ listen = (name, fn) ->
 	sock.on name, fn
 	room.__listeners[name] = fn
 
+# probably should figure out some more elegant way to do things, but then again
+# these things hardly actually need to be frequently added - it's mostly hacks
 listen 'echo', (data, fn) -> fn 'alive'
 listen 'application_update', -> applicationCache.update() if applicationCache?
 listen 'application_force_update', -> $('#update').slideDown()
@@ -86,37 +87,38 @@ listen 'log', (data) -> verbAnnotation data
 listen 'sync', (data) -> synchronize data
 
 listen 'joined', (data) ->
-	# public_name = data.name
-	# public_id = data.id
 	me.id = data.id
 	me.name = data.name
-	$('#username').val public_name
+	$('#username').val me.name
 	$('#username').disable false
 
-sync = {}
 sync_offsets = []
 latency_log = []
 users = {}
 
 synchronize = (data) ->
 	if data
+		blacklist = ['real_time', 'users']
 		sync_offsets.push +new Date - data.real_time
 		compute_sync_offset()
-		sync[attr] = val for attr, val of data
+		room[attr] = val for attr, val of data when attr not in blacklist
 		
-	if !data or 'users' of data
-		for user in sync.users
-			user.room = sync.name
+	if  'users' of data
+		for user in data.users
+			if user.id is me.id
+				console.log "it's me, mario!"
+			console.log user
+			user.room = room.name
 			users[user.id] = user
 
 
-	if (data and 'difficulties' of data) or ($('.difficulties')[0].options.length == 0 and sync.difficulties)
+	if 'difficulties' of data
 		renderParameters()
 
 	renderUpdate()
 
-	if !data or 'users' of data
-		renderState()
+	if 'users' of data
+		renderUsers()
 	else
 		renderPartial()
 
@@ -147,10 +149,10 @@ compute_sync_offset = ->
 	# console.log 'frst iter', below
 	thresh = Avg below
 	below = (item for item in sync_offsets when item <= thresh)
-	sync_offset = Avg(below)
+	room.sync_offset = Avg(below)
 
 	# console.log 'sec iter', below
-	$('#sync_offset').text(sync_offset.toFixed(1) + '/' + StDev(below).toFixed(1) + '/' + StDev(sync_offsets).toFixed(1))
+	$('#sync_offset').text(room.sync_offset.toFixed(1) + '/' + StDev(below).toFixed(1) + '/' + StDev(sync_offsets).toFixed(1))
 
 testLatency = ->
 	return unless connected()
