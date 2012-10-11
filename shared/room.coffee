@@ -121,15 +121,20 @@ class QuizRoom
 	#freeze with access controls	
 	unpause: -> @unfreeze() unless @attempt
 	
-	timeout: (metric, time, callback) ->
+	# timeout: (metric, time, callback) ->
+	# 	@clear_timeout()
+
+	# 	diff = time - metric()
+	# 	if diff < 0
+	# 		callback()
+	# 	else
+	# 		@__timeout = setTimeout =>
+	# 			@timeout(metric, time, callback)
+	# 		, diff
+
+	timeout: (delay, callback) ->
 		@clear_timeout()
-		diff = time - metric()
-		if diff < 0
-			callback()
-		else
-			@__timeout = setTimeout =>
-				@timeout(metric, time, callback)
-			, diff
+		@__timeout = setTimeout callback, delay
 
 	clear_timeout: -> clearTimeout @__timeout
 
@@ -235,6 +240,7 @@ class QuizRoom
 		return Math.random() > 0.3
 
 	end_buzz: (session) -> #killit, killitwithfire
+
 		return unless @attempt?.session is session
 		# touch the user in weird places
 		# @touch @attempt.user
@@ -268,7 +274,7 @@ class QuizRoom
 
 				# @emit 'log', {user: @attempt.user, verb: "won the lottery, hooray! 1% of buzzes which would otherwise be deemed wrong are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."}
 				
-				@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
+				@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @attempt.duration, =>
 					@end_buzz session
 			@sync()
 		else
@@ -346,8 +352,9 @@ class QuizRoom
 			
 			@freeze()
 			@sync(1) #partial sync
-			@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
+			@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
+
 		else if @attempt
 			@emit 'log', {user: user, verb: 'lost the buzzer race'}
 			fn 'THE GAME' if fn
@@ -409,7 +416,7 @@ class QuizRoom
 					user.online = @users[id].sockets.length > 0
 				else
 					user.online = true
-					
+
 				user
 
 		if level >= 2

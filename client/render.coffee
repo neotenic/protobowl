@@ -99,16 +99,17 @@ renderPartial = ->
 
 	last_rendering = +new Date
 	
-	if !room.question and $('.start-page').length is 0
-		console.log 'adding a start thing'
-		start = $('<div>').addClass('start-page').hide().prependTo '#history'
-		well = $('<div>').addClass('well').appendTo start
-		$('<button>')
-			.addClass('btn btn-success btn-large')
-			.text('Start the Question')
-			.appendTo(well)
-			.click -> me.next()
-		start.slideDown()
+	if !room.question 
+		if $('.start-page').length is 0
+			console.log 'adding a start thing'
+			start = $('<div>').addClass('start-page').hide().prependTo '#history'
+			well = $('<div>').addClass('well').appendTo start
+			$('<button>')
+				.addClass('btn btn-success btn-large')
+				.text('Start the Question')
+				.appendTo(well)
+				.click -> me.next()
+			start.slideDown()
 	else
 		if $('.start-page').length isnt 0
 			$('.start-page').slideUp 'normal', -> $(this).remove()
@@ -254,6 +255,7 @@ renderUsers = ->
 
 
 changeQuestion = ->
+	return unless room.question and room.generated_time
 	cutoff = 15
 	#smaller cutoff for phones which dont place things in parallel
 	cutoff = 1 if mobileLayout()

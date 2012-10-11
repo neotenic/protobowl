@@ -2156,25 +2156,25 @@ createAlert = function(bundle, title, message) {
 };
 
 userSpan = function(user, global) {
-  var c, el, hash, prefix, scope, text, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+  var c, el, hash, prefix, scope, text, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
   prefix = '';
   if (me.id && me.id.slice(0, 2) === "__") {
-    prefix = (((_ref = room.users[user]) != null ? _ref.room : void 0) || 'unknown') + '/';
+    prefix = (((_ref = room.users[user]) != null ? (_ref1 = _ref.room) != null ? _ref1.name : void 0 : void 0) || 'unknown') + '/';
   }
   text = '';
   if (user.slice(0, 2) === "__") {
     text = prefix + user.slice(2);
   } else {
-    text = prefix + (((_ref1 = room.users[user]) != null ? _ref1.name : void 0) || "[name missing]");
+    text = prefix + (((_ref2 = room.users[user]) != null ? _ref2.name : void 0) || "[name missing]");
   }
   hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (global) {
     scope = $(".user-" + user + ":not(." + hash + ")");
     for (_i = 0, _len = scope.length; _i < _len; _i++) {
       el = scope[_i];
-      _ref2 = $(el).attr('class').split('\s');
-      for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-        c = _ref2[_j];
+      _ref3 = $(el).attr('class').split('\s');
+      for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
+        c = _ref3[_j];
         if (c.slice(0, 8) === 'userhash') {
           $(el).removeClass(c);
         }
@@ -2322,7 +2322,7 @@ guessAnnotation = function(_arg) {
 };
 
 chatAnnotation = function(_arg) {
-  var done, html, id, line, session, text, time, url_regex, user, _ref;
+  var done, html, id, line, session, text, time, url_regex, user, _ref, _ref1;
   session = _arg.session, text = _arg.text, user = _arg.user, done = _arg.done, time = _arg.time;
   id = user + '-' + session;
   if ($('#' + id).length > 0) {
@@ -2332,7 +2332,7 @@ chatAnnotation = function(_arg) {
     line.append(userSpan(user).addClass('author').attr('title', formatTime(time)));
     line.append(document.createTextNode(' '));
     $('<span>').addClass('comment').appendTo(line);
-    addAnnotation(line, (_ref = room.users[user]) != null ? _ref.room : void 0);
+    addAnnotation(line, (_ref = room.users[user]) != null ? (_ref1 = _ref.room) != null ? _ref1.name : void 0 : void 0);
   }
   url_regex = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig;
   html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(^|\s+)(\/[a-z0-9\-]+)(\s+|$)/g, function(all, pre, room, post) {
@@ -2951,21 +2951,29 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.set_distribution = function(data) {
-    var cat, count;
+    var _this = this;
     this.touch();
-    if (data) {
+    if (!data) {
+      return;
+    }
+    this.room.distribution = data;
+    this.room.sync(3);
+    return this.room.get_size(function(size) {
+      var cat, count, _results;
+      _results = [];
       for (cat in data) {
         count = data[cat];
-        if (this.room.distribution[cat] === 0 && count > 0) {
-          this.verb('enabled category ' + cat);
+        if (_this.room.distribution[cat] === 0 && count > 0) {
+          _this.verb("enabled category " + cat + " (" + size + " questions)");
         }
-        if (this.room.distribution[cat] > 0 && count === 0) {
-          this.verb('disabled category ' + cat);
+        if (_this.room.distribution[cat] > 0 && count === 0) {
+          _results.push(_this.verb("disabled category " + cat + " (" + size + " questions)"));
+        } else {
+          _results.push(void 0);
         }
       }
-      this.room.distribution = data;
-      return this.room.sync(3);
-    }
+      return _results;
+    });
   };
 
   QuizPlayer.prototype.set_difficulty = function(data) {
@@ -3205,18 +3213,9 @@ QuizRoom = (function() {
     }
   };
 
-  QuizRoom.prototype.timeout = function(metric, time, callback) {
-    var diff,
-      _this = this;
+  QuizRoom.prototype.timeout = function(delay, callback) {
     this.clear_timeout();
-    diff = time - metric();
-    if (diff < 0) {
-      return callback();
-    } else {
-      return this.__timeout = setTimeout(function() {
-        return _this.timeout(metric, time, callback);
-      }, diff);
-    }
+    return this.__timeout = setTimeout(callback, delay);
   };
 
   QuizRoom.prototype.clear_timeout = function() {
@@ -3354,7 +3353,7 @@ QuizRoom = (function() {
         this.attempt.start = this.time();
         this.attempt.text = '';
         this.attempt.duration = 10 * 1000;
-        this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
+        this.timeout(this.attempt.duration, function() {
           return _this.end_buzz(session);
         });
       }
@@ -3458,7 +3457,7 @@ QuizRoom = (function() {
       this.users[user].guesses++;
       this.freeze();
       this.sync(1);
-      return this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
+      return this.timeout(this.attempt.duration, function() {
         return _this.end_buzz(session);
       });
     } else if (this.attempt) {
@@ -4508,14 +4507,16 @@ renderPartial = function() {
     }
   }
   last_rendering = +(new Date);
-  if (!room.question && $('.start-page').length === 0) {
-    console.log('adding a start thing');
-    start = $('<div>').addClass('start-page').hide().prependTo('#history');
-    well = $('<div>').addClass('well').appendTo(start);
-    $('<button>').addClass('btn btn-success btn-large').text('Start the Question').appendTo(well).click(function() {
-      return me.next();
-    });
-    start.slideDown();
+  if (!room.question) {
+    if ($('.start-page').length === 0) {
+      console.log('adding a start thing');
+      start = $('<div>').addClass('start-page').hide().prependTo('#history');
+      well = $('<div>').addClass('well').appendTo(start);
+      $('<button>').addClass('btn btn-success btn-large').text('Start the Question').appendTo(well).click(function() {
+        return me.next();
+      });
+      start.slideDown();
+    }
   } else {
     if ($('.start-page').length !== 0) {
       $('.start-page').slideUp('normal', function() {
@@ -4648,6 +4649,9 @@ renderUsers = function() {
 
 changeQuestion = function() {
   var bundle, cutoff, nested, old;
+  if (!(room.question && room.generated_time)) {
+    return;
+  }
   cutoff = 15;
   if (mobileLayout()) {
     cutoff = 1;
@@ -5104,7 +5108,7 @@ sync_offsets = [];
 latency_log = [];
 
 synchronize = function(data) {
-  var attr, blacklist, cumsum, user, val, _i, _len, _ref;
+  var attr, blacklist, cumsum, user, user_blacklist, val, _i, _len, _ref;
   if (data) {
     blacklist = ['real_time', 'users'];
     sync_offsets.push(+(new Date) - data.real_time);
@@ -5132,15 +5136,23 @@ synchronize = function(data) {
     room.__last_rate = room.rate;
   }
   if ('users' in data) {
+    user_blacklist = ['id'];
     _ref = data.users;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       user = _ref[_i];
-      user.room = room.name;
       if (user.id === me.id) {
         console.log("it's me, mario!");
         room.users[user.id] = me;
       } else {
-        room.users[user.id] = user;
+        if (!(user.id in room.users)) {
+          room.users[user.id] = new QuizPlayer(room, user.id);
+        }
+        for (attr in user) {
+          val = user[attr];
+          if (__indexOf.call(user_blacklist, attr) < 0) {
+            room.users[user.id][attr] = val;
+          }
+        }
       }
     }
   }

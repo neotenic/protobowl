@@ -92,14 +92,15 @@ class QuizPlayer
 
 	set_distribution: (data) ->
 		@touch()
-		if data
+		return unless data
+		@room.distribution = data
+		@room.sync(3)
+		@room.get_size (size) =>
 			for cat, count of data
 				if @room.distribution[cat] == 0 and count > 0
-					@verb 'enabled category ' + cat
+					@verb "enabled category #{cat} (#{size} questions)"
 				if @room.distribution[cat] > 0 and count == 0
-					@verb 'disabled category ' + cat
-			@room.distribution = data
-			@room.sync(3)
+					@verb "disabled category #{cat} (#{size} questions)"
 
 
 
