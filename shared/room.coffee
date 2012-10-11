@@ -160,7 +160,7 @@ class QuizRoom
 
 			# console.log @info
 			# @qid = question.question
-			@qid = question._id.toString()
+			@qid = question?._id?.toString() || 'question_id'
 			@info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" +
 			@answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20)
 			# console.log @qid
@@ -177,8 +177,8 @@ class QuizRoom
 			# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
 			for id, user of @users
 				user.times_buzzed = 0
-				if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
-					user.seen++
+				# if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
+				user.seen++ if user.active()
 
 			@sync(2)
 
@@ -405,7 +405,11 @@ class QuizRoom
 				user = {}
 				for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function', 'object']
 					user[attr] = @users[id][attr] 
-				user.online = @users[id].sockets.length > 0
+				if 'sockets' of @users[id]
+					user.online = @users[id].sockets.length > 0
+				else
+					user.online = true
+					
 				user
 
 		if level >= 2

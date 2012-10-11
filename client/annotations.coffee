@@ -16,18 +16,18 @@ createAlert = (bundle, title, message) ->
 			$(this).remove()
 	, 5000
 	
-	
+
 userSpan = (user, global) ->
 	prefix = ''
 
 	if me.id and me.id.slice(0, 2) == "__"
-		prefix = (users[user]?.room || 'unknown') + '/'
+		prefix = (room.users[user]?.room || 'unknown') + '/'
 	text = ''
 
 	if user.slice(0, 2) == "__"
 		text = prefix + user.slice(2)
 	else
-		text = prefix + (users[user]?.name || "[name missing]")
+		text = prefix + (room.users[user]?.name || "[name missing]")
 	
 	hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
 	
@@ -140,9 +140,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "correct"
 			ruling.addClass('label-success').text('Correct')
 			if user is me.id # if the person who got it right was me
-				old_score = computeScore(users[me.id])
+				old_score = computeScore(me)
 				checkScoreUpdate = ->
-					updated_score = computeScore(users[me.id])
+					updated_score = computeScore(me)
 					if updated_score is old_score
 						setTimeout checkScoreUpdate, 100
 						return
@@ -159,8 +159,8 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
-			if user is me.id and me.id of users
-				old_score = computeScore(users[me.id])
+			if user is me.id and me.id of room.users
+				old_score = computeScore(me)
 				if old_score < -100 # just a little way of saying "you suck"
 					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.'
 
@@ -196,7 +196,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		$('<span>')
 			.addClass('comment')
 			.appendTo line
-		addAnnotation line, users[user]?.room
+		addAnnotation line, room.users[user]?.room
 
 	url_regex = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig
 	html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')

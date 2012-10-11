@@ -214,8 +214,8 @@ $('body').keydown (e) ->
 
 	if e.keyCode is 32
 		e.preventDefault()
-		if $('.bundle .start-page').length is 1
-			$('.pausebtn').click()	
+		if $('.start-page').length is 1
+			$('.nextbtn').click()
 		else
 			$('.buzzbtn').click()
 	else if e.keyCode in [83] # S

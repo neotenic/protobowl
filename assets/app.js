@@ -2159,13 +2159,13 @@ userSpan = function(user, global) {
   var c, el, hash, prefix, scope, text, _i, _j, _len, _len1, _ref, _ref1, _ref2;
   prefix = '';
   if (me.id && me.id.slice(0, 2) === "__") {
-    prefix = (((_ref = users[user]) != null ? _ref.room : void 0) || 'unknown') + '/';
+    prefix = (((_ref = room.users[user]) != null ? _ref.room : void 0) || 'unknown') + '/';
   }
   text = '';
   if (user.slice(0, 2) === "__") {
     text = prefix + user.slice(2);
   } else {
-    text = prefix + (((_ref1 = users[user]) != null ? _ref1.name : void 0) || "[name missing]");
+    text = prefix + (((_ref1 = room.users[user]) != null ? _ref1.name : void 0) || "[name missing]");
   }
   hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (global) {
@@ -2272,10 +2272,10 @@ guessAnnotation = function(_arg) {
       decision = "correct";
       ruling.addClass('label-success').text('Correct');
       if (user === me.id) {
-        old_score = computeScore(users[me.id]);
+        old_score = computeScore(me);
         checkScoreUpdate = function() {
           var magic_multiple, magic_number, updated_score;
-          updated_score = computeScore(users[me.id]);
+          updated_score = computeScore(me);
           if (updated_score === old_score) {
             setTimeout(checkScoreUpdate, 100);
             return;
@@ -2297,8 +2297,8 @@ guessAnnotation = function(_arg) {
     } else {
       decision = "wrong";
       ruling.addClass('label-warning').text('Wrong');
-      if (user === me.id && me.id in users) {
-        old_score = computeScore(users[me.id]);
+      if (user === me.id && me.id in room.users) {
+        old_score = computeScore(me);
         if (old_score < -100) {
           createAlert(ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.');
         }
@@ -2332,7 +2332,7 @@ chatAnnotation = function(_arg) {
     line.append(userSpan(user).addClass('author').attr('title', formatTime(time)));
     line.append(document.createTextNode(' '));
     $('<span>').addClass('comment').appendTo(line);
-    addAnnotation(line, (_ref = users[user]) != null ? _ref.room : void 0);
+    addAnnotation(line, (_ref = room.users[user]) != null ? _ref.room : void 0);
   }
   url_regex = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig;
   html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(^|\s+)(\/[a-z0-9\-]+)(\s+|$)/g, function(all, pre, room, post) {
@@ -2672,8 +2672,8 @@ $('body').keydown(function(e) {
   }
   if (e.keyCode === 32) {
     e.preventDefault();
-    if ($('.bundle .start-page').length === 1) {
-      return $('.pausebtn').click();
+    if ($('.start-page').length === 1) {
+      return $('.nextbtn').click();
     } else {
       return $('.buzzbtn').click();
     }
@@ -2864,6 +2864,10 @@ QuizPlayer = (function() {
       }
     }
     return this.last_action = current_time;
+  };
+
+  QuizPlayer.prototype.active = function() {
+    return (this.room.serverTime() - this.last_action) < 1000 * 60 * 10;
   };
 
   QuizPlayer.prototype.verb = function(action) {
@@ -3223,7 +3227,7 @@ QuizRoom = (function() {
     var _this = this;
     this.generating_question = true;
     return this.get_question(function(question) {
-      var id, syllables, user, word, _ref;
+      var id, syllables, user, word, _ref, _ref1;
       delete _this.generating_question;
       _this.generated_time = _this.time();
       _this.attempt = null;
@@ -3237,7 +3241,7 @@ QuizRoom = (function() {
       };
       _this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ').replace(/\s+/g, ' ');
       _this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
-      _this.qid = question._id.toString();
+      _this.qid = (question != null ? (_ref = question._id) != null ? _ref.toString() : void 0 : void 0) || 'question_id';
       _this.info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" + _this.answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20);
       _this.begin_time = _this.time();
       if (typeof SyllableCounter !== "undefined" && SyllableCounter !== null) {
@@ -3246,21 +3250,21 @@ QuizRoom = (function() {
         syllables = require('./syllable').syllables;
       }
       _this.timing = (function() {
-        var _i, _len, _ref, _results;
-        _ref = this.question.split(" ");
+        var _i, _len, _ref1, _results;
+        _ref1 = this.question.split(" ");
         _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          word = _ref[_i];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          word = _ref1[_i];
           _results.push(syllables(word) + 1);
         }
         return _results;
       }).call(_this);
       _this.set_speed(_this.rate);
-      _ref = _this.users;
-      for (id in _ref) {
-        user = _ref[id];
+      _ref1 = _this.users;
+      for (id in _ref1) {
+        user = _ref1[id];
         user.times_buzzed = 0;
-        if (user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10) {
+        if (user.active()) {
           user.seen++;
         }
       }
@@ -3518,7 +3522,11 @@ QuizRoom = (function() {
               user[attr] = this.users[id][attr];
             }
           }
-          user.online = this.users[id].sockets.length > 0;
+          if ('sockets' in this.users[id]) {
+            user.online = this.users[id].sockets.length > 0;
+          } else {
+            user.online = true;
+          }
           _results.push(user);
         }
         return _results;
@@ -3993,6 +4001,53 @@ if(typeof exports !== "undefined"){
     exports.stemmer = PorterStemmer
 }
 
+var SyllableCounter;
+
+SyllableCounter = function(word) {
+  var add, addSyllables, count, fix, part, prefixSuffix, problemWords, sub, subSyllables, tmp, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref;
+  word = word.toLowerCase().replace(/[^a-z]/g, '');
+  problemWords = {
+    simile: 3,
+    forever: 3,
+    shoreline: 2
+  };
+  if (word in problemWords) {
+    return problemWords[word];
+  }
+  prefixSuffix = [/^un/, /^fore/, /ly$/, /less$/, /ful$/, /ers?$/, /ings?$/];
+  count = 0;
+  for (_i = 0, _len = prefixSuffix.length; _i < _len; _i++) {
+    fix = prefixSuffix[_i];
+    tmp = word.replace(fix, '');
+    if (tmp !== word) {
+      count++;
+    }
+    word = tmp;
+  }
+  subSyllables = [/cial/, /tia/, /cius/, /cious/, /giu/, /ion/, /iou/, /sia$/, /[^aeiuoyt]{2,}ed$/, /.ely$/, /[cg]h?e[rsd]?$/, /rved?$/, /[aeiouy][dt]es?$/, /[aeiouy][^aeiouydt]e[rsd]?$/, /^[dr]e[aeiou][^aeiou]+$/, /[aeiouy]rse$/];
+  addSyllables = [/ia/, /riet/, /dien/, /iu/, /io/, /ii/, /[aeiouym]bl$/, /[aeiou]{3}/, /^mc/, /ism$/, /([^aeiouy])\1l$/, /[^l]lien/, /^coa[dglx]./, /[^gq]ua[^auieo]/, /dnt$/, /uity$/, /ie(r|st)$/];
+  _ref = word.split(/[^aeiouy]+/);
+  for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+    part = _ref[_j];
+    if (part !== '') {
+      count++;
+    }
+  }
+  for (_k = 0, _len2 = subSyllables.length; _k < _len2; _k++) {
+    sub = subSyllables[_k];
+    count -= word.split(sub).length - 1;
+  }
+  for (_l = 0, _len3 = addSyllables.length; _l < _len3; _l++) {
+    add = addSyllables[_l];
+    count += word.split(add).length - 1;
+  }
+  return Math.max(1, count);
+};
+
+if (typeof exports !== "undefined" && exports !== null) {
+  exports.syllables = SyllableCounter;
+}
+
 var __slice = [].slice,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -4408,10 +4463,10 @@ renderUpdate = function() {
     $('.settings').slideDown();
     $(window).resize();
   }
-  if (me.id in users && 'show_typing' in users[me.id]) {
-    $('.livechat').attr('checked', users[me.id].show_typing);
-    $('.sounds').attr('checked', users[me.id].sounds);
-    $('.teams').val(users[me.id].team);
+  if (me.id in room.users && 'show_typing' in room.users[me.id]) {
+    $('.livechat').attr('checked', room.users[me.id].show_typing);
+    $('.sounds').attr('checked', room.users[me.id].sounds);
+    $('.teams').val(room.users[me.id].team);
   }
   if (room.attempt) {
     guessAnnotation(room.attempt);
@@ -4746,7 +4801,7 @@ updateTextPosition = function() {
     return;
   }
   timeDelta = room.time() - room.begin_time;
-  start_index = Math.max(0, reader_last_state - 5);
+  start_index = Math.max(0, reader_last_state);
   index = start_index;
   while (timeDelta > room.cumulative[index]) {
     index++;
@@ -4914,7 +4969,7 @@ formatTime = function(timestamp) {
   return (date.getHours() % 12) + ':' + ('0' + date.getMinutes()).substr(-2, 2) + (date.getHours() > 12 ? "pm" : "am");
 };
 
-var Avg, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency, users,
+var Avg, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -5048,8 +5103,6 @@ sync_offsets = [];
 
 latency_log = [];
 
-users = {};
-
 synchronize = function(data) {
   var attr, blacklist, cumsum, user, val, _i, _len, _ref;
   if (data) {
@@ -5082,12 +5135,13 @@ synchronize = function(data) {
     _ref = data.users;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       user = _ref[_i];
+      user.room = room.name;
       if (user.id === me.id) {
         console.log("it's me, mario!");
+        room.users[user.id] = me;
+      } else {
+        room.users[user.id] = user;
       }
-      console.log(user);
-      user.room = room.name;
-      users[user.id] = user;
     }
   }
   if ('difficulties' in data) {

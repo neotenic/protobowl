@@ -60,10 +60,10 @@ renderUpdate = ->
 	# if room.attempt
 	# 	updateInlineSymbols()
 
-	if me.id of users and 'show_typing' of users[me.id]
-		$('.livechat').attr 'checked', users[me.id].show_typing
-		$('.sounds').attr 'checked', users[me.id].sounds
-		$('.teams').val users[me.id].team
+	if me.id of room.users and 'show_typing' of room.users[me.id]
+		$('.livechat').attr 'checked', room.users[me.id].show_typing
+		$('.sounds').attr 'checked', room.users[me.id].sounds
+		$('.teams').val room.users[me.id].team
 
 	if room.attempt
 		guessAnnotation room.attempt
@@ -430,8 +430,9 @@ reader_last_state = -1
 
 updateTextPosition = ->
 	return unless room.question and room.timing
+
 	timeDelta = room.time() - room.begin_time
-	start_index = Math.max(0, reader_last_state - 5)
+	start_index = Math.max(0, reader_last_state)
 	index = start_index
 	index++ while timeDelta > room.cumulative[index]
 

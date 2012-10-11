@@ -113,6 +113,8 @@ class SocketQuizPlayer extends QuizPlayer
 		if data.old_socket and io.sockets.socket(data.old_socket)
 			io.sockets.socket(data.old_socket).disconnect()
 
+	active: -> @sockets.length > 0 and super()
+
 	disconnect: ->
 		super()
 		console.log 'HANDLING A DISCONNECT'

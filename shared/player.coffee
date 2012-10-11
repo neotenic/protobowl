@@ -32,6 +32,7 @@ class QuizPlayer
 		@sounds = false
 
 	# keep track of how long someone's been online
+
 	touch: (no_add_time) ->
 		current_time = @room.serverTime() 
 		unless no_add_time
@@ -39,6 +40,8 @@ class QuizPlayer
 			if elapsed < 1000 * 60 * 10
 				@time_spent += elapsed
 		@last_action = current_time
+
+	active: -> (@room.serverTime() - @last_action) < 1000 * 60 * 10
 
 	verb: (action) -> @room.emit 'log', {user: @id, verb: action} unless @id.toString().slice(0, 2) is '__'
 	

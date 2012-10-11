@@ -96,7 +96,7 @@ listen 'joined', (data) ->
 
 sync_offsets = []
 latency_log = []
-users = {}
+
 
 synchronize = (data) ->
 	if data
@@ -115,12 +115,12 @@ synchronize = (data) ->
 
 	if  'users' of data
 		for user in data.users
+			user.room = room.name
 			if user.id is me.id
 				console.log "it's me, mario!"
-			console.log user
-			user.room = room.name
-			users[user.id] = user
-
+				room.users[user.id] = me
+			else
+				room.users[user.id] = user
 
 	if 'difficulties' of data
 		renderParameters()
