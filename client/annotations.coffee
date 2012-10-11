@@ -21,7 +21,7 @@ userSpan = (user, global) ->
 	prefix = ''
 
 	if me.id and me.id.slice(0, 2) == "__"
-		prefix = (room.users[user]?.room || 'unknown') + '/'
+		prefix = (room.users[user]?.room?.name || 'unknown') + '/'
 	text = ''
 
 	if user.slice(0, 2) == "__"
@@ -196,7 +196,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		$('<span>')
 			.addClass('comment')
 			.appendTo line
-		addAnnotation line, room.users[user]?.room
+		addAnnotation line, room.users[user]?.room?.name
 
 	url_regex = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig
 	html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')

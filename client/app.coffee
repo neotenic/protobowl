@@ -114,13 +114,17 @@ synchronize = (data) ->
 		room.__last_rate = room.rate
 
 	if  'users' of data
+		user_blacklist = ['id']
 		for user in data.users
-			user.room = room.name
+			# user.room = room.name
 			if user.id is me.id
 				console.log "it's me, mario!"
 				room.users[user.id] = me
 			else
-				room.users[user.id] = user
+				unless user.id of room.users
+					room.users[user.id] = new QuizPlayer(room, user.id)
+				for attr, val of user when attr not in user_blacklist
+					room.users[user.id][attr] = val
 
 	if 'difficulties' of data
 		renderParameters()
@@ -132,7 +136,7 @@ synchronize = (data) ->
 	
 	renderPartial()
 
-
+# TODO: move this over to QuizPlayer class
 computeScore = (user) ->
 	return 0 if !user
 
