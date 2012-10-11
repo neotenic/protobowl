@@ -115,12 +115,14 @@ html(lang="en")
 							| Timer 
 							span.label.label-warning.pause(style="display:none") Paused
 							span.label.label-important.buzz(style="display:none") Buzz
+							//- span.label.label-info.finished(style="display:none") Finished
 						div.timer.unselectable.disabled
 							span.face 00:00
 							span.fraction .0
 
 						div.progress.progress-striped
-							div.bar(style="width:0%")
+							div.bar.primary-bar(style="width:0%")
+							div.bar.aux-bar.bar-info(style="width:0%")
 
 
 					div.span3.leaderboard(style="display:none; margin: 0")
@@ -169,9 +171,6 @@ html(lang="en")
 											i.icon-group
 										select.input.teams
 											option(value="") Individual
-											option(value="Team A") Team A (experimental)
-											option(value="Team B") Team B (experimental)
-											option(value="Team C") Team C (experimental)
 								div.expando
 									div.input-prepend
 										span.add-on(style="width:21px", title="Reset my score", rel='tooltip')

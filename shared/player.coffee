@@ -89,42 +89,36 @@ class QuizPlayer
 
 	set_distribution: (data) ->
 		@touch()
-		for cat, count of (data || default_distribution)
-			if @room.distribution[cat] == 0 and count > 0
-				@verb 'enabled category ' + cat
-			if @room.distribution[cat] > 0 and count == 0
-				@verb 'disabled category ' + cat
-		@room.distribution = data || default_distribution
-		@room.sync(3)
+		if data
+			for cat, count of data
+				if @room.distribution[cat] == 0 and count > 0
+					@verb 'enabled category ' + cat
+				if @room.distribution[cat] > 0 and count == 0
+					@verb 'disabled category ' + cat
+			@room.distribution = data
+			@room.sync(3)
 
 
 
 	set_difficulty: (data) ->
 		@touch()
-		@verb 'is doing something with difficulty'
+		# @verb 'is doing something with difficulty'
 		@room.difficulty = data
 		@room.sync()
-		# category = (if @category is 'custom' then @distribution else @category)
-		# remote.count_questions room.type, room.difficulty, category, (count) ->
-		# 	room.emit 'log', {user: publicID, verb: 'set difficulty to ' + (data || 'everything') + ' (' + count + ' questions)'}
-		# 	room.sync(3)
+		@room.get_size (size) =>
+			@verb "set difficulty to #{data || 'everything'} (#{size} questions)"
 
 	set_category: (data) ->
 		@touch()
-		@verb 'changed the category to something which needs to be changed'
+		# @verb 'changed the category to something which needs to be changed'
 		@room.category = data
+		@room.reset_distribution() unless data # reset to the default question distribution 
 		@room.sync()
-		# if !data
-		# 	room.distribution = default_distribution # reset to the default question distribution 
-		# log 'category', [room.name, publicID + '-' + room.users[publicID].name, room.category]
-		# if data is "custom"
-		# 	category = (if @category is 'custom' then @distribution else @category)
-		# 	remote.count_questions room.type, room.difficulty, category, (count) ->
-		# 		room.emit 'log', {user: publicID, verb: 'enabled a custom category distribution' + ' (' + count + ' questions)'}
-		# 	room.sync(3)
-		# else
-		# 	remote.count_questions room.type, room.difficulty, room.category, (count) ->
-		# 		room.emit 'log', {user: publicID, verb: 'set category to ' + (data.toLowerCase() || 'potpourri') + ' (' + count + ' questions)'}
+		@room.get_size (size) =>
+			if data is 'custom'
+				@verb "enabled a custom category distribution (#{size} questions)"
+			else
+				@verb "set category to #{data.toLowerCase() || 'potpourri'} (#{size} questions)"
 		
 	set_max_buzz: (data) ->
 		@room.max_buzz = data

@@ -29,76 +29,59 @@ class QuizRoom
 		@answer_duration = 1000 * 5
 		@time_offset = 0
 		@sync_offset = 0 # always zero for master installations
+		
+		@end_time = 0
+		@question = ''
+		@answer = ''
+		@timing = []
+		@cumulative = []
 
 		@rate = 1000 * 60 / 5 / 200
 		@__timeout = -1
 		@distribution = default_distribution
 		
+
 		@freeze()
-		# @new_question()
+		# @new_question() # start off without a question
 		@users = {}
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null
 
-	get_parameters: (type, difficulty, cb) ->
+	log: (message) -> @emit 'log', { verb: message }
+
+	get_parameters: (type, difficulty, cb) -> # cb(difficulties, categories)
 		#  async version of get_difficulties and get_categories
 		@emit 'log', {verb: 'NOT IMPLEMENTED (async get params)'}
-		# cb(difficulties, categories)
 		cb ['HS', 'MS'], ['Science', 'Trash']
 
+	count_questions: (type, difficulty, category, cb) ->
+		@log 'NOT IMPLEMENTED (question counting)'
+
+	get_size: (cb, type = @type, difficulty = @difficulty, category = @category) ->
+		@count_questions type, difficulty, (if category is 'custom' then @distribution else category), (count) ->
+			cb count
 
 	get_question: (cb) ->
 		cb error_question
-		@emit 'log', {verb: 'NOT IMPLEMENTED (async) get question'}
-		# category = (if @category is 'custom' then @distribution else @category)
-		# remote.get_question @type, @difficulty, category, (question) =>
-		# 	cb(question || error_question)
+		@log 'NOT IMPLEMENTED (async get question)'
 
-	# add_socket: (id, socket) ->
-	# 	unless id of @users
-	# 		@users[id] = {
-	# 			sockets: [],
-	# 			guesses: 0,
-	# 			interrupts: 0,
-	# 			early: 0,
-	# 			correct: 0,
-	# 			seen: 0,
-	# 			time_spent: 0,
-	# 			last_action: 0,
-	# 			times_buzzed: 0,
-	# 			show_typing: true,
-	# 			team: '',
-	# 			banned: false,
-	# 			sounds: false
-	# 		}
-	# 		# journal @name
-	# 	user = @users[id]
-	# 	user.id = id
-	# 	@touch(id, true)
-	# 	# user.last_action = @serverTime()
-	# 	unless socket in user.sockets
-	# 		user.sockets.push socket
-
-	# 	whitelist = ['']
-	
-
+		
 	emit_user: (id, args...) ->
-		console.log 'room.emit_user(id, name, data) not implemented'
-		# if id of @users
-		# 	for sock in @users[id].sockets
-		# 		s = io.sockets.socket(sock)
-		# 		s.emit args...
+		@log 'room.emit_user(id, name, data) not implemented'
 
 
 	emit: (name, data) ->
+		# note to self, do not change this into an @log, because thats recursive
 		console.log 'room.emit(name, data) not implemented'
-		# io.sockets.in(@name).emit name, data
 
-	ban: (id) ->
-		@users[id].banned = true
-		@emit_user id, 'redirect', "/#{@name}-banned"
-		@emit 'log', {user: id, verb: 'was banned from this room'}
+	reset_distribution: ->
+		@distribution = default_distribution
+
+	# ban: (id) ->
+	# 	@users[id].banned = true
+	# 	@emit_user id, 'redirect', "/#{@name}-banned"
+	# 	@emit 'log', {user: id, verb: 'was banned from this room'}
 		
 
 	# vote: (id, action, val) ->
@@ -155,6 +138,8 @@ class QuizRoom
 		@generating_question = true
 		@get_question (question) =>
 			delete @generating_question;
+			@generated_time = @time() # like begin_time but doesnt change when speed is altered
+			
 			@attempt = null
 			@info = {
 				category: question.category, 
@@ -181,6 +166,7 @@ class QuizRoom
 			# console.log @qid
 
 			@begin_time = @time()
+
 			if SyllableCounter?
 				syllables = SyllableCounter
 			else
@@ -239,7 +225,14 @@ class QuizRoom
 	finish: -> @set_time @end_time
 
 	next: ->
-		@skip() if @time() > @end_time - @answer_duration and !@generating_question
+		if @time() > @end_time - @answer_duration and !@generating_question
+			@skip()
+			@unpause()
+
+	check_answer: ->
+		@log 'CUSTOM ANSWER CHECKER NOT IMPLEMENTED'
+		return 'prompt' if Math.random() > 0.9
+		return Math.random() > 0.3
 
 	end_buzz: (session) -> #killit, killitwithfire
 		return unless @attempt?.session is session
@@ -248,17 +241,17 @@ class QuizRoom
 		unless @attempt.prompt
 			@clear_timeout()
 			@attempt.done = true
-			@attempt.correct = checkAnswer @attempt.text, @answer, @question
+			@attempt.correct = @check_answer @attempt.text, @answer, @question
 			do_prompt = false
 			
 			if @attempt.correct is 'prompt'
 				do_prompt = true
 				@attempt.correct = false
 			
-			if Math.random() > 0.99 and @attempt.correct is false
-				do_prompt = true
+			# if Math.random() > 0.99 and @attempt.correct is false
+			# 	do_prompt = true
 
-			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, @attempt.correct]
+			# log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, @attempt.correct]
 			# conditionally set this based on stuff
 			if do_prompt is true
 				@attempt.correct = "prompt" # quasi hack i know
@@ -273,18 +266,15 @@ class QuizRoom
 				@attempt.text = ''
 				@attempt.duration = 10 * 1000
 
-				@emit 'log', {user: @attempt.user, verb: "won the lottery, hooray! 1% of buzzes which would otherwise be deemed wrong are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."}
+				# @emit 'log', {user: @attempt.user, verb: "won the lottery, hooray! 1% of buzzes which would otherwise be deemed wrong are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."}
 				
 				@timeout @serverTime, @attempt.realTime + @attempt.duration, =>
 					@end_buzz session
 			@sync()
 		else
 			@attempt.done = true
-			@attempt.correct = checkAnswer @attempt.text, @answer, @question
-			
-			if @attempt.correct is 'prompt'
-				@attempt.correct = false
-
+			@attempt.correct = @check_answer @attempt.text, @answer, @question
+			@attempt.correct = false if @attempt.correct is 'prompt'
 			@sync()
 
 		if @attempt.done

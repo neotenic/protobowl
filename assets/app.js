@@ -2031,6 +2031,12 @@
 
 }(window.jQuery);
 
+window.requestAnimationFrame || (window.requestAnimationFrame = window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
+  return window.setTimeout(function() {
+    return callback(+new Date());
+  }, 1000 / 60);
+});
+
 jQuery.fn.disable = function(value) {
   var current;
   current = $(this).attr('disabled') === 'disabled';
@@ -2131,7 +2137,23 @@ setTimeout(function() {
   return $(window).resize();
 }, 6022);
 
-var addAnnotation, addImportant, chatAnnotation, guessAnnotation, logAnnotation, userSpan, verbAnnotation;
+var addAnnotation, addImportant, chatAnnotation, createAlert, guessAnnotation, logAnnotation, userSpan, verbAnnotation;
+
+createAlert = function(bundle, title, message) {
+  var div;
+  div = $("<div>").addClass("alert alert-success").insertAfter(bundle.find(".annotations")).hide();
+  div.append($("<button>").attr("data-dismiss", "alert").attr("type", "button").html("&times;").addClass("close"));
+  div.append($("<strong>").text(title));
+  div.append(" ");
+  div.append(message);
+  div.slideDown();
+  return setTimeout(function() {
+    return div.slideUp().queue(function() {
+      $(this).dequeue();
+      return $(this).remove();
+    });
+  }, 5000);
+};
 
 userSpan = function(user, global) {
   var c, el, hash, prefix, scope, text, _i, _j, _len, _len1, _ref, _ref1, _ref2;
@@ -2195,7 +2217,7 @@ addImportant = function(el) {
 };
 
 guessAnnotation = function(_arg) {
-  var answer, checkScoreUpdate, correct, decision, done, early, id, interrupt, line, marker, old_score, prompt, prompt_el, ruling, session, text, user;
+  var annotation_spot, answer, checkScoreUpdate, correct, decision, done, early, id, interrupt, line, marker, old_score, prompt, prompt_el, ruling, session, text, user;
   session = _arg.session, text = _arg.text, user = _arg.user, done = _arg.done, correct = _arg.correct, interrupt = _arg.interrupt, early = _arg.early, prompt = _arg.prompt;
   id = "" + user + "-" + session + "-" + (prompt ? 'prompt' : 'guess');
   if ($('#' + id).length > 0) {
@@ -2224,7 +2246,11 @@ guessAnnotation = function(_arg) {
     ruling = $('<a>').addClass('label ruling').hide().attr('href', '#').attr('title', 'Click to Report').data('placement', 'right');
     line.append(' ');
     line.append(ruling);
-    line.css('display', 'none').prependTo($('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations'));
+    annotation_spot = $('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations');
+    if (annotation_spot.length === 0) {
+      annotation_spot = $('#history');
+    }
+    line.css('display', 'none').prependTo(annotation_spot);
     line.slideDown();
   }
   if (done) {
@@ -2689,6 +2715,48 @@ $('.difficulties').change(function() {
   return me.set_difficulty($('.difficulties').val());
 });
 
+$('.dist-picker .increase').live('click', function(e) {
+  var item, _i, _len, _ref, _results;
+  if (!room.distribution) {
+    return;
+  }
+  item = $(this).parents('.category-item');
+  room.distribution[$(item).data('value')]++;
+  me.set_distribution(room.distribution);
+  _ref = $('.custom-category .category-item');
+  _results = [];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    item = _ref[_i];
+    _results.push(renderCategoryItem(item));
+  }
+  return _results;
+});
+
+$('.dist-picker .decrease').live('click', function(e) {
+  var cat, item, s, val, _i, _len, _ref, _ref1, _results;
+  if (!room.distribution) {
+    return;
+  }
+  item = $(this).parents('.category-item');
+  s = 0;
+  _ref = room.distribution;
+  for (cat in _ref) {
+    val = _ref[cat];
+    s += val;
+  }
+  if (room.distribution[$(item).data('value')] > 0 && s > 1) {
+    room.distribution[$(item).data('value')]--;
+    me.set_distribution(room.distribution);
+  }
+  _ref1 = $('.custom-category .category-item');
+  _results = [];
+  for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+    item = _ref1[_i];
+    _results.push(renderCategoryItem(item));
+  }
+  return _results;
+});
+
 $('.teams').change(function() {
   if ($('.teams').val() === 'create') {
     return me.set_team(prompt('Enter Team Name') || '');
@@ -2879,34 +2947,48 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.set_distribution = function(data) {
-    var cat, count, _ref;
+    var cat, count;
     this.touch();
-    _ref = data || default_distribution;
-    for (cat in _ref) {
-      count = _ref[cat];
-      if (this.room.distribution[cat] === 0 && count > 0) {
-        this.verb('enabled category ' + cat);
+    if (data) {
+      for (cat in data) {
+        count = data[cat];
+        if (this.room.distribution[cat] === 0 && count > 0) {
+          this.verb('enabled category ' + cat);
+        }
+        if (this.room.distribution[cat] > 0 && count === 0) {
+          this.verb('disabled category ' + cat);
+        }
       }
-      if (this.room.distribution[cat] > 0 && count === 0) {
-        this.verb('disabled category ' + cat);
-      }
+      this.room.distribution = data;
+      return this.room.sync(3);
     }
-    this.room.distribution = data || default_distribution;
-    return this.room.sync(3);
   };
 
   QuizPlayer.prototype.set_difficulty = function(data) {
+    var _this = this;
     this.touch();
-    this.verb('is doing something with difficulty');
     this.room.difficulty = data;
-    return this.room.sync();
+    this.room.sync();
+    return this.room.get_size(function(size) {
+      return _this.verb("set difficulty to " + (data || 'everything') + " (" + size + " questions)");
+    });
   };
 
   QuizPlayer.prototype.set_category = function(data) {
+    var _this = this;
     this.touch();
-    this.verb('changed the category to something which needs to be changed');
     this.room.category = data;
-    return this.room.sync();
+    if (!data) {
+      this.room.reset_distribution();
+    }
+    this.room.sync();
+    return this.room.get_size(function(size) {
+      if (data === 'custom') {
+        return _this.verb("enabled a custom category distribution (" + size + " questions)");
+      } else {
+        return _this.verb("set category to " + (data.toLowerCase() || 'potpourri') + " (" + size + " questions)");
+      }
+    });
   };
 
   QuizPlayer.prototype.set_max_buzz = function(data) {
@@ -3014,6 +3096,11 @@ QuizRoom = (function() {
     this.answer_duration = 1000 * 5;
     this.time_offset = 0;
     this.sync_offset = 0;
+    this.end_time = 0;
+    this.question = '';
+    this.answer = '';
+    this.timing = [];
+    this.cumulative = [];
     this.rate = 1000 * 60 / 5 / 200;
     this.__timeout = -1;
     this.distribution = default_distribution;
@@ -3024,6 +3111,12 @@ QuizRoom = (function() {
     this.max_buzz = null;
   }
 
+  QuizRoom.prototype.log = function(message) {
+    return this.emit('log', {
+      verb: message
+    });
+  };
+
   QuizRoom.prototype.get_parameters = function(type, difficulty, cb) {
     this.emit('log', {
       verb: 'NOT IMPLEMENTED (async get params)'
@@ -3031,30 +3124,42 @@ QuizRoom = (function() {
     return cb(['HS', 'MS'], ['Science', 'Trash']);
   };
 
+  QuizRoom.prototype.count_questions = function(type, difficulty, category, cb) {
+    return this.log('NOT IMPLEMENTED (question counting)');
+  };
+
+  QuizRoom.prototype.get_size = function(cb, type, difficulty, category) {
+    if (type == null) {
+      type = this.type;
+    }
+    if (difficulty == null) {
+      difficulty = this.difficulty;
+    }
+    if (category == null) {
+      category = this.category;
+    }
+    return this.count_questions(type, difficulty, (category === 'custom' ? this.distribution : category), function(count) {
+      return cb(count);
+    });
+  };
+
   QuizRoom.prototype.get_question = function(cb) {
     cb(error_question);
-    return this.emit('log', {
-      verb: 'NOT IMPLEMENTED (async) get question'
-    });
+    return this.log('NOT IMPLEMENTED (async get question)');
   };
 
   QuizRoom.prototype.emit_user = function() {
     var args, id;
     id = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-    return console.log('room.emit_user(id, name, data) not implemented');
+    return this.log('room.emit_user(id, name, data) not implemented');
   };
 
   QuizRoom.prototype.emit = function(name, data) {
     return console.log('room.emit(name, data) not implemented');
   };
 
-  QuizRoom.prototype.ban = function(id) {
-    this.users[id].banned = true;
-    this.emit_user(id, 'redirect', "/" + this.name + "-banned");
-    return this.emit('log', {
-      user: id,
-      verb: 'was banned from this room'
-    });
+  QuizRoom.prototype.reset_distribution = function() {
+    return this.distribution = default_distribution;
   };
 
   QuizRoom.prototype.time = function() {
@@ -3120,6 +3225,7 @@ QuizRoom = (function() {
     return this.get_question(function(question) {
       var id, syllables, user, word, _ref;
       delete _this.generating_question;
+      _this.generated_time = _this.time();
       _this.attempt = null;
       _this.info = {
         category: question.category,
@@ -3207,8 +3313,17 @@ QuizRoom = (function() {
 
   QuizRoom.prototype.next = function() {
     if (this.time() > this.end_time - this.answer_duration && !this.generating_question) {
-      return this.skip();
+      this.skip();
+      return this.unpause();
     }
+  };
+
+  QuizRoom.prototype.check_answer = function() {
+    this.log('CUSTOM ANSWER CHECKER NOT IMPLEMENTED');
+    if (Math.random() > 0.9) {
+      return 'prompt';
+    }
+    return Math.random() > 0.3;
   };
 
   QuizRoom.prototype.end_buzz = function(session) {
@@ -3220,16 +3335,12 @@ QuizRoom = (function() {
     if (!this.attempt.prompt) {
       this.clear_timeout();
       this.attempt.done = true;
-      this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
+      this.attempt.correct = this.check_answer(this.attempt.text, this.answer, this.question);
       do_prompt = false;
       if (this.attempt.correct === 'prompt') {
         do_prompt = true;
         this.attempt.correct = false;
       }
-      if (Math.random() > 0.99 && this.attempt.correct === false) {
-        do_prompt = true;
-      }
-      log('buzz', [this.name, this.attempt.user + '-' + this.users[this.attempt.user].name, this.attempt.text, this.answer, this.attempt.correct]);
       if (do_prompt === true) {
         this.attempt.correct = "prompt";
         this.sync();
@@ -3239,10 +3350,6 @@ QuizRoom = (function() {
         this.attempt.start = this.time();
         this.attempt.text = '';
         this.attempt.duration = 10 * 1000;
-        this.emit('log', {
-          user: this.attempt.user,
-          verb: "won the lottery, hooray! 1% of buzzes which would otherwise be deemed wrong are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."
-        });
         this.timeout(this.serverTime, this.attempt.realTime + this.attempt.duration, function() {
           return _this.end_buzz(session);
         });
@@ -3250,7 +3357,7 @@ QuizRoom = (function() {
       this.sync();
     } else {
       this.attempt.done = true;
-      this.attempt.correct = checkAnswer(this.attempt.text, this.answer, this.question);
+      this.attempt.correct = this.check_answer(this.attempt.text, this.answer, this.question);
       if (this.attempt.correct === 'prompt') {
         this.attempt.correct = false;
       }
@@ -4219,7 +4326,8 @@ var __slice = [].slice,
 
 
 
-var createCategoryList, renderCategoryItem, renderParameters, renderPartial, renderUpdate, renderUsers;
+var changeQuestion, createBundle, createCategoryList, last_question, last_rendering, reader_children, reader_last_state, renderCategoryItem, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, updateInlineSymbols, updateTextPosition,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 createCategoryList = function() {
   var cat, item, picker, _i, _len, _ref, _results;
@@ -4332,12 +4440,368 @@ renderUpdate = function() {
   }
 };
 
+last_rendering = 0;
+
+last_question = '';
+
 renderPartial = function() {
-  return console.log('partial rendering');
+  var start, well;
+  if ((!room.time_freeze || room.attempt) && room.time() < room.end_time) {
+    requestAnimationFrame(renderPartial);
+    if (new Date - last_rendering < 1000 / 20) {
+      return;
+    }
+  }
+  last_rendering = +(new Date);
+  if (!room.question && $('.start-page').length === 0) {
+    console.log('adding a start thing');
+    start = $('<div>').addClass('start-page').hide().prependTo('#history');
+    well = $('<div>').addClass('well').appendTo(start);
+    $('<button>').addClass('btn btn-success btn-large').text('Start the Question').appendTo(well).click(function() {
+      return me.next();
+    });
+    start.slideDown();
+  } else {
+    if ($('.start-page').length !== 0) {
+      $('.start-page').slideUp('normal', function() {
+        return $(this).remove();
+      });
+    }
+    if (room.question + room.generated_time !== last_question) {
+      changeQuestion();
+      last_question = room.question + room.generated_time;
+    }
+  }
+  updateTextPosition();
+  return renderTimer();
+};
+
+renderTimer = function() {
+  var cs, elapsed, fraction, min, ms, pad, progress, ruling, sec, sign;
+  if (connected()) {
+    $('.offline').fadeOut();
+  } else {
+    $('.offline').fadeIn();
+  }
+  if (room.time_freeze) {
+    $('.buzzbtn').disable(true);
+    if (room.attempt) {
+      (function() {
+        var del, i, starts, _ref;
+        del = room.attempt.start - room.begin_time;
+        i = 0;
+        while (del > room.cumulative[i]) {
+          i++;
+        }
+        starts = $('.bundle.active').data('starts') || [];
+        if (_ref = i - 1, __indexOf.call(starts, _ref) < 0) {
+          starts.push(i - 1);
+        }
+        return $('.bundle.active').data('starts', starts);
+      })();
+      $('.label.pause').hide();
+      $('.label.buzz').fadeIn();
+    } else {
+      $('.label.pause').fadeIn();
+      $('.label.buzz').hide();
+    }
+    if ($('.pausebtn').hasClass('btn-warning')) {
+      $('.pausebtn .resume').show();
+      $('.pausebtn .pause').hide();
+      $('.pausebtn').addClass('btn-success').removeClass('btn-warning');
+    }
+  } else {
+    $('.label.pause').fadeOut();
+    $('.label.buzz').fadeOut();
+    if ($('.pausebtn').hasClass('btn-success')) {
+      $('.pausebtn .resume').hide();
+      $('.pausebtn .pause').show();
+      $('.pausebtn').addClass('btn-warning').removeClass('btn-success');
+    }
+  }
+  if (room.time() > room.end_time - room.answer_duration) {
+    if ($(".nextbtn").is(":hidden")) {
+      $('.nextbtn').show();
+      $('.skipbtn').hide();
+    }
+  } else {
+    if ($(".skipbtn").is(":hidden")) {
+      $('.nextbtn').hide();
+      $('.skipbtn').show();
+    }
+  }
+  $('.timer').toggleClass('buzz', !!room.attempt);
+  $('.primary-bar').toggleClass('bar-warning', !!(room.time_freeze && !room.attempt));
+  $('.primary-bar').toggleClass('bar-danger', !!room.attempt);
+  $('.progress').toggleClass('active', !!room.attempt);
+  if (room.attempt) {
+    elapsed = room.serverTime() - room.attempt.realTime;
+    ms = room.attempt.duration - elapsed;
+    progress = elapsed / room.attempt.duration;
+    $('.pausebtn, .buzzbtn, .skipbtn, .nextbtn').disable(true);
+  } else {
+    ms = room.end_time - room.time();
+    elapsed = room.time() - room.begin_time;
+    progress = elapsed / (room.end_time - room.begin_time);
+    $('.skipbtn, .nextbtn').disable(false);
+    $('.pausebtn').disable(ms < 0);
+    if (!room.time_freeze) {
+      $('.buzzbtn').disable(ms < 0 || elapsed < 100);
+    }
+    if (ms < 0) {
+      $('.bundle.active').find('.answer').css('display', 'inline').css('visibility', 'visible');
+      ruling = $('.bundle.active').find('.ruling');
+      if (!ruling.data('shown_tooltip')) {
+        ruling.data('shown_tooltip', true);
+        $('.bundle.active').find('.ruling').first().tooltip({
+          trigger: "manual"
+        }).tooltip('show');
+      }
+    }
+  }
+  if (room.attempt || room.time_freeze) {
+    $('.progress .primary-bar').width(progress * 100 + '%');
+    $('.progress .aux-bar').width('0%');
+  } else {
+    fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100;
+    $('.progress .primary-bar').width(Math.min(progress * 100, fraction) + '%');
+    $('.progress .aux-bar').width(Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%');
+  }
+  ms = Math.max(0, ms);
+  sign = "";
+  if (ms < 0) {
+    sign = "+";
+  }
+  sec = Math.abs(ms) / 1000;
+  cs = (sec % 1).toFixed(1).slice(1);
+  $('.timer .fraction').text(cs);
+  min = sec / 60;
+  pad = function(num) {
+    var str;
+    str = Math.floor(num).toString();
+    while (str.length < 2) {
+      str = '0' + str;
+    }
+    return str;
+  };
+  return $('.timer .face').text(sign + pad(min) + ':' + pad(sec % 60));
 };
 
 renderUsers = function() {
   return console.log('rendering users');
+};
+
+changeQuestion = function() {
+  var bundle, cutoff, nested, old;
+  cutoff = 15;
+  if (mobileLayout()) {
+    cutoff = 1;
+  }
+  $('.bundle .ruling').tooltip('destroy');
+  $('.bundle:not(.bookmarked)').slice(cutoff).slideUp('normal', function() {
+    return $(this).remove();
+  });
+  old = $('#history .bundle').first();
+  old.removeClass('active');
+  old.find('.breadcrumb').click(function() {
+    return 1;
+  });
+  bundle = createBundle().width($('#history').width());
+  bundle.addClass('active');
+  $('#history').prepend(bundle.hide());
+  updateInlineSymbols();
+  bundle.slideDown("normal").queue(function() {
+    bundle.width('auto');
+    return $(this).dequeue();
+  });
+  if (old.find('.readout').length > 0) {
+    nested = old.find('.readout .well>span');
+    old.find('.readout .well').append(nested.contents());
+    nested.remove();
+    old.find('.readout')[0].normalize();
+    return old.queue(function() {
+      old.find('.readout').slideUp("normal");
+      return $(this).dequeue();
+    });
+  }
+};
+
+createBundle = function() {
+  var addInfo, annotations, breadcrumb, bundle, important, readout, star, well, _ref;
+  bundle = $('<div>').addClass('bundle').attr('name', room.qid).addClass('room-' + ((_ref = room.name) != null ? _ref.replace(/[^a-z0-9]/g, '') : void 0));
+  important = $('<div>').addClass('important');
+  bundle.append(important);
+  breadcrumb = $('<ul>');
+  star = $('<a>', {
+    href: "#",
+    rel: "tooltip",
+    title: "Bookmark this question"
+  }).addClass('icon-star-empty bookmark').click(function(e) {
+    bundle.toggleClass('bookmarked');
+    star.toggleClass('icon-star-empty', !bundle.hasClass('bookmarked'));
+    star.toggleClass('icon-star', bundle.hasClass('bookmarked'));
+    e.stopPropagation();
+    return e.preventDefault();
+  });
+  breadcrumb.append($('<li>').addClass('pull-right').append(star));
+  addInfo = function(name, value) {
+    var el;
+    breadcrumb.find('li:not(.pull-right)').last().append($('<span>').addClass('divider').text('/'));
+    if (value) {
+      name += ": " + value;
+    }
+    el = $('<li>').text(name).appendTo(breadcrumb);
+    if (value) {
+      return el.addClass('hidden-phone');
+    } else {
+      return el.addClass('visible-phone');
+    }
+  };
+  if ((me.id + '').slice(0, 2) === "__") {
+    addInfo('Room', room.name);
+  }
+  addInfo('Category', room.info.category);
+  addInfo('Difficulty', room.info.difficulty);
+  addInfo('Tournament', room.info.year + ' ' + room.info.tournament);
+  addInfo(room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category);
+  breadcrumb.find('li').last().append($('<span>').addClass('divider hidden-phone').text('/'));
+  bundle.data('report_info', {
+    year: room.info.year,
+    difficulty: room.info.difficulty,
+    category: room.info.category,
+    tournament: room.info.tournament,
+    round: room.info.round,
+    num: room.info.num,
+    qid: room.qid,
+    question: room.question,
+    answer: room.answer
+  });
+  breadcrumb.append($('<li>').addClass('clickable hidden-phone').text('Report').click(function(e) {
+    var cat, cat_list, controls, ctype, div, form, info, option, rtype, stype, _i, _j, _len, _len1, _ref1, _ref2;
+    info = bundle.data('report_info');
+    div = $("<div>").addClass("alert alert-block alert-info").insertBefore(bundle.find(".annotations")).hide();
+    div.append($("<button>").attr("data-dismiss", "alert").attr("type", "button").html("&times;").addClass("close"));
+    div.append($("<h4>").text("Report Question"));
+    form = $("<form>");
+    form.addClass('form-horizontal').appendTo(div);
+    rtype = $('<div>').addClass('control-group').appendTo(form);
+    rtype.append($("<label>").addClass('control-label').text('Description'));
+    controls = $("<div>").addClass('controls').appendTo(rtype);
+    _ref1 = ["Wrong category", "Wrong details", "Bad question", "Broken formatting"];
+    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+      option = _ref1[_i];
+      controls.append($("<label>").addClass("radio").append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase())).append(option));
+    }
+    form.find(":radio").change(function() {
+      if (form.find(":radio:checked").val() === 'category') {
+        return ctype.slideDown();
+      } else {
+        return ctype.slideUp();
+      }
+    });
+    ctype = $('<div>').addClass('control-group').appendTo(form);
+    ctype.append($("<label>").addClass('control-label').text('Category'));
+    cat_list = $('<select>');
+    ctype.append($("<div>").addClass('controls').append(cat_list));
+    controls.find('input:radio')[0].checked = true;
+    _ref2 = room.categories;
+    for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+      cat = _ref2[_j];
+      cat_list.append(new Option(cat));
+    }
+    cat_list.val(info.category);
+    stype = $('<div>').addClass('control-group').appendTo(form);
+    $("<div>").addClass('controls').appendTo(stype).append($('<button type=submit>').addClass('btn btn-primary').text('Submit'));
+    $(form).submit(function() {
+      var describe;
+      describe = form.find(":radio:checked").val();
+      if (describe === 'category') {
+        info.fixed_category = cat_list.val();
+      }
+      info.describe = describe;
+      sock.emit('report_question', info);
+      createAlert(bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.');
+      div.slideUp();
+      return false;
+    });
+    div.slideDown();
+    e.stopPropagation();
+    return e.preventDefault();
+  }));
+  breadcrumb.append($('<li>').addClass('pull-right answer').text(room.answer));
+  readout = $('<div>').addClass('readout');
+  well = $('<div>').addClass('well').appendTo(readout);
+  well.append($('<span>').addClass('unread').text(room.question));
+  annotations = $('<div>').addClass('annotations');
+  return bundle.append($('<ul>').addClass('breadcrumb').append(breadcrumb)).append(readout).append(annotations);
+};
+
+reader_children = null;
+
+reader_last_state = -1;
+
+updateTextPosition = function() {
+  var index, start_index, timeDelta, word_index, _i;
+  if (!(room.question && room.timing)) {
+    return;
+  }
+  timeDelta = room.time() - room.begin_time;
+  start_index = Math.max(0, reader_last_state - 5);
+  index = start_index;
+  while (timeDelta > room.cumulative[index]) {
+    index++;
+  }
+  for (word_index = _i = start_index; start_index <= index ? _i < index : _i > index; word_index = start_index <= index ? ++_i : --_i) {
+    reader_children[word_index].className = '';
+  }
+  return reader_last_state = index - 1;
+};
+
+updateInlineSymbols = function() {
+  var bundle, children, early_index, element, elements, i, label_type, readout, spots, words, _i, _j, _ref, _ref1;
+  if (!(room.question && room.timing)) {
+    return;
+  }
+  console.log('update inline symbols');
+  words = room.question.split(' ');
+  early_index = room.question.replace(/[^ \*]/g, '').indexOf('*');
+  bundle = $('#history .bundle.active');
+  spots = bundle.data('starts') || [];
+  readout = bundle.find('.readout .well');
+  readout.data('spots', spots.join(','));
+  children = readout.children();
+  elements = [];
+  for (i = _i = 0, _ref = words.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+    element = $('<span>').addClass('unread');
+    if (words[i].indexOf('*') !== -1) {
+      element.append(" <span class='inline-icon'><span class='asterisk'>" + words[i] + "</span><i class='label icon-white icon-asterisk'></i></span> ");
+    } else {
+      element.append(words[i] + " ");
+    }
+    if (__indexOf.call(spots, i) >= 0) {
+      label_type = 'label-important';
+      if (i === words.length - 1) {
+        label_type = "label-info";
+      }
+      if (early_index !== -1 && i < early_index) {
+        label_type = "label";
+      }
+      element.append(" <span class='inline-icon'><i class='label icon-white icon-bell  " + label_type + "'></i></span> ");
+    }
+    elements.push(element);
+  }
+  for (i = _j = 0, _ref1 = words.length; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
+    if (children.eq(i).html() !== elements[i].html()) {
+      if (children.eq(i).length > 0) {
+        children.eq(i).replaceWith(elements[i]);
+      } else {
+        readout.append(elements[i]);
+      }
+    }
+  }
+  reader_children = readout[0].childNodes;
+  reader_last_state = -1;
+  return updateTextPosition();
 };
 
 var formatRelativeTime, formatTime, getTimeSpan;
@@ -4450,7 +4914,7 @@ formatTime = function(timestamp) {
   return (date.getHours() % 12) + ':' + ('0' + date.getMinutes()).substr(-2, 2) + (date.getHours() > 12 ? "pm" : "am");
 };
 
-var Avg, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, compute_sync_offset, connected, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency, users,
+var Avg, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency, users,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -4587,7 +5051,7 @@ latency_log = [];
 users = {};
 
 synchronize = function(data) {
-  var attr, blacklist, user, val, _i, _len, _ref;
+  var attr, blacklist, cumsum, user, val, _i, _len, _ref;
   if (data) {
     blacklist = ['real_time', 'users'];
     sync_offsets.push(+(new Date) - data.real_time);
@@ -4598,6 +5062,21 @@ synchronize = function(data) {
         room[attr] = val;
       }
     }
+  }
+  if ('timing' in data || room.__last_rate !== room.rate) {
+    cumsum = function(list, rate) {
+      var num, sum, _i, _len, _ref, _results;
+      sum = 0;
+      _ref = [5].concat(list).slice(0, -1);
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        num = _ref[_i];
+        _results.push(sum += Math.round(num) * rate);
+      }
+      return _results;
+    };
+    room.cumulative = cumsum(room.timing, room.rate);
+    room.__last_rate = room.rate;
   }
   if ('users' in data) {
     _ref = data.users;
@@ -4616,10 +5095,20 @@ synchronize = function(data) {
   }
   renderUpdate();
   if ('users' in data) {
-    return renderUsers();
-  } else {
-    return renderPartial();
+    renderUsers();
   }
+  return renderPartial();
+};
+
+computeScore = function(user) {
+  var CORRECT, EARLY, INTERRUPT;
+  if (!user) {
+    return 0;
+  }
+  CORRECT = 10;
+  EARLY = 15;
+  INTERRUPT = -5;
+  return user.early * EARLY + (user.correct - user.early) * CORRECT + user.interrupts * INTERRUPT;
 };
 
 Avg = function(list) {

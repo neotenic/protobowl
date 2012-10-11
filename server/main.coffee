@@ -100,6 +100,7 @@ class SocketQuizRoom extends QuizRoom
 			cb(question || error_question)
 
 	get_parameters: (type, difficulty, callback) -> remote.get_parameters(type, difficulty, callback)
+	count_questions: (type, difficulty, category, cb) -> remote.count_questions(type, difficulty, category, cb) 
 
 
 class SocketQuizPlayer extends QuizPlayer

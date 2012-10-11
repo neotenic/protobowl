@@ -70,6 +70,8 @@ sock.on 'disconnect', ->
 	# room.emit 'init_offline', 'yay' #obviously server wont pay attention to that
 	# renderState()
 
+
+
 # look at all these one liner events!
 listen = (name, fn) ->
 	sock.on name, fn
@@ -102,7 +104,15 @@ synchronize = (data) ->
 		sync_offsets.push +new Date - data.real_time
 		compute_sync_offset()
 		room[attr] = val for attr, val of data when attr not in blacklist
-		
+	
+	if 'timing' of data or room.__last_rate isnt room.rate
+		cumsum = (list, rate) ->
+			sum = 0 #start nonzero, allow pause before rendering
+			for num in [5].concat(list).slice(0, -1)
+				sum += Math.round(num) * rate #always round!
+		room.cumulative = cumsum room.timing, room.rate
+		room.__last_rate = room.rate
+
 	if  'users' of data
 		for user in data.users
 			if user.id is me.id
@@ -119,8 +129,18 @@ synchronize = (data) ->
 
 	if 'users' of data
 		renderUsers()
-	else
-		renderPartial()
+	
+	renderPartial()
+
+
+computeScore = (user) ->
+	return 0 if !user
+
+	CORRECT = 10
+	EARLY = 15
+	INTERRUPT = -5
+
+	return user.early * EARLY + (user.correct - user.early) * CORRECT + user.interrupts * INTERRUPT
 
 
 Avg = (list) -> Sum(list) / list.length

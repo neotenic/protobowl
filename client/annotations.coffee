@@ -1,3 +1,22 @@
+createAlert = (bundle, title, message) ->
+	div = $("<div>").addClass("alert alert-success")
+		.insertAfter(bundle.find(".annotations")).hide()
+	div.append $("<button>")
+		.attr("data-dismiss", "alert")
+		.attr("type", "button")
+		.html("&times;")
+		.addClass("close")
+	div.append $("<strong>").text(title)
+	div.append " "
+	div.append message
+	div.slideDown()
+	setTimeout ->
+		div.slideUp().queue ->
+			$(this).dequeue()
+			$(this).remove()
+	, 5000
+	
+	
 userSpan = (user, global) ->
 	prefix = ''
 
@@ -91,7 +110,10 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		line.append ' '
 		line.append ruling
 		# addAnnotation line
-		line.css('display', 'none').prependTo $('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations')
+		annotation_spot = $('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations')
+		if annotation_spot.length is 0
+			annotation_spot = $('#history')
+		line.css('display', 'none').prependTo annotation_spot
 		line.slideDown()
 	if done
 		if text is ''
