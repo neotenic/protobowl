@@ -43,7 +43,7 @@ class QuizPlayer
 
 	active: -> (@room.serverTime() - @last_action) < 1000 * 60 * 10
 
-	verb: (action) -> @room.emit 'log', {user: @id, verb: action} unless @id.toString().slice(0, 2) is '__'
+	verb: (action) -> @room.emit 'log', {user: @id, verb: action, time: @room.serverTime() } unless @id.toString().slice(0, 2) is '__'
 	
 	disco: -> 0 # skeleton method, not actually implemented
 
@@ -64,10 +64,12 @@ class QuizPlayer
 	skip: ->
 		@touch()
 		unless @room.attempt
-			@room.skip()
+			@room.new_question()
 			@verb 'skipped a question'
 
-	next: -> @room.next()
+	next: -> 
+		@touch()
+		@room.next()
 
 	finish: ->
 		@touch()
@@ -77,11 +79,15 @@ class QuizPlayer
 
 	pause: ->
 		@touch()
-		@room.pause()
-		@room.sync()
+		if !@room.attempt and @room.time() < @room.end_time
+			@verb 'paused the game'
+			@room.freeze()
+			@room.sync()
 
 	unpause: ->
-		@room.unpause()
+		if !@room.attempt
+			@verb 'resumed the game'
+			@room.unfreeze()
 		@room.sync()
 
 

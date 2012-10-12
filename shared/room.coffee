@@ -117,10 +117,10 @@ class QuizRoom
 			@set_time @time_freeze
 			@time_freeze = 0
 
-	pause: -> @freeze() unless @attempt or @time() > @end_time
+	# pause: -> @freeze() unless @attempt or @time() > @end_time
 		
 	#freeze with access controls	
-	unpause: -> @unfreeze() unless @attempt
+	# unpause: -> @unfreeze() unless @attempt
 	
 	# timeout: (metric, time, callback) ->
 	# 	@clear_timeout()
@@ -225,18 +225,14 @@ class QuizRoom
 		@end_time = @begin_time + new_duration + @answer_duration
 
 
-
-	skip: -> @new_question() unless @attempt
-
 	finish: -> @set_time @end_time
 
 	next: ->
-		if @time() > @end_time - @answer_duration and !@generating_question
-			@skip()
-			@unpause()
+		if @time() > @end_time - @answer_duration and !@generating_question and !@attempt
+			@new_question()
+			@unfreeze()
 
 	check_answer: ->
-		@log 'CUSTOM ANSWER CHECKER NOT IMPLEMENTED'
 		return 'prompt' if Math.random() > 0.9
 		return Math.random() > 0.3
 
