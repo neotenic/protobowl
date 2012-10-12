@@ -54,7 +54,7 @@ addAnnotation = (el, name = sync?.name) ->
 		current_bundle = $('#history .bundle.active')
 	current_block = current_bundle.eq(0).find('.annotations')
 	if current_block.length is 0
-		current_block = $('<div>').addClass('annotations').prependTo('#history')
+		current_block = $('#history .annotations').eq(0)
 	el.css('display', 'none').prependTo current_block
 	el.slideDown()
 	return el

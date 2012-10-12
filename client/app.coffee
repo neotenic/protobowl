@@ -99,12 +99,16 @@ latency_log = []
 
 
 synchronize = (data) ->
-	if data
-		blacklist = ['real_time', 'users']
-		sync_offsets.push +new Date - data.real_time
-		compute_sync_offset()
-		room[attr] = val for attr, val of data when attr not in blacklist
+	blacklist = ['real_time', 'users']
 	
+	sync_offsets.push +new Date - data.real_time
+	compute_sync_offset()
+	
+	difflist = []
+	difflist.push(attr) for attr, val of data when val isnt room[attr]
+	
+	room[attr] = val for attr, val of data when attr not in blacklist
+
 	if 'timing' of data or room.__last_rate isnt room.rate
 		cumsum = (list, rate) ->
 			sum = 0 #start nonzero, allow pause before rendering
@@ -130,6 +134,17 @@ synchronize = (data) ->
 		renderParameters()
 
 	renderUpdate()
+
+	if 'time_freeze' in difflist # includes buzzes
+		variable = (if room.attempt then 'starts' else 'stops')
+		del = room.time_freeze - room.begin_time
+		i = 0
+		i++ while del > room.cumulative[i]
+		starts = ($('.bundle.active').data(variable) || [])
+		starts.push(i - 1) if (i - 1) not in starts
+		$('.bundle.active').data(variable, starts)
+
+		updateInlineSymbols()
 
 	if 'users' of data
 		renderUsers()

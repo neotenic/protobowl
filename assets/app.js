@@ -2198,7 +2198,7 @@ addAnnotation = function(el, name) {
   }
   current_block = current_bundle.eq(0).find('.annotations');
   if (current_block.length === 0) {
-    current_block = $('<div>').addClass('annotations').prependTo('#history');
+    current_block = $('#history .annotations').eq(0);
   }
   el.css('display', 'none').prependTo(current_block);
   el.slideDown();
@@ -4542,19 +4542,6 @@ renderTimer = function() {
   if (room.time_freeze) {
     $('.buzzbtn').disable(true);
     if (room.attempt) {
-      (function() {
-        var del, i, starts, _ref;
-        del = room.attempt.start - room.begin_time;
-        i = 0;
-        while (del > room.cumulative[i]) {
-          i++;
-        }
-        starts = $('.bundle.active').data('starts') || [];
-        if (_ref = i - 1, __indexOf.call(starts, _ref) < 0) {
-          starts.push(i - 1);
-        }
-        return $('.bundle.active').data('starts', starts);
-      })();
       $('.label.pause').hide();
       $('.label.buzz').fadeIn();
     } else {
@@ -4817,7 +4804,7 @@ updateTextPosition = function() {
 };
 
 updateInlineSymbols = function() {
-  var bundle, children, early_index, element, elements, i, label_type, readout, spots, words, _i, _j, _ref, _ref1;
+  var bundle, children, early_index, element, elements, i, label_type, readout, spots, stops, words, _i, _j, _ref, _ref1;
   if (!(room.question && room.timing)) {
     return;
   }
@@ -4826,7 +4813,11 @@ updateInlineSymbols = function() {
   early_index = room.question.replace(/[^ \*]/g, '').indexOf('*');
   bundle = $('#history .bundle.active');
   spots = bundle.data('starts') || [];
+  stops = bundle.data('stops') || [];
   readout = bundle.find('.readout .well');
+  if (readout.length === 0) {
+    return;
+  }
   readout.data('spots', spots.join(','));
   children = readout.children();
   elements = [];
@@ -4846,6 +4837,8 @@ updateInlineSymbols = function() {
         label_type = "label";
       }
       element.append(" <span class='inline-icon'><i class='label icon-white icon-bell  " + label_type + "'></i></span> ");
+    } else if (__indexOf.call(stops, i) >= 0) {
+      element.append(" <span class='inline-icon'><i class='label icon-white icon-pause label-warning'></i></span> ");
     }
     elements.push(element);
   }
@@ -5108,16 +5101,21 @@ sync_offsets = [];
 latency_log = [];
 
 synchronize = function(data) {
-  var attr, blacklist, cumsum, user, user_blacklist, val, _i, _len, _ref;
-  if (data) {
-    blacklist = ['real_time', 'users'];
-    sync_offsets.push(+(new Date) - data.real_time);
-    compute_sync_offset();
-    for (attr in data) {
-      val = data[attr];
-      if (__indexOf.call(blacklist, attr) < 0) {
-        room[attr] = val;
-      }
+  var attr, blacklist, cumsum, del, difflist, i, starts, user, user_blacklist, val, variable, _i, _len, _ref, _ref1;
+  blacklist = ['real_time', 'users'];
+  sync_offsets.push(+(new Date) - data.real_time);
+  compute_sync_offset();
+  difflist = [];
+  for (attr in data) {
+    val = data[attr];
+    if (val !== room[attr]) {
+      difflist.push(attr);
+    }
+  }
+  for (attr in data) {
+    val = data[attr];
+    if (__indexOf.call(blacklist, attr) < 0) {
+      room[attr] = val;
     }
   }
   if ('timing' in data || room.__last_rate !== room.rate) {
@@ -5160,6 +5158,20 @@ synchronize = function(data) {
     renderParameters();
   }
   renderUpdate();
+  if (__indexOf.call(difflist, 'time_freeze') >= 0) {
+    variable = (room.attempt ? 'starts' : 'stops');
+    del = room.time_freeze - room.begin_time;
+    i = 0;
+    while (del > room.cumulative[i]) {
+      i++;
+    }
+    starts = $('.bundle.active').data(variable) || [];
+    if (_ref1 = i - 1, __indexOf.call(starts, _ref1) < 0) {
+      starts.push(i - 1);
+    }
+    $('.bundle.active').data(variable, starts);
+    updateInlineSymbols();
+  }
   if ('users' in data) {
     renderUsers();
   }

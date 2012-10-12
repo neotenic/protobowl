@@ -65,8 +65,11 @@ renderUpdate = ->
 		$('.sounds').attr 'checked', room.users[me.id].sounds
 		$('.teams').val room.users[me.id].team
 
+	
 	if room.attempt
 		guessAnnotation room.attempt
+		
+
 
 	wpm = Math.round(1000 * 60 / 5 / room.rate)
 	if !$('.speed').data('last_update') or new Date - $(".speed").data("last_update") > 1337
@@ -135,14 +138,6 @@ renderTimer = ->
 		$('.buzzbtn').disable true
 
 		if room.attempt
-			do ->
-				del = room.attempt.start - room.begin_time
-				i = 0
-				i++ while del > room.cumulative[i]
-				starts = ($('.bundle.active').data('starts') || [])
-				starts.push(i - 1) if (i - 1) not in starts
-				$('.bundle.active').data('starts', starts)
-
 			$('.label.pause').hide()
 			$('.label.buzz').fadeIn()
 
@@ -214,6 +209,7 @@ renderTimer = ->
 				.css('display', 'inline')
 				.css('visibility', 'visible')
 			ruling = $('.bundle.active').find('.ruling')
+			
 			unless ruling.data('shown_tooltip')
 				ruling.data('shown_tooltip', true)
 				$('.bundle.active').find('.ruling').first()
@@ -466,8 +462,12 @@ updateInlineSymbols = ->
 	bundle = $('#history .bundle.active') 
 
 	spots = bundle.data('starts') || []
+	stops = bundle.data('stops') || []
 
 	readout = bundle.find('.readout .well')
+	
+	return if readout.length is 0
+
 	readout.data('spots', spots.join(','))
 
 	children = readout.children()
@@ -493,6 +493,8 @@ updateInlineSymbols = ->
 				label_type = "label"
 
 			element.append " <span class='inline-icon'><i class='label icon-white icon-bell  #{label_type}'></i></span> "
+		else if i in stops
+			element.append " <span class='inline-icon'><i class='label icon-white icon-pause label-warning'></i></span> "
 
 		elements.push element
 

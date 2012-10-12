@@ -168,10 +168,6 @@ io.sockets.on 'connection', (sock) ->
 	user.add_socket sock
 	sock.join room_name
 
-	
-	room.emit 'log', {verb: 'hello world, these are the first words from the third major incarnation of protobowl'}
-
-
 	# publicID = "__secret_ninja" if is_ninja
 	# publicID += "_god" if is_god
 	# create the room if it doesn't exist
@@ -196,11 +192,12 @@ io.sockets.on 'connection', (sock) ->
 	# 	user.ninja = true
 	# 	user.name = publicID
 	# # give the user a stupid name
-	# user.name ||= names.generateName()
-	# # tell the user of his new moniker
+
+	room.sync(3)
+
 	sock.emit 'joined', { id: user.id, name: user.name }
 	# # tell that there's a new person at the partaay
-	room.sync(3)
+	
 	user.verb 'joined the room'
 	# room.emit 'log', {user: publicID, verb: 'joined the room'} # unless is_ninja
 	# # detect if the server had been recently restarted
