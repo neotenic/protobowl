@@ -239,7 +239,14 @@ $('.speed').change ->
 	$('.speed').not(this).val($(this).val())
 	$('.speed').data("last_update", +new Date)
 	rate = 1000 * 60 / 5 / Math.round($(this).val())
-	me.set_speed rate
+	if +$('.speed').val() > $('.speed').attr('max') - 10
+		console.log('bam')
+
+		# technically not speed, but duration per syllable
+		# 0 is close enough
+		me.set_speed 1
+	else
+		me.set_speed rate
 	# console.log rate
 		
 $('.categories').change ->

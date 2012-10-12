@@ -2698,7 +2698,12 @@ $('.speed').change(function() {
   $('.speed').not(this).val($(this).val());
   $('.speed').data("last_update", +(new Date));
   rate = 1000 * 60 / 5 / Math.round($(this).val());
-  return me.set_speed(rate);
+  if (+$('.speed').val() > $('.speed').attr('max') - 10) {
+    console.log('bam');
+    return me.set_speed(1);
+  } else {
+    return me.set_speed(rate);
+  }
 });
 
 $('.categories').change(function() {

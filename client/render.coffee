@@ -73,7 +73,7 @@ renderUpdate = ->
 
 	wpm = Math.round(1000 * 60 / 5 / room.rate)
 	if !$('.speed').data('last_update') or new Date - $(".speed").data("last_update") > 1337
-		if Math.abs($('.speed').val() - wpm) > 1
+		if Math.abs($('.speed').val() - wpm) > 1	
 			$('.speed').val(wpm)
 
 
@@ -209,7 +209,7 @@ renderTimer = ->
 				.css('display', 'inline')
 				.css('visibility', 'visible')
 			ruling = $('.bundle.active').find('.ruling')
-			
+
 			unless ruling.data('shown_tooltip')
 				ruling.data('shown_tooltip', true)
 				$('.bundle.active').find('.ruling').first()
