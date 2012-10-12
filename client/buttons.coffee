@@ -240,11 +240,9 @@ $('.speed').change ->
 	$('.speed').data("last_update", +new Date)
 	rate = 1000 * 60 / 5 / Math.round($(this).val())
 	if +$('.speed').val() > $('.speed').attr('max') - 10
-		console.log('bam')
-
 		# technically not speed, but duration per syllable
-		# 0 is close enough
-		me.set_speed 1
+		# 0.1 is close enough, though 0.01 might be better
+		me.set_speed 0.1
 	else
 		me.set_speed rate
 	# console.log rate

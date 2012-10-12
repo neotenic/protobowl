@@ -2699,8 +2699,7 @@ $('.speed').change(function() {
   $('.speed').data("last_update", +(new Date));
   rate = 1000 * 60 / 5 / Math.round($(this).val());
   if (+$('.speed').val() > $('.speed').attr('max') - 10) {
-    console.log('bam');
-    return me.set_speed(1);
+    return me.set_speed(0.1);
   } else {
     return me.set_speed(rate);
   }
@@ -4538,7 +4537,8 @@ renderPartial = function() {
 };
 
 renderTimer = function() {
-  var cs, elapsed, fraction, min, ms, pad, progress, ruling, sec, sign;
+  var cs, elapsed, fraction, min, ms, pad, progress, ruling, sec, sign, time;
+  time = Math.max(room.begin_time, room.time());
   if (connected()) {
     $('.offline').fadeOut();
   } else {
@@ -4567,7 +4567,7 @@ renderTimer = function() {
       $('.pausebtn').addClass('btn-warning').removeClass('btn-success');
     }
   }
-  if (room.time() > room.end_time - room.answer_duration) {
+  if (time > room.end_time - room.answer_duration) {
     if ($(".nextbtn").is(":hidden")) {
       $('.nextbtn').show();
       $('.skipbtn').hide();
@@ -4588,8 +4588,8 @@ renderTimer = function() {
     progress = elapsed / room.attempt.duration;
     $('.pausebtn, .buzzbtn, .skipbtn, .nextbtn').disable(true);
   } else {
-    ms = room.end_time - room.time();
-    elapsed = room.time() - room.begin_time;
+    ms = room.end_time - time;
+    elapsed = time - room.begin_time;
     progress = elapsed / (room.end_time - room.begin_time);
     $('.skipbtn, .nextbtn').disable(false);
     $('.pausebtn').disable(ms < 0);
@@ -4597,7 +4597,7 @@ renderTimer = function() {
       $('.buzzbtn').disable(ms < 0 || elapsed < 100);
     }
     if (ms < 0) {
-      $('.bundle.active').find('.answer').css('display', 'inline').css('visibility', 'visible');
+      $('.bundle.active').addClass('revealed');
       ruling = $('.bundle.active').find('.ruling');
       if (!ruling.data('shown_tooltip')) {
         ruling.data('shown_tooltip', true);

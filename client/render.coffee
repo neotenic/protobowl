@@ -129,6 +129,8 @@ renderPartial = ->
 renderTimer = ->
 	# $('#pause').show !!room.time_freeze
 	# $('.buzzbtn').attr 'disabled', !!room.attempt
+	time = Math.max(room.begin_time, room.time())
+
 	if connected()
 		$('.offline').fadeOut()
 	else
@@ -167,12 +169,12 @@ renderTimer = ->
 			.addClass('btn-warning')
 			.removeClass('btn-success')
 	
-	# if room.time() >= room.end_time
+	# if time >= room.end_time
 	# 	$('.label.finished').fadeIn()
 	# else
 	# 	$('.label.finished').hide()
 
-	if room.time() > room.end_time - room.answer_duration
+	if time > room.end_time - room.answer_duration
 		# $('.progress').addClass 'progress-info'
 		if $(".nextbtn").is(":hidden")
 			$('.nextbtn').show() 
@@ -197,17 +199,18 @@ renderTimer = ->
 		progress = elapsed / room.attempt.duration
 		$('.pausebtn, .buzzbtn, .skipbtn, .nextbtn').disable true
 	else
-		ms = room.end_time - room.time()
-		elapsed = (room.time() - room.begin_time)
+		ms = room.end_time - time
+		elapsed = (time - room.begin_time)
 		progress = elapsed/(room.end_time - room.begin_time)
 		$('.skipbtn, .nextbtn').disable false
 		$('.pausebtn').disable (ms < 0)
 		unless room.time_freeze
 			$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
-			$('.bundle.active').find('.answer')
-				.css('display', 'inline')
-				.css('visibility', 'visible')
+			$('.bundle.active').addClass('revealed')
+			# .find('.answer')
+			# .css('display', 'inline')
+			# .css('visibility', 'visible')
 			ruling = $('.bundle.active').find('.ruling')
 
 			unless ruling.data('shown_tooltip')

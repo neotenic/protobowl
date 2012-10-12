@@ -15,6 +15,7 @@ DOES NOT WORK. AT ALL. NOPE.
 # TODO IN REWRITE
 
 * Trolling voting interface
+* less jarring start offset interface
 
 # Todo
 

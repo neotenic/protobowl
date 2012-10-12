@@ -29,6 +29,7 @@ class QuizRoom
 		@answer_duration = 1000 * 5
 		@time_offset = 0
 		@sync_offset = 0 # always zero for master installations
+		@start_offset = 0 # to compensate for latency, etc.
 		
 		@end_time = 0
 		@question = ''
@@ -170,7 +171,7 @@ class QuizRoom
 			@answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20)
 			# console.log @qid
 
-			@begin_time = @time()
+			@begin_time = @time() + @start_offset
 
 			if SyllableCounter?
 				syllables = SyllableCounter

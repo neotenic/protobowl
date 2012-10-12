@@ -262,11 +262,18 @@ input[type=range] {
 	}
 }
 
-
 .bundle.active {
 	.answer { visibility: hidden; }
 	.unread { visibility: hidden; }
 }
+
+.bundle.revealed {
+	.answer {
+		display: inline;
+		visibility: visible;
+	}
+}
+
 .bundle .breadcrumb {
 	cursor: default;
 }
@@ -284,7 +291,6 @@ input[type=range] {
 .btn.disabled, .btn[disabled], .timer.disabled {
 	opacity: 0.35;
 }
-
 
 .start-page {
 	.btn.btn-large {
