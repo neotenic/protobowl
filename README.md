@@ -15,7 +15,6 @@ DOES NOT WORK. AT ALL. NOPE.
 # TODO IN REWRITE
 
 * Trolling voting interface
-* less jarring start offset interface
 
 # Todo
 
@@ -28,7 +27,7 @@ DOES NOT WORK. AT ALL. NOPE.
 
 # In Progress
 * Support different question sets
-* have question reports include miscategorization
+* less jarring start offset interface
 
 # Mostly Done
 * Create teams
@@ -37,6 +36,8 @@ DOES NOT WORK. AT ALL. NOPE.
 * make leaderboard faster (mostly done)
 
 # Done
+* have question reports include miscategorization
+* add times to verb annotations interface
 * support teams (mostly done)
 * make single-buzz restriction support teams
 * support ties on the leaderboard (done)

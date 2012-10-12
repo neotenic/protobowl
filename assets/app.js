@@ -2137,7 +2137,7 @@ setTimeout(function() {
   return $(window).resize();
 }, 6022);
 
-var addAnnotation, addImportant, chatAnnotation, createAlert, guessAnnotation, logAnnotation, userSpan, verbAnnotation;
+var addAnnotation, addImportant, chatAnnotation, createAlert, guessAnnotation, userSpan, verbAnnotation;
 
 createAlert = function(bundle, title, message) {
   var div;
@@ -2369,22 +2369,15 @@ chatAnnotation = function(_arg) {
 };
 
 verbAnnotation = function(_arg) {
-  var line, user, verb;
-  user = _arg.user, verb = _arg.verb;
+  var line, time, user, verb;
+  user = _arg.user, verb = _arg.verb, time = _arg.time;
   line = $('<p>').addClass('log');
   if (user) {
-    line.append(userSpan(user));
+    line.append(userSpan(user).attr('title', formatTime(time)));
     line.append(" " + verb);
   } else {
     line.append(verb);
   }
-  return addAnnotation(line);
-};
-
-logAnnotation = function(text) {
-  var line;
-  line = $('<p>').addClass('log');
-  line.append(text);
   return addAnnotation(line);
 };
 
@@ -2551,7 +2544,7 @@ $('input').keydown(function(e) {
 
 $('.chat_input').typeahead({
   source: function() {
-    var existing, name, names, option, prefix, _i, _len, _results;
+    var existing, id, name, names, option, prefix, user, _i, _len, _results;
     prefix = '@' + this.query.slice(1).split(',').slice(0, -1).join(',');
     existing = (function() {
       var _i, _len, _ref, _results;
@@ -2566,7 +2559,18 @@ $('.chat_input').typeahead({
     if (prefix.length > 1) {
       prefix += ', ';
     }
-    names = ['alphabet', 'bowl', 'chevrolet', 'darcy', 'encephalogram', 'facetious', 'glistening', 'high', 'jump rope', 'knowledge', 'loquacious', 'melanin', 'narcotic', 'obecalp', 'placebo', 'quiz', 'rapacious', 'singularity', 'time travel', 'underappreciated', 'vestigial', 'wolfram', 'xetharious', 'yonder', 'zeta function'];
+    names = (function() {
+      var _ref, _results;
+      _ref = room.users;
+      _results = [];
+      for (id in _ref) {
+        user = _ref[id];
+        if (user !== me) {
+          _results.push(user.name);
+        }
+      }
+      return _results;
+    })();
     _results = [];
     for (_i = 0, _len = names.length; _i < _len; _i++) {
       name = names[_i];
@@ -2812,6 +2816,14 @@ $('body').click(function(e) {
   }
 });
 
+$('.singleuser').click(function() {
+  return $('.singleuser .stats').slideUp().queue(function() {
+    $('.singleuser').data('full', !$('.singleuser').data('full'));
+    renderUsers();
+    return $(this).dequeue().slideDown();
+  });
+});
+
 $(".leaderboard tbody tr").live('click', function(e) {
   var enabled, user, _ref;
   user = $(this).data('entity');
@@ -2849,6 +2861,7 @@ QuizPlayer = (function() {
     this.interrupts = 0;
     this.early = 0;
     this.seen = 0;
+    this.correct = 0;
     this.time_spent = 0;
     this.last_action = this.room.serverTime();
     this.times_buzzed = 0;
@@ -2878,7 +2891,8 @@ QuizPlayer = (function() {
     if (this.id.toString().slice(0, 2) !== '__') {
       return this.room.emit('log', {
         user: this.id,
-        verb: action
+        verb: action,
+        time: this.room.serverTime()
       });
     }
   };
@@ -2920,12 +2934,13 @@ QuizPlayer = (function() {
   QuizPlayer.prototype.skip = function() {
     this.touch();
     if (!this.room.attempt) {
-      this.room.skip();
+      this.room.new_question();
       return this.verb('skipped a question');
     }
   };
 
   QuizPlayer.prototype.next = function() {
+    this.touch();
     return this.room.next();
   };
 
@@ -2939,12 +2954,21 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.pause = function() {
     this.touch();
-    this.room.pause();
-    return this.room.sync();
+    if (!this.room.attempt && this.room.time() < this.room.end_time) {
+      this.verb('paused the game');
+      this.room.freeze();
+      return this.room.sync();
+    }
   };
 
   QuizPlayer.prototype.unpause = function() {
-    this.room.unpause();
+    if (!this.room.attempt) {
+      this.verb('resumed the game');
+      if (!this.room.question) {
+        this.room.new_question();
+      }
+      this.room.unfreeze();
+    }
     return this.room.sync();
   };
 
@@ -2955,28 +2979,32 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.set_distribution = function(data) {
-    var _this = this;
+    var cat, count, disabled, enabled,
+      _this = this;
     this.touch();
     if (!data) {
       return;
     }
+    enabled = [];
+    disabled = [];
+    for (cat in data) {
+      count = data[cat];
+      if (this.room.distribution[cat] === 0 && count > 0) {
+        enabled.push(cat);
+      }
+      if (this.room.distribution[cat] > 0 && count === 0) {
+        disabled.push(cat);
+      }
+    }
     this.room.distribution = data;
     this.room.sync(3);
     return this.room.get_size(function(size) {
-      var cat, count, _results;
-      _results = [];
-      for (cat in data) {
-        count = data[cat];
-        if (_this.room.distribution[cat] === 0 && count > 0) {
-          _this.verb("enabled category " + cat + " (" + size + " questions)");
-        }
-        if (_this.room.distribution[cat] > 0 && count === 0) {
-          _results.push(_this.verb("disabled category " + cat + " (" + size + " questions)"));
-        } else {
-          _results.push(void 0);
-        }
+      if (enabled.length > 0) {
+        _this.verb("enabled " + (enabled.join(', ')) + " (" + size + " questions)");
       }
-      return _results;
+      if (disabled.length > 0) {
+        return _this.verb("disabled " + (disabled.join(', ')) + " (" + size + " questions)");
+      }
     });
   };
 
@@ -3112,6 +3140,7 @@ QuizRoom = (function() {
     this.answer_duration = 1000 * 5;
     this.time_offset = 0;
     this.sync_offset = 0;
+    this.start_offset = 0;
     this.end_time = 0;
     this.question = '';
     this.answer = '';
@@ -3205,18 +3234,6 @@ QuizRoom = (function() {
     }
   };
 
-  QuizRoom.prototype.pause = function() {
-    if (!(this.attempt || this.time() > this.end_time)) {
-      return this.freeze();
-    }
-  };
-
-  QuizRoom.prototype.unpause = function() {
-    if (!this.attempt) {
-      return this.unfreeze();
-    }
-  };
-
   QuizRoom.prototype.timeout = function(delay, callback) {
     this.clear_timeout();
     return this.__timeout = setTimeout(callback, delay);
@@ -3246,7 +3263,7 @@ QuizRoom = (function() {
       _this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
       _this.qid = (question != null ? (_ref = question._id) != null ? _ref.toString() : void 0 : void 0) || 'question_id';
       _this.info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" + _this.answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20);
-      _this.begin_time = _this.time();
+      _this.begin_time = _this.time() + _this.start_offset;
       if (typeof SyllableCounter !== "undefined" && SyllableCounter !== null) {
         syllables = SyllableCounter;
       } else {
@@ -3308,25 +3325,18 @@ QuizRoom = (function() {
     return this.end_time = this.begin_time + new_duration + this.answer_duration;
   };
 
-  QuizRoom.prototype.skip = function() {
-    if (!this.attempt) {
-      return this.new_question();
-    }
-  };
-
   QuizRoom.prototype.finish = function() {
     return this.set_time(this.end_time);
   };
 
   QuizRoom.prototype.next = function() {
-    if (this.time() > this.end_time - this.answer_duration && !this.generating_question) {
-      this.skip();
-      return this.unpause();
+    if (this.time() > this.end_time - this.answer_duration && !this.generating_question && !this.attempt) {
+      this.new_question();
+      return this.unfreeze();
     }
   };
 
   QuizRoom.prototype.check_answer = function() {
-    this.log('CUSTOM ANSWER CHECKER NOT IMPLEMENTED');
     if (Math.random() > 0.9) {
       return 'prompt';
     }
@@ -4384,7 +4394,7 @@ var __slice = [].slice,
 
 
 
-var changeQuestion, createBundle, createCategoryList, last_question, last_rendering, reader_children, reader_last_state, renderCategoryItem, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, updateInlineSymbols, updateTextPosition,
+var changeQuestion, checkAlone, createBundle, createCategoryList, createStatSheet, last_question, last_rendering, reader_children, reader_last_state, renderCategoryItem, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, updateInlineSymbols, updateTextPosition,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 createCategoryList = function() {
@@ -4538,6 +4548,11 @@ renderPartial = function() {
 
 renderTimer = function() {
   var cs, elapsed, fraction, min, ms, pad, progress, ruling, sec, sign, time;
+  if (room.end_time && room.begin_time) {
+    $('.timer').removeClass('disabled');
+  } else {
+    $('.timer').addClass('disabled');
+  }
   time = Math.max(room.begin_time, room.time());
   if (connected()) {
     $('.offline').fadeOut();
@@ -4621,22 +4636,228 @@ renderTimer = function() {
     sign = "+";
   }
   sec = Math.abs(ms) / 1000;
-  cs = (sec % 1).toFixed(1).slice(1);
-  $('.timer .fraction').text(cs);
-  min = sec / 60;
-  pad = function(num) {
-    var str;
-    str = Math.floor(num).toString();
-    while (str.length < 2) {
-      str = '0' + str;
-    }
-    return str;
-  };
-  return $('.timer .face').text(sign + pad(min) + ':' + pad(sec % 60));
+  if (isNaN(sec)) {
+    $('.timer .face').text('00:00');
+    return $('.timer .fraction').text('.00');
+  } else {
+    cs = (sec % 1).toFixed(1).slice(1);
+    $('.timer .fraction').text(cs);
+    min = sec / 60;
+    pad = function(num) {
+      var str;
+      str = Math.floor(num).toString();
+      while (str.length < 2) {
+        str = '0' + str;
+      }
+      return str;
+    };
+    return $('.timer .face').text(sign + pad(min) + ':' + pad(sec % 60));
+  }
 };
 
 renderUsers = function() {
-  return console.log('rendering users');
+  var active_count, attr, attrs, badge, entities, id, idle_count, list, member, members, name, ranking, row, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+  if (!room.users) {
+    return;
+  }
+  teams = {};
+  team_hash = '';
+  _ref = room.users;
+  for (id in _ref) {
+    user = _ref[id];
+    if (user.team) {
+      if (!(user.team in teams)) {
+        teams[user.team] = [];
+      }
+      teams[user.team].push(user.id);
+      team_hash += user.team + user.id;
+    }
+    userSpan(user.id, true);
+  }
+  if ($('.teams').data('teamhash') !== team_hash) {
+    $('.teams').data('teamhash', team_hash);
+    $('.teams').empty();
+    $('.teams')[0].options.add(new Option('Individual', ''));
+    for (team in teams) {
+      members = teams[team];
+      $('.teams')[0].options.add(new Option("" + team + " (" + members.length + ")", team));
+    }
+    $('.teams')[0].options.add(new Option('Create Team', 'create'));
+    if (me.id in room.users) {
+      $('.teams').val(room.users[me.id].team);
+    }
+  }
+  list = $('.leaderboard tbody');
+  ranking = 1;
+  entities = (function() {
+    var _ref1, _results;
+    _ref1 = room.users;
+    _results = [];
+    for (id in _ref1) {
+      user = _ref1[id];
+      _results.push(user);
+    }
+    return _results;
+  })();
+  user_count = entities.length;
+  team_count = 0;
+  if ($('.teams').val() || me.id.slice(0, 2) === "__") {
+    entities = (function() {
+      var _i, _len, _ref1, _results;
+      _results = [];
+      for (team in teams) {
+        members = teams[team];
+        attrs = {};
+        team_count++;
+        for (_i = 0, _len = members.length; _i < _len; _i++) {
+          member = members[_i];
+          _ref1 = room.users[member];
+          for (attr in _ref1) {
+            val = _ref1[attr];
+            if (typeof val === 'number') {
+              if (!(attr in attrs)) {
+                attrs[attr] = 0;
+              }
+              attrs[attr] += val;
+            }
+          }
+        }
+        attrs.id = 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, '');
+        attrs.members = members;
+        attrs.name = team;
+        _results.push(attrs);
+      }
+      return _results;
+    })();
+    _ref1 = room.users;
+    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+      user = _ref1[_i];
+      if (!user.team) {
+        entities.push(user);
+      }
+    }
+  }
+  list.empty();
+  _ref2 = entities.sort(function(a, b) {
+    return computeScore(b) - computeScore(a);
+  });
+  for (user_index = _j = 0, _len1 = _ref2.length; _j < _len1; user_index = ++_j) {
+    user = _ref2[user_index];
+    if (entities[user_index - 1] && computeScore(user) < computeScore(entities[user_index - 1])) {
+      ranking++;
+    }
+    row = $('<tr>').data('entity', user).appendTo(list);
+    row.click(function() {
+      return 1;
+    });
+    badge = $('<span>').addClass('badge pull-right').text(computeScore(user));
+    if (_ref3 = me.id, __indexOf.call(user.members || [user.id], _ref3) >= 0) {
+      badge.addClass('badge-info').attr('title', 'You');
+    } else {
+      idle_count = 0;
+      active_count = 0;
+      _ref4 = user.members || [user.id];
+      for (_k = 0, _len2 = _ref4.length; _k < _len2; _k++) {
+        member = _ref4[_k];
+        if (room.users[member].online) {
+          if (room.serverTime() - room.users[member].last_action > 1000 * 60 * 10) {
+            idle_count++;
+          } else {
+            active_count++;
+          }
+        }
+      }
+      if (active_count > 0) {
+        badge.addClass('badge-success').attr('title', 'Online');
+      } else if (idle_count > 0) {
+        badge.addClass('badge-warning').attr('title', 'Idle');
+      }
+    }
+    $('<td>').addClass('rank').append(badge).append(ranking).appendTo(row);
+    name = $('<td>').appendTo(row);
+    $('<td>').text(user.interrupts).appendTo(row);
+    if (!user.members) {
+      name.append($('<span>').text(user.name));
+    } else {
+      name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
+      _ref5 = user.members.sort(function(a, b) {
+        return computeScore(room.users[b]) - computeScore(room.users[a]);
+      });
+      for (_l = 0, _len3 = _ref5.length; _l < _len3; _l++) {
+        member = _ref5[_l];
+        user = room.users[member];
+        row = $('<tr>').addClass('subordinate').data('entity', user).appendTo(list);
+        row.click(function() {
+          return 1;
+        });
+        badge = $('<span>').addClass('badge pull-right').text(computeScore(user));
+        if (user.id === me.id) {
+          badge.addClass('badge-info').attr('title', 'You');
+        } else {
+          if (user.online) {
+            if (room.serverTime() - user.last_action > 1000 * 60 * 10) {
+              badge.addClass('badge-warning').attr('title', 'Idle');
+            } else {
+              badge.addClass('badge-success').attr('title', 'Online');
+            }
+          }
+        }
+        $('<td>').css("border", 0).append(badge).appendTo(row);
+        name = $('<td>').text(user.name);
+        name.appendTo(row);
+        $('<td>').text(user.interrupts).appendTo(row);
+      }
+    }
+  }
+  if (user_count > 1 && connected()) {
+    if ($('.leaderboard').is(':hidden')) {
+      $('.leaderboard').slideDown();
+      $('.singleuser').slideUp();
+    }
+  } else if (room.users[me.id]) {
+    $('.singleuser .stats table').replaceWith(createStatSheet(room.users[me.id], !!$('.singleuser').data('full')));
+    if ($('.singleuser').is(':hidden')) {
+      $('.leaderboard').slideUp();
+      $('.singleuser').slideDown();
+    }
+  }
+  return checkAlone();
+};
+
+checkAlone = function() {
+  if (!connected()) {
+
+  }
+};
+
+createStatSheet = function(user, full) {
+  var body, row, table;
+  table = $('<table>').addClass('table headless');
+  body = $('<tbody>').appendTo(table);
+  row = function(name, val) {
+    return $('<tr>').appendTo(body).append($("<th>").text(name)).append($("<td>").addClass("value").append(val));
+  };
+  row("Score", $('<span>').addClass('badge').text(computeScore(user)));
+  row("Correct", user.correct);
+  row("Interrupts", user.interrupts);
+  if (full) {
+    row("Early", user.early);
+  }
+  if (full) {
+    row("Incorrect", user.guesses - user.correct);
+  }
+  row("Guesses", user.guesses);
+  row("Seen", user.seen);
+  if (user.team) {
+    row("Team", user.team);
+  }
+  if (full) {
+    row("ID", user.id.slice(0, 10));
+  }
+  if (full) {
+    row("Last Seen", formatRelativeTime(user.last_action));
+  }
+  return table;
 };
 
 changeQuestion = function() {
@@ -4813,7 +5034,6 @@ updateInlineSymbols = function() {
   if (!(room.question && room.timing)) {
     return;
   }
-  console.log('update inline symbols');
   words = room.question.split(' ');
   early_index = room.question.replace(/[^ \*]/g, '').indexOf('*');
   bundle = $('#history .bundle.active');
@@ -5037,7 +5257,6 @@ me = new QuizPlayerSlave(room, 'temporary');
 
 sock.on('connect', function() {
   $('.actionbar button').disable(false);
-  $('.timer').removeClass('disabled');
   $('.disconnect-notice').slideUp();
   return me.disco({
     old_socket: localStorage.old_socket
@@ -5150,11 +5369,11 @@ synchronize = function(data) {
         if (!(user.id in room.users)) {
           room.users[user.id] = new QuizPlayer(room, user.id);
         }
-        for (attr in user) {
-          val = user[attr];
-          if (__indexOf.call(user_blacklist, attr) < 0) {
-            room.users[user.id][attr] = val;
-          }
+      }
+      for (attr in user) {
+        val = user[attr];
+        if (__indexOf.call(user_blacklist, attr) < 0) {
+          room.users[user.id][attr] = val;
         }
       }
     }

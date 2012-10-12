@@ -231,19 +231,19 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	line.toggleClass 'typing', !done
 
 
-verbAnnotation = ({user, verb}) ->
+verbAnnotation = ({user, verb, time}) ->
 	line = $('<p>').addClass 'log'
 	if user
-		line.append userSpan(user)
+		line.append userSpan(user).attr('title', formatTime(time))
 		line.append " " + verb
 	else
 		line.append verb
 	addAnnotation line
 
-logAnnotation = (text) ->
-	line = $('<p>').addClass 'log'
-	line.append text
-	addAnnotation line
+# logAnnotation = (text) ->
+# 	line = $('<p>').addClass 'log'
+# 	line.append text
+# 	addAnnotation line
 
 # sock.on 'log',
 

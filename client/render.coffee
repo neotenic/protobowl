@@ -129,6 +129,11 @@ renderPartial = ->
 renderTimer = ->
 	# $('#pause').show !!room.time_freeze
 	# $('.buzzbtn').attr 'disabled', !!room.attempt
+	if room.end_time and room.begin_time
+		$('.timer').removeClass 'disabled'
+	else
+		$('.timer').addClass 'disabled'
+		
 	time = Math.max(room.begin_time, room.time())
 
 	if connected()
@@ -238,19 +243,201 @@ renderTimer = ->
 	sign = "+" if ms < 0
 	sec = Math.abs(ms) / 1000
 
-
-	cs = (sec % 1).toFixed(1).slice(1)
-	$('.timer .fraction').text cs
-	min = sec / 60
-	pad = (num) ->
-		str = Math.floor(num).toString()
-		while str.length < 2
-			str = '0' + str
-		str
-	$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
+	if isNaN(sec)
+		$('.timer .face').text('00:00')
+		$('.timer .fraction').text('.00')
+	else
+		cs = (sec % 1).toFixed(1).slice(1)
+		$('.timer .fraction').text cs
+		min = sec / 60
+		pad = (num) ->
+			str = Math.floor(num).toString()
+			while str.length < 2
+				str = '0' + str
+			str
+		$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
 
 renderUsers = ->
-	console.log 'rendering users'
+	# render the user list and that stuff
+	return unless room.users
+
+	teams = {}
+	team_hash = ''
+	for id, user of room.users
+		# votes = []
+		# for action of room.voting
+		# 	if user.id in room.voting[action]
+		# 		votes.push action
+		# user.votes = votes.join(', ')
+		# user.room = room.name
+		# users[user.id] = user
+		if user.team
+			teams[user.team] = [] unless user.team of teams
+			teams[user.team].push user.id
+			team_hash += user.team + user.id
+		
+		#teams[user.team || user.id] = [] unless teams[user.team || ''] 
+		#teams[user.team || user.id].push user.id
+
+		userSpan(user.id, true) # do a global update!
+
+
+		# user.name + " (" + user.id + ") " + votes.join(", ")
+	
+	if $('.teams').data('teamhash') isnt team_hash
+		$('.teams').data('teamhash', team_hash)
+		$('.teams').empty()
+		$('.teams')[0].options.add new Option('Individual', '')
+		for team, members of teams
+			$('.teams')[0].options.add new Option("#{team} (#{members.length})", team)
+		$('.teams')[0].options.add new Option('Create Team', 'create')
+		if me.id of room.users
+			$('.teams').val(room.users[me.id].team)
+	
+	#console.time('draw board')
+	list = $('.leaderboard tbody')
+	# list.find('tr').remove() #abort all people
+	ranking = 1
+	
+	entities = (user for id, user of room.users)
+	user_count = entities.length
+
+	team_count = 0
+	if $('.teams').val() or me.id.slice(0,2) == "__"
+		entities = for team, members of teams
+			attrs = {}
+			team_count++
+			for member in members
+				for attr, val of room.users[member]
+					if typeof val is 'number'
+						attrs[attr] = 0 unless attr of attrs
+						attrs[attr] += val
+
+			attrs.id = 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, '')
+			attrs.members = members
+			
+			attrs.name = team
+			attrs
+			
+		for user in room.users when !user.team 
+			entities.push user # add all the unaffiliated users
+
+	list.empty()
+	for user, user_index in entities.sort((a, b) -> computeScore(b) - computeScore(a))
+		# if the score is worse, increment ranks
+		ranking++ if entities[user_index - 1] and computeScore(user) < computeScore(entities[user_index - 1])
+		row = $('<tr>').data('entity', user).appendTo list
+		row.click -> 1
+		badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+		if me.id in (user.members || [user.id])
+			badge.addClass('badge-info').attr('title', 'You')
+		else
+			idle_count = 0
+			active_count = 0
+			for member in (user.members || [user.id])
+				if room.users[member].online
+					if room.serverTime() - room.users[member].last_action > 1000 * 60 * 10
+						idle_count++
+					else
+						active_count++
+			if active_count > 0
+				badge.addClass('badge-success').attr('title', 'Online')
+			else if idle_count > 0
+				badge.addClass('badge-warning').attr('title', 'Idle')
+		
+		$('<td>').addClass('rank').append(badge).append(ranking).appendTo row
+		name = $('<td>').appendTo row
+		
+		$('<td>').text(user.interrupts).appendTo row
+		if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
+			name.append($('<span>').text(user.name)) #.css('font-weight', 'bold'))
+		else
+			name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
+		
+			for member in user.members.sort((a, b) -> computeScore(room.users[b]) - computeScore(room.users[a]))
+				user = room.users[member]
+				row = $('<tr>').addClass('subordinate').data('entity', user).appendTo list
+				row.click -> 1
+				badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+				if user.id is me.id
+					badge.addClass('badge-info').attr('title', 'You')
+				else
+					if user.online
+						if room.serverTime() - user.last_action > 1000 * 60 * 10
+							badge.addClass('badge-warning').attr('title', 'Idle')
+						else
+							badge.addClass('badge-success').attr('title', 'Online')
+
+				$('<td>').css("border", 0).append(badge).appendTo row
+				name = $('<td>').text(user.name)
+				name.appendTo row
+				$('<td>').text(user.interrupts).appendTo row
+
+	#console.timeEnd('draw board')
+	# this if clause is ~5msecs
+	# console.log entities, room.users, me.id
+	if user_count > 1 and connected()
+		if $('.leaderboard').is(':hidden')
+			$('.leaderboard').slideDown()
+			$('.singleuser').slideUp()
+	else if room.users[me.id]
+		$('.singleuser .stats table').replaceWith(createStatSheet(room.users[me.id], !!$('.singleuser').data('full')))
+		if $('.singleuser').is(':hidden')
+			$('.leaderboard').slideUp()
+			$('.singleuser').slideDown()
+	# turns out doing this resize is like the slowest part!
+	# console.time('resize')
+	# $(window).resize() #fix all the expandos
+	# console.timeEnd('resize')
+	checkAlone() # ~ 1 msec
+	
+	#console.time('partial')
+	# renderPartial()
+	#console.timeEnd('partial')
+	#console.timeEnd('render state')
+
+
+checkAlone = ->
+	return unless connected()
+	# active_count = 0
+	# for user in room.users
+	# 	if user.online and serverTime() - user.last_action < 1000 * 60 * 10
+	# 		active_count++
+	# if active_count is 1
+	# 	sock.emit 'check_rooms', public_rooms, (data) ->
+	# 		suggested_candidates = []
+	# 		for room, count of data
+	# 			if count > 0 and room isnt room.name
+	# 				suggested_candidates.push room
+	# 		if suggested_candidates.length > 0
+	# 			links = (can.link("/" + can) + " (#{data[can]}) " for can in suggested_candidates)
+	# 			$('.foreveralone .roomlist').html links.join(' or ')
+	# 			$('.foreveralone').slideDown()
+	# 		else
+	# 			$('.foreveralone').slideUp()
+	# else
+	# 	$('.foreveralone').slideUp()
+
+createStatSheet = (user, full) ->
+	table = $('<table>').addClass('table headless')
+	body = $('<tbody>').appendTo(table)
+	row = (name, val) ->
+		$('<tr>')
+			.appendTo(body)
+			.append($("<th>").text(name))
+			.append($("<td>").addClass("value").append(val))
+	
+	row	"Score", $('<span>').addClass('badge').text(computeScore(user))
+	row	"Correct", user.correct
+	row "Interrupts", user.interrupts
+	row "Early", user.early  if full
+	row "Incorrect", user.guesses - user.correct  if full
+	row "Guesses", user.guesses 
+	row "Seen", user.seen
+	row "Team", user.team if user.team
+	row "ID", user.id.slice(0, 10) if full
+	row "Last Seen", formatRelativeTime(user.last_action) if full
+	return table
 
 
 changeQuestion = ->
@@ -458,7 +645,7 @@ updateTextPosition = ->
 
 updateInlineSymbols = ->
 	return unless room.question and room.timing
-	console.log 'update inline symbols'
+	# console.log 'update inline symbols'
 
 	words = room.question.split ' '
 	early_index = room.question.replace(/[^ \*]/g, '').indexOf('*')

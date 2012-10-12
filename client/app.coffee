@@ -8,8 +8,6 @@
 #= require time.coffee
 
 sock = io.connect()
-# console.timeEnd("from here")
-# console.time('connect')
 
 connected = -> sock? and sock.socket.connected
 
@@ -34,7 +32,6 @@ class QuizPlayerSlave extends QuizPlayer
 class QuizRoomSlave extends QuizRoom
 	# dont know what to change
 	emit: (name, data) ->
-		# console.log 'yaaaaaaaaaaaaaaaaaayyy?', name, data
 		@__listeners[name](data)
 
 	constructor: (name) ->
@@ -49,7 +46,6 @@ sock.on 'connect', ->
 	# console.timeEnd('connect')
 	# $('.chatbtn').disable(false)
 	$('.actionbar button').disable false
-	$('.timer').removeClass 'disabled'
 	$('.disconnect-notice').slideUp()
 	# implemented in SocketQuizPlayer rather than QuizPlayer
 	# actually just new skeleeton method in place
@@ -69,8 +65,6 @@ sock.on 'disconnect', ->
 	addImportant $('<div>').addClass('log disconnect-notice').append(line)
 	# room.emit 'init_offline', 'yay' #obviously server wont pay attention to that
 	# renderState()
-
-
 
 # look at all these one liner events!
 listen = (name, fn) ->
@@ -96,7 +90,6 @@ listen 'joined', (data) ->
 
 sync_offsets = []
 latency_log = []
-
 
 synchronize = (data) ->
 	blacklist = ['real_time', 'users']
@@ -127,11 +120,11 @@ synchronize = (data) ->
 			else
 				unless user.id of room.users
 					room.users[user.id] = new QuizPlayer(room, user.id)
-				for attr, val of user when attr not in user_blacklist
-					room.users[user.id][attr] = val
+					
+			for attr, val of user when attr not in user_blacklist
+				room.users[user.id][attr] = val
 
-	if 'difficulties' of data
-		renderParameters()
+	renderParameters() if 'difficulties' of data
 
 	renderUpdate()
 
@@ -146,12 +139,15 @@ synchronize = (data) ->
 
 		updateInlineSymbols()
 
-	if 'users' of data
-		renderUsers()
+	renderUsers() if 'users' of data
 	
 	renderPartial()
 
-# TODO: move this over to QuizPlayer class
+# in theory this would belong in QuizPlayer
+# but this doesnt fit into the architecture quite yet
+# possibly part of a bigger statistics class if that ever
+# gets actually built
+
 computeScore = (user) ->
 	return 0 if !user
 

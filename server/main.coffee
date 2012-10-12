@@ -168,6 +168,9 @@ io.sockets.on 'connection', (sock) ->
 	user.add_socket sock
 	sock.join room_name
 
+	sock.emit 'joined', { id: user.id, name: user.name }
+	
+
 	# publicID = "__secret_ninja" if is_ninja
 	# publicID += "_god" if is_god
 	# create the room if it doesn't exist
@@ -193,10 +196,9 @@ io.sockets.on 'connection', (sock) ->
 	# 	user.name = publicID
 	# # give the user a stupid name
 
+	# tell that there's a new person at the partaay
 	room.sync(3)
 
-	sock.emit 'joined', { id: user.id, name: user.name }
-	# # tell that there's a new person at the partaay
 	
 	user.verb 'joined the room'
 	# room.emit 'log', {user: publicID, verb: 'joined the room'} # unless is_ninja

@@ -1,20 +1,3 @@
-# class Player
-# 	constructor: (room, id) ->
-# 		# @id = id
-# 		# @room = room
-# 		@guesses = 0
-# 		@interrupts = 0
-# 		@early = 0
-# 		@seen = 0
-# 		@time_spent = 0
-# 		@last_action = +new Date
-# 		@times_buzzed = 0
-# 		@show_typing = true
-# 		@team = 0
-# 		@banned = false
-# 		@sounds = false
-
-
 class QuizPlayer
 	constructor: (room, id) ->
 		@id = id
@@ -23,6 +6,8 @@ class QuizPlayer
 		@interrupts = 0
 		@early = 0
 		@seen = 0
+		@correct = 0
+		
 		@time_spent = 0
 		@last_action = @room.serverTime()
 		@times_buzzed = 0
@@ -43,7 +28,10 @@ class QuizPlayer
 
 	active: -> (@room.serverTime() - @last_action) < 1000 * 60 * 10
 
-	verb: (action) -> @room.emit 'log', {user: @id, verb: action, time: @room.serverTime() } unless @id.toString().slice(0, 2) is '__'
+	verb: (action) -> 
+		# dont send any messages for actions done by ninjas
+		unless @id.toString().slice(0, 2) is '__'
+			@room.emit 'log', {user: @id, verb: action, time: @room.serverTime() }
 	
 	disco: -> 0 # skeleton method, not actually implemented
 
@@ -87,6 +75,7 @@ class QuizPlayer
 	unpause: ->
 		if !@room.attempt
 			@verb 'resumed the game'
+			@room.new_question() if !@room.question
 			@room.unfreeze()
 		@room.sync()
 
@@ -99,14 +88,20 @@ class QuizPlayer
 	set_distribution: (data) ->
 		@touch()
 		return unless data
+		enabled = []
+		disabled = []
+		for cat, count of data
+			enabled.push cat if @room.distribution[cat] == 0 and count > 0
+			disabled.push cat if @room.distribution[cat] > 0 and count == 0
+
 		@room.distribution = data
 		@room.sync(3)
+
 		@room.get_size (size) =>
-			for cat, count of data
-				if @room.distribution[cat] == 0 and count > 0
-					@verb "enabled category #{cat} (#{size} questions)"
-				if @room.distribution[cat] > 0 and count == 0
-					@verb "disabled category #{cat} (#{size} questions)"
+			if enabled.length > 0
+				@verb "enabled #{enabled.join(', ')} (#{size} questions)"
+			if disabled.length > 0
+				@verb "disabled #{disabled.join(', ')} (#{size} questions)"
 
 
 

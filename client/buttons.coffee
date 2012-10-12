@@ -129,7 +129,7 @@ $('.chat_input').typeahead {
 		prefix = '@' + this.query.slice(1).split(',').slice(0, -1).join(',')
 		existing = ($.trim(option) for option in this.query.slice(1).split(',').slice(0, -1))
 		prefix += ', ' if prefix.length > 1
-		names = ['alphabet', 'bowl', 'chevrolet', 'darcy', 'encephalogram', 'facetious', 'glistening', 'high', 'jump rope', 'knowledge', 'loquacious', 'melanin', 'narcotic', 'obecalp', 'placebo', 'quiz', 'rapacious', 'singularity', 'time travel', 'underappreciated', 'vestigial', 'wolfram', 'xetharious', 'yonder', 'zeta function']
+		names = (user.name for id, user of room.users when user isnt me)
 		("#{prefix}#{name}" for name in names when name not in existing)
 	matcher: (candidate) ->
 		this.query[0] == '@' and this.query.split(' ').length <= this.query.split(', ').length
@@ -317,6 +317,12 @@ if !Modernizr.touch and !mobileLayout()
 $('body').click (e) ->
 	if $(e.target).parents('.leaderboard, .popover').length is 0
 		$('.popover').remove()
+
+$('.singleuser').click ->
+	$('.singleuser .stats').slideUp().queue ->
+		$('.singleuser').data 'full', !$('.singleuser').data('full')
+		renderUsers()
+		$(this).dequeue().slideDown()
 
 $(".leaderboard tbody tr").live 'click', (e) ->
 	# console.log this
