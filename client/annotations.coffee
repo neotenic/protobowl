@@ -61,8 +61,8 @@ addAnnotation = (el, name = sync?.name) ->
 
 addImportant = (el) ->
 	$('.bundle .ruling').tooltip('destroy')
-	if $('#history .bundle.active .important').length isnt 0
-		el.css('display', 'none').prependTo $('#history .bundle.active .important')
+	if $('#history .bundle.active .sticky').length isnt 0
+		el.css('display', 'none').prependTo $('#history .bundle.active .sticky')
 	else
 		el.css('display', 'none').prependTo $('#history')
 	el.slideDown()
@@ -235,7 +235,8 @@ verbAnnotation = ({user, verb, time}) ->
 	line = $('<p>').addClass 'log'
 	if user
 		line.append userSpan(user).attr('title', formatTime(time))
-		line.append " " + verb
+		line.append " " + verb.replace /@@([a-z0-9]+)/g, (match, user) ->
+			return userSpan(user).clone().wrap('<div>').parent().html()
 	else
 		line.append verb
 	addAnnotation line
@@ -248,3 +249,30 @@ verbAnnotation = ({user, verb, time}) ->
 # sock.on 'log',
 
 # logAnnotation 'Initializing ProtoBowl v3'
+
+
+boxxyAnnotation = ({id, tribunal}) ->
+	return if id is me.id # who would vote for their own banning?
+	{votes, time, witnesses} = tribunal
+
+	
+	line = $('<div>').addClass('alert').addClass('troll-' + id)
+	line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
+	line.append 'Protobowl has detected high rates of activity coming from the user '
+	line.append userSpan(id)
+	line.append '. If a majority of other active players vote to ban this user, the user will be sent to '
+	line.append "<a href='#{room.name}-banned'>/#{room.name}-banned</a> and banned from this room. This message will be automatically dismissed in a minute. <br> "
+	vote = $('<button>').addClass('btn btn-small').text('Ban this user')
+	line.append vote
+	line.append " <strong> Currently #{votes.length} of #{witnesses.length} users have voted</strong> (#{Math.floor((witnesses.length - 1)/2 + 1) - votes.length} more votes are needed to ban "
+	line.append userSpan(id)
+	line.append ")"
+	vote.click ->
+		me.vote_tribunal id
+	
+	vote.disable(me.id in votes)
+	
+	if $('.troll-'+id).length > 0
+		$('.troll-'+id).replaceWith line
+	else
+		addImportant line

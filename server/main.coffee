@@ -128,8 +128,7 @@ class SocketQuizPlayer extends QuizPlayer
 			output[check_name] = 0
 			if rooms[check_name]?.users
 				for uid, udat of rooms[check_name].users
-					if udat.sockets.length > 0 and new Date - udat.last_action < 10 * 60 * 1000
-						output[check_name]++
+					output[check_name]++ if udat.active()
 		fn output
 
 	add_socket: (sock) ->

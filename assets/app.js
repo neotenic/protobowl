@@ -2137,7 +2137,8 @@ setTimeout(function() {
   return $(window).resize();
 }, 6022);
 
-var addAnnotation, addImportant, chatAnnotation, createAlert, guessAnnotation, userSpan, verbAnnotation;
+var addAnnotation, addImportant, boxxyAnnotation, chatAnnotation, createAlert, guessAnnotation, userSpan, verbAnnotation,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 createAlert = function(bundle, title, message) {
   var div;
@@ -2207,8 +2208,8 @@ addAnnotation = function(el, name) {
 
 addImportant = function(el) {
   $('.bundle .ruling').tooltip('destroy');
-  if ($('#history .bundle.active .important').length !== 0) {
-    el.css('display', 'none').prependTo($('#history .bundle.active .important'));
+  if ($('#history .bundle.active .sticky').length !== 0) {
+    el.css('display', 'none').prependTo($('#history .bundle.active .sticky'));
   } else {
     el.css('display', 'none').prependTo($('#history'));
   }
@@ -2374,11 +2375,42 @@ verbAnnotation = function(_arg) {
   line = $('<p>').addClass('log');
   if (user) {
     line.append(userSpan(user).attr('title', formatTime(time)));
-    line.append(" " + verb);
+    line.append(" " + verb.replace(/@@([a-z0-9]+)/g, function(match, user) {
+      return userSpan(user).clone().wrap('<div>').parent().html();
+    }));
   } else {
     line.append(verb);
   }
   return addAnnotation(line);
+};
+
+boxxyAnnotation = function(_arg) {
+  var id, line, time, tribunal, vote, votes, witnesses, _ref;
+  id = _arg.id, tribunal = _arg.tribunal;
+  if (id === me.id) {
+    return;
+  }
+  votes = tribunal.votes, time = tribunal.time, witnesses = tribunal.witnesses;
+  line = $('<div>').addClass('alert').addClass('troll-' + id);
+  line.append($("<strong>").append('Is ').append(userSpan(id)).append(' trolling? '));
+  line.append('Protobowl has detected high rates of activity coming from the user ');
+  line.append(userSpan(id));
+  line.append('. If a majority of other active players vote to ban this user, the user will be sent to ');
+  line.append("<a href='" + room.name + "-banned'>/" + room.name + "-banned</a> and banned from this room. This message will be automatically dismissed in a minute. <br> ");
+  vote = $('<button>').addClass('btn btn-small').text('Ban this user');
+  line.append(vote);
+  line.append(" <strong> Currently " + votes.length + " of " + witnesses.length + " users have voted</strong> (" + (Math.floor((witnesses.length - 1) / 2 + 1) - votes.length) + " more votes are needed to ban ");
+  line.append(userSpan(id));
+  line.append(")");
+  vote.click(function() {
+    return me.vote_tribunal(id);
+  });
+  vote.disable((_ref = me.id, __indexOf.call(votes, _ref) >= 0));
+  if ($('.troll-' + id).length > 0) {
+    return $('.troll-' + id).replaceWith(line);
+  } else {
+    return addImportant(line);
+  }
 };
 
 var actionMode, mobileLayout, next, rate_limit_ceiling, rate_limit_check, recent_actions, setActionMode, skip,
@@ -2852,7 +2884,8 @@ if (Modernizr.touch) {
   $('.show-touch').hide();
 }
 
-var QuizPlayer;
+var QuizPlayer,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 QuizPlayer = (function() {
 
@@ -2868,9 +2901,12 @@ QuizPlayer = (function() {
     this.last_action = this.room.serverTime();
     this.times_buzzed = 0;
     this.show_typing = true;
-    this.team = 0;
+    this.team = '';
     this.banned = false;
     this.sounds = false;
+    this.tribunal = null;
+    this.__timeout = null;
+    this.__recent_actions = [];
   }
 
   QuizPlayer.prototype.touch = function(no_add_time) {
@@ -2901,14 +2937,85 @@ QuizPlayer = (function() {
     return this.early * EARLY + (this.correct - this.early) * CORRECT + this.interrupts * INTERRUPT;
   };
 
-  QuizPlayer.prototype.verb = function(action) {
-    if (this.id.toString().slice(0, 2) !== '__') {
-      return this.room.emit('log', {
-        user: this.id,
-        verb: action,
-        time: this.room.serverTime()
-      });
+  QuizPlayer.prototype.rate_limit = function() {
+    var action_delay, current_time, id, mean_elapsed, s, time, user, window_size, witnesses, _i, _len, _ref,
+      _this = this;
+    witnesses = (function() {
+      var _ref, _results;
+      _ref = this.room.users;
+      _results = [];
+      for (id in _ref) {
+        user = _ref[id];
+        if (id[0] !== "_" && user.active()) {
+          _results.push(id);
+        }
+      }
+      return _results;
+    }).call(this);
+    if (witnesses.length <= 2) {
+      return;
     }
+    window_size = 6;
+    action_delay = 1000;
+    current_time = this.room.serverTime();
+    this.__recent_actions.push(current_time);
+    this.__recent_actions = this.__recent_actions.slice(-window_size);
+    if (this.__recent_actions.length === window_size && !this.tribunal) {
+      s = 0;
+      _ref = this.__recent_actions;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        time = _ref[_i];
+        s += time;
+      }
+      mean_elapsed = current_time - s / window_size;
+      if (mean_elapsed < window_size * action_delay / 2) {
+        this.verb('is getting a boxxy tribunal', true);
+        this.__timeout = setTimeout(function() {
+          _this.verb('boxxy tribunal is over', true);
+          _this.tribunal = null;
+          return _this.room.sync(1);
+        }, 1000 * 60);
+        this.tribunal = {
+          votes: [],
+          time: current_time,
+          witnesses: witnesses
+        };
+        return this.room.sync(1);
+      }
+    }
+  };
+
+  QuizPlayer.prototype.vote_tribunal = function(user) {
+    var tribunal, votes, _ref;
+    tribunal = this.room.users[user].tribunal;
+    if (tribunal) {
+      votes = tribunal.votes;
+      if (votes && (_ref = this.id, __indexOf.call(votes, _ref) < 0)) {
+        votes.push(this.id);
+      }
+      if (votes.length > (tribunal.witnesses.length - 1) / 2) {
+        this.room.users[user].verb('got voted off the island', true);
+        clearTimeout(this.room.users[user].__timeout);
+        this.room.users[user].tribunal = null;
+      } else {
+        this.verb('voted to ban @@' + user);
+      }
+      return this.room.sync(1);
+    }
+  };
+
+  QuizPlayer.prototype.verb = function(action, no_rate_limit) {
+    if (this.id.toString().slice(0, 2) === '__') {
+      return;
+    }
+    if (!no_rate_limit) {
+      this.rate_limit();
+    }
+    return this.room.emit('log', {
+      user: this.id,
+      verb: action,
+      time: this.room.serverTime()
+    });
   };
 
   QuizPlayer.prototype.disco = function() {
@@ -2926,7 +3033,9 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.buzz = function(data, fn) {
-    return this.room.buzz(this.id, fn);
+    if (this.room.buzz(this.id, fn)) {
+      return this.rate_limit();
+    }
   };
 
   QuizPlayer.prototype.guess = function(data) {
@@ -2937,13 +3046,16 @@ QuizPlayer = (function() {
     var done, session, text;
     text = _arg.text, done = _arg.done, session = _arg.session;
     this.touch();
-    return this.room.emit('chat', {
+    this.room.emit('chat', {
       text: text,
       session: session,
       user: this.id,
       done: done,
       time: this.room.serverTime()
     });
+    if (done) {
+      return this.rate_limit();
+    }
   };
 
   QuizPlayer.prototype.skip = function() {
@@ -3120,7 +3232,6 @@ if (typeof exports !== "undefined" && exports !== null) {
 }
 
 var QuizRoom, default_distribution, error_question,
-  __slice = [].slice,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 error_question = {
@@ -3206,12 +3317,6 @@ QuizRoom = (function() {
   QuizRoom.prototype.get_question = function(cb) {
     cb(error_question);
     return this.log('NOT IMPLEMENTED (async get question)');
-  };
-
-  QuizRoom.prototype.emit_user = function() {
-    var args, id;
-    id = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-    return this.log('room.emit_user(id, name, data) not implemented');
   };
 
   QuizRoom.prototype.emit = function(name, data) {
@@ -3453,7 +3558,7 @@ QuizRoom = (function() {
       if (fn) {
         fn('THE BUZZES ARE TOO DAMN HIGH');
       }
-      return this.emit('log', {
+      this.emit('log', {
         user: user,
         verb: 'has already buzzed'
       });
@@ -3461,7 +3566,7 @@ QuizRoom = (function() {
       if (fn) {
         fn('THE BUZZES ARE TOO DAMN HIGH');
       }
-      return this.emit('log', {
+      this.emit('log', {
         user: user,
         verb: 'is in a team which has already buzzed'
       });
@@ -3486,16 +3591,17 @@ QuizRoom = (function() {
       this.users[user].guesses++;
       this.freeze();
       this.sync(1);
-      return this.timeout(this.attempt.duration, function() {
+      this.timeout(this.attempt.duration, function() {
         return _this.end_buzz(session);
       });
+      return true;
     } else if (this.attempt) {
       this.emit('log', {
         user: user,
         verb: 'lost the buzzer race'
       });
       if (fn) {
-        return fn('THE GAME');
+        fn('THE GAME');
       }
     } else {
       this.emit('log', {
@@ -3503,9 +3609,10 @@ QuizRoom = (function() {
         verb: 'attempted an invalid buzz'
       });
       if (fn) {
-        return fn('THE GAME');
+        fn('THE GAME');
       }
     }
+    return false;
   };
 
   QuizRoom.prototype.guess = function(user, data) {
@@ -3530,7 +3637,7 @@ QuizRoom = (function() {
       real_time: this.serverTime()
     };
     blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"];
-    user_blacklist = ["sockets"];
+    user_blacklist = ["sockets", "room"];
     for (attr in this) {
       if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0 && attr[0] !== "_") {
         data[attr] = this[attr];
@@ -3546,7 +3653,7 @@ QuizRoom = (function() {
           }
           user = {};
           for (attr in this.users[id]) {
-            if (__indexOf.call(user_blacklist, attr) < 0 && ((_ref = typeof this.users[id][attr]) !== 'function' && _ref !== 'object')) {
+            if (__indexOf.call(user_blacklist, attr) < 0 && ((_ref = typeof this.users[id][attr]) !== 'function') && attr[0] !== '_') {
               user[attr] = this.users[id][attr];
             }
           }
@@ -4677,10 +4784,10 @@ renderUsers = function() {
   for (id in _ref) {
     user = _ref[id];
     if (user.team) {
-      if (!(user.team in teams)) {
-        teams[user.team] = [];
+      if (!('t-' + user.team in teams)) {
+        teams['t-' + user.team] = [];
       }
-      teams[user.team].push(user.id);
+      teams['t-' + user.team].push(user.id);
       team_hash += user.team + user.id;
     }
     userSpan(user.id, true);
@@ -4691,6 +4798,7 @@ renderUsers = function() {
     $('.teams')[0].options.add(new Option('Individual', ''));
     for (team in teams) {
       members = teams[team];
+      team = team.slice(2);
       $('.teams')[0].options.add(new Option("" + team + " (" + members.length + ")", team));
     }
     $('.teams')[0].options.add(new Option('Create Team', 'create'));
@@ -4718,7 +4826,8 @@ renderUsers = function() {
       _results = [];
       for (team in teams) {
         members = teams[team];
-        attrs = {};
+        team = team.slice(2);
+        attrs = new QuizPlayer(room, 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, ''));
         team_count++;
         for (_i = 0, _len = members.length; _i < _len; _i++) {
           member = members[_i];
@@ -4733,7 +4842,6 @@ renderUsers = function() {
             }
           }
         }
-        attrs.id = 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, '');
         attrs.members = members;
         attrs.name = team;
         _results.push(attrs);
@@ -4948,10 +5056,8 @@ changeQuestion = function() {
 };
 
 createBundle = function() {
-  var addInfo, annotations, breadcrumb, bundle, important, readout, star, well, _ref;
+  var addInfo, breadcrumb, bundle, readout, star, well, _ref;
   bundle = $('<div>').addClass('bundle').attr('name', room.qid).addClass('room-' + ((_ref = room.name) != null ? _ref.replace(/[^a-z0-9]/g, '') : void 0));
-  important = $('<div>').addClass('important');
-  bundle.append(important);
   breadcrumb = $('<ul>');
   star = $('<a>', {
     href: "#",
@@ -5053,8 +5159,7 @@ createBundle = function() {
   readout = $('<div>').addClass('readout');
   well = $('<div>').addClass('well').appendTo(readout);
   well.append($('<span>').addClass('unread').text(room.question));
-  annotations = $('<div>').addClass('annotations');
-  return bundle.append($('<ul>').addClass('breadcrumb').append(breadcrumb)).append(readout).append(annotations);
+  return bundle.append($('<ul>').addClass('breadcrumb').append(breadcrumb)).append(readout).append($('<div>').addClass('sticky')).append($('<div>').addClass('annotations'));
 };
 
 reader_children = null;
@@ -5333,7 +5438,7 @@ sock.on('disconnect', function() {
   if (((_ref = room.attempt) != null ? _ref.user : void 0) !== me.id) {
     room.attempt = null;
   }
-  line = $('<div>').addClass('well');
+  line = $('<div>').addClass('alert alert-error');
   line.append($('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), " from the server for some reason. ", $('<em>').text(new Date)));
   line.append($('<p>').append("This may be due to a drop in the network 			connectivity or a malfunction in the server. The client will automatically 			attempt to reconnect to the server and in the mean time, the app has automatically transitioned			into <b>offline mode</b>. You can continue playing alone with a limited offline set			of questions without interruption. However, you might want to try <a href=''>reloading</a>."));
   return addImportant($('<div>').addClass('log disconnect-notice').append(line));
@@ -5435,6 +5540,15 @@ synchronize = function(data) {
         if (__indexOf.call(user_blacklist, attr) < 0) {
           room.users[user.id][attr] = val;
         }
+      }
+      console.log(user.name, user.tribunal);
+      if (user.tribunal) {
+        console.log('doing a tribunal');
+        boxxyAnnotation(user);
+      } else {
+        $('.troll-' + user.id).slideUp('normal', function() {
+          return $(this).remove();
+        });
       }
     }
   }

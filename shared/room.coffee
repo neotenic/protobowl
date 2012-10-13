@@ -46,8 +46,7 @@ class QuizRoom
 		
 
 		@freeze()
-		# @new_question() # start off without a question
-		@users = {}
+		@users = {} 
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null
@@ -71,8 +70,8 @@ class QuizRoom
 		@log 'NOT IMPLEMENTED (async get question)'
 
 		
-	emit_user: (id, args...) ->
-		@log 'room.emit_user(id, name, data) not implemented'
+	# emit_user: (id, args...) ->
+	# 	@log 'room.emit_user(id, name, data) not implemented'
 
 
 	emit: (name, data) ->
@@ -355,12 +354,16 @@ class QuizRoom
 			@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
 
+			return true
+
 		else if @attempt
 			@emit 'log', {user: user, verb: 'lost the buzzer race'}
 			fn 'THE GAME' if fn
 		else
 			@emit 'log', {user: user, verb: 'attempted an invalid buzz'}
 			fn 'THE GAME' if fn
+
+		return false
 
 	guess: (user, data) ->
 		# @touch user
@@ -403,16 +406,17 @@ class QuizRoom
 		# 		this[action]()
 		
 		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"]
-		user_blacklist = ["sockets"]
+		user_blacklist = ["sockets", "room"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
 			data[attr] = this[attr]
 
 		if level >= 1
 			data.users = for id of @users when !@users[id].ninja
 				user = {}
-				for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function', 'object']
+				for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function'] and attr[0] != '_'
 					user[attr] = @users[id][attr] 
 				user.online_state = @users[id].online()
+				# console.log user
 				user
 
 		if level >= 2

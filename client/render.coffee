@@ -271,13 +271,10 @@ renderUsers = ->
 		# user.room = room.name
 		# users[user.id] = user
 		if user.team
-			teams[user.team] = [] unless user.team of teams
-			teams[user.team].push user.id
+			teams['t-' + user.team] = [] unless 't-' + user.team of teams
+			teams['t-' + user.team].push user.id
 			team_hash += user.team + user.id
 		
-		#teams[user.team || user.id] = [] unless teams[user.team || ''] 
-		#teams[user.team || user.id].push user.id
-
 		userSpan(user.id, true) # do a global update!
 
 
@@ -288,6 +285,7 @@ renderUsers = ->
 		$('.teams').empty()
 		$('.teams')[0].options.add new Option('Individual', '')
 		for team, members of teams
+			team = team.slice(2)
 			$('.teams')[0].options.add new Option("#{team} (#{members.length})", team)
 		$('.teams')[0].options.add new Option('Create Team', 'create')
 		if me.id of room.users
@@ -304,7 +302,9 @@ renderUsers = ->
 	team_count = 0
 	if $('.teams').val() or me.id.slice(0,2) == "__"
 		entities = for team, members of teams
-			attrs = {}
+			team = team.slice(2)
+
+			attrs = new QuizPlayer(room, 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, ''))
 			team_count++
 			for member in members
 				for attr, val of room.users[member]
@@ -312,7 +312,6 @@ renderUsers = ->
 						attrs[attr] = 0 unless attr of attrs
 						attrs[attr] += val
 
-			attrs.id = 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, '')
 			attrs.members = members
 			
 			attrs.name = team
@@ -479,8 +478,8 @@ changeQuestion = ->
 
 createBundle = ->
 	bundle = $('<div>').addClass('bundle').attr('name', room.qid).addClass('room-'+room.name?.replace(/[^a-z0-9]/g, ''))
-	important = $('<div>').addClass 'important'
-	bundle.append(important)
+	# important = $('<div>').addClass 'important'
+	# bundle.append(important)
 	breadcrumb = $('<ul>')
 
 	star = $('<a>', {
@@ -606,11 +605,11 @@ createBundle = ->
 	# well.append $('<span>').addClass('visible')
 	# well.append document.createTextNode(' ') #space: the frontier in between visible and unread
 	well.append $('<span>').addClass('unread').text(room.question)
-	annotations = $('<div>').addClass 'annotations'
 	bundle
 		.append($('<ul>').addClass('breadcrumb').append(breadcrumb))
 		.append(readout)
-		.append(annotations)
+		.append($('<div>').addClass('sticky'))
+		.append($('<div>').addClass('annotations'))
 
 
 reader_children = null

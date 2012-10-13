@@ -1,20 +1,37 @@
+# A strange game. 
+# The only winning move is not to play. 
+# How about a nice game of chess? 
+
 class QuizPlayer
 	constructor: (room, id) ->
+		# basic attributes: user id, room object
 		@id = id
 		@room = room
+
+		# statistics
 		@guesses = 0
 		@interrupts = 0
 		@early = 0
 		@seen = 0
 		@correct = 0
-
+		
+		# timekeeping and other stuff
 		@time_spent = 0
 		@last_action = @room.serverTime()
+
+		# used to keep track of buzz limits
 		@times_buzzed = 0
+		
+		# user settings
 		@show_typing = true
-		@team = 0
+		@team = ''
 		@banned = false
 		@sounds = false
+
+		# rate limiting and banning
+		@tribunal = null
+		@__timeout = null
+		@__recent_actions = []
 
 	# keep track of how long someone's been online
 
@@ -36,10 +53,81 @@ class QuizPlayer
 		INTERRUPT = -5
 		return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
 
-	verb: (action) -> 
+	ban: ->
+		@banned = true
+
+	emit: (name, data) ->
+		@room.log 'QuizPlayer.emit(name, data) not implemented'
+
+
+
+	rate_limit: ->
+		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+		return if witnesses.length <= 2 # under this case, you can just go to a new room!
+
+		window_size = 6
+		action_delay = 1000
+		current_time = @room.serverTime()
+		@__recent_actions.push current_time
+		@__recent_actions = @__recent_actions.slice(-window_size) # get the last 10
+
+		if @__recent_actions.length is window_size and !@tribunal
+			s = 0; s += time for time in @__recent_actions;
+			mean_elapsed = current_time - s / window_size
+			if mean_elapsed < window_size * action_delay / 2
+				# Ummmm ahh such as like, 
+				# like the one where I'm like mmm and it says, 
+				# "I saw watchoo did there!" 
+				# And like and and then like you peoples were all like, 
+				# "YOU IS TROLLIN!" and I was like 
+				# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
+				
+				# @verb 'is getting a boxxy tribunal', true
+
+				@__timeout = setTimeout =>
+					# @verb 'boxxy tribunal is over', true
+					@tribunal = null
+					@room.sync(1)
+				, 1000 * 60
+
+				@tribunal = { votes: [], time: current_time, witnesses }
+				
+				# @room.emit 'boxxy', {user: @id, time: current_time}
+				@room.sync(1)
+
+
+	vote_tribunal: (user) ->
+		
+		# Instruct democracy, if possible to reanimate its beliefs, to
+		# purify its mores, to regulate its movements, to substitute
+		# little by little the science of affairs for its
+		# inexperience, and knowledge of its true instincts for its
+		# blind instincts; to adapt its government to time and place;
+		# to modify it according to circumstances and men: such is the
+		# first duty imposed on those who direct society in our day
+
+		tribunal = @room.users[user].tribunal
+		if tribunal
+			votes = tribunal.votes
+			votes.push(@id) if votes and @id not in votes
+			if votes.length > (tribunal.witnesses.length - 1) / 2
+				@room.users[user].verb 'got voted off the island', true
+				clearTimeout @room.users[user].__timeout
+				@room.users[user].tribunal = null
+				@room.users[user].ban()
+
+			else
+				@verb 'voted to ban @@' + user
+
+			@room.sync(1)
+
+
+	verb: (action, no_rate_limit) -> 
 		# dont send any messages for actions done by ninjas
-		unless @id.toString().slice(0, 2) is '__'
-			@room.emit 'log', {user: @id, verb: action, time: @room.serverTime() }
+		return if @id.toString().slice(0, 2) is '__'
+		@rate_limit() unless no_rate_limit
+		@room.emit 'log', {user: @id, verb: action, time: @room.serverTime() }
+
 	
 	disco: -> 0 # skeleton method, not actually implemented
 
@@ -50,13 +138,16 @@ class QuizPlayer
 
 	echo: (data, callback) -> callback @room.serverTime()
 
-	buzz: (data, fn) -> @room.buzz @id, fn
+	buzz: (data, fn) -> 
+		if @room.buzz @id, fn
+			@rate_limit()
 
 	guess: (data) -> @room.guess @id, data
 
 	chat: ({text, done, session}) ->
 		@touch()
 		@room.emit 'chat', { text, session, user: @id, done, time: @room.serverTime() }	
+		@rate_limit() if done
 	
 	skip: ->
 		@touch()

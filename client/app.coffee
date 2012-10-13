@@ -63,7 +63,7 @@ sock.on 'connect', ->
 
 sock.on 'disconnect', ->
 	room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
-	line = $('<div>').addClass 'well'
+	line = $('<div>').addClass 'alert alert-error'
 	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
 			" from the server for some reason. ", $('<em>').text(new Date))
 	line.append $('<p>').append("This may be due to a drop in the network 
@@ -133,6 +133,12 @@ synchronize = (data) ->
 
 			for attr, val of user when attr not in user_blacklist
 				room.users[user.id][attr] = val
+
+			if user.tribunal
+				boxxyAnnotation user
+			else
+				$('.troll-'+user.id).slideUp 'normal', ->
+					$(this).remove()
 
 	renderParameters() if 'difficulties' of data
 
