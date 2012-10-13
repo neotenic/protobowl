@@ -62,672 +62,8 @@
 
   })
 
-}(window.jQuery);/* ==========================================================
- * bootstrap-alert.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#alerts
- * ==========================================================
- * Copyright 2012 Twitter, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ========================================================== */
-
-
-!function ($) {
-
-  "use strict"; // jshint ;_;
-
-
- /* ALERT CLASS DEFINITION
-  * ====================== */
-
-  var dismiss = '[data-dismiss="alert"]'
-    , Alert = function (el) {
-        $(el).on('click', dismiss, this.close)
-      }
-
-  Alert.prototype.close = function (e) {
-    var $this = $(this)
-      , selector = $this.attr('data-target')
-      , $parent
-
-    if (!selector) {
-      selector = $this.attr('href')
-      selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') //strip for ie7
-    }
-
-    $parent = $(selector)
-
-    e && e.preventDefault()
-
-    $parent.length || ($parent = $this.hasClass('alert') ? $this : $this.parent())
-
-    $parent.trigger(e = $.Event('close'))
-
-    if (e.isDefaultPrevented()) return
-
-    $parent.removeClass('in')
-
-    function removeElement() {
-      $parent
-        .trigger('closed')
-        .remove()
-    }
-
-    $.support.transition && $parent.hasClass('fade') ?
-      $parent.on($.support.transition.end, removeElement) :
-      removeElement()
-  }
-
-
- /* ALERT PLUGIN DEFINITION
-  * ======================= */
-
-  $.fn.alert = function (option) {
-    return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('alert')
-      if (!data) $this.data('alert', (data = new Alert(this)))
-      if (typeof option == 'string') data[option].call($this)
-    })
-  }
-
-  $.fn.alert.Constructor = Alert
-
-
- /* ALERT DATA-API
-  * ============== */
-
-  $(function () {
-    $('body').on('click.alert.data-api', dismiss, Alert.prototype.close)
-  })
-
-}(window.jQuery);/* ============================================================
- * bootstrap-button.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#buttons
- * ============================================================
- * Copyright 2012 Twitter, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ============================================================ */
-
-
-!function ($) {
-
-  "use strict"; // jshint ;_;
-
-
- /* BUTTON PUBLIC CLASS DEFINITION
-  * ============================== */
-
-  var Button = function (element, options) {
-    this.$element = $(element)
-    this.options = $.extend({}, $.fn.button.defaults, options)
-  }
-
-  Button.prototype.setState = function (state) {
-    var d = 'disabled'
-      , $el = this.$element
-      , data = $el.data()
-      , val = $el.is('input') ? 'val' : 'html'
-
-    state = state + 'Text'
-    data.resetText || $el.data('resetText', $el[val]())
-
-    $el[val](data[state] || this.options[state])
-
-    // push to event loop to allow forms to submit
-    setTimeout(function () {
-      state == 'loadingText' ?
-        $el.addClass(d).attr(d, d) :
-        $el.removeClass(d).removeAttr(d)
-    }, 0)
-  }
-
-  Button.prototype.toggle = function () {
-    var $parent = this.$element.closest('[data-toggle="buttons-radio"]')
-
-    $parent && $parent
-      .find('.active')
-      .removeClass('active')
-
-    this.$element.toggleClass('active')
-  }
-
-
- /* BUTTON PLUGIN DEFINITION
-  * ======================== */
-
-  $.fn.button = function (option) {
-    return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('button')
-        , options = typeof option == 'object' && option
-      if (!data) $this.data('button', (data = new Button(this, options)))
-      if (option == 'toggle') data.toggle()
-      else if (option) data.setState(option)
-    })
-  }
-
-  $.fn.button.defaults = {
-    loadingText: 'loading...'
-  }
-
-  $.fn.button.Constructor = Button
-
-
- /* BUTTON DATA-API
-  * =============== */
-
-  $(function () {
-    $('body').on('click.button.data-api', '[data-toggle^=button]', function ( e ) {
-      var $btn = $(e.target)
-      if (!$btn.hasClass('btn')) $btn = $btn.closest('.btn')
-      $btn.button('toggle')
-    })
-  })
-
-}(window.jQuery);/* ==========================================================
- * bootstrap-carousel.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#carousel
- * ==========================================================
- * Copyright 2012 Twitter, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ========================================================== */
-
-
-!function ($) {
-
-  "use strict"; // jshint ;_;
-
-
- /* CAROUSEL CLASS DEFINITION
-  * ========================= */
-
-  var Carousel = function (element, options) {
-    this.$element = $(element)
-    this.options = options
-    this.options.slide && this.slide(this.options.slide)
-    this.options.pause == 'hover' && this.$element
-      .on('mouseenter', $.proxy(this.pause, this))
-      .on('mouseleave', $.proxy(this.cycle, this))
-  }
-
-  Carousel.prototype = {
-
-    cycle: function (e) {
-      if (!e) this.paused = false
-      this.options.interval
-        && !this.paused
-        && (this.interval = setInterval($.proxy(this.next, this), this.options.interval))
-      return this
-    }
-
-  , to: function (pos) {
-      var $active = this.$element.find('.item.active')
-        , children = $active.parent().children()
-        , activePos = children.index($active)
-        , that = this
-
-      if (pos > (children.length - 1) || pos < 0) return
-
-      if (this.sliding) {
-        return this.$element.one('slid', function () {
-          that.to(pos)
-        })
-      }
-
-      if (activePos == pos) {
-        return this.pause().cycle()
-      }
-
-      return this.slide(pos > activePos ? 'next' : 'prev', $(children[pos]))
-    }
-
-  , pause: function (e) {
-      if (!e) this.paused = true
-      if (this.$element.find('.next, .prev').length && $.support.transition.end) {
-        this.$element.trigger($.support.transition.end)
-        this.cycle()
-      }
-      clearInterval(this.interval)
-      this.interval = null
-      return this
-    }
-
-  , next: function () {
-      if (this.sliding) return
-      return this.slide('next')
-    }
-
-  , prev: function () {
-      if (this.sliding) return
-      return this.slide('prev')
-    }
-
-  , slide: function (type, next) {
-      var $active = this.$element.find('.item.active')
-        , $next = next || $active[type]()
-        , isCycling = this.interval
-        , direction = type == 'next' ? 'left' : 'right'
-        , fallback  = type == 'next' ? 'first' : 'last'
-        , that = this
-        , e = $.Event('slide', {
-            relatedTarget: $next[0]
-          })
-
-      this.sliding = true
-
-      isCycling && this.pause()
-
-      $next = $next.length ? $next : this.$element.find('.item')[fallback]()
-
-      if ($next.hasClass('active')) return
-
-      if ($.support.transition && this.$element.hasClass('slide')) {
-        this.$element.trigger(e)
-        if (e.isDefaultPrevented()) return
-        $next.addClass(type)
-        $next[0].offsetWidth // force reflow
-        $active.addClass(direction)
-        $next.addClass(direction)
-        this.$element.one($.support.transition.end, function () {
-          $next.removeClass([type, direction].join(' ')).addClass('active')
-          $active.removeClass(['active', direction].join(' '))
-          that.sliding = false
-          setTimeout(function () { that.$element.trigger('slid') }, 0)
-        })
-      } else {
-        this.$element.trigger(e)
-        if (e.isDefaultPrevented()) return
-        $active.removeClass('active')
-        $next.addClass('active')
-        this.sliding = false
-        this.$element.trigger('slid')
-      }
-
-      isCycling && this.cycle()
-
-      return this
-    }
-
-  }
-
-
- /* CAROUSEL PLUGIN DEFINITION
-  * ========================== */
-
-  $.fn.carousel = function (option) {
-    return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('carousel')
-        , options = $.extend({}, $.fn.carousel.defaults, typeof option == 'object' && option)
-        , action = typeof option == 'string' ? option : options.slide
-      if (!data) $this.data('carousel', (data = new Carousel(this, options)))
-      if (typeof option == 'number') data.to(option)
-      else if (action) data[action]()
-      else if (options.interval) data.cycle()
-    })
-  }
-
-  $.fn.carousel.defaults = {
-    interval: 5000
-  , pause: 'hover'
-  }
-
-  $.fn.carousel.Constructor = Carousel
-
-
- /* CAROUSEL DATA-API
-  * ================= */
-
-  $(function () {
-    $('body').on('click.carousel.data-api', '[data-slide]', function ( e ) {
-      var $this = $(this), href
-        , $target = $($this.attr('data-target') || (href = $this.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '')) //strip for ie7
-        , options = !$target.data('modal') && $.extend({}, $target.data(), $this.data())
-      $target.carousel(options)
-      e.preventDefault()
-    })
-  })
-
-}(window.jQuery);/* =============================================================
- * bootstrap-collapse.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#collapse
- * =============================================================
- * Copyright 2012 Twitter, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ============================================================ */
-
-
-!function ($) {
-
-  "use strict"; // jshint ;_;
-
-
- /* COLLAPSE PUBLIC CLASS DEFINITION
-  * ================================ */
-
-  var Collapse = function (element, options) {
-    this.$element = $(element)
-    this.options = $.extend({}, $.fn.collapse.defaults, options)
-
-    if (this.options.parent) {
-      this.$parent = $(this.options.parent)
-    }
-
-    this.options.toggle && this.toggle()
-  }
-
-  Collapse.prototype = {
-
-    constructor: Collapse
-
-  , dimension: function () {
-      var hasWidth = this.$element.hasClass('width')
-      return hasWidth ? 'width' : 'height'
-    }
-
-  , show: function () {
-      var dimension
-        , scroll
-        , actives
-        , hasData
-
-      if (this.transitioning) return
-
-      dimension = this.dimension()
-      scroll = $.camelCase(['scroll', dimension].join('-'))
-      actives = this.$parent && this.$parent.find('> .accordion-group > .in')
-
-      if (actives && actives.length) {
-        hasData = actives.data('collapse')
-        if (hasData && hasData.transitioning) return
-        actives.collapse('hide')
-        hasData || actives.data('collapse', null)
-      }
-
-      this.$element[dimension](0)
-      this.transition('addClass', $.Event('show'), 'shown')
-      $.support.transition && this.$element[dimension](this.$element[0][scroll])
-    }
-
-  , hide: function () {
-      var dimension
-      if (this.transitioning) return
-      dimension = this.dimension()
-      this.reset(this.$element[dimension]())
-      this.transition('removeClass', $.Event('hide'), 'hidden')
-      this.$element[dimension](0)
-    }
-
-  , reset: function (size) {
-      var dimension = this.dimension()
-
-      this.$element
-        .removeClass('collapse')
-        [dimension](size || 'auto')
-        [0].offsetWidth
-
-      this.$element[size !== null ? 'addClass' : 'removeClass']('collapse')
-
-      return this
-    }
-
-  , transition: function (method, startEvent, completeEvent) {
-      var that = this
-        , complete = function () {
-            if (startEvent.type == 'show') that.reset()
-            that.transitioning = 0
-            that.$element.trigger(completeEvent)
-          }
-
-      this.$element.trigger(startEvent)
-
-      if (startEvent.isDefaultPrevented()) return
-
-      this.transitioning = 1
-
-      this.$element[method]('in')
-
-      $.support.transition && this.$element.hasClass('collapse') ?
-        this.$element.one($.support.transition.end, complete) :
-        complete()
-    }
-
-  , toggle: function () {
-      this[this.$element.hasClass('in') ? 'hide' : 'show']()
-    }
-
-  }
-
-
- /* COLLAPSIBLE PLUGIN DEFINITION
-  * ============================== */
-
-  $.fn.collapse = function (option) {
-    return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('collapse')
-        , options = typeof option == 'object' && option
-      if (!data) $this.data('collapse', (data = new Collapse(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  $.fn.collapse.defaults = {
-    toggle: true
-  }
-
-  $.fn.collapse.Constructor = Collapse
-
-
- /* COLLAPSIBLE DATA-API
-  * ==================== */
-
-  $(function () {
-    $('body').on('click.collapse.data-api', '[data-toggle=collapse]', function (e) {
-      var $this = $(this), href
-        , target = $this.attr('data-target')
-          || e.preventDefault()
-          || (href = $this.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') //strip for ie7
-        , option = $(target).data('collapse') ? 'toggle' : $this.data()
-      $this[$(target).hasClass('in') ? 'addClass' : 'removeClass']('collapsed')
-      $(target).collapse(option)
-    })
-  })
-
-}(window.jQuery);/* ============================================================
- * bootstrap-dropdown.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#dropdowns
- * ============================================================
- * Copyright 2012 Twitter, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ============================================================ */
-
-
-!function ($) {
-
-  "use strict"; // jshint ;_;
-
-
- /* DROPDOWN CLASS DEFINITION
-  * ========================= */
-
-  var toggle = '[data-toggle=dropdown]'
-    , Dropdown = function (element) {
-        var $el = $(element).on('click.dropdown.data-api', this.toggle)
-        $('html').on('click.dropdown.data-api', function () {
-          $el.parent().removeClass('open')
-        })
-      }
-
-  Dropdown.prototype = {
-
-    constructor: Dropdown
-
-  , toggle: function (e) {
-      var $this = $(this)
-        , $parent
-        , isActive
-
-      if ($this.is('.disabled, :disabled')) return
-
-      $parent = getParent($this)
-
-      isActive = $parent.hasClass('open')
-
-      clearMenus()
-
-      if (!isActive) {
-        $parent.toggleClass('open')
-        $this.focus()
-      }
-
-      return false
-    }
-
-  , keydown: function (e) {
-      var $this
-        , $items
-        , $active
-        , $parent
-        , isActive
-        , index
-
-      if (!/(38|40|27)/.test(e.keyCode)) return
-
-      $this = $(this)
-
-      e.preventDefault()
-      e.stopPropagation()
-
-      if ($this.is('.disabled, :disabled')) return
-
-      $parent = getParent($this)
-
-      isActive = $parent.hasClass('open')
-
-      if (!isActive || (isActive && e.keyCode == 27)) return $this.click()
-
-      $items = $('[role=menu] li:not(.divider) a', $parent)
-
-      if (!$items.length) return
-
-      index = $items.index($items.filter(':focus'))
-
-      if (e.keyCode == 38 && index > 0) index--                                        // up
-      if (e.keyCode == 40 && index < $items.length - 1) index++                        // down
-      if (!~index) index = 0
-
-      $items
-        .eq(index)
-        .focus()
-    }
-
-  }
-
-  function clearMenus() {
-    getParent($(toggle))
-      .removeClass('open')
-  }
-
-  function getParent($this) {
-    var selector = $this.attr('data-target')
-      , $parent
-
-    if (!selector) {
-      selector = $this.attr('href')
-      selector = selector && /#/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') //strip for ie7
-    }
-
-    $parent = $(selector)
-    $parent.length || ($parent = $this.parent())
-
-    return $parent
-  }
-
-
-  /* DROPDOWN PLUGIN DEFINITION
-   * ========================== */
-
-  $.fn.dropdown = function (option) {
-    return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('dropdown')
-      if (!data) $this.data('dropdown', (data = new Dropdown(this)))
-      if (typeof option == 'string') data[option].call($this)
-    })
-  }
-
-  $.fn.dropdown.Constructor = Dropdown
-
-
-  /* APPLY TO STANDARD DROPDOWN ELEMENTS
-   * =================================== */
-
-  $(function () {
-    $('html')
-      .on('click.dropdown.data-api touchstart.dropdown.data-api', clearMenus)
-    $('body')
-      .on('click.dropdown touchstart.dropdown.data-api', '.dropdown form', function (e) { e.stopPropagation() })
-      .on('click.dropdown.data-api touchstart.dropdown.data-api'  , toggle, Dropdown.prototype.toggle)
-      .on('keydown.dropdown.data-api touchstart.dropdown.data-api', toggle + ', [role=menu]' , Dropdown.prototype.keydown)
-  })
-
-}(window.jQuery);/* =========================================================
+}(window.jQuery);
+/* =========================================================
  * bootstrap-modal.js v2.1.1
  * http://twitter.github.com/bootstrap/javascript.html#modals
  * =========================================================
@@ -965,7 +301,8 @@
     })
   })
 
-}(window.jQuery);/* ===========================================================
+}(window.jQuery);
+/* ===========================================================
  * bootstrap-tooltip.js v2.1.1
  * http://twitter.github.com/bootstrap/javascript.html#tooltips
  * Inspired by the original jQuery.tipsy by Jason Frame
@@ -1240,6 +577,7 @@
   }
 
 }(window.jQuery);
+
 /* ===========================================================
  * bootstrap-popover.js v2.1.1
  * http://twitter.github.com/bootstrap/javascript.html#popovers
@@ -1342,10 +680,11 @@
   , template: '<div class="popover"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>'
   })
 
-}(window.jQuery);/* =============================================================
- * bootstrap-scrollspy.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#scrollspy
- * =============================================================
+}(window.jQuery);
+/* ==========================================================
+ * bootstrap-alert.js v2.1.1
+ * http://twitter.github.com/bootstrap/javascript.html#alerts
+ * ==========================================================
  * Copyright 2012 Twitter, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1359,7 +698,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * ============================================================== */
+ * ========================================================== */
 
 
 !function ($) {
@@ -1367,266 +706,168 @@
   "use strict"; // jshint ;_;
 
 
- /* SCROLLSPY CLASS DEFINITION
-  * ========================== */
+ /* ALERT CLASS DEFINITION
+  * ====================== */
 
-  function ScrollSpy(element, options) {
-    var process = $.proxy(this.process, this)
-      , $element = $(element).is('body') ? $(window) : $(element)
-      , href
-    this.options = $.extend({}, $.fn.scrollspy.defaults, options)
-    this.$scrollElement = $element.on('scroll.scroll-spy.data-api', process)
-    this.selector = (this.options.target
-      || ((href = $(element).attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '')) //strip for ie7
-      || '') + ' .nav li > a'
-    this.$body = $('body')
-    this.refresh()
-    this.process()
-  }
-
-  ScrollSpy.prototype = {
-
-      constructor: ScrollSpy
-
-    , refresh: function () {
-        var self = this
-          , $targets
-
-        this.offsets = $([])
-        this.targets = $([])
-
-        $targets = this.$body
-          .find(this.selector)
-          .map(function () {
-            var $el = $(this)
-              , href = $el.data('target') || $el.attr('href')
-              , $href = /^#\w/.test(href) && $(href)
-            return ( $href
-              && $href.length
-              && [[ $href.position().top, href ]] ) || null
-          })
-          .sort(function (a, b) { return a[0] - b[0] })
-          .each(function () {
-            self.offsets.push(this[0])
-            self.targets.push(this[1])
-          })
+  var dismiss = '[data-dismiss="alert"]'
+    , Alert = function (el) {
+        $(el).on('click', dismiss, this.close)
       }
 
-    , process: function () {
-        var scrollTop = this.$scrollElement.scrollTop() + this.options.offset
-          , scrollHeight = this.$scrollElement[0].scrollHeight || this.$body[0].scrollHeight
-          , maxScroll = scrollHeight - this.$scrollElement.height()
-          , offsets = this.offsets
-          , targets = this.targets
-          , activeTarget = this.activeTarget
-          , i
+  Alert.prototype.close = function (e) {
+    var $this = $(this)
+      , selector = $this.attr('data-target')
+      , $parent
 
-        if (scrollTop >= maxScroll) {
-          return activeTarget != (i = targets.last()[0])
-            && this.activate ( i )
-        }
-
-        for (i = offsets.length; i--;) {
-          activeTarget != targets[i]
-            && scrollTop >= offsets[i]
-            && (!offsets[i + 1] || scrollTop <= offsets[i + 1])
-            && this.activate( targets[i] )
-        }
-      }
-
-    , activate: function (target) {
-        var active
-          , selector
-
-        this.activeTarget = target
-
-        $(this.selector)
-          .parent('.active')
-          .removeClass('active')
-
-        selector = this.selector
-          + '[data-target="' + target + '"],'
-          + this.selector + '[href="' + target + '"]'
-
-        active = $(selector)
-          .parent('li')
-          .addClass('active')
-
-        if (active.parent('.dropdown-menu').length)  {
-          active = active.closest('li.dropdown').addClass('active')
-        }
-
-        active.trigger('activate')
-      }
-
-  }
-
-
- /* SCROLLSPY PLUGIN DEFINITION
-  * =========================== */
-
-  $.fn.scrollspy = function (option) {
-    return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('scrollspy')
-        , options = typeof option == 'object' && option
-      if (!data) $this.data('scrollspy', (data = new ScrollSpy(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  $.fn.scrollspy.Constructor = ScrollSpy
-
-  $.fn.scrollspy.defaults = {
-    offset: 10
-  }
-
-
- /* SCROLLSPY DATA-API
-  * ================== */
-
-  $(window).on('load', function () {
-    $('[data-spy="scroll"]').each(function () {
-      var $spy = $(this)
-      $spy.scrollspy($spy.data())
-    })
-  })
-
-}(window.jQuery);/* ========================================================
- * bootstrap-tab.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#tabs
- * ========================================================
- * Copyright 2012 Twitter, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ======================================================== */
-
-
-!function ($) {
-
-  "use strict"; // jshint ;_;
-
-
- /* TAB CLASS DEFINITION
-  * ==================== */
-
-  var Tab = function (element) {
-    this.element = $(element)
-  }
-
-  Tab.prototype = {
-
-    constructor: Tab
-
-  , show: function () {
-      var $this = this.element
-        , $ul = $this.closest('ul:not(.dropdown-menu)')
-        , selector = $this.attr('data-target')
-        , previous
-        , $target
-        , e
-
-      if (!selector) {
-        selector = $this.attr('href')
-        selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') //strip for ie7
-      }
-
-      if ( $this.parent('li').hasClass('active') ) return
-
-      previous = $ul.find('.active a').last()[0]
-
-      e = $.Event('show', {
-        relatedTarget: previous
-      })
-
-      $this.trigger(e)
-
-      if (e.isDefaultPrevented()) return
-
-      $target = $(selector)
-
-      this.activate($this.parent('li'), $ul)
-      this.activate($target, $target.parent(), function () {
-        $this.trigger({
-          type: 'shown'
-        , relatedTarget: previous
-        })
-      })
+    if (!selector) {
+      selector = $this.attr('href')
+      selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') //strip for ie7
     }
 
-  , activate: function ( element, container, callback) {
-      var $active = container.find('> .active')
-        , transition = callback
-            && $.support.transition
-            && $active.hasClass('fade')
+    $parent = $(selector)
 
-      function next() {
-        $active
-          .removeClass('active')
-          .find('> .dropdown-menu > .active')
-          .removeClass('active')
+    e && e.preventDefault()
 
-        element.addClass('active')
+    $parent.length || ($parent = $this.hasClass('alert') ? $this : $this.parent())
 
-        if (transition) {
-          element[0].offsetWidth // reflow for transition
-          element.addClass('in')
-        } else {
-          element.removeClass('fade')
-        }
+    $parent.trigger(e = $.Event('close'))
 
-        if ( element.parent('.dropdown-menu') ) {
-          element.closest('li.dropdown').addClass('active')
-        }
+    if (e.isDefaultPrevented()) return
 
-        callback && callback()
-      }
+    $parent.removeClass('in')
 
-      transition ?
-        $active.one($.support.transition.end, next) :
-        next()
-
-      $active.removeClass('in')
+    function removeElement() {
+      $parent
+        .trigger('closed')
+        .remove()
     }
+
+    $.support.transition && $parent.hasClass('fade') ?
+      $parent.on($.support.transition.end, removeElement) :
+      removeElement()
   }
 
 
- /* TAB PLUGIN DEFINITION
-  * ===================== */
+ /* ALERT PLUGIN DEFINITION
+  * ======================= */
 
-  $.fn.tab = function ( option ) {
+  $.fn.alert = function (option) {
     return this.each(function () {
       var $this = $(this)
-        , data = $this.data('tab')
-      if (!data) $this.data('tab', (data = new Tab(this)))
-      if (typeof option == 'string') data[option]()
+        , data = $this.data('alert')
+      if (!data) $this.data('alert', (data = new Alert(this)))
+      if (typeof option == 'string') data[option].call($this)
     })
   }
 
-  $.fn.tab.Constructor = Tab
+  $.fn.alert.Constructor = Alert
 
 
- /* TAB DATA-API
-  * ============ */
+ /* ALERT DATA-API
+  * ============== */
 
   $(function () {
-    $('body').on('click.tab.data-api', '[data-toggle="tab"], [data-toggle="pill"]', function (e) {
-      e.preventDefault()
-      $(this).tab('show')
+    $('body').on('click.alert.data-api', dismiss, Alert.prototype.close)
+  })
+
+}(window.jQuery);
+/* ============================================================
+ * bootstrap-button.js v2.1.1
+ * http://twitter.github.com/bootstrap/javascript.html#buttons
+ * ============================================================
+ * Copyright 2012 Twitter, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ============================================================ */
+
+
+!function ($) {
+
+  "use strict"; // jshint ;_;
+
+
+ /* BUTTON PUBLIC CLASS DEFINITION
+  * ============================== */
+
+  var Button = function (element, options) {
+    this.$element = $(element)
+    this.options = $.extend({}, $.fn.button.defaults, options)
+  }
+
+  Button.prototype.setState = function (state) {
+    var d = 'disabled'
+      , $el = this.$element
+      , data = $el.data()
+      , val = $el.is('input') ? 'val' : 'html'
+
+    state = state + 'Text'
+    data.resetText || $el.data('resetText', $el[val]())
+
+    $el[val](data[state] || this.options[state])
+
+    // push to event loop to allow forms to submit
+    setTimeout(function () {
+      state == 'loadingText' ?
+        $el.addClass(d).attr(d, d) :
+        $el.removeClass(d).removeAttr(d)
+    }, 0)
+  }
+
+  Button.prototype.toggle = function () {
+    var $parent = this.$element.closest('[data-toggle="buttons-radio"]')
+
+    $parent && $parent
+      .find('.active')
+      .removeClass('active')
+
+    this.$element.toggleClass('active')
+  }
+
+
+ /* BUTTON PLUGIN DEFINITION
+  * ======================== */
+
+  $.fn.button = function (option) {
+    return this.each(function () {
+      var $this = $(this)
+        , data = $this.data('button')
+        , options = typeof option == 'object' && option
+      if (!data) $this.data('button', (data = new Button(this, options)))
+      if (option == 'toggle') data.toggle()
+      else if (option) data.setState(option)
+    })
+  }
+
+  $.fn.button.defaults = {
+    loadingText: 'loading...'
+  }
+
+  $.fn.button.Constructor = Button
+
+
+ /* BUTTON DATA-API
+  * =============== */
+
+  $(function () {
+    $('body').on('click.button.data-api', '[data-toggle^=button]', function ( e ) {
+      var $btn = $(e.target)
+      if (!$btn.hasClass('btn')) $btn = $btn.closest('.btn')
+      $btn.button('toggle')
     })
   })
 
-}(window.jQuery);/* =============================================================
+}(window.jQuery);
+/* =============================================================
  * bootstrap-typeahead.js v2.1.1
  * http://twitter.github.com/bootstrap/javascript.html#typeahead
  * =============================================================
@@ -1926,110 +1167,7 @@
   })
 
 }(window.jQuery);
-/* ==========================================================
- * bootstrap-affix.js v2.1.1
- * http://twitter.github.com/bootstrap/javascript.html#affix
- * ==========================================================
- * Copyright 2012 Twitter, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ========================================================== */
 
-
-!function ($) {
-
-  "use strict"; // jshint ;_;
-
-
- /* AFFIX CLASS DEFINITION
-  * ====================== */
-
-  var Affix = function (element, options) {
-    this.options = $.extend({}, $.fn.affix.defaults, options)
-    this.$window = $(window).on('scroll.affix.data-api', $.proxy(this.checkPosition, this))
-    this.$element = $(element)
-    this.checkPosition()
-  }
-
-  Affix.prototype.checkPosition = function () {
-    if (!this.$element.is(':visible')) return
-
-    var scrollHeight = $(document).height()
-      , scrollTop = this.$window.scrollTop()
-      , position = this.$element.offset()
-      , offset = this.options.offset
-      , offsetBottom = offset.bottom
-      , offsetTop = offset.top
-      , reset = 'affix affix-top affix-bottom'
-      , affix
-
-    if (typeof offset != 'object') offsetBottom = offsetTop = offset
-    if (typeof offsetTop == 'function') offsetTop = offset.top()
-    if (typeof offsetBottom == 'function') offsetBottom = offset.bottom()
-
-    affix = this.unpin != null && (scrollTop + this.unpin <= position.top) ?
-      false    : offsetBottom != null && (position.top + this.$element.height() >= scrollHeight - offsetBottom) ?
-      'bottom' : offsetTop != null && scrollTop <= offsetTop ?
-      'top'    : false
-
-    if (this.affixed === affix) return
-
-    this.affixed = affix
-    this.unpin = affix == 'bottom' ? position.top - scrollTop : null
-
-    this.$element.removeClass(reset).addClass('affix' + (affix ? '-' + affix : ''))
-  }
-
-
- /* AFFIX PLUGIN DEFINITION
-  * ======================= */
-
-  $.fn.affix = function (option) {
-    return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('affix')
-        , options = typeof option == 'object' && option
-      if (!data) $this.data('affix', (data = new Affix(this, options)))
-      if (typeof option == 'string') data[option]()
-    })
-  }
-
-  $.fn.affix.Constructor = Affix
-
-  $.fn.affix.defaults = {
-    offset: 0
-  }
-
-
- /* AFFIX DATA-API
-  * ============== */
-
-  $(window).on('load', function () {
-    $('[data-spy="affix"]').each(function () {
-      var $spy = $(this)
-        , data = $spy.data()
-
-      data.offset = data.offset || {}
-
-      data.offsetBottom && (data.offset.bottom = data.offsetBottom)
-      data.offsetTop && (data.offset.top = data.offsetTop)
-
-      $spy.affix(data)
-    })
-  })
-
-
-}(window.jQuery);
 
 window.requestAnimationFrame || (window.requestAnimationFrame = window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
   return window.setTimeout(function() {
@@ -2350,7 +1488,7 @@ chatAnnotation = function(_arg) {
       return "<a href='" + real_url + "' target='_blank'>" + url + "</a>";
     }
   }).replace(/!@([a-z0-9]+)/g, function(match, user) {
-    return userSpan(user).clone().wrap('<div>').parent().html();
+    return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html();
   });
   if (done) {
     line.removeClass('buffer');
@@ -2358,6 +1496,9 @@ chatAnnotation = function(_arg) {
       line.find('.comment').html('<em>(no message)</em>');
       line.slideUp();
     } else {
+      if (text.slice(0, 1) === '@') {
+        line.prepend('<i class="icon-user"></i> ');
+      }
       line.find('.comment').html(html);
     }
   } else {
@@ -2516,7 +1657,7 @@ $('.buzzbtn').click(function() {
   $('.guess_input').val('').addClass('disabled').focus();
   submit_time = +(new Date);
   if ($('.sounds')[0].checked && !$('.sounds').data('ding_sound')) {
-    $('.sounds').data('ding_sound', new Audio('img/ding.wav'));
+    $('.sounds').data('ding_sound', new Audio('sound/ding.wav'));
   }
   return me.buzz('yay', function(status) {
     if (status === 'http://www.whosawesome.com/') {
@@ -2830,7 +1971,7 @@ $('.livechat').change(function() {
 
 $('.sounds').change(function() {
   me.set_sounds($('.sounds')[0].checked);
-  return $('.sounds').data('ding_sound', new Audio('img/ding.wav'));
+  return $('.sounds').data('ding_sound', new Audio('sound/ding.wav'));
 });
 
 mobileLayout = function() {
@@ -2897,1648 +2038,6 @@ if (Modernizr.touch) {
   $('.show-keyboard').show();
   $('.show-touch').hide();
 }
-
-var QuizPlayer,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-QuizPlayer = (function() {
-
-  function QuizPlayer(room, id) {
-    this.id = id;
-    this.room = room;
-    this.guesses = 0;
-    this.interrupts = 0;
-    this.early = 0;
-    this.seen = 0;
-    this.correct = 0;
-    this.time_spent = 0;
-    this.last_action = this.room.serverTime();
-    this.times_buzzed = 0;
-    this.show_typing = true;
-    this.team = '';
-    this.banned = false;
-    this.sounds = false;
-    this.tribunal = null;
-    this.__timeout = null;
-    this.__recent_actions = [];
-  }
-
-  QuizPlayer.prototype.touch = function(no_add_time) {
-    var current_time, elapsed;
-    current_time = this.room.serverTime();
-    if (!no_add_time) {
-      elapsed = current_time - this.last_action;
-      if (elapsed < 1000 * 60 * 10) {
-        this.time_spent += elapsed;
-      }
-    }
-    return this.last_action = current_time;
-  };
-
-  QuizPlayer.prototype.active = function() {
-    return this.online() && (this.room.serverTime() - this.last_action) < 1000 * 60 * 10;
-  };
-
-  QuizPlayer.prototype.online = function() {
-    return true;
-  };
-
-  QuizPlayer.prototype.score = function() {
-    var CORRECT, EARLY, INTERRUPT;
-    CORRECT = 10;
-    EARLY = 15;
-    INTERRUPT = -5;
-    return this.early * EARLY + (this.correct - this.early) * CORRECT + this.interrupts * INTERRUPT;
-  };
-
-  QuizPlayer.prototype.ban = function() {
-    this.banned = true;
-    return this.emit('redirect', "/" + this.room.name + "-banned");
-  };
-
-  QuizPlayer.prototype.emit = function(name, data) {
-    return this.room.log('QuizPlayer.emit(name, data) not implemented');
-  };
-
-  QuizPlayer.prototype.rate_limit = function() {
-    var action_delay, current_time, id, mean_elapsed, s, time, user, window_size, witnesses, _i, _len, _ref,
-      _this = this;
-    witnesses = (function() {
-      var _ref, _results;
-      _ref = this.room.users;
-      _results = [];
-      for (id in _ref) {
-        user = _ref[id];
-        if (id[0] !== "_" && user.active()) {
-          _results.push(id);
-        }
-      }
-      return _results;
-    }).call(this);
-    if (witnesses.length <= 2) {
-      return;
-    }
-    window_size = 6;
-    action_delay = 1000;
-    current_time = this.room.serverTime();
-    this.__recent_actions.push(current_time);
-    this.__recent_actions = this.__recent_actions.slice(-window_size);
-    if (this.__recent_actions.length === window_size && !this.tribunal) {
-      s = 0;
-      _ref = this.__recent_actions;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        time = _ref[_i];
-        s += time;
-      }
-      mean_elapsed = current_time - s / window_size;
-      if (mean_elapsed < window_size * action_delay / 2) {
-        this.__timeout = setTimeout(function() {
-          _this.verb('survived the tribunal', true);
-          _this.tribunal = null;
-          return _this.room.sync(1);
-        }, 1000 * 60);
-        this.tribunal = {
-          votes: [],
-          time: current_time,
-          witnesses: witnesses
-        };
-        return this.room.sync(1);
-      }
-    }
-  };
-
-  QuizPlayer.prototype.vote_tribunal = function(user) {
-    var tribunal, votes, _ref, _ref1;
-    tribunal = this.room.users[user].tribunal;
-    if (tribunal) {
-      if (_ref = this.id, __indexOf.call(tribunal.witnesses, _ref) < 0) {
-        return;
-      }
-      votes = tribunal.votes;
-      if (votes && (_ref1 = this.id, __indexOf.call(votes, _ref1) < 0)) {
-        votes.push(this.id);
-      }
-      if (votes.length > (tribunal.witnesses.length - 1) / 2) {
-        this.room.users[user].verb('got voted off the island', true);
-        clearTimeout(this.room.users[user].__timeout);
-        this.room.users[user].tribunal = null;
-        this.room.users[user].ban();
-      } else {
-        this.verb('voted to ban !@' + user);
-      }
-      return this.room.sync(1);
-    }
-  };
-
-  QuizPlayer.prototype.verb = function(action, no_rate_limit) {
-    if (this.id.toString().slice(0, 2) === '__') {
-      return;
-    }
-    if (!no_rate_limit) {
-      this.rate_limit();
-    }
-    return this.room.emit('log', {
-      user: this.id,
-      verb: action,
-      time: this.room.serverTime()
-    });
-  };
-
-  QuizPlayer.prototype.disco = function() {
-    return 0;
-  };
-
-  QuizPlayer.prototype.disconnect = function() {
-    this.verb('left the room');
-    this.touch();
-    return this.room.sync(1);
-  };
-
-  QuizPlayer.prototype.echo = function(data, callback) {
-    return callback(this.room.serverTime());
-  };
-
-  QuizPlayer.prototype.buzz = function(data, fn) {
-    if (this.room.buzz(this.id, fn)) {
-      return this.rate_limit();
-    }
-  };
-
-  QuizPlayer.prototype.guess = function(data) {
-    return this.room.guess(this.id, data);
-  };
-
-  QuizPlayer.prototype.chat = function(_arg) {
-    var done, session, text;
-    text = _arg.text, done = _arg.done, session = _arg.session;
-    this.touch();
-    this.room.emit('chat', {
-      text: text,
-      session: session,
-      user: this.id,
-      done: done,
-      time: this.room.serverTime()
-    });
-    if (done) {
-      return this.rate_limit();
-    }
-  };
-
-  QuizPlayer.prototype.skip = function() {
-    this.touch();
-    if (!this.room.attempt) {
-      this.room.new_question();
-      return this.verb('skipped a question');
-    }
-  };
-
-  QuizPlayer.prototype.next = function() {
-    this.touch();
-    return this.room.next();
-  };
-
-  QuizPlayer.prototype.finish = function() {
-    this.touch();
-    if (!this.room.attempt) {
-      this.room.finish();
-      return this.room.sync(1);
-    }
-  };
-
-  QuizPlayer.prototype.pause = function() {
-    this.touch();
-    if (!this.room.attempt && this.room.time() < this.room.end_time) {
-      this.verb('paused the game');
-      this.room.freeze();
-      return this.room.sync();
-    }
-  };
-
-  QuizPlayer.prototype.unpause = function() {
-    if (!this.room.attempt) {
-      this.verb('resumed the game');
-      if (!this.room.question) {
-        this.room.new_question();
-      }
-      this.room.unfreeze();
-    }
-    return this.room.sync();
-  };
-
-  QuizPlayer.prototype.set_name = function(name) {
-    if (name.trim().length > 0) {
-      this.name = name.trim().slice(0, 140);
-      this.touch();
-      return this.room.sync(1);
-    }
-  };
-
-  QuizPlayer.prototype.set_distribution = function(data) {
-    var cat, count, disabled, enabled,
-      _this = this;
-    this.touch();
-    if (!data) {
-      return;
-    }
-    enabled = [];
-    disabled = [];
-    for (cat in data) {
-      count = data[cat];
-      if (this.room.distribution[cat] === 0 && count > 0) {
-        enabled.push(cat);
-      }
-      if (this.room.distribution[cat] > 0 && count === 0) {
-        disabled.push(cat);
-      }
-    }
-    this.room.distribution = data;
-    this.room.sync(3);
-    return this.room.get_size(function(size) {
-      if (enabled.length > 0) {
-        _this.verb("enabled " + (enabled.join(', ')) + " (" + size + " questions)");
-      }
-      if (disabled.length > 0) {
-        return _this.verb("disabled " + (disabled.join(', ')) + " (" + size + " questions)");
-      }
-    });
-  };
-
-  QuizPlayer.prototype.set_difficulty = function(data) {
-    var _this = this;
-    this.touch();
-    this.room.difficulty = data;
-    this.room.sync();
-    return this.room.get_size(function(size) {
-      return _this.verb("set difficulty to " + (data || 'everything') + " (" + size + " questions)");
-    });
-  };
-
-  QuizPlayer.prototype.set_category = function(data) {
-    var _this = this;
-    this.touch();
-    this.room.category = data;
-    if (!data) {
-      this.room.reset_distribution();
-    }
-    this.room.sync();
-    return this.room.get_size(function(size) {
-      if (data === 'custom') {
-        return _this.verb("enabled a custom category distribution (" + size + " questions)");
-      } else {
-        return _this.verb("set category to " + (data.toLowerCase() || 'potpourri') + " (" + size + " questions)");
-      }
-    });
-  };
-
-  QuizPlayer.prototype.set_max_buzz = function(data) {
-    this.room.max_buzz = data;
-    this.touch();
-    if (this.room.max_buzz !== data) {
-      if (data === 0) {
-        this.verb('allowed players to buzz multiple times');
-      } else if (data === 1) {
-        this.verb('restricted players and teams to a single buzz per question');
-      } else if (data > 1) {
-        this.verb("restricted players and teams to " + data + " buzzes per question");
-      }
-    }
-    return this.room.sync();
-  };
-
-  QuizPlayer.prototype.set_speed = function(speed) {
-    if (!speed) {
-      return;
-    }
-    this.touch();
-    this.room.set_speed(speed);
-    return this.room.sync();
-  };
-
-  QuizPlayer.prototype.set_team = function(name) {
-    if (name) {
-      this.verb("switched to team " + name);
-    } else {
-      this.verb("is playing as an individual");
-    }
-    this.team = name;
-    return this.room.sync(2);
-  };
-
-  QuizPlayer.prototype.set_show_typing = function(data) {
-    this.show_typing = data;
-    return this.room.sync(2);
-  };
-
-  QuizPlayer.prototype.set_sounds = function(data) {
-    this.sounds = data;
-    return this.room.sync(2);
-  };
-
-  QuizPlayer.prototype.reset_score = function() {
-    this.seen = this.interrupts = this.guesses = this.correct = this.early = 0;
-    return this.room.sync(1);
-  };
-
-  QuizPlayer.prototype.report_question = function() {
-    return this.verb("did something unimplemented (report question)");
-  };
-
-  QuizPlayer.prototype.report_answer = function() {
-    return this.verb("did something unimplemented (report answer)");
-  };
-
-  QuizPlayer.prototype.check_public = function() {
-    return this.verb("did something unimplemented (check public)");
-  };
-
-  return QuizPlayer;
-
-})();
-
-if (typeof exports !== "undefined" && exports !== null) {
-  exports.QuizPlayer = QuizPlayer;
-}
-
-var QuizRoom, default_distribution, error_question,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-error_question = {
-  'category': '$0x40000',
-  'difficulty': 'segmentation fault',
-  'num': 'NaN',
-  'tournament': 'Guru Meditation Cup',
-  'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
-  'answer': 'error',
-  'year': 1970,
-  'round': '0x080483ba'
-};
-
-default_distribution = {
-  "Fine Arts": 2,
-  "Literature": 4,
-  "History": 3,
-  "Science": 3,
-  "Trash": 1,
-  "Geography": 1,
-  "Mythology": 1,
-  "Philosophy": 1,
-  "Religion": 1,
-  "Social Science": 1
-};
-
-QuizRoom = (function() {
-
-  function QuizRoom(name) {
-    this.name = name;
-    this.type = "qb";
-    this.answer_duration = 1000 * 5;
-    this.time_offset = 0;
-    this.sync_offset = 0;
-    this.start_offset = 0;
-    this.end_time = 0;
-    this.question = '';
-    this.answer = '';
-    this.timing = [];
-    this.cumulative = [];
-    this.rate = 1000 * 60 / 5 / 200;
-    this.__timeout = -1;
-    this.distribution = default_distribution;
-    this.freeze();
-    this.users = {};
-    this.difficulty = '';
-    this.category = '';
-    this.max_buzz = null;
-  }
-
-  QuizRoom.prototype.log = function(message) {
-    return this.emit('log', {
-      verb: message
-    });
-  };
-
-  QuizRoom.prototype.get_parameters = function(type, difficulty, cb) {
-    this.emit('log', {
-      verb: 'NOT IMPLEMENTED (async get params)'
-    });
-    return cb(['HS', 'MS'], ['Science', 'Trash']);
-  };
-
-  QuizRoom.prototype.count_questions = function(type, difficulty, category, cb) {
-    return this.log('NOT IMPLEMENTED (question counting)');
-  };
-
-  QuizRoom.prototype.get_size = function(cb, type, difficulty, category) {
-    if (type == null) {
-      type = this.type;
-    }
-    if (difficulty == null) {
-      difficulty = this.difficulty;
-    }
-    if (category == null) {
-      category = this.category;
-    }
-    return this.count_questions(type, difficulty, (category === 'custom' ? this.distribution : category), function(count) {
-      return cb(count);
-    });
-  };
-
-  QuizRoom.prototype.get_question = function(cb) {
-    cb(error_question);
-    return this.log('NOT IMPLEMENTED (async get question)');
-  };
-
-  QuizRoom.prototype.emit = function(name, data) {
-    return console.log('room.emit(name, data) not implemented');
-  };
-
-  QuizRoom.prototype.reset_distribution = function() {
-    return this.distribution = default_distribution;
-  };
-
-  QuizRoom.prototype.time = function() {
-    if (this.time_freeze) {
-      return this.time_freeze;
-    } else {
-      return this.serverTime() - this.time_offset;
-    }
-  };
-
-  QuizRoom.prototype.serverTime = function() {
-    return new Date - this.sync_offset;
-  };
-
-  QuizRoom.prototype.set_time = function(ts) {
-    return this.time_offset = this.serverTime() - ts;
-  };
-
-  QuizRoom.prototype.freeze = function() {
-    return this.time_freeze = this.time();
-  };
-
-  QuizRoom.prototype.unfreeze = function() {
-    if (this.time_freeze) {
-      this.set_time(this.time_freeze);
-      return this.time_freeze = 0;
-    }
-  };
-
-  QuizRoom.prototype.timeout = function(delay, callback) {
-    this.clear_timeout();
-    return this.__timeout = setTimeout(callback, delay);
-  };
-
-  QuizRoom.prototype.clear_timeout = function() {
-    return clearTimeout(this.__timeout);
-  };
-
-  QuizRoom.prototype.new_question = function() {
-    var _this = this;
-    this.generating_question = true;
-    return this.get_question(function(question) {
-      var id, syllables, user, word, _ref, _ref1;
-      delete _this.generating_question;
-      _this.generated_time = _this.time();
-      _this.attempt = null;
-      _this.info = {
-        category: question.category,
-        difficulty: question.difficulty,
-        tournament: question.tournament,
-        num: question.num,
-        year: question.year,
-        round: question.round
-      };
-      _this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ').replace(/\s+/g, ' ');
-      _this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
-      _this.qid = (question != null ? (_ref = question._id) != null ? _ref.toString() : void 0 : void 0) || 'question_id';
-      _this.info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" + _this.answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20);
-      _this.begin_time = _this.time() + _this.start_offset;
-      if (typeof SyllableCounter !== "undefined" && SyllableCounter !== null) {
-        syllables = SyllableCounter;
-      } else {
-        syllables = require('./syllable').syllables;
-      }
-      _this.timing = (function() {
-        var _i, _len, _ref1, _results;
-        _ref1 = this.question.split(" ");
-        _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          word = _ref1[_i];
-          _results.push(syllables(word) + 1);
-        }
-        return _results;
-      }).call(_this);
-      _this.set_speed(_this.rate);
-      _ref1 = _this.users;
-      for (id in _ref1) {
-        user = _ref1[id];
-        user.times_buzzed = 0;
-        if (user.active()) {
-          user.seen++;
-        }
-      }
-      return _this.sync(2);
-    });
-  };
-
-  QuizRoom.prototype.set_speed = function(rate) {
-    var cumsum, done, duration, elapsed, new_duration, now, remainder;
-    if (!rate) {
-      return;
-    }
-    cumsum = function(list, rate) {
-      var num, sum, _i, _len, _ref, _results;
-      sum = 0;
-      _ref = [5].concat(list).slice(0, -1);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        num = _ref[_i];
-        _results.push(sum += Math.round(num) * rate);
-      }
-      return _results;
-    };
-    now = this.time();
-    this.cumulative = cumsum(this.timing, this.rate);
-    elapsed = now - this.begin_time;
-    duration = this.cumulative[this.cumulative.length - 1];
-    done = elapsed / duration;
-    remainder = 0;
-    if (done > 1) {
-      remainder = elapsed - duration;
-      done = 1;
-    }
-    this.rate = rate;
-    this.cumulative = cumsum(this.timing, this.rate);
-    new_duration = this.cumulative[this.cumulative.length - 1];
-    this.begin_time = now - new_duration * done - remainder;
-    return this.end_time = this.begin_time + new_duration + this.answer_duration;
-  };
-
-  QuizRoom.prototype.finish = function() {
-    return this.set_time(this.end_time);
-  };
-
-  QuizRoom.prototype.next = function() {
-    if (this.time() > this.end_time - this.answer_duration && !this.generating_question && !this.attempt) {
-      this.new_question();
-      return this.unfreeze();
-    }
-  };
-
-  QuizRoom.prototype.check_answer = function() {
-    if (Math.random() > 0.1) {
-      return 'prompt';
-    }
-    return Math.random() > 0.3;
-  };
-
-  QuizRoom.prototype.end_buzz = function(session) {
-    var buzzed, do_prompt, id, pool, team, teams, times_buzzed, user, _ref, _ref1,
-      _this = this;
-    if (((_ref = this.attempt) != null ? _ref.session : void 0) !== session) {
-      return;
-    }
-    if (!this.attempt.prompt) {
-      this.clear_timeout();
-      this.attempt.done = true;
-      this.attempt.correct = this.check_answer(this.attempt.text, this.answer, this.question);
-      do_prompt = false;
-      if (this.attempt.correct === 'prompt') {
-        do_prompt = true;
-        this.attempt.correct = false;
-      }
-      if (do_prompt === true) {
-        this.attempt.correct = "prompt";
-        this.sync();
-        this.attempt.prompt = true;
-        this.attempt.done = false;
-        this.attempt.realTime = this.serverTime();
-        this.attempt.start = this.time();
-        this.attempt.text = '';
-        this.attempt.duration = 10 * 1000;
-        this.timeout(this.attempt.duration, function() {
-          return _this.end_buzz(session);
-        });
-      }
-      this.sync();
-    } else {
-      this.attempt.done = true;
-      this.attempt.correct = this.check_answer(this.attempt.text, this.answer, this.question);
-      if (this.attempt.correct === 'prompt') {
-        this.attempt.correct = false;
-      }
-      this.sync();
-    }
-    if (this.attempt.done) {
-      this.unfreeze();
-      if (this.attempt.correct) {
-        this.users[this.attempt.user].correct++;
-        if (this.attempt.early) {
-          this.users[this.attempt.user].early++;
-        }
-        this.finish();
-      } else {
-        if (this.attempt.interrupt) {
-          this.users[this.attempt.user].interrupts++;
-        }
-        buzzed = 0;
-        pool = 0;
-        teams = {};
-        _ref1 = this.users;
-        for (id in _ref1) {
-          user = _ref1[id];
-          if (id[0] !== "_") {
-            if (user.active()) {
-              teams[user.team || id] = teams[user.team || id] || 0;
-              teams[user.team || id] += user.times_buzzed;
-            }
-          }
-        }
-        for (team in teams) {
-          times_buzzed = teams[team];
-          if (times_buzzed >= this.max_buzz && this.max_buzz) {
-            buzzed++;
-          }
-          pool++;
-        }
-        if (this.max_buzz) {
-          if (buzzed >= pool) {
-            this.finish();
-          }
-        }
-      }
-      this.attempt = null;
-      return this.sync(1);
-    }
-  };
-
-  QuizRoom.prototype.buzz = function(user, fn) {
-    var early_index, id, member, session, team_buzzed, _ref,
-      _this = this;
-    team_buzzed = 0;
-    _ref = this.users;
-    for (id in _ref) {
-      member = _ref[id];
-      if ((member.team || id) === (this.users[user].team || user)) {
-        team_buzzed += member.times_buzzed;
-      }
-    }
-    if (this.max_buzz && this.users[user].times_buzzed >= this.max_buzz) {
-      if (fn) {
-        fn('THE BUZZES ARE TOO DAMN HIGH');
-      }
-      this.emit('log', {
-        user: user,
-        verb: 'has already buzzed'
-      });
-    } else if (this.max_buzz && team_buzzed >= this.max_buzz) {
-      if (fn) {
-        fn('THE BUZZES ARE TOO DAMN HIGH');
-      }
-      this.emit('log', {
-        user: user,
-        verb: 'is in a team which has already buzzed'
-      });
-    } else if (this.attempt === null && this.time() <= this.end_time) {
-      if (fn) {
-        fn('http://www.whosawesome.com/');
-      }
-      session = Math.random().toString(36).slice(2);
-      early_index = this.question.replace(/[^ \*]/g, '').indexOf('*');
-      this.attempt = {
-        user: user,
-        realTime: this.serverTime(),
-        start: this.time(),
-        duration: 8 * 1000,
-        session: session,
-        text: '',
-        early: early_index !== -1 && this.time() < this.begin_time + this.cumulative[early_index],
-        interrupt: this.time() < this.end_time - this.answer_duration,
-        done: false
-      };
-      this.users[user].times_buzzed++;
-      this.users[user].guesses++;
-      this.freeze();
-      this.sync(1);
-      this.timeout(this.attempt.duration, function() {
-        return _this.end_buzz(session);
-      });
-      return true;
-    } else if (this.attempt) {
-      this.emit('log', {
-        user: user,
-        verb: 'lost the buzzer race'
-      });
-      if (fn) {
-        fn('THE GAME');
-      }
-    } else {
-      this.emit('log', {
-        user: user,
-        verb: 'attempted an invalid buzz'
-      });
-      if (fn) {
-        fn('THE GAME');
-      }
-    }
-    return false;
-  };
-
-  QuizRoom.prototype.guess = function(user, data) {
-    var _ref;
-    if (((_ref = this.attempt) != null ? _ref.user : void 0) === user) {
-      this.attempt.text = data.text;
-      if (data.done) {
-        return this.end_buzz(this.attempt.session);
-      } else {
-        return this.sync();
-      }
-    }
-  };
-
-  QuizRoom.prototype.sync = function(level) {
-    var attr, blacklist, data, id, user, user_blacklist,
-      _this = this;
-    if (level == null) {
-      level = 0;
-    }
-    data = {
-      real_time: this.serverTime()
-    };
-    blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"];
-    user_blacklist = ["sockets", "room"];
-    for (attr in this) {
-      if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0 && attr[0] !== "_") {
-        data[attr] = this[attr];
-      }
-    }
-    if (level >= 1) {
-      data.users = (function() {
-        var _ref, _results;
-        _results = [];
-        for (id in this.users) {
-          if (!(!this.users[id].ninja)) {
-            continue;
-          }
-          user = {};
-          for (attr in this.users[id]) {
-            if (__indexOf.call(user_blacklist, attr) < 0 && ((_ref = typeof this.users[id][attr]) !== 'function') && attr[0] !== '_') {
-              user[attr] = this.users[id][attr];
-            }
-          }
-          user.online_state = this.users[id].online();
-          _results.push(user);
-        }
-        return _results;
-      }).call(this);
-    }
-    if (level >= 2) {
-      data.question = this.question;
-      data.answer = this.answer;
-      data.timing = this.timing;
-      data.info = this.info;
-    }
-    if (level >= 3) {
-      data.distribution = this.distribution;
-      return this.get_parameters(this.type, this.difficulty, function(difficulties, categories) {
-        data.difficulties = difficulties;
-        data.categories = categories;
-        return _this.emit('sync', data);
-      });
-    } else {
-      return this.emit('sync', data);
-    }
-  };
-
-  return QuizRoom;
-
-})();
-
-if (typeof exports !== "undefined" && exports !== null) {
-  exports.QuizRoom = QuizRoom;
-}
-
-var generateName, generatePage;
-
-generateName = function() {
-  var adjective, animal, pick;
-  pick = function(list) {
-    var n;
-    n = list.split(',');
-    return n[Math.floor(n.length * Math.random())];
-  };
-  adjective = 'flaming,aberrant,agressive,warty,hoary,breezy,dapper,edgy,feisty,gutsy,hardy,intrepid,jaunty,karmic,lucid,gastric,maverick,natty,oneric,precise,quantal,quizzical,curious,derisive,bodacious,nefarious,nuclear,nonchalant,marvelous,greedy,omnipotent,loquacious,rabid,redundant,dazzling,jolly,autoerotic,gloomy,valiant,pedantic,demented,prolific,scientific,pedagogical,robotic,sluggish,lethargic,bioluminescent,stationary,quirky,spunky,stochastic,bipolar,brownian,relativistic,defiant,rebellious,rhetorical,irradiated,electric,tethered,polemic,nostalgic,ninja,wistful,wintry,narcissistic,foreign,deistic,eclectic,discordant,cacophonous,drunk,racist,secular';
-  animal = 'monkey,axolotl,warthog,hedgehog,badger,drake,fawn,gibbon,heron,ibex,jackalope,koala,lynx,meerkat,narwhal,ocelot,penguin,quetzal,kodiak,cheetah,puma,jaguar,panther,tiger,leopard,lion,neanderthal,walrus,mushroom,dolphin,giraffe,gnat,fox,possum,otter,owl,osprey,oyster,rhinoceros,quail,gerbil,jellyfish,porcupine,anglerfish,unicorn,seal,macaw,kakapo,squirrel,squid,rabbit,raccoon,turtle,tortoise,iguana,gecko,werewolf,traut';
-  return pick(adjective) + " " + pick(animal);
-};
-
-generatePage = function() {
-  var noun, people, pick, verb;
-  pick = function(list) {
-    var n;
-    n = list.split(',');
-    return n[Math.floor(n.length * Math.random())];
-  };
-  people = 'kirk,picard,feynman,einstein,erdos,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut,chicken,kitten,cats,shakespeare,dali,cherenkov,stallman,sherlock,sagan,irving,copernicus,kepler,astronomer,colbert';
-  verb = 'on,enveloping,eating,drinking,in,near,sleeping,destroying,arresting,cloning,around,jumping,scrambling,painting,stalking,vomiting,defrauding,rappelling,searching,voting,faking';
-  noun = 'mountain,drugs,house,asylum,elevator,scandal,planet,school,brick,rock,pebble,lamp,water,paper,friend,toilet,airplane,cow,pony,egg,chicken,meat,book,wikipedia,turd,rhinoceros,paris,sunscreen,canteen,earwax,printer,staple,endorphins,trampoline,helicopter,feather,cloud,skeleton,uranus,neptune,earth,venus,mars,mercury,pluto,moon,jupiter,saturn,electorate,facade,tree,plant,pants';
-  return pick(people) + "-" + pick(verb) + "-" + pick(noun);
-};
-
-if (typeof exports !== "undefined" && exports !== null) {
-  exports.generatePage = generatePage;
-}
-
-if (typeof exports !== "undefined" && exports !== null) {
-  exports.generateName = generateName;
-}
-
-removeDiacritics = (function(){
-var defaultDiacriticsRemovalMap = [
-    {'base':'A', 'letters':/[\u0041\u24B6\uFF21\u00C0\u00C1\u00C2\u1EA6\u1EA4\u1EAA\u1EA8\u00C3\u0100\u0102\u1EB0\u1EAE\u1EB4\u1EB2\u0226\u01E0\u00C4\u01DE\u1EA2\u00C5\u01FA\u01CD\u0200\u0202\u1EA0\u1EAC\u1EB6\u1E00\u0104\u023A\u2C6F]/g},
-    {'base':'AA','letters':/[\uA732]/g},
-    {'base':'AE','letters':/[\u00C6\u01FC\u01E2]/g},
-    {'base':'AO','letters':/[\uA734]/g},
-    {'base':'AU','letters':/[\uA736]/g},
-    {'base':'AV','letters':/[\uA738\uA73A]/g},
-    {'base':'AY','letters':/[\uA73C]/g},
-    {'base':'B', 'letters':/[\u0042\u24B7\uFF22\u1E02\u1E04\u1E06\u0243\u0182\u0181]/g},
-    {'base':'C', 'letters':/[\u0043\u24B8\uFF23\u0106\u0108\u010A\u010C\u00C7\u1E08\u0187\u023B\uA73E]/g},
-    {'base':'D', 'letters':/[\u0044\u24B9\uFF24\u1E0A\u010E\u1E0C\u1E10\u1E12\u1E0E\u0110\u018B\u018A\u0189\uA779]/g},
-    {'base':'DZ','letters':/[\u01F1\u01C4]/g},
-    {'base':'Dz','letters':/[\u01F2\u01C5]/g},
-    {'base':'E', 'letters':/[\u0045\u24BA\uFF25\u00C8\u00C9\u00CA\u1EC0\u1EBE\u1EC4\u1EC2\u1EBC\u0112\u1E14\u1E16\u0114\u0116\u00CB\u1EBA\u011A\u0204\u0206\u1EB8\u1EC6\u0228\u1E1C\u0118\u1E18\u1E1A\u0190\u018E]/g},
-    {'base':'F', 'letters':/[\u0046\u24BB\uFF26\u1E1E\u0191\uA77B]/g},
-    {'base':'G', 'letters':/[\u0047\u24BC\uFF27\u01F4\u011C\u1E20\u011E\u0120\u01E6\u0122\u01E4\u0193\uA7A0\uA77D\uA77E]/g},
-    {'base':'H', 'letters':/[\u0048\u24BD\uFF28\u0124\u1E22\u1E26\u021E\u1E24\u1E28\u1E2A\u0126\u2C67\u2C75\uA78D]/g},
-    {'base':'I', 'letters':/[\u0049\u24BE\uFF29\u00CC\u00CD\u00CE\u0128\u012A\u012C\u0130\u00CF\u1E2E\u1EC8\u01CF\u0208\u020A\u1ECA\u012E\u1E2C\u0197]/g},
-    {'base':'J', 'letters':/[\u004A\u24BF\uFF2A\u0134\u0248]/g},
-    {'base':'K', 'letters':/[\u004B\u24C0\uFF2B\u1E30\u01E8\u1E32\u0136\u1E34\u0198\u2C69\uA740\uA742\uA744\uA7A2]/g},
-    {'base':'L', 'letters':/[\u004C\u24C1\uFF2C\u013F\u0139\u013D\u1E36\u1E38\u013B\u1E3C\u1E3A\u0141\u023D\u2C62\u2C60\uA748\uA746\uA780]/g},
-    {'base':'LJ','letters':/[\u01C7]/g},
-    {'base':'Lj','letters':/[\u01C8]/g},
-    {'base':'M', 'letters':/[\u004D\u24C2\uFF2D\u1E3E\u1E40\u1E42\u2C6E\u019C]/g},
-    {'base':'N', 'letters':/[\u004E\u24C3\uFF2E\u01F8\u0143\u00D1\u1E44\u0147\u1E46\u0145\u1E4A\u1E48\u0220\u019D\uA790\uA7A4]/g},
-    {'base':'NJ','letters':/[\u01CA]/g},
-    {'base':'Nj','letters':/[\u01CB]/g},
-    {'base':'O', 'letters':/[\u004F\u24C4\uFF2F\u00D2\u00D3\u00D4\u1ED2\u1ED0\u1ED6\u1ED4\u00D5\u1E4C\u022C\u1E4E\u014C\u1E50\u1E52\u014E\u022E\u0230\u00D6\u022A\u1ECE\u0150\u01D1\u020C\u020E\u01A0\u1EDC\u1EDA\u1EE0\u1EDE\u1EE2\u1ECC\u1ED8\u01EA\u01EC\u00D8\u01FE\u0186\u019F\uA74A\uA74C]/g},
-    {'base':'OI','letters':/[\u01A2]/g},
-    {'base':'OO','letters':/[\uA74E]/g},
-    {'base':'OU','letters':/[\u0222]/g},
-    {'base':'P', 'letters':/[\u0050\u24C5\uFF30\u1E54\u1E56\u01A4\u2C63\uA750\uA752\uA754]/g},
-    {'base':'Q', 'letters':/[\u0051\u24C6\uFF31\uA756\uA758\u024A]/g},
-    {'base':'R', 'letters':/[\u0052\u24C7\uFF32\u0154\u1E58\u0158\u0210\u0212\u1E5A\u1E5C\u0156\u1E5E\u024C\u2C64\uA75A\uA7A6\uA782]/g},
-    {'base':'S', 'letters':/[\u0053\u24C8\uFF33\u1E9E\u015A\u1E64\u015C\u1E60\u0160\u1E66\u1E62\u1E68\u0218\u015E\u2C7E\uA7A8\uA784]/g},
-    {'base':'T', 'letters':/[\u0054\u24C9\uFF34\u1E6A\u0164\u1E6C\u021A\u0162\u1E70\u1E6E\u0166\u01AC\u01AE\u023E\uA786]/g},
-    {'base':'TZ','letters':/[\uA728]/g},
-    {'base':'U', 'letters':/[\u0055\u24CA\uFF35\u00D9\u00DA\u00DB\u0168\u1E78\u016A\u1E7A\u016C\u00DC\u01DB\u01D7\u01D5\u01D9\u1EE6\u016E\u0170\u01D3\u0214\u0216\u01AF\u1EEA\u1EE8\u1EEE\u1EEC\u1EF0\u1EE4\u1E72\u0172\u1E76\u1E74\u0244]/g},
-    {'base':'V', 'letters':/[\u0056\u24CB\uFF36\u1E7C\u1E7E\u01B2\uA75E\u0245]/g},
-    {'base':'VY','letters':/[\uA760]/g},
-    {'base':'W', 'letters':/[\u0057\u24CC\uFF37\u1E80\u1E82\u0174\u1E86\u1E84\u1E88\u2C72]/g},
-    {'base':'X', 'letters':/[\u0058\u24CD\uFF38\u1E8A\u1E8C]/g},
-    {'base':'Y', 'letters':/[\u0059\u24CE\uFF39\u1EF2\u00DD\u0176\u1EF8\u0232\u1E8E\u0178\u1EF6\u1EF4\u01B3\u024E\u1EFE]/g},
-    {'base':'Z', 'letters':/[\u005A\u24CF\uFF3A\u0179\u1E90\u017B\u017D\u1E92\u1E94\u01B5\u0224\u2C7F\u2C6B\uA762]/g},
-    {'base':'a', 'letters':/[\u0061\u24D0\uFF41\u1E9A\u00E0\u00E1\u00E2\u1EA7\u1EA5\u1EAB\u1EA9\u00E3\u0101\u0103\u1EB1\u1EAF\u1EB5\u1EB3\u0227\u01E1\u00E4\u01DF\u1EA3\u00E5\u01FB\u01CE\u0201\u0203\u1EA1\u1EAD\u1EB7\u1E01\u0105\u2C65\u0250]/g},
-    {'base':'aa','letters':/[\uA733]/g},
-    {'base':'ae','letters':/[\u00E6\u01FD\u01E3]/g},
-    {'base':'ao','letters':/[\uA735]/g},
-    {'base':'au','letters':/[\uA737]/g},
-    {'base':'av','letters':/[\uA739\uA73B]/g},
-    {'base':'ay','letters':/[\uA73D]/g},
-    {'base':'b', 'letters':/[\u0062\u24D1\uFF42\u1E03\u1E05\u1E07\u0180\u0183\u0253]/g},
-    {'base':'c', 'letters':/[\u0063\u24D2\uFF43\u0107\u0109\u010B\u010D\u00E7\u1E09\u0188\u023C\uA73F\u2184]/g},
-    {'base':'d', 'letters':/[\u0064\u24D3\uFF44\u1E0B\u010F\u1E0D\u1E11\u1E13\u1E0F\u0111\u018C\u0256\u0257\uA77A]/g},
-    {'base':'dz','letters':/[\u01F3\u01C6]/g},
-    {'base':'e', 'letters':/[\u0065\u24D4\uFF45\u00E8\u00E9\u00EA\u1EC1\u1EBF\u1EC5\u1EC3\u1EBD\u0113\u1E15\u1E17\u0115\u0117\u00EB\u1EBB\u011B\u0205\u0207\u1EB9\u1EC7\u0229\u1E1D\u0119\u1E19\u1E1B\u0247\u025B\u01DD]/g},
-    {'base':'f', 'letters':/[\u0066\u24D5\uFF46\u1E1F\u0192\uA77C]/g},
-    {'base':'g', 'letters':/[\u0067\u24D6\uFF47\u01F5\u011D\u1E21\u011F\u0121\u01E7\u0123\u01E5\u0260\uA7A1\u1D79\uA77F]/g},
-    {'base':'h', 'letters':/[\u0068\u24D7\uFF48\u0125\u1E23\u1E27\u021F\u1E25\u1E29\u1E2B\u1E96\u0127\u2C68\u2C76\u0265]/g},
-    {'base':'hv','letters':/[\u0195]/g},
-    {'base':'i', 'letters':/[\u0069\u24D8\uFF49\u00EC\u00ED\u00EE\u0129\u012B\u012D\u00EF\u1E2F\u1EC9\u01D0\u0209\u020B\u1ECB\u012F\u1E2D\u0268\u0131]/g},
-    {'base':'j', 'letters':/[\u006A\u24D9\uFF4A\u0135\u01F0\u0249]/g},
-    {'base':'k', 'letters':/[\u006B\u24DA\uFF4B\u1E31\u01E9\u1E33\u0137\u1E35\u0199\u2C6A\uA741\uA743\uA745\uA7A3]/g},
-    {'base':'l', 'letters':/[\u006C\u24DB\uFF4C\u0140\u013A\u013E\u1E37\u1E39\u013C\u1E3D\u1E3B\u017F\u0142\u019A\u026B\u2C61\uA749\uA781\uA747]/g},
-    {'base':'lj','letters':/[\u01C9]/g},
-    {'base':'m', 'letters':/[\u006D\u24DC\uFF4D\u1E3F\u1E41\u1E43\u0271\u026F]/g},
-    {'base':'n', 'letters':/[\u006E\u24DD\uFF4E\u01F9\u0144\u00F1\u1E45\u0148\u1E47\u0146\u1E4B\u1E49\u019E\u0272\u0149\uA791\uA7A5]/g},
-    {'base':'nj','letters':/[\u01CC]/g},
-    {'base':'o', 'letters':/[\u006F\u24DE\uFF4F\u00F2\u00F3\u00F4\u1ED3\u1ED1\u1ED7\u1ED5\u00F5\u1E4D\u022D\u1E4F\u014D\u1E51\u1E53\u014F\u022F\u0231\u00F6\u022B\u1ECF\u0151\u01D2\u020D\u020F\u01A1\u1EDD\u1EDB\u1EE1\u1EDF\u1EE3\u1ECD\u1ED9\u01EB\u01ED\u00F8\u01FF\u0254\uA74B\uA74D\u0275]/g},
-    {'base':'oi','letters':/[\u01A3]/g},
-    {'base':'ou','letters':/[\u0223]/g},
-    {'base':'oo','letters':/[\uA74F]/g},
-    {'base':'p','letters':/[\u0070\u24DF\uFF50\u1E55\u1E57\u01A5\u1D7D\uA751\uA753\uA755]/g},
-    {'base':'q','letters':/[\u0071\u24E0\uFF51\u024B\uA757\uA759]/g},
-    {'base':'r','letters':/[\u0072\u24E1\uFF52\u0155\u1E59\u0159\u0211\u0213\u1E5B\u1E5D\u0157\u1E5F\u024D\u027D\uA75B\uA7A7\uA783]/g},
-    {'base':'s','letters':/[\u0073\u24E2\uFF53\u00DF\u015B\u1E65\u015D\u1E61\u0161\u1E67\u1E63\u1E69\u0219\u015F\u023F\uA7A9\uA785\u1E9B]/g},
-    {'base':'t','letters':/[\u0074\u24E3\uFF54\u1E6B\u1E97\u0165\u1E6D\u021B\u0163\u1E71\u1E6F\u0167\u01AD\u0288\u2C66\uA787]/g},
-    {'base':'tz','letters':/[\uA729]/g},
-    {'base':'u','letters':/[\u0075\u24E4\uFF55\u00F9\u00FA\u00FB\u0169\u1E79\u016B\u1E7B\u016D\u00FC\u01DC\u01D8\u01D6\u01DA\u1EE7\u016F\u0171\u01D4\u0215\u0217\u01B0\u1EEB\u1EE9\u1EEF\u1EED\u1EF1\u1EE5\u1E73\u0173\u1E77\u1E75\u0289]/g},
-    {'base':'v','letters':/[\u0076\u24E5\uFF56\u1E7D\u1E7F\u028B\uA75F\u028C]/g},
-    {'base':'vy','letters':/[\uA761]/g},
-    {'base':'w','letters':/[\u0077\u24E6\uFF57\u1E81\u1E83\u0175\u1E87\u1E85\u1E98\u1E89\u2C73]/g},
-    {'base':'x','letters':/[\u0078\u24E7\uFF58\u1E8B\u1E8D]/g},
-    {'base':'y','letters':/[\u0079\u24E8\uFF59\u1EF3\u00FD\u0177\u1EF9\u0233\u1E8F\u00FF\u1EF7\u1E99\u1EF5\u01B4\u024F\u1EFF]/g},
-    {'base':'z','letters':/[\u007A\u24E9\uFF5A\u017A\u1E91\u017C\u017E\u1E93\u1E95\u01B6\u0225\u0240\u2C6C\uA763]/g}
-];
-var changes;
-function removeDiacritics (str) {
-    if(!changes) {
-        changes = defaultDiacriticsRemovalMap;
-    }
-    for(var i=0; i<changes.length; i++) {
-        str = str.replace(changes[i].letters, changes[i].base);
-    }
-    return str;
-}
-
-return removeDiacritics;
-})()
-
-if(typeof exports !== "undefined"){
-    exports.removeDiacritics = removeDiacritics    
-}
-
-function levenshtein( a, b )
-{
-	var i;
-	var j;
-	var cost;
-	var d = new Array();
- 
-	if ( a.length == 0 )
-	{
-		return b.length;
-	}
- 
-	if ( b.length == 0 )
-	{
-		return a.length;
-	}
- 
-	for ( i = 0; i <= a.length; i++ )
-	{
-		d[ i ] = new Array();
-		d[ i ][ 0 ] = i;
-	}
- 
-	for ( j = 0; j <= b.length; j++ )
-	{
-		d[ 0 ][ j ] = j;
-	}
- 
-	for ( i = 1; i <= a.length; i++ )
-	{
-		for ( j = 1; j <= b.length; j++ )
-		{
-			if ( a.charAt( i - 1 ) == b.charAt( j - 1 ) )
-			{
-				cost = 0;
-			}
-			else
-			{
-				cost = 1;
-			}
- 
-			d[ i ][ j ] = Math.min( d[ i - 1 ][ j ] + 1, d[ i ][ j - 1 ] + 1, d[ i - 1 ][ j - 1 ] + cost );
-			
-			if(
-         i > 1 && 
-         j > 1 &&  
-         a.charAt(i - 1) == b.charAt(j-2) && 
-         a.charAt(i-2) == b.charAt(j-1)
-         ){
-          d[i][j] = Math.min(
-            d[i][j],
-            d[i - 2][j - 2] + cost
-          )
-         
-			}
-		}
-	}
- 
-	return d[ a.length ][ b.length ];
-}
-
-if(typeof exports !== "undefined"){
-    exports.levenshtein = levenshtein    
-}
-// Porter stemmer in Javascript. Few comments, but it's easy to follow against the rules in the original
-// paper, in
-//
-//  Porter, 1980, An algorithm for suffix stripping, Program, Vol. 14,
-//  no. 3, pp 130-137,
-//
-// see also http://www.tartarus.org/~martin/PorterStemmer
-
-// Release 1
-// Derived from (http://tartarus.org/~martin/PorterStemmer/js.txt) - cjm (iizuu) Aug 24, 2009
-
-PorterStemmer = (function(){
-	var step2list = {
-			"ational" : "ate",
-			"tional" : "tion",
-			"enci" : "ence",
-			"anci" : "ance",
-			"izer" : "ize",
-			"bli" : "ble",
-			"alli" : "al",
-			"entli" : "ent",
-			"eli" : "e",
-			"ousli" : "ous",
-			"ization" : "ize",
-			"ation" : "ate",
-			"ator" : "ate",
-			"alism" : "al",
-			"iveness" : "ive",
-			"fulness" : "ful",
-			"ousness" : "ous",
-			"aliti" : "al",
-			"iviti" : "ive",
-			"biliti" : "ble",
-			"logi" : "log"
-		},
-
-		step3list = {
-			"icate" : "ic",
-			"ative" : "",
-			"alize" : "al",
-			"iciti" : "ic",
-			"ical" : "ic",
-			"ful" : "",
-			"ness" : ""
-		},
-
-		c = "[^aeiou]",          // consonant
-		v = "[aeiouy]",          // vowel
-		C = c + "[^aeiouy]*",    // consonant sequence
-		V = v + "[aeiou]*",      // vowel sequence
-
-		mgr0 = "^(" + C + ")?" + V + C,               // [C]VC... is m>0
-		meq1 = "^(" + C + ")?" + V + C + "(" + V + ")?$",  // [C]VC[V] is m=1
-		mgr1 = "^(" + C + ")?" + V + C + V + C,       // [C]VCVC... is m>1
-		s_v = "^(" + C + ")?" + v;                   // vowel in stem
-
-	return function (w) {
-		var 	stem,
-			suffix,
-			firstch,
-			re,
-			re2,
-			re3,
-			re4,
-			origword = w;
-
-		if (w.length < 3) { return w; }
-
-		firstch = w.substr(0,1);
-		if (firstch == "y") {
-			w = firstch.toUpperCase() + w.substr(1);
-		}
-
-		// Step 1a
-		re = /^(.+?)(ss|i)es$/;
-		re2 = /^(.+?)([^s])s$/;
-
-		if (re.test(w)) { w = w.replace(re,"$1$2"); }
-		else if (re2.test(w)) {	w = w.replace(re2,"$1$2"); }
-
-		// Step 1b
-		re = /^(.+?)eed$/;
-		re2 = /^(.+?)(ed|ing)$/;
-		if (re.test(w)) {
-			var fp = re.exec(w);
-			re = new RegExp(mgr0);
-			if (re.test(fp[1])) {
-				re = /.$/;
-				w = w.replace(re,"");
-			}
-		} else if (re2.test(w)) {
-			var fp = re2.exec(w);
-			stem = fp[1];
-			re2 = new RegExp(s_v);
-			if (re2.test(stem)) {
-				w = stem;
-				re2 = /(at|bl|iz)$/;
-				re3 = new RegExp("([^aeiouylsz])\\1$");
-				re4 = new RegExp("^" + C + v + "[^aeiouwxy]$");
-				if (re2.test(w)) { w = w + "e"; }
-				else if (re3.test(w)) { re = /.$/; w = w.replace(re,""); }
-				else if (re4.test(w)) { w = w + "e"; }
-			}
-		}
-
-		// Step 1c
-	        re = new RegExp("^(.+" + c + ")y$");
-		    if (re.test(w)) {
-			var fp = re.exec(w);
-			stem = fp[1];
-		    w = stem + "i";
-		}
-
-		// Step 2
-		re = /^(.+?)(ational|tional|enci|anci|izer|bli|alli|entli|eli|ousli|ization|ation|ator|alism|iveness|fulness|ousness|aliti|iviti|biliti|logi)$/;
-		if (re.test(w)) {
-			var fp = re.exec(w);
-			stem = fp[1];
-			suffix = fp[2];
-			re = new RegExp(mgr0);
-			if (re.test(stem)) {
-				w = stem + step2list[suffix];
-			}
-		}
-
-		// Step 3
-		re = /^(.+?)(icate|ative|alize|iciti|ical|ful|ness)$/;
-		if (re.test(w)) {
-			var fp = re.exec(w);
-			stem = fp[1];
-			suffix = fp[2];
-			re = new RegExp(mgr0);
-			if (re.test(stem)) {
-				w = stem + step3list[suffix];
-			}
-		}
-
-		// Step 4
-		re = /^(.+?)(al|ance|ence|er|ic|able|ible|ant|ement|ment|ent|ou|ism|ate|iti|ous|ive|ize)$/;
-		re2 = /^(.+?)(s|t)(ion)$/;
-		if (re.test(w)) {
-			var fp = re.exec(w);
-			stem = fp[1];
-			re = new RegExp(mgr1);
-			if (re.test(stem)) {
-				w = stem;
-			}
-		} else if (re2.test(w)) {
-			var fp = re2.exec(w);
-			stem = fp[1] + fp[2];
-			re2 = new RegExp(mgr1);
-			if (re2.test(stem)) {
-				w = stem;
-			}
-		}
-
-		// Step 5
-		re = /^(.+?)e$/;
-		if (re.test(w)) {
-			var fp = re.exec(w);
-			stem = fp[1];
-			re = new RegExp(mgr1);
-			re2 = new RegExp(meq1);
-			re3 = new RegExp("^" + C + v + "[^aeiouwxy]$");
-			if (re.test(stem) || (re2.test(stem) && !(re3.test(stem)))) {
-				w = stem;
-			}
-		}
-
-		re = /ll$/;
-		re2 = new RegExp(mgr1);
-		if (re.test(w) && re2.test(w)) {
-			re = /.$/;
-			w = w.replace(re,"");
-		}
-
-		// and turn initial Y back to y
-
-		if (firstch == "y") {
-			w = firstch.toLowerCase() + w.substr(1);
-		}
-
-	    // See http://snowball.tartarus.org/algorithms/english/stemmer.html
-	    // "Exceptional forms in general"
-	    var specialWords = {
-	    	"skis" : "ski",
-	    	"skies" : "sky",
-	    	"dying" : "die",
-	    	"lying" : "lie",
-	    	"tying" : "tie",
-	    	"idly" : "idl",
-	    	"gently" : "gentl",
-	    	"ugly" : "ugli",
-	    	"early": "earli",
-	    	"only": "onli",
-	    	"singly": "singl"
-	    };
-
-	    if(specialWords[origword]){
-	    	w = specialWords[origword];
-	    }
-
-	    if( "sky news howe atlas cosmos bias \
-	    	 andes inning outing canning herring \
-	    	 earring proceed exceed succeed".indexOf(origword) !== -1 ){
-	    	w = origword;
-	    }
-
-	    // Address words overstemmed as gener-
-	    re = /.*generate?s?d?(ing)?$/;
-	    if( re.test(origword) ){
-		w = w + 'at';
-	    }
-	    re = /.*general(ly)?$/;
-	    if( re.test(origword) ){
-		w = w + 'al';
-	    }
-	    re = /.*generic(ally)?$/;
-	    if( re.test(origword) ){
-		w = w + 'ic';
-	    }
-	    re = /.*generous(ly)?$/;
-	    if( re.test(origword) ){
-		w = w + 'ous';
-	    }
-	    // Address words overstemmed as commun-
-	    re = /.*communit(ies)?y?/;
-	    if( re.test(origword) ){
-		w = w + 'iti';
-	    }
-
-	    return w;
-	}
-})();
-
-if(typeof exports !== "undefined"){
-    exports.stemmer = PorterStemmer
-}
-
-var SyllableCounter;
-
-SyllableCounter = function(word) {
-  var add, addSyllables, count, fix, part, prefixSuffix, problemWords, sub, subSyllables, tmp, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref;
-  word = word.toLowerCase().replace(/[^a-z]/g, '');
-  problemWords = {
-    simile: 3,
-    forever: 3,
-    shoreline: 2
-  };
-  if (word in problemWords) {
-    return problemWords[word];
-  }
-  prefixSuffix = [/^un/, /^fore/, /ly$/, /less$/, /ful$/, /ers?$/, /ings?$/];
-  count = 0;
-  for (_i = 0, _len = prefixSuffix.length; _i < _len; _i++) {
-    fix = prefixSuffix[_i];
-    tmp = word.replace(fix, '');
-    if (tmp !== word) {
-      count++;
-    }
-    word = tmp;
-  }
-  subSyllables = [/cial/, /tia/, /cius/, /cious/, /giu/, /ion/, /iou/, /sia$/, /[^aeiuoyt]{2,}ed$/, /.ely$/, /[cg]h?e[rsd]?$/, /rved?$/, /[aeiouy][dt]es?$/, /[aeiouy][^aeiouydt]e[rsd]?$/, /^[dr]e[aeiou][^aeiou]+$/, /[aeiouy]rse$/];
-  addSyllables = [/ia/, /riet/, /dien/, /iu/, /io/, /ii/, /[aeiouym]bl$/, /[aeiou]{3}/, /^mc/, /ism$/, /([^aeiouy])\1l$/, /[^l]lien/, /^coa[dglx]./, /[^gq]ua[^auieo]/, /dnt$/, /uity$/, /ie(r|st)$/];
-  _ref = word.split(/[^aeiouy]+/);
-  for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-    part = _ref[_j];
-    if (part !== '') {
-      count++;
-    }
-  }
-  for (_k = 0, _len2 = subSyllables.length; _k < _len2; _k++) {
-    sub = subSyllables[_k];
-    count -= word.split(sub).length - 1;
-  }
-  for (_l = 0, _len3 = addSyllables.length; _l < _len3; _l++) {
-    add = addSyllables[_l];
-    count += word.split(add).length - 1;
-  }
-  return Math.max(1, count);
-};
-
-if (typeof exports !== "undefined" && exports !== null) {
-  exports.syllables = SyllableCounter;
-}
-
-var __slice = [].slice,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-(function() {
-  var advancedCompare, checkAnswer, checkWord, isPerson, levens, log, parseAnswer, rawCompare, reduceAlphabet, reduceLetter, replaceNumber, safeCheckAnswer, splitWords, stem, stopnames, stopwords;
-  stopwords = "derp rofl lmao lawl lole lol the prompt on of is a in on that have for at so it do or de y by accept any and".split(' ');
-  stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold luke matthew";
-  log = function() {
-    var args;
-    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if (exports.log) {
-      return exports.log.apply(exports, args);
-    }
-  };
-  parseAnswer = function(answer) {
-    var clean, comp, neg, part, pos, _i, _len;
-    answer = answer.replace(/[\[\]\<\>\{\}][\w\-]+?[\[\]\<\>\{\}]/g, '');
-    clean = (function() {
-      var _i, _len, _ref, _results;
-      _ref = answer.split(/[^\w]or[^\w]|\[|\]|\{|\}|\;|\,|\<|\>|\(|\)/g);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        part = _ref[_i];
-        _results.push(part.trim());
-      }
-      return _results;
-    })();
-    clean = (function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = clean.length; _i < _len; _i++) {
-        part = clean[_i];
-        if (part !== '') {
-          _results.push(part);
-        }
-      }
-      return _results;
-    })();
-    pos = [];
-    neg = [];
-    for (_i = 0, _len = clean.length; _i < _len; _i++) {
-      part = clean[_i];
-      part = removeDiacritics(part);
-      part = part.replace(/\"|\'|\“|\”|\.|’|\:/g, '');
-      part = part.replace(/-/g, ' ');
-      if (/equivalent|word form|other wrong/.test(part)) {
-
-      } else if (/do not|dont/.test(part)) {
-        neg.push(part);
-      } else if (/accept/.test(part)) {
-        comp = part.split(/before|until/);
-        if (comp.length > 1) {
-          neg.push(comp[1]);
-        }
-        pos.push(comp[0]);
-      } else {
-        pos.push(part);
-      }
-    }
-    return [pos, neg];
-  };
-  replaceNumber = function(word) {
-    if (/\d+nd/.test(word) || /\d+st/.test(word)) {
-      return parseInt(word, 10);
-    }
-    if (word === 'zero' || word === 'zeroeth' || word === 'zeroth') {
-      return 0;
-    }
-    if (word === 'one' || word === 'first' || word === 'i') {
-      return 1;
-    }
-    if (word === 'two' || word === 'second' || word === 'twoth' || word === 'ii') {
-      return 2;
-    }
-    if (word === 'three' || word === 'third' || word === 'turd' || word === 'iii' || word === 'iiv') {
-      return 3;
-    }
-    if (word === 'forth' || word === 'fourth' || word === 'four' || word === 'iiii' || word === 'iv') {
-      return 4;
-    }
-    if (word === 'fifth' || word === 'five' || word === 'v') {
-      return 5;
-    }
-    if (word === 'sixth' || word === 'six' || word === 'vi' || word === 'emacs') {
-      return 6;
-    }
-    if (word === 'seventh' || word === 'seven' || word === 'vii') {
-      return 7;
-    }
-    if (word === 'eight' || word === 'eighth' || word === 'viii' || word === 'iix') {
-      return 8;
-    }
-    if (word === 'nine' || word === 'nein' || word === 'ninth' || word === 'ix' || word === 'viiii') {
-      return 9;
-    }
-    if (word === 'tenth' || word === 'ten' || word === 'x') {
-      return 10;
-    }
-    if (word === 'eleventh' || word === 'eleven' || word === 'xi') {
-      return 11;
-    }
-    if (word === 'twelfth' || word === 'twelveth' || word === 'twelve' || word === 'xii') {
-      return 12;
-    }
-    if (word === 'thirteenth' || word === 'thirteen' || word === 'xiii' || word === 'iixv') {
-      return 13;
-    }
-    if (word === 'fourteenth' || word === 'fourteen' || word === 'ixv' || word === 'xiiii') {
-      return 14;
-    }
-    return word;
-  };
-  stem = function(word) {
-    return PorterStemmer(word.replace(/ez$/g, 'es').replace(/[^\w]/g, ''));
-  };
-  splitWords = function(text) {
-    var arr, word, words;
-    arr = (function() {
-      var _i, _len, _ref, _results;
-      _ref = text.toLowerCase().split(/\s+/);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        word = _ref[_i];
-        _results.push(word.trim());
-      }
-      return _results;
-    })();
-    words = (function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = arr.length; _i < _len; _i++) {
-        word = arr[_i];
-        if (__indexOf.call(stopwords, word) < 0 && word !== '') {
-          _results.push(stem(word));
-        }
-      }
-      return _results;
-    })();
-    return words;
-  };
-  isPerson = function(answer) {
-    var canon, caps, name;
-    canon = (function() {
-      var _i, _len, _ref, _results;
-      _ref = answer.split(/\s+/);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        name = _ref[_i];
-        if (name.length > 3) {
-          _results.push(name);
-        }
-      }
-      return _results;
-    })();
-    caps = (function() {
-      var _i, _len, _ref, _results;
-      _results = [];
-      for (_i = 0, _len = canon.length; _i < _len; _i++) {
-        name = canon[_i];
-        if (("A" <= (_ref = name[0]) && _ref <= "Z")) {
-          _results.push(name);
-        }
-      }
-      return _results;
-    })();
-    return caps.length === canon.length;
-  };
-  reduceLetter = function(letter) {
-    if (letter === 'z' || letter === 's' || letter === 'k' || letter === 'c') {
-      return 's';
-    }
-    if (letter === 'e' || letter === 'a' || letter === 'o' || letter === 'u' || letter === 'y' || letter === 'i') {
-      return 'e';
-    }
-    return letter;
-  };
-  reduceAlphabet = function(word) {
-    var letter, letters;
-    letters = (function() {
-      var _i, _len, _ref, _results;
-      _ref = word.split('');
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        letter = _ref[_i];
-        _results.push(reduceLetter(letter));
-      }
-      return _results;
-    })();
-    return letters.join('');
-  };
-  levens = function(a, b) {
-    return damlev(reduceAlphabet(a), reduceAlphabet(b));
-  };
-  checkWord = function(word, list) {
-    var frac, len, real, score, scores, valid, _ref;
-    scores = (function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = list.length; _i < _len; _i++) {
-        valid = list[_i];
-        score = levens(valid, word);
-        _results.push([score, valid.length - score, valid.length, valid]);
-      }
-      return _results;
-    })();
-    if (scores.length === 0) {
-      return '';
-    }
-    scores = scores.sort(function(a, b) {
-      return a[0] - b[0];
-    });
-    _ref = scores[0], score = _ref[0], real = _ref[1], len = _ref[2], valid = _ref[3];
-    frac = real / len;
-    log(word, valid, list, len, score, frac);
-    if (len > 4) {
-      if (frac >= 0.65) {
-        return valid;
-      }
-    } else {
-      if (frac >= 0.60) {
-        return valid;
-      }
-    }
-    return '';
-  };
-  advancedCompare = function(inputText, p, questionWords) {
-    var invalid_count, is_person, list, result, valid_count, value, word, _i, _len;
-    is_person = isPerson(p.trim());
-    list = (function() {
-      var _i, _len, _ref, _results;
-      _ref = splitWords(p);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        word = _ref[_i];
-        if (__indexOf.call(questionWords, word) < 0) {
-          _results.push(word);
-        }
-      }
-      return _results;
-    })();
-    valid_count = 0;
-    invalid_count = 0;
-    for (_i = 0, _len = inputText.length; _i < _len; _i++) {
-      word = inputText[_i];
-      value = 1;
-      result = checkWord(word, list);
-      if (is_person && __indexOf.call(stopnames, result) >= 0 && __indexOf.call(list, 'gospel') < 0) {
-        value = 0.5;
-      }
-      if (result) {
-        valid_count += value;
-      } else {
-        invalid_count += value;
-      }
-    }
-    log("ADVANCED", valid_count, invalid_count, inputText.length);
-    return valid_count - invalid_count >= 1;
-  };
-  rawCompare = function(compare, p) {
-    var accuracy, diff, minlen;
-    compare = compare.toLowerCase().replace(/[^\w]/g, '');
-    p = p.toLowerCase().replace(/[^\w]/g, '');
-    minlen = Math.min(compare.length, p.length);
-    diff = levens(compare.slice(0, minlen), p.slice(0, minlen));
-    accuracy = 1 - (diff / minlen);
-    log("RAW LEVENSHTEIN", diff, minlen, accuracy);
-    if (minlen >= 4 && accuracy >= 0.70) {
-      return "prompt";
-    }
-    return false;
-  };
-  checkAnswer = function(compare, answer, question) {
-    var compyr, inputText, neg, p, pos, questionWords, word, year, _i, _len, _ref;
-    if (question == null) {
-      question = '';
-    }
-    log('---------------------------');
-    question = removeDiacritics(question).trim();
-    answer = removeDiacritics(answer).trim();
-    compare = removeDiacritics(compare).trim();
-    questionWords = splitWords(question);
-    inputText = (function() {
-      var _i, _len, _ref, _results;
-      _ref = splitWords(compare);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        word = _ref[_i];
-        if (__indexOf.call(questionWords, word) < 0) {
-          _results.push(word);
-        }
-      }
-      return _results;
-    })();
-    _ref = parseAnswer(answer.trim()), pos = _ref[0], neg = _ref[1];
-    log("ACCEPT", pos, "REJECT", neg);
-    for (_i = 0, _len = pos.length; _i < _len; _i++) {
-      p = pos[_i];
-      if (compare.replace(/[^0-9]/g, '').length === 4) {
-        year = compare.replace(/[^0-9]/g, '');
-        compyr = p.replace(/[^0-9]/g, '');
-        log("YEAR COMPARE", year, compyr);
-        if (year === compyr) {
-          return true;
-        }
-      } else {
-        if (advancedCompare(inputText, p, questionWords)) {
-          return true;
-        }
-        if (rawCompare(compare, p)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
-  safeCheckAnswer = function(compare, answer, question) {
-    try {
-      return checkAnswer(compare, answer, question);
-    } catch (error) {
-      log("ERROR", error);
-      return false;
-    }
-  };
-  stopnames = splitWords(stopnames);
-  if (typeof exports !== "undefined" && exports !== null) {
-    exports.checkAnswer = safeCheckAnswer;
-    return exports.parseAnswer = parseAnswer;
-  }
-})();
-
-
-
 
 var changeQuestion, checkAlone, createBundle, createCategoryList, createStatSheet, last_question, last_rendering, reader_children, reader_last_state, renderCategoryItem, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, updateInlineSymbols, updateTextPosition,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -5380,12 +2879,833 @@ formatTime = function(timestamp) {
   return (date.getHours() % 12) + ':' + ('0' + date.getMinutes()).substr(-2, 2) + (date.getHours() > 12 ? "pm" : "am");
 };
 
-var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, last_freeze, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
+var QuizPlayer,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+QuizPlayer = (function() {
+
+  function QuizPlayer(room, id) {
+    this.id = id;
+    this.room = room;
+    this.guesses = 0;
+    this.interrupts = 0;
+    this.early = 0;
+    this.seen = 0;
+    this.correct = 0;
+    this.time_spent = 0;
+    this.last_action = this.room.serverTime();
+    this.times_buzzed = 0;
+    this.show_typing = true;
+    this.team = '';
+    this.banned = false;
+    this.sounds = false;
+    this.tribunal = null;
+    this.__timeout = null;
+    this.__recent_actions = [];
+  }
+
+  QuizPlayer.prototype.touch = function(no_add_time) {
+    var current_time, elapsed;
+    current_time = this.room.serverTime();
+    if (!no_add_time) {
+      elapsed = current_time - this.last_action;
+      if (elapsed < 1000 * 60 * 10) {
+        this.time_spent += elapsed;
+      }
+    }
+    return this.last_action = current_time;
+  };
+
+  QuizPlayer.prototype.active = function() {
+    return this.online() && (this.room.serverTime() - this.last_action) < 1000 * 60 * 10;
+  };
+
+  QuizPlayer.prototype.online = function() {
+    return true;
+  };
+
+  QuizPlayer.prototype.score = function() {
+    var CORRECT, EARLY, INTERRUPT;
+    CORRECT = 10;
+    EARLY = 15;
+    INTERRUPT = -5;
+    return this.early * EARLY + (this.correct - this.early) * CORRECT + this.interrupts * INTERRUPT;
+  };
+
+  QuizPlayer.prototype.ban = function() {
+    this.banned = true;
+    return this.emit('redirect', "/" + this.room.name + "-banned");
+  };
+
+  QuizPlayer.prototype.emit = function(name, data) {
+    return this.room.log('QuizPlayer.emit(name, data) not implemented');
+  };
+
+  QuizPlayer.prototype.rate_limit = function() {
+    var action_delay, current_time, id, mean_elapsed, s, time, user, window_size, witnesses, _i, _len, _ref,
+      _this = this;
+    witnesses = (function() {
+      var _ref, _results;
+      _ref = this.room.users;
+      _results = [];
+      for (id in _ref) {
+        user = _ref[id];
+        if (id[0] !== "_" && user.active()) {
+          _results.push(id);
+        }
+      }
+      return _results;
+    }).call(this);
+    if (witnesses.length <= 2) {
+      return;
+    }
+    window_size = 6;
+    action_delay = 1000;
+    current_time = this.room.serverTime();
+    this.__recent_actions.push(current_time);
+    this.__recent_actions = this.__recent_actions.slice(-window_size);
+    if (this.__recent_actions.length === window_size && !this.tribunal) {
+      s = 0;
+      _ref = this.__recent_actions;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        time = _ref[_i];
+        s += time;
+      }
+      mean_elapsed = current_time - s / window_size;
+      if (mean_elapsed < window_size * action_delay / 2) {
+        this.__timeout = setTimeout(function() {
+          _this.verb('survived the tribunal', true);
+          _this.tribunal = null;
+          return _this.room.sync(1);
+        }, 1000 * 60);
+        this.tribunal = {
+          votes: [],
+          time: current_time,
+          witnesses: witnesses
+        };
+        return this.room.sync(1);
+      }
+    }
+  };
+
+  QuizPlayer.prototype.vote_tribunal = function(user) {
+    var tribunal, votes, _ref, _ref1;
+    tribunal = this.room.users[user].tribunal;
+    if (tribunal) {
+      if (_ref = this.id, __indexOf.call(tribunal.witnesses, _ref) < 0) {
+        return;
+      }
+      votes = tribunal.votes;
+      if (votes && (_ref1 = this.id, __indexOf.call(votes, _ref1) < 0)) {
+        votes.push(this.id);
+      }
+      if (votes.length > (tribunal.witnesses.length - 1) / 2) {
+        this.room.users[user].verb('got voted off the island', true);
+        clearTimeout(this.room.users[user].__timeout);
+        this.room.users[user].tribunal = null;
+        this.room.users[user].ban();
+      } else {
+        this.verb('voted to ban !@' + user);
+      }
+      return this.room.sync(1);
+    }
+  };
+
+  QuizPlayer.prototype.verb = function(action, no_rate_limit) {
+    if (this.id.toString().slice(0, 2) === '__') {
+      return;
+    }
+    if (!no_rate_limit) {
+      this.rate_limit();
+    }
+    return this.room.emit('log', {
+      user: this.id,
+      verb: action,
+      time: this.room.serverTime()
+    });
+  };
+
+  QuizPlayer.prototype.disco = function() {
+    return 0;
+  };
+
+  QuizPlayer.prototype.disconnect = function() {
+    this.verb('left the room');
+    this.touch();
+    return this.room.sync(1);
+  };
+
+  QuizPlayer.prototype.echo = function(data, callback) {
+    return callback(this.room.serverTime());
+  };
+
+  QuizPlayer.prototype.buzz = function(data, fn) {
+    if (this.room.buzz(this.id, fn)) {
+      return this.rate_limit();
+    }
+  };
+
+  QuizPlayer.prototype.guess = function(data) {
+    return this.room.guess(this.id, data);
+  };
+
+  QuizPlayer.prototype.chat = function(_arg) {
+    var done, session, text;
+    text = _arg.text, done = _arg.done, session = _arg.session;
+    this.touch();
+    this.room.emit('chat', {
+      text: text,
+      session: session,
+      user: this.id,
+      done: done,
+      time: this.room.serverTime()
+    });
+    if (done) {
+      return this.rate_limit();
+    }
+  };
+
+  QuizPlayer.prototype.skip = function() {
+    this.touch();
+    if (!this.room.attempt) {
+      this.room.new_question();
+      return this.verb('skipped a question');
+    }
+  };
+
+  QuizPlayer.prototype.next = function() {
+    this.touch();
+    return this.room.next();
+  };
+
+  QuizPlayer.prototype.finish = function() {
+    this.touch();
+    if (!this.room.attempt) {
+      this.room.finish();
+      return this.room.sync(1);
+    }
+  };
+
+  QuizPlayer.prototype.pause = function() {
+    this.touch();
+    if (!this.room.attempt && this.room.time() < this.room.end_time) {
+      this.verb('paused the game');
+      this.room.freeze();
+      return this.room.sync();
+    }
+  };
+
+  QuizPlayer.prototype.unpause = function() {
+    if (!this.room.attempt) {
+      this.verb('resumed the game');
+      if (!this.room.question) {
+        this.room.new_question();
+      }
+      this.room.unfreeze();
+    }
+    return this.room.sync();
+  };
+
+  QuizPlayer.prototype.set_name = function(name) {
+    if (name.trim().length > 0) {
+      this.name = name.trim().slice(0, 140);
+      this.touch();
+      return this.room.sync(1);
+    }
+  };
+
+  QuizPlayer.prototype.set_distribution = function(data) {
+    var cat, count, disabled, enabled,
+      _this = this;
+    this.touch();
+    if (!data) {
+      return;
+    }
+    enabled = [];
+    disabled = [];
+    for (cat in data) {
+      count = data[cat];
+      if (this.room.distribution[cat] === 0 && count > 0) {
+        enabled.push(cat);
+      }
+      if (this.room.distribution[cat] > 0 && count === 0) {
+        disabled.push(cat);
+      }
+    }
+    this.room.distribution = data;
+    this.room.sync(3);
+    return this.room.get_size(function(size) {
+      if (enabled.length > 0) {
+        _this.verb("enabled " + (enabled.join(', ')) + " (" + size + " questions)");
+      }
+      if (disabled.length > 0) {
+        return _this.verb("disabled " + (disabled.join(', ')) + " (" + size + " questions)");
+      }
+    });
+  };
+
+  QuizPlayer.prototype.set_difficulty = function(data) {
+    var _this = this;
+    this.touch();
+    this.room.difficulty = data;
+    this.room.sync();
+    return this.room.get_size(function(size) {
+      return _this.verb("set difficulty to " + (data || 'everything') + " (" + size + " questions)");
+    });
+  };
+
+  QuizPlayer.prototype.set_category = function(data) {
+    var _this = this;
+    this.touch();
+    this.room.category = data;
+    if (!data) {
+      this.room.reset_distribution();
+    }
+    this.room.sync();
+    return this.room.get_size(function(size) {
+      if (data === 'custom') {
+        return _this.verb("enabled a custom category distribution (" + size + " questions)");
+      } else {
+        return _this.verb("set category to " + (data.toLowerCase() || 'potpourri') + " (" + size + " questions)");
+      }
+    });
+  };
+
+  QuizPlayer.prototype.set_max_buzz = function(data) {
+    this.room.max_buzz = data;
+    this.touch();
+    if (this.room.max_buzz !== data) {
+      if (data === 0) {
+        this.verb('allowed players to buzz multiple times');
+      } else if (data === 1) {
+        this.verb('restricted players and teams to a single buzz per question');
+      } else if (data > 1) {
+        this.verb("restricted players and teams to " + data + " buzzes per question");
+      }
+    }
+    return this.room.sync();
+  };
+
+  QuizPlayer.prototype.set_speed = function(speed) {
+    if (!speed) {
+      return;
+    }
+    this.touch();
+    this.room.set_speed(speed);
+    return this.room.sync();
+  };
+
+  QuizPlayer.prototype.set_team = function(name) {
+    if (name) {
+      this.verb("switched to team " + name);
+    } else {
+      this.verb("is playing as an individual");
+    }
+    this.team = name;
+    return this.room.sync(2);
+  };
+
+  QuizPlayer.prototype.set_show_typing = function(data) {
+    this.show_typing = data;
+    return this.room.sync(2);
+  };
+
+  QuizPlayer.prototype.set_sounds = function(data) {
+    this.sounds = data;
+    return this.room.sync(2);
+  };
+
+  QuizPlayer.prototype.reset_score = function() {
+    this.seen = this.interrupts = this.guesses = this.correct = this.early = 0;
+    return this.room.sync(1);
+  };
+
+  QuizPlayer.prototype.report_question = function() {
+    return this.verb("did something unimplemented (report question)");
+  };
+
+  QuizPlayer.prototype.report_answer = function() {
+    return this.verb("did something unimplemented (report answer)");
+  };
+
+  QuizPlayer.prototype.check_public = function() {
+    return this.verb("did something unimplemented (check public)");
+  };
+
+  return QuizPlayer;
+
+})();
+
+if (typeof exports !== "undefined" && exports !== null) {
+  exports.QuizPlayer = QuizPlayer;
+}
+
+var QuizRoom, default_distribution, error_question,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+error_question = {
+  'category': '$0x40000',
+  'difficulty': 'segmentation fault',
+  'num': 'NaN',
+  'tournament': 'Guru Meditation Cup',
+  'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
+  'answer': 'error',
+  'year': 1970,
+  'round': '0x080483ba'
+};
+
+default_distribution = {
+  "Fine Arts": 2,
+  "Literature": 4,
+  "History": 3,
+  "Science": 3,
+  "Trash": 1,
+  "Geography": 1,
+  "Mythology": 1,
+  "Philosophy": 1,
+  "Religion": 1,
+  "Social Science": 1
+};
+
+QuizRoom = (function() {
+
+  function QuizRoom(name) {
+    this.name = name;
+    this.type = "qb";
+    this.answer_duration = 1000 * 5;
+    this.time_offset = 0;
+    this.sync_offset = 0;
+    this.start_offset = 0;
+    this.end_time = 0;
+    this.question = '';
+    this.answer = '';
+    this.timing = [];
+    this.cumulative = [];
+    this.rate = 1000 * 60 / 5 / 200;
+    this.__timeout = -1;
+    this.distribution = default_distribution;
+    this.freeze();
+    this.users = {};
+    this.difficulty = '';
+    this.category = '';
+    this.max_buzz = null;
+  }
+
+  QuizRoom.prototype.log = function(message) {
+    return this.emit('log', {
+      verb: message
+    });
+  };
+
+  QuizRoom.prototype.get_parameters = function(type, difficulty, cb) {
+    this.emit('log', {
+      verb: 'NOT IMPLEMENTED (async get params)'
+    });
+    return cb(['HS', 'MS'], ['Science', 'Trash']);
+  };
+
+  QuizRoom.prototype.count_questions = function(type, difficulty, category, cb) {
+    return this.log('NOT IMPLEMENTED (question counting)');
+  };
+
+  QuizRoom.prototype.get_size = function(cb, type, difficulty, category) {
+    if (type == null) {
+      type = this.type;
+    }
+    if (difficulty == null) {
+      difficulty = this.difficulty;
+    }
+    if (category == null) {
+      category = this.category;
+    }
+    return this.count_questions(type, difficulty, (category === 'custom' ? this.distribution : category), function(count) {
+      return cb(count);
+    });
+  };
+
+  QuizRoom.prototype.get_question = function(cb) {
+    cb(error_question);
+    return this.log('NOT IMPLEMENTED (async get question)');
+  };
+
+  QuizRoom.prototype.emit = function(name, data) {
+    return console.log('room.emit(name, data) not implemented');
+  };
+
+  QuizRoom.prototype.reset_distribution = function() {
+    return this.distribution = default_distribution;
+  };
+
+  QuizRoom.prototype.time = function() {
+    if (this.time_freeze) {
+      return this.time_freeze;
+    } else {
+      return this.serverTime() - this.time_offset;
+    }
+  };
+
+  QuizRoom.prototype.serverTime = function() {
+    return new Date - this.sync_offset;
+  };
+
+  QuizRoom.prototype.set_time = function(ts) {
+    return this.time_offset = this.serverTime() - ts;
+  };
+
+  QuizRoom.prototype.freeze = function() {
+    return this.time_freeze = this.time();
+  };
+
+  QuizRoom.prototype.unfreeze = function() {
+    if (this.time_freeze) {
+      this.set_time(this.time_freeze);
+      return this.time_freeze = 0;
+    }
+  };
+
+  QuizRoom.prototype.timeout = function(delay, callback) {
+    this.clear_timeout();
+    return this.__timeout = setTimeout(callback, delay);
+  };
+
+  QuizRoom.prototype.clear_timeout = function() {
+    return clearTimeout(this.__timeout);
+  };
+
+  QuizRoom.prototype.new_question = function() {
+    var _this = this;
+    this.generating_question = true;
+    return this.get_question(function(question) {
+      var id, syllables, user, word, _ref, _ref1;
+      delete _this.generating_question;
+      _this.generated_time = _this.time();
+      _this.attempt = null;
+      _this.info = {
+        category: question.category,
+        difficulty: question.difficulty,
+        tournament: question.tournament,
+        num: question.num,
+        year: question.year,
+        round: question.round
+      };
+      _this.question = question.question.replace(/FTP/g, 'For 10 points').replace(/^\[.*?\]/, '').replace(/\n/g, ' ').replace(/\s+/g, ' ');
+      _this.answer = question.answer.replace(/\<\w\w\>/g, '').replace(/\[\w\w\]/g, '');
+      _this.qid = (question != null ? (_ref = question._id) != null ? _ref.toString() : void 0 : void 0) || 'question_id';
+      _this.info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" + _this.answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20);
+      _this.begin_time = _this.time() + _this.start_offset;
+      if (typeof SyllableCounter !== "undefined" && SyllableCounter !== null) {
+        syllables = SyllableCounter;
+      } else {
+        syllables = require('./syllable').syllables;
+      }
+      _this.timing = (function() {
+        var _i, _len, _ref1, _results;
+        _ref1 = this.question.split(" ");
+        _results = [];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          word = _ref1[_i];
+          _results.push(syllables(word) + 1);
+        }
+        return _results;
+      }).call(_this);
+      _this.set_speed(_this.rate);
+      _ref1 = _this.users;
+      for (id in _ref1) {
+        user = _ref1[id];
+        user.times_buzzed = 0;
+        if (user.active()) {
+          user.seen++;
+        }
+      }
+      return _this.sync(2);
+    });
+  };
+
+  QuizRoom.prototype.set_speed = function(rate) {
+    var cumsum, done, duration, elapsed, new_duration, now, remainder;
+    if (!rate) {
+      return;
+    }
+    cumsum = function(list, rate) {
+      var num, sum, _i, _len, _ref, _results;
+      sum = 0;
+      _ref = [5].concat(list).slice(0, -1);
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        num = _ref[_i];
+        _results.push(sum += Math.round(num) * rate);
+      }
+      return _results;
+    };
+    now = this.time();
+    this.cumulative = cumsum(this.timing, this.rate);
+    elapsed = now - this.begin_time;
+    duration = this.cumulative[this.cumulative.length - 1];
+    done = elapsed / duration;
+    remainder = 0;
+    if (done > 1) {
+      remainder = elapsed - duration;
+      done = 1;
+    }
+    this.rate = rate;
+    this.cumulative = cumsum(this.timing, this.rate);
+    new_duration = this.cumulative[this.cumulative.length - 1];
+    this.begin_time = now - new_duration * done - remainder;
+    return this.end_time = this.begin_time + new_duration + this.answer_duration;
+  };
+
+  QuizRoom.prototype.finish = function() {
+    return this.set_time(this.end_time);
+  };
+
+  QuizRoom.prototype.next = function() {
+    if (this.time() > this.end_time - this.answer_duration && !this.generating_question && !this.attempt) {
+      this.new_question();
+      return this.unfreeze();
+    }
+  };
+
+  QuizRoom.prototype.check_answer = function() {
+    if (Math.random() > 0.8) {
+      return 'prompt';
+    }
+    return Math.random() > 0.3;
+  };
+
+  QuizRoom.prototype.end_buzz = function(session) {
+    var buzzed, do_prompt, id, pool, team, teams, times_buzzed, user, _ref, _ref1,
+      _this = this;
+    if (((_ref = this.attempt) != null ? _ref.session : void 0) !== session) {
+      return;
+    }
+    if (!this.attempt.prompt) {
+      this.clear_timeout();
+      this.attempt.done = true;
+      this.attempt.correct = this.check_answer(this.attempt.text, this.answer, this.question);
+      do_prompt = false;
+      if (this.attempt.correct === 'prompt') {
+        do_prompt = true;
+        this.attempt.correct = false;
+      }
+      if (do_prompt === true) {
+        this.attempt.correct = "prompt";
+        this.sync();
+        this.attempt.prompt = true;
+        this.attempt.done = false;
+        this.attempt.realTime = this.serverTime();
+        this.attempt.start = this.time();
+        this.attempt.text = '';
+        this.attempt.duration = 10 * 1000;
+        this.timeout(this.attempt.duration, function() {
+          return _this.end_buzz(session);
+        });
+      }
+      this.sync();
+    } else {
+      this.attempt.done = true;
+      this.attempt.correct = this.check_answer(this.attempt.text, this.answer, this.question);
+      if (this.attempt.correct === 'prompt') {
+        this.attempt.correct = false;
+      }
+      this.sync();
+    }
+    if (this.attempt.done) {
+      this.unfreeze();
+      if (this.attempt.correct) {
+        this.users[this.attempt.user].correct++;
+        if (this.attempt.early) {
+          this.users[this.attempt.user].early++;
+        }
+        this.finish();
+      } else {
+        if (this.attempt.interrupt) {
+          this.users[this.attempt.user].interrupts++;
+        }
+        buzzed = 0;
+        pool = 0;
+        teams = {};
+        _ref1 = this.users;
+        for (id in _ref1) {
+          user = _ref1[id];
+          if (id[0] !== "_") {
+            if (user.active()) {
+              teams[user.team || id] = teams[user.team || id] || 0;
+              teams[user.team || id] += user.times_buzzed;
+            }
+          }
+        }
+        for (team in teams) {
+          times_buzzed = teams[team];
+          if (times_buzzed >= this.max_buzz && this.max_buzz) {
+            buzzed++;
+          }
+          pool++;
+        }
+        if (this.max_buzz) {
+          if (buzzed >= pool) {
+            this.finish();
+          }
+        }
+      }
+      this.attempt = null;
+      return this.sync(1);
+    }
+  };
+
+  QuizRoom.prototype.buzz = function(user, fn) {
+    var early_index, id, member, session, team_buzzed, _ref,
+      _this = this;
+    team_buzzed = 0;
+    _ref = this.users;
+    for (id in _ref) {
+      member = _ref[id];
+      if ((member.team || id) === (this.users[user].team || user)) {
+        team_buzzed += member.times_buzzed;
+      }
+    }
+    if (this.max_buzz && this.users[user].times_buzzed >= this.max_buzz) {
+      if (fn) {
+        fn('THE BUZZES ARE TOO DAMN HIGH');
+      }
+      this.emit('log', {
+        user: user,
+        verb: 'has already buzzed'
+      });
+    } else if (this.max_buzz && team_buzzed >= this.max_buzz) {
+      if (fn) {
+        fn('THE BUZZES ARE TOO DAMN HIGH');
+      }
+      this.emit('log', {
+        user: user,
+        verb: 'is in a team which has already buzzed'
+      });
+    } else if (this.attempt === null && this.time() <= this.end_time) {
+      if (fn) {
+        fn('http://www.whosawesome.com/');
+      }
+      session = Math.random().toString(36).slice(2);
+      early_index = this.question.replace(/[^ \*]/g, '').indexOf('*');
+      this.attempt = {
+        user: user,
+        realTime: this.serverTime(),
+        start: this.time(),
+        duration: 8 * 1000,
+        session: session,
+        text: '',
+        early: early_index !== -1 && this.time() < this.begin_time + this.cumulative[early_index],
+        interrupt: this.time() < this.end_time - this.answer_duration,
+        done: false
+      };
+      this.users[user].times_buzzed++;
+      this.users[user].guesses++;
+      this.freeze();
+      this.sync(1);
+      this.timeout(this.attempt.duration, function() {
+        return _this.end_buzz(session);
+      });
+      return true;
+    } else if (this.attempt) {
+      this.emit('log', {
+        user: user,
+        verb: 'lost the buzzer race'
+      });
+      if (fn) {
+        fn('THE GAME');
+      }
+    } else {
+      this.emit('log', {
+        user: user,
+        verb: 'attempted an invalid buzz'
+      });
+      if (fn) {
+        fn('THE GAME');
+      }
+    }
+    return false;
+  };
+
+  QuizRoom.prototype.guess = function(user, data) {
+    var _ref;
+    if (((_ref = this.attempt) != null ? _ref.user : void 0) === user) {
+      this.attempt.text = data.text;
+      if (data.done) {
+        return this.end_buzz(this.attempt.session);
+      } else {
+        return this.sync();
+      }
+    }
+  };
+
+  QuizRoom.prototype.sync = function(level) {
+    var attr, blacklist, data, id, user, user_blacklist,
+      _this = this;
+    if (level == null) {
+      level = 0;
+    }
+    data = {
+      real_time: this.serverTime()
+    };
+    blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"];
+    user_blacklist = ["sockets", "room"];
+    for (attr in this) {
+      if (typeof this[attr] !== 'function' && __indexOf.call(blacklist, attr) < 0 && attr[0] !== "_") {
+        data[attr] = this[attr];
+      }
+    }
+    if (level >= 1) {
+      data.users = (function() {
+        var _ref, _results;
+        _results = [];
+        for (id in this.users) {
+          if (!(!this.users[id].ninja)) {
+            continue;
+          }
+          user = {};
+          for (attr in this.users[id]) {
+            if (__indexOf.call(user_blacklist, attr) < 0 && ((_ref = typeof this.users[id][attr]) !== 'function') && attr[0] !== '_') {
+              user[attr] = this.users[id][attr];
+            }
+          }
+          user.online_state = this.users[id].online();
+          _results.push(user);
+        }
+        return _results;
+      }).call(this);
+    }
+    if (level >= 2) {
+      data.question = this.question;
+      data.answer = this.answer;
+      data.timing = this.timing;
+      data.info = this.info;
+    }
+    if (level >= 3) {
+      data.distribution = this.distribution;
+      return this.get_parameters(this.type, this.difficulty, function(difficulties, categories) {
+        data.difficulties = difficulties;
+        data.categories = categories;
+        return _this.emit('sync', data);
+      });
+    } else {
+      return this.emit('sync', data);
+    }
+  };
+
+  return QuizRoom;
+
+})();
+
+if (typeof exports !== "undefined" && exports !== null) {
+  exports.QuizRoom = QuizRoom;
+}
+
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, handleCacheEvent, last_freeze, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-sock = io.connect();
+if (typeof io !== "undefined" && io !== null) {
+  sock = io.connect();
+}
 
 connected = function() {
   return (sock != null) && sock.socket.connected;
@@ -5494,8 +3814,9 @@ listen('application_update', function() {
   }
 });
 
-listen('application_force_update', function() {
-  return $('#update').slideDown();
+listen('force_application_update', function() {
+  $('#update').data('force', true);
+  return applicationCache.update();
 });
 
 listen('redirect', function(url) {
@@ -5700,3 +4021,43 @@ setTimeout(function() {
     return testLatency();
   }, 30 * 1000);
 }, 2000);
+
+handleCacheEvent = function() {
+  var status;
+  status = applicationCache.status;
+  switch (applicationCache.status) {
+    case applicationCache.UPDATEREADY:
+      $('#cachestatus').text('Updated');
+      applicationCache.swapCache();
+      $('#update').slideDown();
+      if (localStorage.auto_reload === "yay" || $('#update').data('force') === true) {
+        return setTimeout(function() {
+          return location.reload();
+        }, 1000);
+      }
+      break;
+    case applicationCache.UNCACHED:
+      return $('#cachestatus').text('Uncached');
+    case applicationCache.OBSOLETE:
+      return $('#cachestatus').text('Obsolete');
+    case applicationCache.IDLE:
+      return $('#cachestatus').text('Cached');
+    case applicationCache.DOWNLOADING:
+      return $('#cachestatus').text('Downloading');
+    case applicationCache.CHECKING:
+      return $('#cachestatus').text('Checking');
+  }
+};
+
+(function() {
+  var name, _i, _len, _ref, _results;
+  if (window.applicationCache) {
+    _ref = ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready'];
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      name = _ref[_i];
+      _results.push(applicationCache.addEventListener(name, handleCacheEvent));
+    }
+    return _results;
+  }
+})();

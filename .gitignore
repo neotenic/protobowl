@@ -1,5 +1,3 @@
-*.css
-
 remote.js
 remote.coffee
 node_modules

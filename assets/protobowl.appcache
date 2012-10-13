@@ -1,0 +1,21 @@
+CACHE MANIFEST
+# INSERT_DATE Sat Oct 13 2012 18:18:55 GMT-0400 (EDT)
+
+CACHE:
+/favicon.ico
+/protobowl.css
+/app.js
+/offline.js
+/sample.txt
+/font/fontawesome-webfont.ttf
+/font/fontawesome-webfont.svg
+/font/fontawesome-webfont.woff
+//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
+https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif
+
+NETWORK:
+/socket.io
+//www.google-analytics.com/
+
+FALLBACK:
+/ offline

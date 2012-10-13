@@ -211,7 +211,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		else
 			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
 	).replace /!@([a-z0-9]+)/g, (match, user) ->
-		return userSpan(user).clone().wrap('<div>').parent().html()
+		return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html()
 	
 	if done
 		line.removeClass('buffer')
@@ -219,6 +219,8 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			line.find('.comment').html('<em>(no message)</em>')
 			line.slideUp()
 		else
+			if text.slice(0, 1) is '@'
+				line.prepend '<i class="icon-user"></i> '
 			line.find('.comment').html html
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'

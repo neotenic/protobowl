@@ -235,7 +235,7 @@ class QuizRoom
 			@unfreeze()
 
 	check_answer: ->
-		return 'prompt' if Math.random() > 0.1
+		return 'prompt' if Math.random() > 0.8
 		return Math.random() > 0.3
 
 	end_buzz: (session) -> #killit, killitwithfire

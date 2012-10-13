@@ -78,6 +78,28 @@ app.use (req, res, next) ->
 		}
 	next()
 
+if app.settings.env is 'development'
+	scheduledUpdate = null
+	updateCache = ->
+		fs.readFile 'assets/protobowl.appcache', 'utf8', (err, data) ->
+			throw err if err
+			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
+			fs.writeFile 'assets/protobowl.appcache', data, (err) ->
+				throw err if err
+				setTimeout ->
+					io.sockets.emit 'force_application_update', +new Date
+				, 2000
+				scheduledUpdate = null
+
+	watcher = (event, filename) ->
+		return if filename in ["protobowl.appcache", "protobowl.css", "app.js"]
+		console.log "changed file", filename
+		unless scheduledUpdate
+			scheduledUpdate = setTimeout updateCache, 500
+
+	fs.watch "shared", watcher
+	fs.watch "client", watcher
+	
 
 url = require 'url'
 parseCookie = require('express/node_modules/connect').utils.parseCookie

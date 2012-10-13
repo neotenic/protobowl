@@ -3,11 +3,13 @@
 #= require plugins.coffee
 #= require annotations.coffee
 #= require buttons.coffee
-#= require offline.coffee
 #= require render.coffee
 #= require time.coffee
+#= require ../shared/player.coffee
+#= require ../shared/room.coffee
 
-sock = io.connect()
+if io?
+	sock = io.connect()
 
 connected = -> sock? and sock.socket.connected
 
@@ -84,7 +86,7 @@ listen = (name, fn) ->
 # these things hardly actually need to be frequently added - it's mostly hacks
 listen 'echo', (data, fn) -> fn 'alive'
 listen 'application_update', -> applicationCache.update() if applicationCache?
-listen 'application_force_update', -> $('#update').slideDown()
+listen 'force_application_update', -> $('#update').data('force', true); applicationCache.update()
 listen 'redirect', (url) -> window.location = url
 listen 'alert', (text) -> window.alert text
 listen 'chat', (data) -> chatAnnotation data
@@ -226,3 +228,51 @@ setTimeout ->
 		testLatency()
 	, 30 * 1000
 , 2000
+
+
+handleCacheEvent = ->
+	status = applicationCache.status
+	switch applicationCache.status
+		when applicationCache.UPDATEREADY
+			$('#cachestatus').text 'Updated'
+			applicationCache.swapCache()
+			$('#update').slideDown()		
+			if localStorage.auto_reload is "yay" or $('#update').data('force') is true
+				setTimeout ->
+					location.reload()
+				, 1000
+		when applicationCache.UNCACHED
+			$('#cachestatus').text 'Uncached'
+		when applicationCache.OBSOLETE
+			$('#cachestatus').text 'Obsolete'
+		when applicationCache.IDLE
+			$('#cachestatus').text 'Cached'
+		when applicationCache.DOWNLOADING
+			$('#cachestatus').text 'Downloading'
+		when applicationCache.CHECKING
+			$('#cachestatus').text 'Checking'
+
+do -> # isolate variables from globals
+	if window.applicationCache
+		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
+			applicationCache.addEventListener name, handleCacheEvent
+
+# asynchronously load offline components
+#also, html5slider isnt actually for offline,
+# but it can be loaded async, so lets do that, 
+# and reuse all the crap that can be reused
+# setTimeout ->
+# 	window.exports = {}
+# 	window.require = -> window.exports
+# 	deps = ["html5slider", "levenshtein", "removeDiacritics", "porter", "answerparse", "syllable", "names", "offline"]
+# 	loadNextResource = ->
+# 		$.ajax {
+# 			url: "lib/#{deps.shift()}.js",
+# 			cache: true,
+# 			dataType: "script",
+# 			success: ->
+# 				if deps.length > 0
+# 					loadNextResource()
+# 		}
+# 	loadNextResource()
+# , 10
