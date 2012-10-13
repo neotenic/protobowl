@@ -2884,7 +2884,19 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.active = function() {
-    return (this.room.serverTime() - this.last_action) < 1000 * 60 * 10;
+    return this.online() && (this.room.serverTime() - this.last_action) < 1000 * 60 * 10;
+  };
+
+  QuizPlayer.prototype.online = function() {
+    return true;
+  };
+
+  QuizPlayer.prototype.score = function() {
+    var CORRECT, EARLY, INTERRUPT;
+    CORRECT = 10;
+    EARLY = 15;
+    INTERRUPT = -5;
+    return this.early * EARLY + (this.correct - this.early) * CORRECT + this.interrupts * INTERRUPT;
   };
 
   QuizPlayer.prototype.verb = function(action) {
@@ -2903,6 +2915,7 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.disconnect = function() {
     this.verb('left the room');
+    this.touch();
     return this.room.sync(1);
   };
 
@@ -3220,7 +3233,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.set_time = function(ts) {
-    return this.time_offset = new Date - ts;
+    return this.time_offset = this.serverTime() - ts;
   };
 
   QuizRoom.prototype.freeze = function() {
@@ -3399,7 +3412,7 @@ QuizRoom = (function() {
         for (id in _ref1) {
           user = _ref1[id];
           if (id[0] !== "_") {
-            if (user.sockets.length > 0 && (new Date - user.last_action) < 1000 * 60 * 10) {
+            if (user.sockets.length > 0 && (this.serverTime() - user.last_action) < 1000 * 60 * 10) {
               teams[user.team || id] = teams[user.team || id] || 0;
               teams[user.team || id] += user.times_buzzed;
             }
@@ -3512,7 +3525,7 @@ QuizRoom = (function() {
       level = 0;
     }
     data = {
-      real_time: +(new Date)
+      real_time: this.serverTime()
     };
     blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"];
     user_blacklist = ["sockets"];
@@ -3535,11 +3548,7 @@ QuizRoom = (function() {
               user[attr] = this.users[id][attr];
             }
           }
-          if ('sockets' in this.users[id]) {
-            user.online = this.users[id].sockets.length > 0;
-          } else {
-            user.online = true;
-          }
+          user.online_state = this.users[id].online();
           _results.push(user);
         }
         return _results;
@@ -4739,18 +4748,18 @@ renderUsers = function() {
   }
   list.empty();
   _ref2 = entities.sort(function(a, b) {
-    return computeScore(b) - computeScore(a);
+    return b.score() - a.score();
   });
   for (user_index = _j = 0, _len1 = _ref2.length; _j < _len1; user_index = ++_j) {
     user = _ref2[user_index];
-    if (entities[user_index - 1] && computeScore(user) < computeScore(entities[user_index - 1])) {
+    if (entities[user_index - 1] && user.score() < entities[user_index - 1].score()) {
       ranking++;
     }
     row = $('<tr>').data('entity', user).appendTo(list);
     row.click(function() {
       return 1;
     });
-    badge = $('<span>').addClass('badge pull-right').text(computeScore(user));
+    badge = $('<span>').addClass('badge pull-right').text(user.score());
     if (_ref3 = me.id, __indexOf.call(user.members || [user.id], _ref3) >= 0) {
       badge.addClass('badge-info').attr('title', 'You');
     } else {
@@ -4759,7 +4768,7 @@ renderUsers = function() {
       _ref4 = user.members || [user.id];
       for (_k = 0, _len2 = _ref4.length; _k < _len2; _k++) {
         member = _ref4[_k];
-        if (room.users[member].online) {
+        if (room.users[member].online()) {
           if (room.serverTime() - room.users[member].last_action > 1000 * 60 * 10) {
             idle_count++;
           } else {
@@ -4781,7 +4790,7 @@ renderUsers = function() {
     } else {
       name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
       _ref5 = user.members.sort(function(a, b) {
-        return computeScore(room.users[b]) - computeScore(room.users[a]);
+        return room.users[b].score() - room.users[a].score();
       });
       for (_l = 0, _len3 = _ref5.length; _l < _len3; _l++) {
         member = _ref5[_l];
@@ -4790,11 +4799,11 @@ renderUsers = function() {
         row.click(function() {
           return 1;
         });
-        badge = $('<span>').addClass('badge pull-right').text(computeScore(user));
+        badge = $('<span>').addClass('badge pull-right').text(user.score());
         if (user.id === me.id) {
           badge.addClass('badge-info').attr('title', 'You');
         } else {
-          if (user.online) {
+          if (user.online()) {
             if (room.serverTime() - user.last_action > 1000 * 60 * 10) {
               badge.addClass('badge-warning').attr('title', 'Idle');
             } else {
@@ -4825,8 +4834,46 @@ renderUsers = function() {
 };
 
 checkAlone = function() {
+  var active_count, id, user, _ref;
   if (!connected()) {
-
+    return;
+  }
+  active_count = 0;
+  _ref = room.users;
+  for (id in _ref) {
+    user = _ref[id];
+    if (user.online() && room.serverTime() - user.last_action < 1000 * 60 * 10) {
+      active_count++;
+    }
+  }
+  if (active_count === 1) {
+    return me.check_public('', function(data) {
+      var can, count, links, suggested_candidates;
+      suggested_candidates = [];
+      for (can in data) {
+        count = data[can];
+        if (count > 0 && can !== room.name) {
+          suggested_candidates.push(can);
+        }
+      }
+      if (suggested_candidates.length > 0) {
+        links = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = suggested_candidates.length; _i < _len; _i++) {
+            can = suggested_candidates[_i];
+            _results.push(can.link("/" + can) + (" (" + data[can] + ") "));
+          }
+          return _results;
+        })();
+        $('.foreveralone .roomlist').html(links.join(' or '));
+        return $('.foreveralone').slideDown();
+      } else {
+        return $('.foreveralone').slideUp();
+      }
+    });
+  } else {
+    return $('.foreveralone').slideUp();
   }
 };
 
@@ -4837,7 +4884,7 @@ createStatSheet = function(user, full) {
   row = function(name, val) {
     return $('<tr>').appendTo(body).append($("<th>").text(name)).append($("<td>").addClass("value").append(val));
   };
-  row("Score", $('<span>').addClass('badge').text(computeScore(user)));
+  row("Score", $('<span>').addClass('badge').text(user.score()));
   row("Correct", user.correct);
   row("Interrupts", user.interrupts);
   if (full) {
@@ -5191,7 +5238,7 @@ formatTime = function(timestamp) {
   return (date.getHours() % 12) + ':' + ('0' + date.getMinutes()).substr(-2, 2) + (date.getHours() > 12 ? "pm" : "am");
 };
 
-var Avg, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -5201,6 +5248,22 @@ sock = io.connect();
 connected = function() {
   return (sock != null) && sock.socket.connected;
 };
+
+QuizPlayerClient = (function(_super) {
+
+  __extends(QuizPlayerClient, _super);
+
+  function QuizPlayerClient() {
+    return QuizPlayerClient.__super__.constructor.apply(this, arguments);
+  }
+
+  QuizPlayerClient.prototype.online = function() {
+    return this.online_state;
+  };
+
+  return QuizPlayerClient;
+
+})(QuizPlayer);
 
 QuizPlayerSlave = (function(_super) {
 
@@ -5221,7 +5284,7 @@ QuizPlayerSlave = (function(_super) {
   function QuizPlayerSlave(room, id) {
     var blacklist, method, name;
     QuizPlayerSlave.__super__.constructor.call(this, room, id);
-    blacklist = ['envelop_action'];
+    blacklist = ['envelop_action', 'score', 'online', 'active'];
     for (name in this) {
       method = this[name];
       if (typeof method === 'function' && __indexOf.call(blacklist, name) < 0) {
@@ -5232,7 +5295,7 @@ QuizPlayerSlave = (function(_super) {
 
   return QuizPlayerSlave;
 
-})(QuizPlayer);
+})(QuizPlayerClient);
 
 QuizRoomSlave = (function(_super) {
 
@@ -5367,7 +5430,7 @@ synchronize = function(data) {
         room.users[user.id] = me;
       } else {
         if (!(user.id in room.users)) {
-          room.users[user.id] = new QuizPlayer(room, user.id);
+          room.users[user.id] = new QuizPlayerClient(room, user.id);
         }
       }
       for (attr in user) {
@@ -5403,14 +5466,7 @@ synchronize = function(data) {
 };
 
 computeScore = function(user) {
-  var CORRECT, EARLY, INTERRUPT;
-  if (!user) {
-    return 0;
-  }
-  CORRECT = 10;
-  EARLY = 15;
-  INTERRUPT = -5;
-  return user.early * EARLY + (user.correct - user.early) * CORRECT + user.interrupts * INTERRUPT;
+  return user.score();
 };
 
 Avg = function(list) {

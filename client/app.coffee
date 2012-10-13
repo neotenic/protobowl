@@ -11,7 +11,11 @@ sock = io.connect()
 
 connected = -> sock? and sock.socket.connected
 
-class QuizPlayerSlave extends QuizPlayer
+
+class QuizPlayerClient extends QuizPlayer
+	online: -> @online_state
+
+class QuizPlayerSlave extends QuizPlayerClient
 	# encapsulate is such a boring word, well actually, it's pretty cool
 	# but you should be allowed to envelop actions like captain kirk 
 	# does to a mountain.
@@ -25,7 +29,7 @@ class QuizPlayerSlave extends QuizPlayer
 
 	constructor: (room, id) ->
 		super(room, id)
-		blacklist = ['envelop_action']
+		blacklist = ['envelop_action', 'score', 'online', 'active']
 		@envelop_action name for name, method of this when typeof method is 'function' and name not in blacklist
 
 
@@ -119,8 +123,8 @@ synchronize = (data) ->
 				room.users[user.id] = me
 			else
 				unless user.id of room.users
-					room.users[user.id] = new QuizPlayer(room, user.id)
-					
+					room.users[user.id] = new QuizPlayerClient(room, user.id)
+
 			for attr, val of user when attr not in user_blacklist
 				room.users[user.id][attr] = val
 
@@ -148,14 +152,7 @@ synchronize = (data) ->
 # possibly part of a bigger statistics class if that ever
 # gets actually built
 
-computeScore = (user) ->
-	return 0 if !user
-
-	CORRECT = 10
-	EARLY = 15
-	INTERRUPT = -5
-
-	return user.early * EARLY + (user.correct - user.early) * CORRECT + user.interrupts * INTERRUPT
+computeScore = (user) -> user.score()
 
 
 Avg = (list) -> Sum(list) / list.length

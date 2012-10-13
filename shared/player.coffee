@@ -7,7 +7,7 @@ class QuizPlayer
 		@early = 0
 		@seen = 0
 		@correct = 0
-		
+
 		@time_spent = 0
 		@last_action = @room.serverTime()
 		@times_buzzed = 0
@@ -26,7 +26,15 @@ class QuizPlayer
 				@time_spent += elapsed
 		@last_action = current_time
 
-	active: -> (@room.serverTime() - @last_action) < 1000 * 60 * 10
+	active: -> @online() and (@room.serverTime() - @last_action) < 1000 * 60 * 10
+
+	online: -> true
+
+	score: ->
+		CORRECT = 10
+		EARLY = 15
+		INTERRUPT = -5
+		return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
 
 	verb: (action) -> 
 		# dont send any messages for actions done by ninjas
@@ -37,6 +45,7 @@ class QuizPlayer
 
 	disconnect: ->
 		@verb 'left the room'
+		@touch()
 		@room.sync(1)
 
 	echo: (data, callback) -> callback @room.serverTime()

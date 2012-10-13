@@ -108,7 +108,7 @@ class QuizRoom
 
 	serverTime: -> new Date - @sync_offset
 
-	set_time: (ts) -> @time_offset = new Date - ts
+	set_time: (ts) -> @time_offset = @serverTime() - ts
 
 	freeze: -> @time_freeze = @time()
 
@@ -295,7 +295,7 @@ class QuizRoom
 				pool = 0
 				teams = {}
 				for id, user of @users when id[0] isnt "_" # skip secret ninja
-					if user.sockets.length > 0 and (new Date - user.last_action) < 1000 * 60 * 10
+					if user.sockets.length > 0 and (@serverTime() - user.last_action) < 1000 * 60 * 10
 						teams[user.team || id] = (teams[user.team || id] || 0)
 						teams[user.team || id] += user.times_buzzed
 				for team, times_buzzed of teams
@@ -375,7 +375,7 @@ class QuizRoom
 
 	sync: (level = 0) ->
 		data = {
-			real_time: +new Date #,
+			real_time: @serverTime() #,
 			# voting: {}
 		}
 		# voting = ['skip', 'pause', 'unpause']
@@ -409,11 +409,7 @@ class QuizRoom
 				user = {}
 				for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function', 'object']
 					user[attr] = @users[id][attr] 
-				if 'sockets' of @users[id]
-					user.online = @users[id].sockets.length > 0
-				else
-					user.online = true
-
+				user.online_state = @users[id].online()
 				user
 
 		if level >= 2

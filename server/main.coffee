@@ -113,24 +113,38 @@ class SocketQuizPlayer extends QuizPlayer
 		if data.old_socket and io.sockets.socket(data.old_socket)
 			io.sockets.socket(data.old_socket).disconnect()
 
-	active: -> @sockets.length > 0 and super()
+	online: -> @sockets.length > 0
 
-	disconnect: ->
-		super()
-		console.log 'HANDLING A DISCONNECT'
+	# disconnect: ->
+	# 	super()
 
-		# room.del_socket publicID, sock.id
+	# 	console.log 'HANDLING A DISCONNECT'
+
+	# 	# room.del_socket publicID, sock.id
 		
-
+	check_public: (_, fn) ->
+		output = {}
+		checklist = ['hsquizbowl', 'lobby']
+		for check_name in checklist
+			output[check_name] = 0
+			if rooms[check_name]?.users
+				for uid, udat of rooms[check_name].users
+					if udat.sockets.length > 0 and new Date - udat.last_action < 10 * 60 * 1000
+						output[check_name]++
+		fn output
 
 	add_socket: (sock) ->
 		@sockets.push sock.id unless sock.id in @sockets
-		blacklist = ['add_socket', 'emit']
-		sock.emit 'log', 'moo'
+		blacklist = ['add_socket', 'emit', 'disconnect']
 		
 		for attr of this when typeof this[attr] is 'function' and attr not in blacklist
 			# wow this is a pretty mesed up line
 			do (attr) => sock.on attr, (args...) => this[attr](args...)
+
+		id = sock.id
+		sock.on 'disconnect', =>
+			@sockets = (s for s in @sockets when s isnt id)
+			@disconnect()
 
 	emit: (name, data) ->
 		for sock in @sockets

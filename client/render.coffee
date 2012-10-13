@@ -323,19 +323,19 @@ renderUsers = ->
 			entities.push user # add all the unaffiliated users
 
 	list.empty()
-	for user, user_index in entities.sort((a, b) -> computeScore(b) - computeScore(a))
+	for user, user_index in entities.sort((a, b) -> b.score() - a.score())
 		# if the score is worse, increment ranks
-		ranking++ if entities[user_index - 1] and computeScore(user) < computeScore(entities[user_index - 1])
+		ranking++ if entities[user_index - 1] and user.score() < entities[user_index - 1].score()
 		row = $('<tr>').data('entity', user).appendTo list
 		row.click -> 1
-		badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+		badge = $('<span>').addClass('badge pull-right').text user.score()
 		if me.id in (user.members || [user.id])
 			badge.addClass('badge-info').attr('title', 'You')
 		else
 			idle_count = 0
 			active_count = 0
 			for member in (user.members || [user.id])
-				if room.users[member].online
+				if room.users[member].online()
 					if room.serverTime() - room.users[member].last_action > 1000 * 60 * 10
 						idle_count++
 					else
@@ -354,15 +354,15 @@ renderUsers = ->
 		else
 			name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
 		
-			for member in user.members.sort((a, b) -> computeScore(room.users[b]) - computeScore(room.users[a]))
+			for member in user.members.sort((a, b) -> room.users[b].score() - room.users[a].score())
 				user = room.users[member]
 				row = $('<tr>').addClass('subordinate').data('entity', user).appendTo list
 				row.click -> 1
-				badge = $('<span>').addClass('badge pull-right').text(computeScore(user))
+				badge = $('<span>').addClass('badge pull-right').text(user.score())
 				if user.id is me.id
 					badge.addClass('badge-info').attr('title', 'You')
 				else
-					if user.online
+					if user.online()
 						if room.serverTime() - user.last_action > 1000 * 60 * 10
 							badge.addClass('badge-warning').attr('title', 'Idle')
 						else
@@ -399,24 +399,25 @@ renderUsers = ->
 
 checkAlone = ->
 	return unless connected()
-	# active_count = 0
-	# for user in room.users
-	# 	if user.online and serverTime() - user.last_action < 1000 * 60 * 10
-	# 		active_count++
-	# if active_count is 1
-	# 	sock.emit 'check_rooms', public_rooms, (data) ->
-	# 		suggested_candidates = []
-	# 		for room, count of data
-	# 			if count > 0 and room isnt room.name
-	# 				suggested_candidates.push room
-	# 		if suggested_candidates.length > 0
-	# 			links = (can.link("/" + can) + " (#{data[can]}) " for can in suggested_candidates)
-	# 			$('.foreveralone .roomlist').html links.join(' or ')
-	# 			$('.foreveralone').slideDown()
-	# 		else
-	# 			$('.foreveralone').slideUp()
-	# else
-	# 	$('.foreveralone').slideUp()
+	active_count = 0
+	for id, user of room.users
+		if user.online() and room.serverTime() - user.last_action < 1000 * 60 * 10
+			active_count++
+	
+	if active_count is 1
+		me.check_public '', (data) ->
+			suggested_candidates = []
+			for can, count of data
+				if count > 0 and can isnt room.name
+					suggested_candidates.push can
+			if suggested_candidates.length > 0
+				links = (can.link("/" + can) + " (#{data[can]}) " for can in suggested_candidates)
+				$('.foreveralone .roomlist').html links.join(' or ')
+				$('.foreveralone').slideDown()
+			else
+				$('.foreveralone').slideUp()
+	else
+		$('.foreveralone').slideUp()
 
 createStatSheet = (user, full) ->
 	table = $('<table>').addClass('table headless')
@@ -427,7 +428,7 @@ createStatSheet = (user, full) ->
 			.append($("<th>").text(name))
 			.append($("<td>").addClass("value").append(val))
 	
-	row	"Score", $('<span>').addClass('badge').text(computeScore(user))
+	row	"Score", $('<span>').addClass('badge').text(user.score())
 	row	"Correct", user.correct
 	row "Interrupts", user.interrupts
 	row "Early", user.early  if full
