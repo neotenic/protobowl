@@ -125,7 +125,7 @@ synchronize = (data) ->
 		for user in data.users
 			# user.room = room.name
 			if user.id is me.id
-				console.log "it's me, mario!"
+				# console.log "it's me, mario!"
 				room.users[user.id] = me
 			else
 				unless user.id of room.users
@@ -133,12 +133,6 @@ synchronize = (data) ->
 
 			for attr, val of user when attr not in user_blacklist
 				room.users[user.id][attr] = val
-
-			if user.tribunal
-				boxxyAnnotation user
-			else
-				$('.troll-'+user.id).slideUp 'normal', ->
-					$(this).remove()
 
 	renderParameters() if 'difficulties' of data
 
@@ -157,9 +151,10 @@ synchronize = (data) ->
 
 		updateInlineSymbols()
 
+	renderPartial()
+
 	renderUsers() if 'users' of data
 	
-	renderPartial()
 
 # in theory this would belong in QuizPlayer
 # but this doesnt fit into the architecture quite yet

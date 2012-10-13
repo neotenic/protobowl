@@ -55,6 +55,8 @@ class QuizPlayer
 
 	ban: ->
 		@banned = true
+		@emit 'redirect', "/#{@room.name}-banned"
+
 
 	emit: (name, data) ->
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
@@ -85,7 +87,7 @@ class QuizPlayer
 				# @verb 'is getting a boxxy tribunal', true
 
 				@__timeout = setTimeout =>
-					# @verb 'boxxy tribunal is over', true
+					@verb 'survived the tribunal', true
 					@tribunal = null
 					@room.sync(1)
 				, 1000 * 60
@@ -108,6 +110,8 @@ class QuizPlayer
 
 		tribunal = @room.users[user].tribunal
 		if tribunal
+			return unless @id in tribunal.witnesses
+
 			votes = tribunal.votes
 			votes.push(@id) if votes and @id not in votes
 			if votes.length > (tribunal.witnesses.length - 1) / 2

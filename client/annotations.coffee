@@ -214,7 +214,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	# console.log html
 	if done
 		line.removeClass('buffer')
-		if text is ''
+		if text is '' or text.slice(0, 1) is '@'
 			line.find('.comment').html('<em>(no message)</em>')
 		else
 			line.find('.comment').html html
@@ -254,8 +254,8 @@ verbAnnotation = ({user, verb, time}) ->
 boxxyAnnotation = ({id, tribunal}) ->
 	return if id is me.id # who would vote for their own banning?
 	{votes, time, witnesses} = tribunal
+	return if me.id not in witnesses # people who havent witnessed the crime do not constitute a jury of peers
 
-	
 	line = $('<div>').addClass('alert').addClass('troll-' + id)
 	line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
 	line.append 'Protobowl has detected high rates of activity coming from the user '
@@ -264,7 +264,7 @@ boxxyAnnotation = ({id, tribunal}) ->
 	line.append "<a href='#{room.name}-banned'>/#{room.name}-banned</a> and banned from this room. This message will be automatically dismissed in a minute. <br> "
 	vote = $('<button>').addClass('btn btn-small').text('Ban this user')
 	line.append vote
-	line.append " <strong> Currently #{votes.length} of #{witnesses.length} users have voted</strong> (#{Math.floor((witnesses.length - 1)/2 + 1) - votes.length} more votes are needed to ban "
+	line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{Math.floor((witnesses.length - 1)/2 + 1) - votes.length} more votes are needed to ban "
 	line.append userSpan(id)
 	line.append ")"
 	vote.click ->

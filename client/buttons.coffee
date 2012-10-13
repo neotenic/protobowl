@@ -35,12 +35,7 @@ $('.chatbtn').click ->
 recent_actions = [0]
 rate_limit_ceiling = 0
 rate_limit_check = ->
-	return false
-
-	online_count = (user for user in sync.users when user.online and user.last_action > new Date - 1000 * 60 * 10).length
-	rate_threshold = 7
-	if online_count > 1
-		rate_threshold = 3
+	rate_threshold = 6
 	current_time = +new Date
 	filtered_actions = []
 	rate_limited = false
@@ -102,6 +97,7 @@ $('.buzzbtn').click ->
 $('.score-reset').click -> me.reset_score()
 
 $('.pausebtn').click ->
+	return if rate_limit_check()
 	if !!room.time_freeze
 		me.unpause()
 	else

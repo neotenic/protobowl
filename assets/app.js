@@ -2352,7 +2352,7 @@ chatAnnotation = function(_arg) {
   });
   if (done) {
     line.removeClass('buffer');
-    if (text === '') {
+    if (text === '' || text.slice(0, 1) === '@') {
       line.find('.comment').html('<em>(no message)</em>');
     } else {
       line.find('.comment').html(html);
@@ -2385,12 +2385,15 @@ verbAnnotation = function(_arg) {
 };
 
 boxxyAnnotation = function(_arg) {
-  var id, line, time, tribunal, vote, votes, witnesses, _ref;
+  var id, line, time, tribunal, vote, votes, witnesses, _ref, _ref1;
   id = _arg.id, tribunal = _arg.tribunal;
   if (id === me.id) {
     return;
   }
   votes = tribunal.votes, time = tribunal.time, witnesses = tribunal.witnesses;
+  if (_ref = me.id, __indexOf.call(witnesses, _ref) < 0) {
+    return;
+  }
   line = $('<div>').addClass('alert').addClass('troll-' + id);
   line.append($("<strong>").append('Is ').append(userSpan(id)).append(' trolling? '));
   line.append('Protobowl has detected high rates of activity coming from the user ');
@@ -2399,13 +2402,13 @@ boxxyAnnotation = function(_arg) {
   line.append("<a href='" + room.name + "-banned'>/" + room.name + "-banned</a> and banned from this room. This message will be automatically dismissed in a minute. <br> ");
   vote = $('<button>').addClass('btn btn-small').text('Ban this user');
   line.append(vote);
-  line.append(" <strong> Currently " + votes.length + " of " + witnesses.length + " users have voted</strong> (" + (Math.floor((witnesses.length - 1) / 2 + 1) - votes.length) + " more votes are needed to ban ");
+  line.append(" <strong> Currently " + votes.length + " of " + (witnesses.length - 1) + " users have voted</strong> (" + (Math.floor((witnesses.length - 1) / 2 + 1) - votes.length) + " more votes are needed to ban ");
   line.append(userSpan(id));
   line.append(")");
   vote.click(function() {
     return me.vote_tribunal(id);
   });
-  vote.disable((_ref = me.id, __indexOf.call(votes, _ref) >= 0));
+  vote.disable((_ref1 = me.id, __indexOf.call(votes, _ref1) >= 0));
   if ($('.troll-' + id).length > 0) {
     return $('.troll-' + id).replaceWith(line);
   } else {
@@ -2457,24 +2460,8 @@ recent_actions = [0];
 rate_limit_ceiling = 0;
 
 rate_limit_check = function() {
-  var action, current_time, filtered_actions, online_count, rate_limited, rate_threshold, user, _i, _len;
-  return false;
-  online_count = ((function() {
-    var _i, _len, _ref, _results;
-    _ref = sync.users;
-    _results = [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      user = _ref[_i];
-      if (user.online && user.last_action > new Date - 1000 * 60 * 10) {
-        _results.push(user);
-      }
-    }
-    return _results;
-  })()).length;
+  var action, current_time, filtered_actions, rate_limited, rate_threshold, _i, _len;
   rate_threshold = 7;
-  if (online_count > 1) {
-    rate_threshold = 3;
-  }
   current_time = +(new Date);
   filtered_actions = [];
   rate_limited = false;
@@ -2551,6 +2538,9 @@ $('.score-reset').click(function() {
 });
 
 $('.pausebtn').click(function() {
+  if (rate_limit_check()) {
+    return;
+  }
   if (!!room.time_freeze) {
     return me.unpause();
   } else {
@@ -2937,6 +2927,15 @@ QuizPlayer = (function() {
     return this.early * EARLY + (this.correct - this.early) * CORRECT + this.interrupts * INTERRUPT;
   };
 
+  QuizPlayer.prototype.ban = function() {
+    this.banned = true;
+    return this.emit('redirect', "/" + this.room.name + "-banned");
+  };
+
+  QuizPlayer.prototype.emit = function(name, data) {
+    return this.room.log('QuizPlayer.emit(name, data) not implemented');
+  };
+
   QuizPlayer.prototype.rate_limit = function() {
     var action_delay, current_time, id, mean_elapsed, s, time, user, window_size, witnesses, _i, _len, _ref,
       _this = this;
@@ -2969,9 +2968,8 @@ QuizPlayer = (function() {
       }
       mean_elapsed = current_time - s / window_size;
       if (mean_elapsed < window_size * action_delay / 2) {
-        this.verb('is getting a boxxy tribunal', true);
         this.__timeout = setTimeout(function() {
-          _this.verb('boxxy tribunal is over', true);
+          _this.verb('survived the tribunal', true);
           _this.tribunal = null;
           return _this.room.sync(1);
         }, 1000 * 60);
@@ -2986,17 +2984,21 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.vote_tribunal = function(user) {
-    var tribunal, votes, _ref;
+    var tribunal, votes, _ref, _ref1;
     tribunal = this.room.users[user].tribunal;
     if (tribunal) {
+      if (_ref = this.id, __indexOf.call(tribunal.witnesses, _ref) < 0) {
+        return;
+      }
       votes = tribunal.votes;
-      if (votes && (_ref = this.id, __indexOf.call(votes, _ref) < 0)) {
+      if (votes && (_ref1 = this.id, __indexOf.call(votes, _ref1) < 0)) {
         votes.push(this.id);
       }
       if (votes.length > (tribunal.witnesses.length - 1) / 2) {
         this.room.users[user].verb('got voted off the island', true);
         clearTimeout(this.room.users[user].__timeout);
         this.room.users[user].tribunal = null;
+        this.room.users[user].ban();
       } else {
         this.verb('voted to ban @@' + user);
       }
@@ -3710,9 +3712,9 @@ generatePage = function() {
     n = list.split(',');
     return n[Math.floor(n.length * Math.random())];
   };
-  people = 'kirk,picard,feynman,einstein,erdos,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut,chicken,kitten,cats,shakespeare,dali,cherenkov,stallman,sherlock,sagan,irving,copernicus,kepler,astronomer';
-  verb = 'on,enveloping,eating,drinking,in,near,sleeping,destroying,arresting,cloning,around,jumping,scrambling,painting,stalking,vomiting,defrauding,rappelling';
-  noun = 'mountain,drugs,house,asylum,elevator,scandal,planet,school,brick,rock,pebble,lamp,water,paper,friend,toilet,airplane,cow,pony,egg,chicken,meat,book,wikipedia,turd,rhinoceros,paris,sunscreen,canteen,earwax,printer,staple,endorphins,trampoline,helicopter,feather,cloud,skeleton,uranus,neptune,earth,venus,mars,mercury,pluto,moon,jupiter,saturn,electorate';
+  people = 'kirk,picard,feynman,einstein,erdos,huxley,robot,ben,batman,panda,pinkman,superhero,celebrity,traitor,alien,lemon,police,whale,astronaut,chicken,kitten,cats,shakespeare,dali,cherenkov,stallman,sherlock,sagan,irving,copernicus,kepler,astronomer,colbert';
+  verb = 'on,enveloping,eating,drinking,in,near,sleeping,destroying,arresting,cloning,around,jumping,scrambling,painting,stalking,vomiting,defrauding,rappelling,searching,voting,faking';
+  noun = 'mountain,drugs,house,asylum,elevator,scandal,planet,school,brick,rock,pebble,lamp,water,paper,friend,toilet,airplane,cow,pony,egg,chicken,meat,book,wikipedia,turd,rhinoceros,paris,sunscreen,canteen,earwax,printer,staple,endorphins,trampoline,helicopter,feather,cloud,skeleton,uranus,neptune,earth,venus,mars,mercury,pluto,moon,jupiter,saturn,electorate,facade,tree,plant,pants';
   return pick(people) + "-" + pick(verb) + "-" + pick(noun);
 };
 
@@ -4791,6 +4793,13 @@ renderUsers = function() {
       team_hash += user.team + user.id;
     }
     userSpan(user.id, true);
+    if (user.tribunal) {
+      boxxyAnnotation(user);
+    } else {
+      $('.troll-' + user.id).slideUp('normal', function() {
+        return $(this).remove();
+      });
+    }
   }
   if ($('.teams').data('teamhash') !== team_hash) {
     $('.teams').data('teamhash', team_hash);
@@ -5528,7 +5537,6 @@ synchronize = function(data) {
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       user = _ref[_i];
       if (user.id === me.id) {
-        console.log("it's me, mario!");
         room.users[user.id] = me;
       } else {
         if (!(user.id in room.users)) {
@@ -5540,15 +5548,6 @@ synchronize = function(data) {
         if (__indexOf.call(user_blacklist, attr) < 0) {
           room.users[user.id][attr] = val;
         }
-      }
-      console.log(user.name, user.tribunal);
-      if (user.tribunal) {
-        console.log('doing a tribunal');
-        boxxyAnnotation(user);
-      } else {
-        $('.troll-' + user.id).slideUp('normal', function() {
-          return $(this).remove();
-        });
       }
     }
   }
@@ -5571,10 +5570,10 @@ synchronize = function(data) {
     $('.bundle.active').data(variable, starts);
     updateInlineSymbols();
   }
+  renderPartial();
   if ('users' in data) {
-    renderUsers();
+    return renderUsers();
   }
-  return renderPartial();
 };
 
 computeScore = function(user) {

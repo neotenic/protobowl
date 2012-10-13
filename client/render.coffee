@@ -56,9 +56,6 @@ renderUpdate = ->
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
 		$(window).resize()
-	
-	# if room.attempt
-	# 	updateInlineSymbols()
 
 	if me.id of room.users and 'show_typing' of room.users[me.id]
 		$('.livechat').attr 'checked', room.users[me.id].show_typing
@@ -68,8 +65,6 @@ renderUpdate = ->
 	
 	if room.attempt
 		guessAnnotation room.attempt
-		
-
 
 	wpm = Math.round(1000 * 60 / 5 / room.rate)
 	if !$('.speed').data('last_update') or new Date - $(".speed").data("last_update") > 1337
@@ -87,8 +82,6 @@ renderUpdate = ->
 		else
 			setActionMode 'guess' if actionMode isnt 'guess'
 
-	# if room.time_offset isnt null
-	# 	$('#time_offset').text(room.time_offset.toFixed(1))
 
 last_rendering = 0
 last_question = ''
@@ -276,7 +269,12 @@ renderUsers = ->
 			team_hash += user.team + user.id
 		
 		userSpan(user.id, true) # do a global update!
-
+		
+		if user.tribunal
+			boxxyAnnotation user
+		else
+			$('.troll-'+user.id).slideUp 'normal', ->
+				$(this).remove()
 
 		# user.name + " (" + user.id + ") " + votes.join(", ")
 	
@@ -389,11 +387,6 @@ renderUsers = ->
 	# console.timeEnd('resize')
 	checkAlone() # ~ 1 msec
 	
-	#console.time('partial')
-	# renderPartial()
-	#console.timeEnd('partial')
-	#console.timeEnd('render state')
-
 
 checkAlone = ->
 	return unless connected()

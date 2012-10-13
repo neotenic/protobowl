@@ -153,71 +153,54 @@ io.sockets.on 'connection', (sock) ->
 	return sock.disconnect() unless headers.referer and headers.cookie
 	config = url.parse(headers.referer)
 
-	# if config.host isnt 'protobowl.com' and app.settings.env isnt 'development'
-	# 	console.log "Sending Upgrade Request", headers.referer
-	# 	config.host = 'protobowl.com'
-	# 	sock.emit 'application_update', +new Date
-	# 	sock.emit 'redirect', url.format(config)
-	# 	sock.disconnect()
-	# 	return
+	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development'
+		console.log "Sending Upgrade Request", headers.referer
+		config.host = 'protobowl.com'
+		sock.emit 'application_update', +new Date
+		sock.emit 'redirect', url.format(config)
+		sock.disconnect()
+		return
 
 	cookie = parseCookie(headers.cookie)
 	return sock.disconnect() unless cookie.protocookie and config.pathname
 	# set the config stuff
-	# is_god = /god/.test config.search
-	# is_ninja = /ninja/.test config.search
+	is_god = /god/.test config.search
+	is_ninja = /ninja/.test config.search
 	# configger the things which are derived from said parsed stuff
 	room_name = config.pathname.replace(/\//g, '').toLowerCase()
 	publicID = sha1(cookie.protocookie + room_name)
+
+	publicID = "__secret_ninja" if is_ninja
+	publicID += "_god" if is_god
 	
 	# get the room
 	rooms[room_name] = new SocketQuizRoom(room_name) unless rooms[room_name]
 	room = rooms[room_name]
 
 	# get the user's identity
+	existing_user = (publicID of room.users)
 	room.users[publicID] = new SocketQuizPlayer(room, publicID) unless room.users[publicID]
 	user = room.users[publicID]
+	if user.banned
+		sock.emit 'redirect', "/#{room_name}-banned"
+		sock.disconnect()
+		return
+	user.name = 'secret ninja' if is_ninja
+	
 	user.add_socket sock
 	sock.join room_name
 
 	sock.emit 'joined', { id: user.id, name: user.name }
 	
-
-	# publicID = "__secret_ninja" if is_ninja
-	# publicID += "_god" if is_god
-	# create the room if it doesn't exist
-	# rooms[room_name] = new QuizRoom(room_name) unless rooms[room_name]
-	# room = rooms[room_name]
-
-	# existing_user = (publicID of room.users)
-	# if existing_user and room.users[publicID].banned
-	# 	sock.emit 'redirect', "/#{room_name}-banned"
-	# 	sock.disconnect()
-	# 	return
-
-	# room.add_socket publicID, sock.id
-	# # actually join the room socket
-	# if is_god
-	# 	sock.join r_name for r_name of rooms
-	# else
-	# 	sock.join room_name
-	# # look up this user in the room
-	# user = room.users[publicID]
-	# if is_ninja
-	# 	user.ninja = true
-	# 	user.name = publicID
-	# # give the user a stupid name
-
 	# tell that there's a new person at the partaay
 	room.sync(3)
 
-	
 	user.verb 'joined the room'
-	# room.emit 'log', {user: publicID, verb: 'joined the room'} # unless is_ninja
+	
 	# # detect if the server had been recently restarted
-	# if new Date - uptime_begin < 1000 * 60 and existing_user
-	# 	sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental and not necessarily reliable). The journal does not record the current question, chat messages, or current attempts, so you may need to manually advance a question. This may have been part of a server or client software update, or the result of an unexpected server crash. We apologize for any inconvienience this may have caused.'}
-	# 	sock.emit 'application_update', +new Date # check for updates in case it was an update
+	if new Date - uptime_begin < 1000 * 60 and existing_user
+		sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental and not necessarily reliable). The journal does not record the current question, chat messages, or current attempts, so you may need to manually advance a question. This may have been part of a server or client software update, or the result of an unexpected server crash. We apologize for any inconvienience this may have caused.'}
+		sock.emit 'application_update', +new Date # check for updates in case it was an update
 
 
 app.get '/:channel', (req, res) ->
