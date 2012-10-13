@@ -210,12 +210,14 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			return "<img src='#{real_url}' alt='#{url}'>"
 		else
 			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
-	)
-	# console.log html
+	).replace /!@([a-z0-9]+)/g, (match, user) ->
+		return userSpan(user).clone().wrap('<div>').parent().html()
+	
 	if done
 		line.removeClass('buffer')
-		if text is '' or text.slice(0, 1) is '@'
+		if text is '' or (text.slice(0, 1) is '@' and text.indexOf(me.id) == -1 and user isnt me.id)
 			line.find('.comment').html('<em>(no message)</em>')
+			line.slideUp()
 		else
 			line.find('.comment').html html
 	else
@@ -235,7 +237,7 @@ verbAnnotation = ({user, verb, time}) ->
 	line = $('<p>').addClass 'log'
 	if user
 		line.append userSpan(user).attr('title', formatTime(time))
-		line.append " " + verb.replace /@@([a-z0-9]+)/g, (match, user) ->
+		line.append " " + verb.replace /!@([a-z0-9]+)/g, (match, user) ->
 			return userSpan(user).clone().wrap('<div>').parent().html()
 	else
 		line.append verb

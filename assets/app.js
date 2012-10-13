@@ -2349,11 +2349,14 @@ chatAnnotation = function(_arg) {
     } else {
       return "<a href='" + real_url + "' target='_blank'>" + url + "</a>";
     }
+  }).replace(/!@([a-z0-9]+)/g, function(match, user) {
+    return userSpan(user).clone().wrap('<div>').parent().html();
   });
   if (done) {
     line.removeClass('buffer');
-    if (text === '' || text.slice(0, 1) === '@') {
+    if (text === '' || (text.slice(0, 1) === '@' && text.indexOf(me.id) === -1 && user !== me.id)) {
       line.find('.comment').html('<em>(no message)</em>');
+      line.slideUp();
     } else {
       line.find('.comment').html(html);
     }
@@ -2375,7 +2378,7 @@ verbAnnotation = function(_arg) {
   line = $('<p>').addClass('log');
   if (user) {
     line.append(userSpan(user).attr('title', formatTime(time)));
-    line.append(" " + verb.replace(/@@([a-z0-9]+)/g, function(match, user) {
+    line.append(" " + verb.replace(/!@([a-z0-9]+)/g, function(match, user) {
       return userSpan(user).clone().wrap('<div>').parent().html();
     }));
   } else {
@@ -2416,7 +2419,7 @@ boxxyAnnotation = function(_arg) {
   }
 };
 
-var actionMode, mobileLayout, next, rate_limit_ceiling, rate_limit_check, recent_actions, setActionMode, skip,
+var actionMode, chat, findReferences, mobileLayout, next, rate_limit_ceiling, rate_limit_check, recent_actions, setActionMode, skip,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 $('#username').keyup(function(e) {
@@ -2554,6 +2557,7 @@ $('.chat_input').keydown(function(e) {
     e.preventDefault();
   }
   if ((_ref1 = e.keyCode) === 27) {
+    $('.chat_input').val('');
     return $('.chat_form').submit();
   }
 });
@@ -2604,9 +2608,41 @@ $('.chat_input').typeahead({
     return _results;
   },
   matcher: function(candidate) {
-    return this.query[0] === '@' && this.query.split(' ').length <= this.query.split(', ').length;
+    return this.query[0] === '@' && !findReferences(this.query)[1];
   }
 });
+
+findReferences = function(text) {
+  var changed, id, name, reconstructed, _ref;
+  reconstructed = '@';
+  changed = true;
+  while (changed === true) {
+    changed = false;
+    text = text.replace(/^[@\s,]*/g, '');
+    _ref = room.users;
+    for (id in _ref) {
+      name = _ref[id].name;
+      if (text.slice(0, name.length) === name) {
+        reconstructed += '!@' + id + ', ';
+        text = text.slice(name.length);
+        changed = true;
+        break;
+      }
+    }
+  }
+  return [reconstructed.replace(/[\s,]*$/g, ''), text];
+};
+
+chat = function(text, done) {
+  if (text.slice(0, 1) === '@') {
+    text = findReferences(text).join(' ');
+  }
+  return me.chat({
+    text: text,
+    session: $('.chat_input').data('input_session'),
+    done: done
+  });
+};
 
 $('.chat_input').keyup(function(e) {
   if (e.keyCode === 13) {
@@ -2614,17 +2650,9 @@ $('.chat_input').keyup(function(e) {
   }
   if ($('.livechat')[0].checked && $('.chat_input').val().slice(0, 1) !== '@') {
     $('.chat_input').data('sent_typing', '');
-    return me.chat({
-      text: $('.chat_input').val(),
-      session: $('.chat_input').data('input_session'),
-      done: false
-    });
+    return chat($('.chat_input').val(), false);
   } else if ($('.chat_input').data('sent_typing') !== $('.chat_input').data('input_session')) {
-    me.chat({
-      text: '(typing)',
-      session: $('.chat_input').data('input_session'),
-      done: false
-    });
+    chat('(typing)', false);
     return $('.chat_input').data('sent_typing', $('.chat_input').data('input_session'));
   }
 });
@@ -2632,11 +2660,7 @@ $('.chat_input').keyup(function(e) {
 $('.chat_form').submit(function(e) {
   var time_delta;
   setActionMode('');
-  me.chat({
-    text: $('.chat_input').val(),
-    session: $('.chat_input').data('input_session'),
-    done: true
-  });
+  chat($('.chat_input').val(), true);
   e.preventDefault();
   time_delta = new Date - $('.chat_input').data('begin_time');
   if (window._gaq) {
@@ -3000,7 +3024,7 @@ QuizPlayer = (function() {
         this.room.users[user].tribunal = null;
         this.room.users[user].ban();
       } else {
-        this.verb('voted to ban @@' + user);
+        this.verb('voted to ban !@' + user);
       }
       return this.room.sync(1);
     }
@@ -3102,9 +3126,11 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.set_name = function(name) {
-    this.name = name;
-    this.touch();
-    return this.room.sync(1);
+    if (name.trim().length > 0) {
+      this.name = name.trim().slice(0, 140);
+      this.touch();
+      return this.room.sync(1);
+    }
   };
 
   QuizPlayer.prototype.set_distribution = function(data) {

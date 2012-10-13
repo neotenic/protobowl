@@ -121,7 +121,7 @@ class QuizPlayer
 				@room.users[user].ban()
 
 			else
-				@verb 'voted to ban @@' + user
+				@verb 'voted to ban !@' + user
 
 			@room.sync(1)
 
@@ -185,9 +185,10 @@ class QuizPlayer
 
 
 	set_name: (name) ->
-		@name = name
-		@touch()
-		@room.sync(1)
+		if name.trim().length > 0
+			@name = name.trim().slice(0, 140)
+			@touch()
+			@room.sync(1)
 
 	set_distribution: (data) ->
 		@touch()

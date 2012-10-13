@@ -2,21 +2,14 @@
 
 [Try out Protobowl on a public room!](http://protobowl.com/hsquizbowl)
 
-
 # VERSION 3 YO
+# TODO (high priority)
 
-doesnt work btw
-
-# WARNING IT DOESNT WORK
-
-DOES NOT WORK. AT ALL. NOPE.
+* Fix offline
+* Move past less-middleware
 
 
-# TODO IN REWRITE
-
-* Trolling voting interface
-
-# Todo
+# Todo (low priority)
 
 * record the position of the question when buzzed
 * check that it's the last name which is common
@@ -29,13 +22,15 @@ DOES NOT WORK. AT ALL. NOPE.
 * less jarring start offset interface
 
 # Mostly Done
-* Create teams
+* Trolling voting interface
 * Keep Offline mode in-sync with protocol revisions
-* support arbitrary question distributions
 * Add sounds
-* make leaderboard faster (mostly done)
+
 
 # Done
+* Create teams
+* support arbitrary question distributions
+* make leaderboard faster (mostly done)
 * have question reports include miscategorization
 * add times to verb annotations interface
 * support teams (mostly done)

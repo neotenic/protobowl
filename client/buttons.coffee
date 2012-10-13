@@ -35,7 +35,7 @@ $('.chatbtn').click ->
 recent_actions = [0]
 rate_limit_ceiling = 0
 rate_limit_check = ->
-	rate_threshold = 6
+	rate_threshold = 7
 	current_time = +new Date
 	filtered_actions = []
 	rate_limited = false
@@ -108,6 +108,7 @@ $('.chat_input').keydown (e) ->
 	if e.keyCode in [47, 111, 191] and $(this).val().length is 0 and !e.shiftKey
 		e.preventDefault()
 	if e.keyCode in [27] #escape key
+		$('.chat_input').val('')
 		$('.chat_form').submit()
 
 
@@ -125,36 +126,63 @@ $('.chat_input').typeahead {
 		names = (user.name for id, user of room.users when user isnt me)
 		("#{prefix}#{name}" for name in names when name not in existing)
 	matcher: (candidate) ->
-		this.query[0] == '@' and this.query.split(' ').length <= this.query.split(', ').length
+		this.query[0] == '@' and !findReferences(this.query)[1]
 }
 
+findReferences = (text) ->
+	reconstructed = '@'
+	changed = true
+	while changed is true
+		changed = false
+		text = text.replace(/^[@\s,]*/g, '')
+		for id, {name} of room.users
+			if text.slice(0, name.length) is name
+				reconstructed += '!@' + id + ', '
+				text = text.slice(name.length)
+				changed = true
+				break
+	# text = reconstructed.replace(/[\s,]*$/g, '') + ' ' + text
+	return [reconstructed.replace(/[\s,]*$/g, ''), text]
+
+
+chat = (text, done) ->
+	if text.slice(0, 1) is '@'
+		text = findReferences(text).join(' ')
+	me.chat {
+		text: text, 
+		session: $('.chat_input').data('input_session'), 
+		done: done
+	}
 
 $('.chat_input').keyup (e) ->
 	return if e.keyCode is 13
 
 	if $('.livechat')[0].checked and $('.chat_input').val().slice(0, 1) != '@'
 		$('.chat_input').data('sent_typing', '')
-		me.chat {
-			text: $('.chat_input').val(), 
-			session: $('.chat_input').data('input_session'), 
-			done: false
-		}
+		chat $('.chat_input').val(), false
+		# me.chat {
+		# 	text: $('.chat_input').val(), 
+		# 	session: $('.chat_input').data('input_session'), 
+		# 	done: false
+		# }
 	else if $('.chat_input').data('sent_typing') isnt $('.chat_input').data('input_session')
-		me.chat {
-			text: '(typing)', 
-			session: $('.chat_input').data('input_session'), 
-			done: false
-		}
+		chat '(typing)', false
+		# me.chat {
+		# 	text: '(typing)', 
+		# 	session: $('.chat_input').data('input_session'), 
+		# 	done: false
+		# }
 		$('.chat_input').data 'sent_typing', $('.chat_input').data('input_session')
 
 
 $('.chat_form').submit (e) ->
 	setActionMode ''
-	me.chat {
-		text: $('.chat_input').val(), 
-		session: $('.chat_input').data('input_session'), 
-		done: true
-	}
+	chat $('.chat_input').val(), true
+	# me.chat {
+	# 	text: $('.chat_input').val(), 
+	# 	session: $('.chat_input').data('input_session'), 
+	# 	done: true
+	# }
 	e.preventDefault()
 	
 	time_delta = new Date - $('.chat_input').data('begin_time')
