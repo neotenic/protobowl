@@ -25,6 +25,11 @@ class QuizPlayerSlave extends QuizPlayerClient
 			if connected()
 				sock.emit(name, data, callback)
 			else
+				# It matters not how strait the gate,
+				# How charged with punishments the scroll.
+				# I am the master of my fate:
+				# I am the captain of my soul. 
+
 				master_action.call(this, data, callback)
 
 	constructor: (room, id) ->

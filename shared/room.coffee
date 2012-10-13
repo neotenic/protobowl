@@ -20,7 +20,10 @@ error_question = {
 default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
 
-
+# Tyger! Tyger! burning bright 
+# In the forests of the night, 
+# What immortal hand or eye 
+# Could frame thy fearful symmetry? 
 
 class QuizRoom
 	constructor: (name) ->
