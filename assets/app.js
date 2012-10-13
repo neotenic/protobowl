@@ -1560,7 +1560,7 @@ boxxyAnnotation = function(_arg) {
   }
 };
 
-var actionMode, chat, findReferences, mobileLayout, next, rate_limit_ceiling, rate_limit_check, recent_actions, setActionMode, skip,
+var actionMode, chat, findReferences, mobileLayout, next, protobot_engaged, protobot_last, protobot_write, rate_limit_ceiling, rate_limit_check, recent_actions, setActionMode, skip,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 $('#username').keyup(function(e) {
@@ -1605,6 +1605,9 @@ rate_limit_ceiling = 0;
 
 rate_limit_check = function() {
   var action, current_time, filtered_actions, rate_limited, rate_threshold, _i, _len;
+  if (!connected()) {
+    return false;
+  }
   rate_threshold = 7;
   current_time = +(new Date);
   filtered_actions = [];
@@ -1774,7 +1777,48 @@ findReferences = function(text) {
   return [reconstructed.replace(/[\s,]*$/g, ''), text];
 };
 
+protobot_engaged = false;
+
+protobot_last = '';
+
+protobot_write = function(message) {
+  var count, session, writeLetter;
+  count = 0;
+  session = Math.random().toString(36).slice(2);
+  writeLetter = function() {
+    if (++count <= message.length) {
+      chatAnnotation({
+        text: message.slice(0, count),
+        session: session,
+        user: '__protobot',
+        done: count === message.length,
+        time: room.serverTime()
+      });
+      return setTimeout(writeLetter, 1000 * 60 / 6 / (80 + Math.random() * 50));
+    }
+  };
+  return writeLetter();
+};
+
 chat = function(text, done) {
+  var pick, reply;
+  if (text.length < 15 && /lonely/i.test(text) && /re |m /i.test(text) && !/you/i.test(text) && !protobot_engaged) {
+    protobot_engaged = true;
+    protobot_last = $('.chat_input').data('input_session');
+    protobot_write("I'm lonely too. Plz talk to meeeee");
+  } else if (protobot_engaged && (typeof omeglebot_replies !== "undefined" && omeglebot_replies !== null) && protobot_last !== $('.chat_input').data('input_session')) {
+    pick = function(list) {
+      return list[Math.floor(list.length * Math.random())];
+    };
+    if (text.replace(/[^a-z]/g, '') in omeglebot_replies) {
+      protobot_write(pick(omeglebot_replies[text.replace(/[^a-z]/g, '')]));
+      protobot_last = $('.chat_input').data('input_session');
+    } else if (done) {
+      reply = pick(Object.keys(omeglebot_replies));
+      reply = pick(omeglebot_replies[reply]);
+      protobot_write(reply);
+    }
+  }
   if (text.slice(0, 1) === '@') {
     text = findReferences(text).join(' ');
   }
@@ -2283,7 +2327,7 @@ renderTimer = function() {
   sec = Math.abs(ms) / 1000;
   if (isNaN(sec)) {
     $('.timer .face').text('00:00');
-    return $('.timer .fraction').text('.00');
+    return $('.timer .fraction').text('.0');
   } else {
     cs = (sec % 1).toFixed(1).slice(1);
     $('.timer .fraction').text(cs);
@@ -2941,6 +2985,10 @@ QuizPlayer = (function() {
     return this.room.log('QuizPlayer.emit(name, data) not implemented');
   };
 
+  QuizPlayer.prototype.disco = function() {
+    return 0;
+  };
+
   QuizPlayer.prototype.rate_limit = function() {
     var action_delay, current_time, id, mean_elapsed, s, time, user, window_size, witnesses, _i, _len, _ref,
       _this = this;
@@ -3023,10 +3071,6 @@ QuizPlayer = (function() {
       verb: action,
       time: this.room.serverTime()
     });
-  };
-
-  QuizPlayer.prototype.disco = function() {
-    return 0;
   };
 
   QuizPlayer.prototype.disconnect = function() {
@@ -3324,7 +3368,9 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.get_question = function(cb) {
-    cb(error_question);
+    setTimeout(function() {
+      return cb(error_question);
+    }, 10);
     return this.log('NOT IMPLEMENTED (async get question)');
   };
 
@@ -3378,7 +3424,7 @@ QuizRoom = (function() {
     return this.get_question(function(question) {
       var id, syllables, user, word, _ref, _ref1;
       delete _this.generating_question;
-      _this.generated_time = _this.time();
+      _this.generated_time = _this.serverTime();
       _this.attempt = null;
       _this.info = {
         category: question.category,
@@ -3460,8 +3506,8 @@ QuizRoom = (function() {
 
   QuizRoom.prototype.next = function() {
     if (this.time() > this.end_time - this.answer_duration && !this.generating_question && !this.attempt) {
-      this.new_question();
-      return this.unfreeze();
+      this.unfreeze();
+      return this.new_question();
     }
   };
 
@@ -3698,13 +3744,49 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.QuizRoom = QuizRoom;
 }
 
-var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, handleCacheEvent, last_freeze, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, handleCacheEvent, initialize_offline, last_freeze, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
+initialize_offline = function(cb) {
+  return $.ajax({
+    url: '/offline.js',
+    cache: true,
+    dataType: 'script',
+    success: cb
+  });
+};
+
 if (typeof io !== "undefined" && io !== null) {
   sock = io.connect();
+  sock.on('connect', function() {
+    $('.disconnect-notice').slideUp();
+    return me.disco({
+      old_socket: localStorage.old_socket
+    });
+  });
+  sock.on('disconnect', function() {
+    var line, _ref;
+    if (((_ref = room.attempt) != null ? _ref.user : void 0) !== me.id) {
+      room.attempt = null;
+    }
+    line = $('<div>').addClass('alert alert-error');
+    line.append($('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), " from the server for some reason. ", $('<em>').text(new Date)));
+    line.append($('<p>').append("This may be due to a drop in the network 				connectivity or a malfunction in the server. The client will automatically 				attempt to reconnect to the server and in the mean time, the app has automatically transitioned				into <b>offline mode</b>. You can continue playing alone with a limited offline set				of questions without interruption. However, you might want to try <a href=''>reloading</a>."));
+    return addImportant($('<div>').addClass('log disconnect-notice').append(line));
+  });
+  setTimeout(initialize_offline, 100);
+} else {
+  initialize_offline(function() {
+    room.__listeners.joined({
+      id: 'offline',
+      name: 'offline user'
+    });
+    room.users[me.id] = me;
+    room.sync(3);
+    return me.verb('joined the room');
+  });
 }
 
 connected = function() {
@@ -3780,27 +3862,10 @@ room = new QuizRoomSlave();
 
 me = new QuizPlayerSlave(room, 'temporary');
 
-sock.on('connect', function() {
-  $('.actionbar button').disable(false);
-  $('.disconnect-notice').slideUp();
-  return me.disco({
-    old_socket: localStorage.old_socket
-  });
-});
-
-sock.on('disconnect', function() {
-  var line, _ref;
-  if (((_ref = room.attempt) != null ? _ref.user : void 0) !== me.id) {
-    room.attempt = null;
-  }
-  line = $('<div>').addClass('alert alert-error');
-  line.append($('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), " from the server for some reason. ", $('<em>').text(new Date)));
-  line.append($('<p>').append("This may be due to a drop in the network 			connectivity or a malfunction in the server. The client will automatically 			attempt to reconnect to the server and in the mean time, the app has automatically transitioned			into <b>offline mode</b>. You can continue playing alone with a limited offline set			of questions without interruption. However, you might want to try <a href=''>reloading</a>."));
-  return addImportant($('<div>').addClass('log disconnect-notice').append(line));
-});
-
 listen = function(name, fn) {
-  sock.on(name, fn);
+  if (sock != null) {
+    sock.on(name, fn);
+  }
   return room.__listeners[name] = fn;
 };
 
@@ -3842,6 +3907,7 @@ listen('sync', function(data) {
 listen('joined', function(data) {
   me.id = data.id;
   me.name = data.name;
+  $('.actionbar button').disable(false);
   $('#username').val(me.name);
   return $('#username').disable(false);
 });
@@ -3863,37 +3929,39 @@ synchronize = function(data) {
       room[attr] = val;
     }
   }
-  if ('timing' in data || room.__last_rate !== room.rate) {
-    cumsum = function(list, rate) {
-      var num, sum, _i, _len, _ref, _results;
-      sum = 0;
-      _ref = [5].concat(list).slice(0, -1);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        num = _ref[_i];
-        _results.push(sum += Math.round(num) * rate);
-      }
-      return _results;
-    };
-    room.cumulative = cumsum(room.timing, room.rate);
-    room.__last_rate = room.rate;
-  }
-  if ('users' in data) {
-    user_blacklist = ['id'];
-    _ref = data.users;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      user = _ref[_i];
-      if (user.id === me.id) {
-        room.users[user.id] = me;
-      } else {
-        if (!(user.id in room.users)) {
-          room.users[user.id] = new QuizPlayerClient(room, user.id);
+  if (connected()) {
+    if ('timing' in data || room.__last_rate !== room.rate) {
+      cumsum = function(list, rate) {
+        var num, sum, _i, _len, _ref, _results;
+        sum = 0;
+        _ref = [5].concat(list).slice(0, -1);
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          num = _ref[_i];
+          _results.push(sum += Math.round(num) * rate);
         }
-      }
-      for (attr in user) {
-        val = user[attr];
-        if (__indexOf.call(user_blacklist, attr) < 0) {
-          room.users[user.id][attr] = val;
+        return _results;
+      };
+      room.cumulative = cumsum(room.timing, room.rate);
+      room.__last_rate = room.rate;
+    }
+    if ('users' in data) {
+      user_blacklist = ['id'];
+      _ref = data.users;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        user = _ref[_i];
+        if (user.id === me.id) {
+          room.users[user.id] = me;
+        } else {
+          if (!(user.id in room.users)) {
+            room.users[user.id] = new QuizPlayerClient(room, user.id);
+          }
+        }
+        for (attr in user) {
+          val = user[attr];
+          if (__indexOf.call(user_blacklist, attr) < 0) {
+            room.users[user.id][attr] = val;
+          }
         }
       }
     }

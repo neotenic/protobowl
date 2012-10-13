@@ -43,7 +43,6 @@ class QuizRoom
 		@rate = 1000 * 60 / 5 / 200
 		@__timeout = -1
 		@distribution = default_distribution
-		
 
 		@freeze()
 		@users = {} 
@@ -66,7 +65,9 @@ class QuizRoom
 			cb count
 
 	get_question: (cb) ->
-		cb error_question
+		setTimeout ->
+			cb error_question
+		, 10
 		@log 'NOT IMPLEMENTED (async get question)'
 
 		
@@ -146,7 +147,7 @@ class QuizRoom
 		@generating_question = true
 		@get_question (question) =>
 			delete @generating_question;
-			@generated_time = @time() # like begin_time but doesnt change when speed is altered
+			@generated_time = @serverTime() # like begin_time but doesnt change when speed is altered
 			
 			@attempt = null
 			@info = {
@@ -231,8 +232,9 @@ class QuizRoom
 
 	next: ->
 		if @time() > @end_time - @answer_duration and !@generating_question and !@attempt
-			@new_question()
 			@unfreeze()
+			@new_question()
+			
 
 	check_answer: ->
 		return 'prompt' if Math.random() > 0.8

@@ -62,6 +62,8 @@ class QuizPlayer
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
 
 
+	disco: -> 0 # skeleton method, not actually implemented
+
 
 	rate_limit: ->
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
@@ -133,8 +135,6 @@ class QuizPlayer
 		@room.emit 'log', {user: @id, verb: action, time: @room.serverTime() }
 
 	
-	disco: -> 0 # skeleton method, not actually implemented
-
 	disconnect: ->
 		@verb 'left the room'
 		@touch()

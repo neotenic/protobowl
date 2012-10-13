@@ -35,6 +35,7 @@ $('.chatbtn').click ->
 recent_actions = [0]
 rate_limit_ceiling = 0
 rate_limit_check = ->
+	return false if !connected()
 	rate_threshold = 7
 	current_time = +new Date
 	filtered_actions = []
@@ -144,10 +145,43 @@ findReferences = (text) ->
 	# text = reconstructed.replace(/[\s,]*$/g, '') + ' ' + text
 	return [reconstructed.replace(/[\s,]*$/g, ''), text]
 
+protobot_engaged = false
+protobot_last = ''
+
+protobot_write = (message) ->
+	count = 0
+	session = Math.random().toString(36).slice(2)
+	writeLetter = ->
+		if ++count <= message.length
+			chatAnnotation {
+				text: message.slice(0, count),
+				session,
+				user: '__protobot',
+				done: count == message.length,
+				time: room.serverTime()
+			}
+			setTimeout writeLetter, 1000 * 60 / 6 / (80 + Math.random() * 50)
+	writeLetter()
 
 chat = (text, done) ->
+	if text.length < 15 and /lonely/i.test(text) and /re |m /i.test(text) and !/you/i.test(text) and !protobot_engaged
+		protobot_engaged = true
+		protobot_last = $('.chat_input').data('input_session')
+		protobot_write "I'm lonely too. Plz talk to meeeee"
+	else if protobot_engaged and omeglebot_replies? and protobot_last isnt $('.chat_input').data('input_session')
+		pick = (list) -> list[Math.floor(list.length * Math.random())]
+
+		if text.replace(/[^a-z]/g, '') of omeglebot_replies
+			protobot_write pick(omeglebot_replies[text.replace(/[^a-z]/g, '')])
+			protobot_last = $('.chat_input').data('input_session')
+		else if done
+			reply = pick Object.keys(omeglebot_replies)
+			reply = pick omeglebot_replies[reply]
+			protobot_write reply
+
 	if text.slice(0, 1) is '@'
 		text = findReferences(text).join(' ')
+
 	me.chat {
 		text: text, 
 		session: $('.chat_input').data('input_session'), 

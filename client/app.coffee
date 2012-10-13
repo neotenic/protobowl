@@ -8,11 +8,51 @@
 #= require ../shared/player.coffee
 #= require ../shared/room.coffee
 
+# asynchronously load the other code which doesn't need to be there on startup necessarily
+initialize_offline = (cb) ->	
+	$.ajax {
+		url: '/offline.js',
+		cache: true,
+		dataType: 'script',
+		success: cb
+	}
+
+
 if io?
 	sock = io.connect()
 
-connected = -> sock? and sock.socket.connected
+	sock.on 'connect', ->
+		# console.timeEnd('connect')
+		# $('.chatbtn').disable(false)
+		$('.disconnect-notice').slideUp()
+		# implemented in SocketQuizPlayer rather than QuizPlayer
+		# actually just new skeleeton method in place
+		me.disco { old_socket: localStorage.old_socket }
 
+	sock.on 'disconnect', ->
+		room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
+		line = $('<div>').addClass 'alert alert-error'
+		line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
+				" from the server for some reason. ", $('<em>').text(new Date))
+		line.append $('<p>').append("This may be due to a drop in the network 
+				connectivity or a malfunction in the server. The client will automatically 
+				attempt to reconnect to the server and in the mean time, the app has automatically transitioned
+				into <b>offline mode</b>. You can continue playing alone with a limited offline set
+				of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
+		addImportant $('<div>').addClass('log disconnect-notice').append(line)
+
+	setTimeout initialize_offline, 100
+else
+	initialize_offline ->
+		room.__listeners.joined {
+			id: 'offline',
+			name: 'offline user'
+		}
+		room.users[me.id] = me
+		room.sync(3)
+		me.verb 'joined the room'
+
+connected = -> sock? and sock.socket.connected
 
 class QuizPlayerClient extends QuizPlayer
 	online: -> @online_state
@@ -53,33 +93,9 @@ class QuizRoomSlave extends QuizRoom
 room = new QuizRoomSlave()
 me = new QuizPlayerSlave(room, 'temporary')
 
-sock.on 'connect', ->
-	# console.timeEnd('connect')
-	# $('.chatbtn').disable(false)
-	$('.actionbar button').disable false
-	$('.disconnect-notice').slideUp()
-	# implemented in SocketQuizPlayer rather than QuizPlayer
-	# actually just new skeleeton method in place
-	me.disco { old_socket: localStorage.old_socket }
-
-
-sock.on 'disconnect', ->
-	room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
-	line = $('<div>').addClass 'alert alert-error'
-	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
-			" from the server for some reason. ", $('<em>').text(new Date))
-	line.append $('<p>').append("This may be due to a drop in the network 
-			connectivity or a malfunction in the server. The client will automatically 
-			attempt to reconnect to the server and in the mean time, the app has automatically transitioned
-			into <b>offline mode</b>. You can continue playing alone with a limited offline set
-			of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
-	addImportant $('<div>').addClass('log disconnect-notice').append(line)
-	# room.emit 'init_offline', 'yay' #obviously server wont pay attention to that
-	# renderState()
-
 # look at all these one liner events!
 listen = (name, fn) ->
-	sock.on name, fn
+	sock.on name, fn if sock?
 	room.__listeners[name] = fn
 
 # probably should figure out some more elegant way to do things, but then again
@@ -96,6 +112,7 @@ listen 'sync', (data) -> synchronize data
 listen 'joined', (data) ->
 	me.id = data.id
 	me.name = data.name
+	$('.actionbar button').disable false
 	$('#username').val me.name
 	$('#username').disable false
 
@@ -109,32 +126,29 @@ synchronize = (data) ->
 	sync_offsets.push +new Date - data.real_time
 	compute_sync_offset()
 	
-	# difflist = []
-	# difflist.push(attr) for attr, val of data when val isnt room[attr]
-	
 	room[attr] = val for attr, val of data when attr not in blacklist
 
-	if 'timing' of data or room.__last_rate isnt room.rate
-		cumsum = (list, rate) ->
-			sum = 0 #start nonzero, allow pause before rendering
-			for num in [5].concat(list).slice(0, -1)
-				sum += Math.round(num) * rate #always round!
-		room.cumulative = cumsum room.timing, room.rate
-		room.__last_rate = room.rate
+	if connected()
+		if 'timing' of data or room.__last_rate isnt room.rate
+			cumsum = (list, rate) ->
+				sum = 0 #start nonzero, allow pause before rendering
+				for num in [5].concat(list).slice(0, -1)
+					sum += Math.round(num) * rate #always round!
+			room.cumulative = cumsum room.timing, room.rate
+			room.__last_rate = room.rate
 
-	if  'users' of data
-		user_blacklist = ['id']
-		for user in data.users
-			# user.room = room.name
-			if user.id is me.id
-				# console.log "it's me, mario!"
-				room.users[user.id] = me
-			else
-				unless user.id of room.users
-					room.users[user.id] = new QuizPlayerClient(room, user.id)
+		if  'users' of data
+			user_blacklist = ['id']
+			for user in data.users
+				if user.id is me.id
+					# console.log "it's me, mario!"
+					room.users[user.id] = me
+				else
+					unless user.id of room.users
+						room.users[user.id] = new QuizPlayerClient(room, user.id)
 
-			for attr, val of user when attr not in user_blacklist
-				room.users[user.id][attr] = val
+				for attr, val of user when attr not in user_blacklist
+					room.users[user.id][attr] = val
 
 	renderParameters() if 'difficulties' of data
 
@@ -257,22 +271,3 @@ do -> # isolate variables from globals
 		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
 			applicationCache.addEventListener name, handleCacheEvent
 
-# asynchronously load offline components
-#also, html5slider isnt actually for offline,
-# but it can be loaded async, so lets do that, 
-# and reuse all the crap that can be reused
-# setTimeout ->
-# 	window.exports = {}
-# 	window.require = -> window.exports
-# 	deps = ["html5slider", "levenshtein", "removeDiacritics", "porter", "answerparse", "syllable", "names", "offline"]
-# 	loadNextResource = ->
-# 		$.ajax {
-# 			url: "lib/#{deps.shift()}.js",
-# 			cache: true,
-# 			dataType: "script",
-# 			success: ->
-# 				if deps.length > 0
-# 					loadNextResource()
-# 		}
-# 	loadNextResource()
-# , 10

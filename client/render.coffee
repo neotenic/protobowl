@@ -237,7 +237,7 @@ renderTimer = ->
 
 	if isNaN(sec)
 		$('.timer .face').text('00:00')
-		$('.timer .fraction').text('.00')
+		$('.timer .fraction').text('.0')
 	else
 		cs = (sec % 1).toFixed(1).slice(1)
 		$('.timer .fraction').text cs

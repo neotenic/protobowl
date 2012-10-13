@@ -36,7 +36,11 @@ app.use (req, res, next) ->
 	if req.url is '/app.js'
 		snockets.getConcatenation 'client/app.coffee', (err, js) ->
 			fs.writeFile 'assets/app.js', err || js, 'utf8', ->
-				next()		
+				next()
+	else if req.url is '/offline.js'
+		snockets.getConcatenation 'client/offline.coffee', (err, js) ->
+			fs.writeFile 'assets/offline.js', err || js, 'utf8', ->
+				next()
 	# else if req.url is '/protobowl.css'
 	# 	parser = new(less.Parser)({
 	# 		paths: ['assets/less'],
