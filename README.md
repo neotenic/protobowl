@@ -22,7 +22,6 @@ DOES NOT WORK. AT ALL. NOPE.
 * check that it's the last name which is common
 * add support for superpower [+]
 * statistical skill metrics i.e. score/interrupts
-* Keep Offline mode in-sync with protocol revisions
 * Add more questions, create new parser in order to do so
 
 # In Progress
@@ -31,6 +30,7 @@ DOES NOT WORK. AT ALL. NOPE.
 
 # Mostly Done
 * Create teams
+* Keep Offline mode in-sync with protocol revisions
 * support arbitrary question distributions
 * Add sounds
 * make leaderboard faster (mostly done)

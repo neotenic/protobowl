@@ -71,10 +71,6 @@ $('.skipbtn').click skip
 
 $('.nextbtn').click next
 
-# try
-# 	ding_sound = new Audio('img/ding.wav')
-# catch e
-# 	# do nothing
 
 $('.buzzbtn').click ->
 	return if $('.buzzbtn').attr('disabled') is 'disabled'
@@ -90,13 +86,14 @@ $('.buzzbtn').click ->
 	# bring up the keyboard, so the solution here is to first open it up
 	# and ask nicely for forgiveness otherwise
 	submit_time = +new Date
+	if $('.sounds')[0].checked and !$('.sounds').data('ding_sound')
+		$('.sounds').data('ding_sound', new Audio('img/ding.wav'))
+
 	me.buzz 'yay', (status) ->
 		if status is 'http://www.whosawesome.com/'
 			$('.guess_input').removeClass('disabled')
 			if $('.sounds')[0].checked
-				
-				
-				ding_sound.play() if ding_sound
+				$('.sounds').data('ding_sound').play()
 			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Accepted', new Date - submit_time] if window._gaq
 		else
 			setActionMode ''
@@ -156,13 +153,14 @@ $('.chat_input').keyup (e) ->
 
 
 $('.chat_form').submit (e) ->
+	setActionMode ''
 	me.chat {
 		text: $('.chat_input').val(), 
 		session: $('.chat_input').data('input_session'), 
 		done: true
 	}
 	e.preventDefault()
-	setActionMode ''
+	
 	time_delta = new Date - $('.chat_input').data('begin_time')
 	_gaq.push ['_trackEvent', 'Chat', 'Typing Time', 'Posted Message', time_delta] if window._gaq
 
@@ -175,12 +173,13 @@ $('.guess_input').keyup (e) ->
 
 	
 $('.guess_form').submit (e) ->
+	setActionMode ''
 	me.guess {
 		text: $('.guess_input').val(), 
 		done: true
 	}
 	e.preventDefault()
-	setActionMode ''
+	
 
 $('.prompt_input').keyup (e) ->
 	return if e.keyCode is 13
@@ -191,12 +190,13 @@ $('.prompt_input').keyup (e) ->
 
 	
 $('.prompt_form').submit (e) ->
+	setActionMode ''
 	me.guess {
 		text: $('.prompt_input').val(), 
 		done: true
 	}
 	e.preventDefault()
-	setActionMode ''
+	
 
 
 $('body').keydown (e) ->
@@ -292,7 +292,9 @@ $('.multibuzz').change -> me.set_max_buzz (if $('.multibuzz')[0].checked then nu
 
 $('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
 
-$('.sounds').change -> me.set_sounds $('.sounds')[0].checked
+$('.sounds').change -> 
+	me.set_sounds $('.sounds')[0].checked
+	$('.sounds').data('ding_sound', new Audio('img/ding.wav'))
 
 
 mobileLayout = -> 

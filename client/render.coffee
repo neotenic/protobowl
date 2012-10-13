@@ -77,7 +77,6 @@ renderUpdate = ->
 			$('.speed').val(wpm)
 
 
-	
 	if !room.attempt or room.attempt.user isnt me.id
 		setActionMode '' if actionMode in ['guess', 'prompt']
 	else

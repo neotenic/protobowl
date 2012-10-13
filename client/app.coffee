@@ -94,6 +94,7 @@ listen 'joined', (data) ->
 
 sync_offsets = []
 latency_log = []
+last_freeze = -1
 
 synchronize = (data) ->
 	blacklist = ['real_time', 'users']
@@ -101,8 +102,8 @@ synchronize = (data) ->
 	sync_offsets.push +new Date - data.real_time
 	compute_sync_offset()
 	
-	difflist = []
-	difflist.push(attr) for attr, val of data when val isnt room[attr]
+	# difflist = []
+	# difflist.push(attr) for attr, val of data when val isnt room[attr]
 	
 	room[attr] = val for attr, val of data when attr not in blacklist
 
@@ -132,7 +133,9 @@ synchronize = (data) ->
 
 	renderUpdate()
 
-	if 'time_freeze' in difflist # includes buzzes
+	# if 'time_freeze' in difflist # includes buzzes
+	if last_freeze isnt room.time_freeze
+		last_freeze = room.time_freeze
 		variable = (if room.attempt then 'starts' else 'stops')
 		del = room.time_freeze - room.begin_time
 		i = 0

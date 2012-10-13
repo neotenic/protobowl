@@ -233,7 +233,7 @@ class QuizRoom
 			@unfreeze()
 
 	check_answer: ->
-		return 'prompt' if Math.random() > 0.9
+		return 'prompt' if Math.random() > 0.1
 		return Math.random() > 0.3
 
 	end_buzz: (session) -> #killit, killitwithfire
@@ -295,7 +295,7 @@ class QuizRoom
 				pool = 0
 				teams = {}
 				for id, user of @users when id[0] isnt "_" # skip secret ninja
-					if user.sockets.length > 0 and (@serverTime() - user.last_action) < 1000 * 60 * 10
+					if user.active()
 						teams[user.team || id] = (teams[user.team || id] || 0)
 						teams[user.team || id] += user.times_buzzed
 				for team, times_buzzed of teams

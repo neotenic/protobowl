@@ -2493,13 +2493,14 @@ $('.buzzbtn').click(function() {
   setActionMode('guess');
   $('.guess_input').val('').addClass('disabled').focus();
   submit_time = +(new Date);
+  if ($('.sounds')[0].checked && !$('.sounds').data('ding_sound')) {
+    $('.sounds').data('ding_sound', new Audio('img/ding.wav'));
+  }
   return me.buzz('yay', function(status) {
     if (status === 'http://www.whosawesome.com/') {
       $('.guess_input').removeClass('disabled');
       if ($('.sounds')[0].checked) {
-        if (ding_sound) {
-          ding_sound.play();
-        }
+        $('.sounds').data('ding_sound').play();
       }
       if (window._gaq) {
         return _gaq.push(['_trackEvent', 'Game', 'Response Latency', 'Buzz Accepted', new Date - submit_time]);
@@ -2608,13 +2609,13 @@ $('.chat_input').keyup(function(e) {
 
 $('.chat_form').submit(function(e) {
   var time_delta;
+  setActionMode('');
   me.chat({
     text: $('.chat_input').val(),
     session: $('.chat_input').data('input_session'),
     done: true
   });
   e.preventDefault();
-  setActionMode('');
   time_delta = new Date - $('.chat_input').data('begin_time');
   if (window._gaq) {
     return _gaq.push(['_trackEvent', 'Chat', 'Typing Time', 'Posted Message', time_delta]);
@@ -2632,12 +2633,12 @@ $('.guess_input').keyup(function(e) {
 });
 
 $('.guess_form').submit(function(e) {
+  setActionMode('');
   me.guess({
     text: $('.guess_input').val(),
     done: true
   });
-  e.preventDefault();
-  return setActionMode('');
+  return e.preventDefault();
 });
 
 $('.prompt_input').keyup(function(e) {
@@ -2651,12 +2652,12 @@ $('.prompt_input').keyup(function(e) {
 });
 
 $('.prompt_form').submit(function(e) {
+  setActionMode('');
   me.guess({
     text: $('.prompt_input').val(),
     done: true
   });
-  e.preventDefault();
-  return setActionMode('');
+  return e.preventDefault();
 });
 
 $('body').keydown(function(e) {
@@ -2782,7 +2783,8 @@ $('.livechat').change(function() {
 });
 
 $('.sounds').change(function() {
-  return me.set_sounds($('.sounds')[0].checked);
+  me.set_sounds($('.sounds')[0].checked);
+  return $('.sounds').data('ding_sound', new Audio('img/ding.wav'));
 });
 
 mobileLayout = function() {
@@ -3350,7 +3352,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.check_answer = function() {
-    if (Math.random() > 0.9) {
+    if (Math.random() > 0.1) {
       return 'prompt';
     }
     return Math.random() > 0.3;
@@ -3412,7 +3414,7 @@ QuizRoom = (function() {
         for (id in _ref1) {
           user = _ref1[id];
           if (id[0] !== "_") {
-            if (user.sockets.length > 0 && (this.serverTime() - user.last_action) < 1000 * 60 * 10) {
+            if (user.active()) {
               teams[user.team || id] = teams[user.team || id] || 0;
               teams[user.team || id] += user.times_buzzed;
             }
@@ -5238,7 +5240,7 @@ formatTime = function(timestamp) {
   return (date.getHours() % 12) + ':' + ('0' + date.getMinutes()).substr(-2, 2) + (date.getHours() > 12 ? "pm" : "am");
 };
 
-var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, last_freeze, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -5387,18 +5389,13 @@ sync_offsets = [];
 
 latency_log = [];
 
+last_freeze = -1;
+
 synchronize = function(data) {
-  var attr, blacklist, cumsum, del, difflist, i, starts, user, user_blacklist, val, variable, _i, _len, _ref, _ref1;
+  var attr, blacklist, cumsum, del, i, starts, user, user_blacklist, val, variable, _i, _len, _ref, _ref1;
   blacklist = ['real_time', 'users'];
   sync_offsets.push(+(new Date) - data.real_time);
   compute_sync_offset();
-  difflist = [];
-  for (attr in data) {
-    val = data[attr];
-    if (val !== room[attr]) {
-      difflist.push(attr);
-    }
-  }
   for (attr in data) {
     val = data[attr];
     if (__indexOf.call(blacklist, attr) < 0) {
@@ -5445,7 +5442,8 @@ synchronize = function(data) {
     renderParameters();
   }
   renderUpdate();
-  if (__indexOf.call(difflist, 'time_freeze') >= 0) {
+  if (last_freeze !== room.time_freeze) {
+    last_freeze = room.time_freeze;
     variable = (room.attempt ? 'starts' : 'stops');
     del = room.time_freeze - room.begin_time;
     i = 0;

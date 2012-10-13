@@ -91,7 +91,6 @@ remote = require './remote'
 
 class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
-		console.log 'emitting shit', @name, name
 		io.sockets.in(@name).emit name, data
 
 	get_question: (cb) ->
