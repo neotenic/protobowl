@@ -215,6 +215,11 @@ class SocketQuizRoom extends QuizRoom
 
 	journal: -> journal_queue[@name] = +new Date
 
+	end_buzz: (session) ->
+		if @attempt?.user
+			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer]
+		super(session)
+
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
 		super(room, id)
@@ -228,7 +233,11 @@ class SocketQuizPlayer extends QuizPlayer
 			io.sockets.emit 'force_application_update', +new Date
 			io.sockets.emit 'application_update', +new Date
 			io.sockets.socket(sock).disconnect() for sock in @sockets
-			
+	
+	chat: (data) ->
+		super(data)
+		log 'chat', [@room.name, @id + '-' + @name, data.text] if data.done
+
 
 	online: -> @sockets.length > 0
 
@@ -244,7 +253,7 @@ class SocketQuizPlayer extends QuizPlayer
 		data.room = @room.name
 		data.user = @id + '-' + @name
 		log 'report_answer', data
-
+		
 
 	check_public: (_, fn) ->
 		output = {}
