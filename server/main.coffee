@@ -1,5 +1,6 @@
-console.log 'hello from protobowl v3'
-
+console.log 'hello from protobowl v3', __dirname, process.cwd()
+express = require 'express'
+fs = require 'fs'
 url = require 'url'
 parseCookie = require('express/node_modules/connect').utils.parseCookie
 rooms = {}
@@ -10,10 +11,57 @@ rooms = {}
 names = require '../shared/names'
 uptime_begin = +new Date
 
-remote = require './remote'
+try 
+	remote = require './remotee'
+catch err
+	questions = []
+	count = 0
+	fs.readFile 'assets/sample.txt', 'utf8', (err, data) ->
+		throw err if err
+		questions = (JSON.parse(line) for line in data.split("\n"))
 
-express = require 'express'
-fs = require 'fs'
+	listProps = (prop) ->
+		propmap = {}
+		for q in questions
+			propmap[q[prop]] = 1
+		return (p for p of propmap)
+
+	filterQuestions = (diff, cat) ->
+		questions.filter (q) ->
+			return false if diff and q.difficulty != diff
+			return false if cat and q.category != cat
+			return true
+
+	fisher_yates = (i) ->
+		return [] if i is 0
+		arr = [0...i]
+		while --i
+			j = Math.floor(Math.random() * (i+1))
+			[arr[i], arr[j]] = [arr[j], arr[i]] 
+		arr
+	current_category = ''
+	current_difficulty = ''
+	current_queue = []
+
+	remote = {
+		initialize_remote: (cb) -> 
+			cb() if cb
+		get_question: (type, diff, cat, cb) ->
+			if diff == current_difficulty and cat == current_category and current_queue.length > 0
+				cb current_queue.shift()
+			else
+				current_difficulty = diff
+				current_category = cat
+				temp_filtered = filterQuestions(diff, cat)
+				current_queue = (temp_filtered[index] for index in fisher_yates(temp_filtered.length))
+				cb current_queue.shift()
+		get_difficulties: (type) ->
+			listProps 'difficulty'
+		get_categories: (type) ->
+			listProps 'category'
+		count_questions: (type, diff, cat, cb) ->
+			cb filterQuestions(diff, cat).length
+	}
 
 app = express.createServer()
 app.set 'views', "server" # directory where the jade files are

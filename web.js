@@ -3,7 +3,9 @@
 // to launch the main server code which is in 
 // coffeescript
 
+
 require('coffee-script')
+process.chdir(__dirname)
 require('./server/main')
 
 
