@@ -171,13 +171,14 @@ chat = (text, done) ->
 	else if protobot_engaged and omeglebot_replies? and protobot_last isnt $('.chat_input').data('input_session')
 		pick = (list) -> list[Math.floor(list.length * Math.random())]
 
-		if text.replace(/[^a-z]/g, '') of omeglebot_replies
+		if text.replace(/[^a-z]/g, '') of omeglebot_replies and Math.random() > 0.1 # probablistic everything
 			protobot_write pick(omeglebot_replies[text.replace(/[^a-z]/g, '')])
 			protobot_last = $('.chat_input').data('input_session')
 		else if done
 			reply = pick Object.keys(omeglebot_replies)
 			reply = pick omeglebot_replies[reply]
 			protobot_write reply
+			# doesnt matter to set protobot last because you dont repeat afterwars anyway
 
 	if text.slice(0, 1) is '@'
 		text = findReferences(text).join(' ')

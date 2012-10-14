@@ -1810,7 +1810,7 @@ chat = function(text, done) {
     pick = function(list) {
       return list[Math.floor(list.length * Math.random())];
     };
-    if (text.replace(/[^a-z]/g, '') in omeglebot_replies) {
+    if (text.replace(/[^a-z]/g, '') in omeglebot_replies && Math.random() > 0.1) {
       protobot_write(pick(omeglebot_replies[text.replace(/[^a-z]/g, '')]));
       protobot_last = $('.chat_input').data('input_session');
     } else if (done) {
@@ -3853,6 +3853,79 @@ QuizRoomSlave = (function(_super) {
     QuizRoomSlave.__super__.constructor.call(this, name);
     this.__listeners = {};
   }
+
+  QuizRoomSlave.prototype.load_questions = function(cb) {
+    var _this = this;
+    if (typeof load_questions !== "undefined" && load_questions !== null) {
+      return load_questions(cb);
+    } else {
+      return setTimeout(function() {
+        return _this.load_questions(cb);
+      }, 100);
+    }
+  };
+
+  QuizRoomSlave.prototype.get_parameters = function(type, difficulty, cb) {
+    return this.load_questions(function() {
+      var categories, difficulties, question, x, _i, _j, _len, _len1;
+      difficulties = {};
+      for (_i = 0, _len = offline_questions.length; _i < _len; _i++) {
+        question = offline_questions[_i];
+        difficulties[question.difficulty] = 1;
+      }
+      categories = {};
+      for (_j = 0, _len1 = offline_questions.length; _j < _len1; _j++) {
+        question = offline_questions[_j];
+        if (question.difficulty === difficulty || !difficulty) {
+          categories[question.category] = 1;
+        }
+      }
+      return cb((function() {
+        var _results;
+        _results = [];
+        for (x in difficulties) {
+          _results.push(x);
+        }
+        return _results;
+      })(), (function() {
+        var _results;
+        _results = [];
+        for (x in categories) {
+          _results.push(x);
+        }
+        return _results;
+      })());
+    });
+  };
+
+  QuizRoomSlave.prototype.count_questions = function(type, difficulty, category, cb) {
+    return this.load_questions(function() {
+      var candidates, question;
+      candidates = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = offline_questions.length; _i < _len; _i++) {
+          question = offline_questions[_i];
+          if ((question.difficulty === difficulty || !difficulty) && (question.category === category || !category)) {
+            _results.push(question);
+          }
+        }
+        return _results;
+      })();
+      return cb(candidates.length);
+    });
+  };
+
+  QuizRoomSlave.prototype.get_question = function(cb) {
+    return this.load_questions(function() {
+      var question;
+      question = offline_questions.sort(function(a, b) {
+        return a._inc - b._inc;
+      })[0];
+      question._inc += Math.random() + 1;
+      return cb(question);
+    });
+  };
 
   return QuizRoomSlave;
 

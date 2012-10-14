@@ -22,11 +22,7 @@ if io?
 	sock = io.connect()
 
 	sock.on 'connect', ->
-		# console.timeEnd('connect')
-		# $('.chatbtn').disable(false)
 		$('.disconnect-notice').slideUp()
-		# implemented in SocketQuizPlayer rather than QuizPlayer
-		# actually just new skeleeton method in place
 		me.disco { old_socket: localStorage.old_socket }
 
 	sock.on 'disconnect', ->
@@ -58,9 +54,11 @@ class QuizPlayerClient extends QuizPlayer
 	online: -> @online_state
 
 class QuizPlayerSlave extends QuizPlayerClient
+	
 	# encapsulate is such a boring word, well actually, it's pretty cool
 	# but you should be allowed to envelop actions like captain kirk 
 	# does to a mountain.
+
 	envelop_action: (name) ->
 		master_action = this[name]
 		this[name] = (data, callback) ->
@@ -80,6 +78,8 @@ class QuizPlayerSlave extends QuizPlayerClient
 		@envelop_action name for name, method of this when typeof method is 'function' and name not in blacklist
 
 
+
+
 class QuizRoomSlave extends QuizRoom
 	# dont know what to change
 	emit: (name, data) ->
@@ -88,6 +88,37 @@ class QuizRoomSlave extends QuizRoom
 	constructor: (name) ->
 		super(name)
 		@__listeners = {}
+
+	load_questions: (cb) ->
+		if load_questions?
+			load_questions cb
+		else
+			setTimeout =>
+				@load_questions cb
+			, 100
+
+	get_parameters: (type, difficulty, cb) ->
+		@load_questions ->
+			difficulties = {}
+			for question in offline_questions
+				difficulties[question.difficulty] = 1
+			categories = {}
+			for question in offline_questions when question.difficulty is difficulty or !difficulty
+				categories[question.category] = 1
+			cb (x for x of difficulties), (x for x of categories)
+
+	count_questions: (type, difficulty, category, cb) ->
+		@load_questions ->
+			candidates = (question for question in offline_questions when (question.difficulty is difficulty or !difficulty) and (question.category is category or !category))
+			cb candidates.length
+
+	get_question: (cb) ->
+		@load_questions ->
+			# this is naive compared to the one on the server side
+			# which uses sampling and stuff
+			question = offline_questions.sort((a, b) -> a._inc - b._inc)[0]
+			question._inc += Math.random() + 1
+			cb(question)
 
 
 room = new QuizRoomSlave()
