@@ -96,7 +96,6 @@ renderPartial = ->
 	
 	if !room.question 
 		if $('.start-page').length is 0
-			console.log 'adding a start thing'
 			start = $('<div>').addClass('start-page').hide().prependTo '#history'
 			well = $('<div>').addClass('well').appendTo start
 			$('<button>')
@@ -549,7 +548,7 @@ createBundle = ->
 		rtype = $('<div>').addClass('control-group').appendTo(form)
 		rtype.append $("<label>").addClass('control-label').text('Description')
 		controls = $("<div>").addClass('controls').appendTo rtype
-		for option in ["Wrong category", "Wrong details", "Bad question", "Broken formatting"]
+		for option in ["Wrong category", "Wrong details", "Broken question"]
 			controls.append $("<label>")
 				.addClass("radio")
 				.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))

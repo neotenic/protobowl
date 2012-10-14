@@ -1,5 +1,17 @@
 console.log 'hello from protobowl v3'
 
+url = require 'url'
+parseCookie = require('express/node_modules/connect').utils.parseCookie
+rooms = {}
+{QuizRoom} = require '../shared/room'
+{QuizPlayer} = require '../shared/player'
+{checkAnswer} = require '../shared/answerparse'
+
+names = require '../shared/names'
+uptime_begin = +new Date
+
+remote = require './remote'
+
 express = require 'express'
 fs = require 'fs'
 
@@ -19,37 +31,67 @@ io.configure 'development', ->
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
 
-app.use require('less-middleware')({
-	src: "assets/less",
-	dest: "assets"
-})
 
-Snockets = require 'snockets'
-CoffeeScript = require 'coffee-script'
-Snockets.compilers.coffee = 
-	match: /\.js$/
-	compileSync: (sourcePath, source) ->
-		CoffeeScript.compile source, {filename: sourcePath, bare: true}
+journal_config = { host: 'localhost', port: 15865 }
+log_config = { host: 'localhost', port: 18228 }
 
-snockets = new Snockets()
-app.use (req, res, next) ->
-	if req.url is '/app.js'
-		snockets.getConcatenation 'client/app.coffee', (err, js) ->
-			fs.writeFile 'assets/app.js', err || js, 'utf8', ->
-				next()
-	else if req.url is '/offline.js'
-		snockets.getConcatenation 'client/offline.coffee', (err, js) ->
-			fs.writeFile 'assets/offline.js', err || js, 'utf8', ->
-				next()
-	# else if req.url is '/protobowl.css'
-	# 	parser = new(less.Parser)({
-	# 		paths: ['assets/less'],
-	# 		filename: 'protobowl.less'
-	# 	})
-	# 	parser.parse
-	else
-		next()
+if app.settings.env is 'production'
+	log_config = remote.deploy.log
+	journal_config = remote.deploy.journal
+	console.log 'set to deployment defaults'
 
+if app.settings.env is 'development'
+	app.use require('less-middleware')({
+		src: "assets/less",
+		dest: "assets",
+		compress: true
+	})
+	Snockets = require 'snockets'
+	CoffeeScript = require 'coffee-script'
+	Snockets.compilers.coffee = 
+		match: /\.js$/
+		compileSync: (sourcePath, source) ->
+			CoffeeScript.compile source, {filename: sourcePath, bare: true}
+
+	snockets = new Snockets()
+	app.use (req, res, next) ->
+		if req.url is '/app.js'
+			snockets.getConcatenation 'client/app.coffee', (err, js) ->
+				fs.writeFile 'assets/app.js', err || js, 'utf8', ->
+					next()
+		else if req.url is '/offline.js'
+			snockets.getConcatenation 'client/offline.coffee', (err, js) ->
+				fs.writeFile 'assets/offline.js', err || js, 'utf8', ->
+					next()
+		# else if req.url is '/protobowl.css'
+		# 	parser = new(less.Parser)({
+		# 		paths: ['assets/less'],
+		# 		filename: 'protobowl.less'
+		# 	})
+		# 	parser.parse
+		else
+			next()
+
+	scheduledUpdate = null
+	updateCache = ->
+		fs.readFile 'assets/protobowl.appcache', 'utf8', (err, data) ->
+			throw err if err
+			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
+			fs.writeFile 'assets/protobowl.appcache', data, (err) ->
+				throw err if err
+				setTimeout ->
+					io.sockets.emit 'force_application_update', +new Date
+				, 2000
+				scheduledUpdate = null
+
+	watcher = (event, filename) ->
+		return if filename in ["protobowl.appcache", "protobowl.css", "app.js"]
+		console.log "changed file", filename
+		unless scheduledUpdate
+			scheduledUpdate = setTimeout updateCache, 500
+
+	fs.watch "shared", watcher
+	fs.watch "client", watcher
 
 app.use express.compress()
 # app.use express.staticCache()
@@ -82,42 +124,35 @@ app.use (req, res, next) ->
 		}
 	next()
 
-if app.settings.env is 'development'
-	scheduledUpdate = null
-	updateCache = ->
-		fs.readFile 'assets/protobowl.appcache', 'utf8', (err, data) ->
-			throw err if err
-			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
-			fs.writeFile 'assets/protobowl.appcache', data, (err) ->
-				throw err if err
-				setTimeout ->
-					io.sockets.emit 'force_application_update', +new Date
-				, 2000
-				scheduledUpdate = null
+app.use (req, res, next) ->
+	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'
+		options = url.parse(req.url)
+		options.host = 'protobowl.com'
+		res.writeHead 301, {Location: url.format(options)}
+		res.end()
+	else
+		next()
 
-	watcher = (event, filename) ->
-		return if filename in ["protobowl.appcache", "protobowl.css", "app.js"]
-		console.log "changed file", filename
-		unless scheduledUpdate
-			scheduledUpdate = setTimeout updateCache, 500
-
-	fs.watch "shared", watcher
-	fs.watch "client", watcher
 	
 
-url = require 'url'
-parseCookie = require('express/node_modules/connect').utils.parseCookie
-rooms = {}
-{QuizRoom} = require '../shared/room'
-{QuizPlayer} = require '../shared/player'
-names = require '../shared/names'
-uptime_begin = +new Date
+http = require('http')
+log = (action, obj) ->
+	req = http.request log_config, ->
+		# console.log "saved log"
+	req.on 'error', ->
+		console.log "logging error"
+	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
+	req.end()
 
-remote = require './remote'
+log 'server_restart', {}
+
+
 
 class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
+
+	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
 
 	get_question: (cb) ->
 		category = (if @category is 'custom' then @distribution else @category)
@@ -125,8 +160,10 @@ class SocketQuizRoom extends QuizRoom
 			cb(question || error_question)
 
 	get_parameters: (type, difficulty, callback) -> remote.get_parameters(type, difficulty, callback)
+
 	count_questions: (type, difficulty, category, cb) -> remote.count_questions(type, difficulty, category, cb) 
 
+	journal: -> journal_queue[@name] = +new Date
 
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
@@ -140,13 +177,18 @@ class SocketQuizPlayer extends QuizPlayer
 
 	online: -> @sockets.length > 0
 
-	# disconnect: ->
-	# 	super()
+	report_question: (data) ->
+		data.room = @room.name
+		data.user = @id + '-' + @name
+		remote.handle_report data if remote.handle_report
+		log 'report_question', data
 
-	# 	console.log 'HANDLING A DISCONNECT'
+	report_answer: ->
+		data.room = @room.name
+		data.user = @id + '-' + @name
+		log 'report_answer', data
 
-	# 	# room.del_socket publicID, sock.id
-		
+
 	check_public: (_, fn) ->
 		output = {}
 		checklist = ['hsquizbowl', 'lobby']
@@ -166,9 +208,13 @@ class SocketQuizPlayer extends QuizPlayer
 			do (attr) => sock.on attr, (args...) => this[attr](args...)
 
 		id = sock.id
+
+		@room.journal()
+
 		sock.on 'disconnect', =>
 			@sockets = (s for s in @sockets when s isnt id)
 			@disconnect()
+			@room.journal()
 
 	emit: (name, data) ->
 		for sock in @sockets
@@ -180,7 +226,6 @@ io.sockets.on 'connection', (sock) ->
 	config = url.parse(headers.referer)
 
 	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development'
-		console.log "Sending Upgrade Request", headers.referer
 		config.host = 'protobowl.com'
 		sock.emit 'application_update', +new Date
 		sock.emit 'redirect', url.format(config)
@@ -229,14 +274,208 @@ io.sockets.on 'connection', (sock) ->
 		sock.emit 'application_update', +new Date # check for updates in case it was an update
 
 
+journal_queue = {}
+
+process_journal_queue = ->
+	room_names = Object.keys(journal_queue).sort (a, b) -> journal_queue[a] - journal_queue[b]
+	return if room_names.length is 0
+	first = room_names[0]
+	delete journal_queue[first]
+	if first of rooms
+		partial_journal first
+
+setInterval process_journal_queue, 1000
+
+partial_journal = (name) ->
+	journal_config.path = '/journal'
+	journal_config.method = 'POST'
+	req = http.request journal_config, (res) ->
+		res.setEncoding 'utf8'
+		# console.log "committed journal for", name
+		res.on 'data', (chunk) ->
+			if chunk == 'do_full_sync'
+				console.log 'got trigger for doing a full journal sync'
+				journal_queue = {} # full syncs clear queue
+				full_journal_sync()
+	req.on 'error', ->
+		# console.log "journal error"
+	req.write(JSON.stringify(rooms[name].journal_export()))
+	req.end()
+
+full_journal_sync = ->
+	backup = for name, room of rooms
+		room.journal_export()
+	journal_config.path = '/full_sync'
+	journal_config.method = 'POST'
+	req = http.request journal_config, (res) ->
+		# console.log "done full sync"
+		log 'log', 'completed full sync'
+	req.on 'error', ->
+		log 'error', 'full sync error'
+	req.write(JSON.stringify(backup))
+	req.end()
+
+rooms = {}
+
+# this is actually really quite hacky
+
+restore_journal = (callback) ->
+	journal_config.path = '/retrieve'
+	journal_config.method = 'GET'
+	req = http.request journal_config, (res) ->
+		console.log 'GOT JOURNAL RESPONSE'
+		res.setEncoding 'utf8'
+		packet = ''
+		res.on 'data', (chunk) ->
+			packet += chunk
+		res.on 'end', ->
+			console.log "GOT DATA"
+			json = JSON.parse(packet)
+
+			# a new question's gonna be pickt, so just restore settings 
+			fields = ["difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz"]
+			for name, data of json
+				# console.log data
+				unless name of rooms
+					log 'log', 'restoring ' + name
+					rooms[name] = new SocketQuizRoom(name)
+					room = rooms[name]
+					for user in data.users
+						id = user.id
+						room.users[id] = new SocketQuizPlayer(room, id)
+						for a, b of user
+							room.users[id][a] = b
+
+					for field in fields
+						room[field] = data[field] if field of data
+			console.log 'restored journal'
+			callback() if callback
+	req.on 'error', ->
+		console.log "Journal not accessible. Starting with defaults."
+		callback() if callback
+	req.end()
+
+
+setInterval ->
+	clearInactive 1000 * 60 * 60 * 48 
+, 1000 * 10 # every ten seconds
+
+
+reaped = {
+	name: "__reaped",
+	users: 0,
+	rooms: 0,
+	seen: 0,
+	correct: 0,
+	guesses: 0,
+	interrupts: 0,
+	time_spent: 0,
+	early: 0,
+	last_action: +new Date
+}
+
+
+clearInactive = (threshold) ->
+	# garbazhe collectour
+	for name, room of rooms
+		len = 0
+		offline_pool = (username for username, user of room.users when user.sockets.length is 0)
+		overcrowded_room = offline_pool.length > 10
+		big_room = Object.keys(room.users).length > 10
+		
+		oldest_user = ''
+		if overcrowded_room
+			oldest = offline_pool.sort (a, b) -> 
+				return room.users[a].last_action - room.users[b].last_action
+			oldest_user = oldest[0]
+
+		for username, user of room.users
+			len++
+			if !user.online()
+				evict_user = false
+				if overcrowded_room and username is oldest_user
+					evict_user = true
+				if (user.last_action < new Date - threshold) or evict_user or
+				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or
+				(big_room and user.correct < 2 and user.last_action < new Date - 1000 * 60 * 10)
+					log 'reap_user', {
+						seen: user.seen, 
+						guesses: user.guesses, 
+						early: user.early, 
+						interrupts: user.interrupts, 
+						correct: user.correct, 
+						time_spent: user.time_spent,
+						last_action: user.last_action,
+						room: name,
+						id: user.id,
+						name: user.name
+					}
+					reaped.users++
+					reaped.seen += user.seen
+					reaped.guesses += user.guesses
+					reaped.early += user.early
+					reaped.interrupts += user.interrupts
+					reaped.correct += user.correct
+					reaped.time_spent += user.time_spent
+					reaped.last_action = +new Date
+					len--
+					delete room.users[username]
+					overcrowded_room = false
+		if len is 0
+			# console.log 'removing empty room', name
+			log 'reap_room', name
+			delete rooms[name]
+			reaped.rooms++
+
+app.post '/stalkermode/kickoffline', (req, res) ->
+	clearInactive 1000 * 5 # five seconds
+	res.redirect '/stalkermode'
+
+
+app.get '/stalkermode/full', (req, res) ->
+	util = require('util')
+	res.render 'admin.jade', {
+		env: app.settings.env,
+		mem: util.inspect(process.memoryUsage()),
+		start: uptime_begin,
+		reaped: reaped,
+		full_room: true,
+		queue: Object.keys(journal_queue).length,
+		rooms: rooms
+	}
+
+app.get '/stalkermode', (req, res) ->
+	util = require('util')
+	res.render 'admin.jade', {
+		env: app.settings.env,
+		mem: util.inspect(process.memoryUsage()),
+		start: uptime_begin,
+		reaped: reaped,
+		full_room: false,
+		queue: Object.keys(journal_queue).length,
+		rooms: rooms
+	}
+
+app.get '/new', (req, res) ->
+	res.redirect '/' + names.generatePage()
+
+app.get '/', (req, res) ->
+	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'
+		options = url.parse(req.url)
+		options.host = 'protobowl.com'
+		res.writeHead 301, {Location: url.format(options)}
+		res.end()
+		return
+	res.redirect '/lobby'
+
+
 app.get '/:channel', (req, res) ->
 	name = req.params.channel
 	res.render 'room.jade', { name }
 
-app.get '/', (req, res) ->
-	res.end 'welcome to protobowl v3 beta'
 
 remote.initialize_remote()
 port = process.env.PORT || 5555
-app.listen port, ->
-	console.log "listening on port", port
+restore_journal ->
+	app.listen port, ->
+		console.log "listening on port", port

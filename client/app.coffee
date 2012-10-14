@@ -44,7 +44,7 @@ else
 			id: 'offline',
 			name: 'offline user'
 		}
-		room.users[me.id] = me
+		
 		room.sync(3)
 		me.verb 'joined the room'
 
@@ -70,6 +70,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 				# I am the master of my fate:
 				# I am the captain of my soul. 
 
+				# TODO: possibly delay this call until certain offline component is loaded
 				master_action.call(this, data, callback)
 
 	constructor: (room, id) ->
@@ -96,6 +97,8 @@ class QuizRoomSlave extends QuizRoom
 			setTimeout =>
 				@load_questions cb
 			, 100
+
+	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
 
 	get_parameters: (type, difficulty, cb) ->
 		@load_questions ->
@@ -134,6 +137,7 @@ listen 'sync', (data) -> synchronize data
 listen 'joined', (data) ->
 	me.id = data.id
 	me.name = data.name
+	room.users[me.id] = me
 	$('.actionbar button').disable false
 	$('#username').val me.name
 	$('#username').disable false

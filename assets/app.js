@@ -2226,7 +2226,6 @@ renderPartial = function() {
   last_rendering = +(new Date);
   if (!room.question) {
     if ($('.start-page').length === 0) {
-      console.log('adding a start thing');
       start = $('<div>').addClass('start-page').hide().prependTo('#history');
       well = $('<div>').addClass('well').appendTo(start);
       $('<button>').addClass('btn btn-success btn-large').text('Start the Question').appendTo(well).click(function() {
@@ -2712,7 +2711,7 @@ createBundle = function() {
     rtype = $('<div>').addClass('control-group').appendTo(form);
     rtype.append($("<label>").addClass('control-label').text('Description'));
     controls = $("<div>").addClass('controls').appendTo(rtype);
-    _ref1 = ["Wrong category", "Wrong details", "Bad question", "Broken formatting"];
+    _ref1 = ["Wrong category", "Wrong details", "Broken question"];
     for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
       option = _ref1[_i];
       controls.append($("<label>").addClass("radio").append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase())).append(option));
@@ -3538,7 +3537,7 @@ QuizRoom = (function() {
     }
   };
 
-  QuizRoom.prototype.check_answer = function() {
+  QuizRoom.prototype.check_answer = function(attempt, answer, question) {
     if (Math.random() > 0.8) {
       return 'prompt';
     }
@@ -3620,6 +3619,7 @@ QuizRoom = (function() {
           }
         }
       }
+      this.journal();
       this.attempt = null;
       return this.sync(1);
     }
@@ -3730,7 +3730,7 @@ QuizRoom = (function() {
         var _ref, _results;
         _results = [];
         for (id in this.users) {
-          if (!(!this.users[id].ninja)) {
+          if (!(id[0] !== '_')) {
             continue;
           }
           user = {};
@@ -3753,14 +3753,45 @@ QuizRoom = (function() {
     }
     if (level >= 3) {
       data.distribution = this.distribution;
-      return this.get_parameters(this.type, this.difficulty, function(difficulties, categories) {
+      this.get_parameters(this.type, this.difficulty, function(difficulties, categories) {
         data.difficulties = difficulties;
         data.categories = categories;
         return _this.emit('sync', data);
       });
+      return this.journal();
     } else {
       return this.emit('sync', data);
     }
+  };
+
+  QuizRoom.prototype.journal = function() {
+    return 0;
+  };
+
+  QuizRoom.prototype.journal_export = function() {
+    var attr, data, field, id, settings, user, user_blacklist, _i, _len;
+    data = {};
+    user_blacklist = ["sockets", "room"];
+    data.users = (function() {
+      var _ref, _results;
+      _results = [];
+      for (id in this.users) {
+        user = {};
+        for (attr in this.users[id]) {
+          if (__indexOf.call(user_blacklist, attr) < 0 && ((_ref = typeof this.users[id][attr]) !== 'function') && attr[0] !== '_') {
+            user[attr] = this.users[id][attr];
+          }
+        }
+        _results.push(user);
+      }
+      return _results;
+    }).call(this);
+    settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"];
+    for (_i = 0, _len = settings.length; _i < _len; _i++) {
+      field = settings[_i];
+      data[field] = this[field];
+    }
+    return data;
   };
 
   return QuizRoom;
@@ -3810,7 +3841,6 @@ if (typeof io !== "undefined" && io !== null) {
       id: 'offline',
       name: 'offline user'
     });
-    room.users[me.id] = me;
     room.sync(3);
     return me.verb('joined the room');
   });
@@ -3892,6 +3922,10 @@ QuizRoomSlave = (function(_super) {
     }
   };
 
+  QuizRoomSlave.prototype.check_answer = function(attempt, answer, question) {
+    return checkAnswer(attempt, answer, question);
+  };
+
   QuizRoomSlave.prototype.get_parameters = function(type, difficulty, cb) {
     return this.load_questions(function() {
       return get_parameters(type, difficulty, cb);
@@ -3968,6 +4002,7 @@ listen('sync', function(data) {
 listen('joined', function(data) {
   me.id = data.id;
   me.name = data.name;
+  room.users[me.id] = me;
   $('.actionbar button').disable(false);
   $('#username').val(me.name);
   return $('#username').disable(false);

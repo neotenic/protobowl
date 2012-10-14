@@ -236,7 +236,8 @@ class QuizRoom
 			@new_question()
 			
 
-	check_answer: ->
+	check_answer: (attempt, answer, question) ->
+		# this is a mock answer checker in lieu of an actual one
 		return 'prompt' if Math.random() > 0.8
 		return Math.random() > 0.3
 
@@ -312,6 +313,7 @@ class QuizRoom
 						@finish() # if everyone's buzzed and nobody can buzz, then why continue reading
 
 			# journal @name
+			@journal()
 			@attempt = null #g'bye
 			@sync(1) #two syncs in one request!
 
@@ -413,7 +415,7 @@ class QuizRoom
 			data[attr] = this[attr]
 
 		if level >= 1
-			data.users = for id of @users when !@users[id].ninja
+			data.users = for id of @users when id[0] isnt '_'
 				user = {}
 				for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function'] and attr[0] != '_'
 					user[attr] = @users[id][attr] 
@@ -434,24 +436,28 @@ class QuizRoom
 				data.difficulties = difficulties
 				data.categories = categories
 				@emit 'sync', data
+
+			@journal()
 		else
 			@emit 'sync', data
 	
-	# journal_backup: ->
-	# 	# this is like a simplified sync
-	# 	data = {}
-	# 	# user data!
-	# 	user_blacklist = ["sockets"]
-	# 	data.users = for id of @users
-	# 		user = {}
-	# 		for attr of @users[id] when attr not in user_blacklist
-	# 			user[attr] = @users[id][attr]
-	# 		user
-	# 	# global room settings
-	# 	settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"]
-	# 	for field in settings
-	# 		data[field] = @[field]
-	# 	# actually save stuff
-	# 	return data
+	journal: -> 0 # unimplemented
+
+	journal_export: ->
+		# this is like a simplified sync
+		data = {}
+		# user data!
+		user_blacklist = ["sockets", "room"]
+		data.users = for id of @users
+			user = {}
+			for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function'] and attr[0] != '_'
+				user[attr] = @users[id][attr]
+			user
+		# global room settings
+		settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"]
+		for field in settings
+			data[field] = @[field]
+		# actually save stuff
+		return data
 
 exports.QuizRoom = QuizRoom if exports?

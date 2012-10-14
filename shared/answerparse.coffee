@@ -5,9 +5,18 @@
 # and even more weird things are outright rejected.
 
 do ->
-	# removeDiacritics = require('./removeDiacritics').removeDiacritics unless removeDiacritics?
-	# damlev = require('./levenshtein').levenshtein unless levenshtein?
-	# stemmer = require('./porter').stemmer unless PorterStemmer?
+	if removeDiacritics?
+		remove_diacritics = removeDiacritics
+	else
+		remove_diacritics = require('./removeDiacritics').removeDiacritics
+	if levenshtein?
+		damlev = levenshtein
+	else
+		damlev = require('./levenshtein').levenshtein 
+	if PorterStemmer?
+		stemmer = PorterStemmer
+	else
+		stemmer = require('./porter').stemmer
 	# stopwords = 'lol,dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
 	# some people like to append "lol" to every answer
 	stopwords = "derp rofl lmao lawl lole lol the prompt on of is a in on that have for at so it do or de y by accept any and".split(' ')
@@ -15,8 +24,11 @@ do ->
 	# commwords = "war battle river"
 
 	log = (args...)->
-		if exports.log
-			exports.log(args...)
+		if exports?
+			if exports.log
+				exports.log(args...)
+		else
+			console.log args...
 
 	parseAnswer = (answer) ->
 		answer = answer.replace(/[\[\]\<\>\{\}][\w\-]+?[\[\]\<\>\{\}]/g, '')
@@ -26,7 +38,7 @@ do ->
 		pos = []
 		neg = []
 		for part in clean 
-			part = removeDiacritics(part) #clean out some non-latin characters
+			part = remove_diacritics(part) #clean out some non-latin characters
 			part = part.replace(/\"|\'|\“|\”|\.|’|\:/g, '')
 			part = part.replace(/-/g, ' ')
 			
@@ -69,7 +81,7 @@ do ->
 
 
 	stem = (word) ->
-		return PorterStemmer word.replace(/ez$/g, 'es').replace(/[^\w]/g, '')
+		return stemmer word.replace(/ez$/g, 'es').replace(/[^\w]/g, '')
 
 	splitWords = (text) ->
 		arr = (word.trim() for word in text.toLowerCase().split(/\s+/))
@@ -199,6 +211,9 @@ do ->
 			log "ERROR", error
 			return false
 	stopnames = splitWords stopnames
+
 	if exports?
 		exports.checkAnswer = safeCheckAnswer
 		exports.parseAnswer = parseAnswer
+	else if window?
+		window.checkAnswer = safeCheckAnswer

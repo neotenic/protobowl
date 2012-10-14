@@ -74,11 +74,11 @@ html(lang="en")
 						if user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10
 							mixin display_user(user)
 
-							li
-								form(action="/stalkermode/ban", method="post")
-									input(type="hidden", name="room", value="#{room.name}")
-									input(type="hidden", name="user", value="#{id}")
-									input(type="submit", value="Ban #{user.name} from #{room.name}")
+							//- li
+							//- 	form(action="/stalkermode/ban", method="post")
+							//- 		input(type="hidden", name="room", value="#{room.name}")
+							//- 		input(type="hidden", name="user", value="#{id}")
+							//- 		input(type="submit", value="Ban #{user.name} from #{room.name}")
 				ul.idle
 					each user, id in room.users
 						if user.sockets.length > 0 && new Date - user.last_action > 1000 * 60 * 10
@@ -89,6 +89,13 @@ html(lang="en")
 							mixin display_user(user)
 
 		h1 STALKERMODE ENGAGED
+		
+		if full_room
+			h4 FULL VIEW
+			a(href="/stalkermode") Summary Stalkermode View
+		else
+			h4 SUMMARY VIEW
+			a(href="/stalkermode/full") Full Stalkermode View
 		p #{mem}
 		- var online = 0, active_users = 0, points = 0, room_num = 0, active_rooms = 0, time_spent = 0, total_users = 0
 		each room, room_name in rooms
@@ -124,7 +131,10 @@ html(lang="en")
 			- var sorted_names = Object.keys(rooms).sort(function(b,a){return weight_room(rooms[a]) - weight_room(rooms[b])})
 			each room_name in sorted_names
 				- var room = rooms[room_name]
-				mixin display_room(room, room_name)
+				if full_room || count_online(room) > 0
+					mixin display_room(room, room_name)
+
+
 		hr
 		form(action="/stalkermode/announce", method="post")
 			label(for="name") Name (no spaces!) 
@@ -143,11 +153,11 @@ html(lang="en")
 			button(type="submit") Kick Offline Users
 
 
-		form(action="/stalkermode/update", method="post")
-			button(type="submit") Trigger Application Update
+		//- form(action="/stalkermode/update", method="post")
+		//- 	button(type="submit") Trigger Application Update
 
-		form(action="/stalkermode/forceupdate", method="post")
-			button(type="submit") Force Application Update
+		//- form(action="/stalkermode/forceupdate", method="post")
+		//- 	button(type="submit") Force Application Update
 
-		form(action="/stalkermode/crash", method="post")
-			button(type="submit") Crash Server
+		//- form(action="/stalkermode/crash", method="post")
+		//- 	button(type="submit") Crash Server

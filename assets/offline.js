@@ -761,14 +761,33 @@ var __slice = [].slice,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 (function() {
-  var advancedCompare, checkAnswer, checkWord, isPerson, levens, log, parseAnswer, rawCompare, reduceAlphabet, reduceLetter, replaceNumber, safeCheckAnswer, splitWords, stem, stopnames, stopwords;
+  var advancedCompare, checkAnswer, checkWord, damlev, isPerson, levens, log, parseAnswer, rawCompare, reduceAlphabet, reduceLetter, remove_diacritics, replaceNumber, safeCheckAnswer, splitWords, stem, stemmer, stopnames, stopwords;
+  if (typeof removeDiacritics !== "undefined" && removeDiacritics !== null) {
+    remove_diacritics = removeDiacritics;
+  } else {
+    remove_diacritics = require('./removeDiacritics').removeDiacritics;
+  }
+  if (typeof levenshtein !== "undefined" && levenshtein !== null) {
+    damlev = levenshtein;
+  } else {
+    damlev = require('./levenshtein').levenshtein;
+  }
+  if (typeof PorterStemmer !== "undefined" && PorterStemmer !== null) {
+    stemmer = PorterStemmer;
+  } else {
+    stemmer = require('./porter').stemmer;
+  }
   stopwords = "derp rofl lmao lawl lole lol the prompt on of is a in on that have for at so it do or de y by accept any and".split(' ');
   stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold luke matthew";
   log = function() {
     var args;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if (exports.log) {
-      return exports.log.apply(exports, args);
+    if (typeof exports !== "undefined" && exports !== null) {
+      if (exports.log) {
+        return exports.log.apply(exports, args);
+      }
+    } else {
+      return console.log.apply(console, args);
     }
   };
   parseAnswer = function(answer) {
@@ -799,7 +818,7 @@ var __slice = [].slice,
     neg = [];
     for (_i = 0, _len = clean.length; _i < _len; _i++) {
       part = clean[_i];
-      part = removeDiacritics(part);
+      part = remove_diacritics(part);
       part = part.replace(/\"|\'|\“|\”|\.|’|\:/g, '');
       part = part.replace(/-/g, ' ');
       if (/equivalent|word form|other wrong/.test(part)) {
@@ -870,7 +889,7 @@ var __slice = [].slice,
     return word;
   };
   stem = function(word) {
-    return PorterStemmer(word.replace(/ez$/g, 'es').replace(/[^\w]/g, ''));
+    return stemmer(word.replace(/ez$/g, 'es').replace(/[^\w]/g, ''));
   };
   splitWords = function(text) {
     var arr, word, words;
@@ -1084,6 +1103,8 @@ var __slice = [].slice,
   if (typeof exports !== "undefined" && exports !== null) {
     exports.checkAnswer = safeCheckAnswer;
     return exports.parseAnswer = parseAnswer;
+  } else if (typeof window !== "undefined" && window !== null) {
+    return window.checkAnswer = safeCheckAnswer;
   }
 })();
 
