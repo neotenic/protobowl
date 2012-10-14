@@ -6,7 +6,7 @@ parseCookie = require('express/node_modules/connect').utils.parseCookie
 rooms = {}
 {QuizRoom} = require '../shared/room'
 {QuizPlayer} = require '../shared/player'
-{checkAnswer} = require '../shared/answerparse'
+{checkAnswer} = require '../shared/checker'
 
 names = require '../shared/names'
 uptime_begin = +new Date

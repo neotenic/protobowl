@@ -4,7 +4,7 @@
 #= require ../shared/levenshtein.js
 #= require ../shared/porter.js
 #= require ../shared/syllable.js
-#= require ../shared/answerparse.coffee
+#= require ../shared/checker.coffee
 #= require ../shared/sample.coffee
 #= require chatbot.js
 
