@@ -1931,7 +1931,7 @@ $('body').keydown(function(e) {
     return $('.bundle:not(.active):first .readout').slideToggle();
   } else if ((_ref3 = e.keyCode) === 80 || _ref3 === 82) {
     return $('.pausebtn').click();
-  } else if ((_ref4 = e.keyCode) === 47 || _ref4 === 111 || _ref4 === 191 || _ref4 === 67 || _ref4 === 65) {
+  } else if ((_ref4 = e.keyCode) === 47 || _ref4 === 111 || _ref4 === 191 || _ref4 === 67 || _ref4 === 65 || _ref4 === 13) {
     e.preventDefault();
     return $('.chatbtn').click();
   } else if ((_ref5 = e.keyCode) === 70) {

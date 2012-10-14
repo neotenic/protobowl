@@ -370,7 +370,7 @@ partial_journal = (name) ->
 				log 'log', 'got trigger to do full sync'
 				journal_queue = {} # full syncs clear queue
 				full_journal_sync()
-	req.on 'error', ->
+	req.on 'error', (e) ->
 		log 'error', 'journal error ' + e.message
 		# console.log "journal error"
 	req.write(JSON.stringify(rooms[name].journal_export()))
