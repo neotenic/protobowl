@@ -21,10 +21,10 @@ if io?
 	sock = io.connect location.hostname, {
 		"connect timeout": 2000
 	}
-	
+
 	sock.on 'connect', ->
 		$('.disconnect-notice').slideUp()
-		me.disco { old_socket: localStorage.old_socket }
+		me.disco { old_socket: localStorage.old_socket, version: 5 } # tell the server the client version to allow the server to disconnect
 
 	sock.on 'disconnect', ->
 		room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes

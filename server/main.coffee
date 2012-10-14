@@ -190,7 +190,7 @@ log = (action, obj) ->
 	req = http.request log_config, ->
 		# console.log "saved log"
 	req.on 'error', ->
-		console.log "backup log", action, obj
+		console.log "backup log", action, JSON.stringify(obj)
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
 	req.end()
 
@@ -224,6 +224,11 @@ class SocketQuizPlayer extends QuizPlayer
 	disco: (data) ->
 		if data.old_socket and io.sockets.socket(data.old_socket)
 			io.sockets.socket(data.old_socket).disconnect()
+		if !data.version or data.version < 5
+			io.sockets.emit 'force_application_update', +new Date
+			io.sockets.emit 'application_update', +new Date
+			io.sockets.socket(sock).disconnect() for sock in @sockets
+			
 
 	online: -> @sockets.length > 0
 

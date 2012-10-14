@@ -1359,7 +1359,7 @@ addImportant = function(el) {
   if ($('#history .bundle.active .sticky').length !== 0) {
     el.css('display', 'none').prependTo($('#history .bundle.active .sticky'));
   } else {
-    el.css('display', 'none').prependTo($('#history'));
+    el.css('display', 'none').prependTo($('#history .sticky:first'));
   }
   el.slideDown();
   return el;
@@ -1397,7 +1397,7 @@ guessAnnotation = function(_arg) {
     line.append(ruling);
     annotation_spot = $('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations');
     if (annotation_spot.length === 0) {
-      annotation_spot = $('#history');
+      annotation_spot = $('#history .annotations:first');
     }
     line.css('display', 'none').prependTo(annotation_spot);
     line.slideDown();
@@ -3823,7 +3823,8 @@ if (typeof io !== "undefined" && io !== null) {
   sock.on('connect', function() {
     $('.disconnect-notice').slideUp();
     return me.disco({
-      old_socket: localStorage.old_socket
+      old_socket: localStorage.old_socket,
+      version: 5
     });
   });
   sock.on('disconnect', function() {
