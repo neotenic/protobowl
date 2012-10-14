@@ -18,7 +18,7 @@ try
 catch err
 	questions = []
 	count = 0
-	fs.readFile 'assets/sample.txt', 'utf8', (err, data) ->
+	fs.readFile 'static/sample.txt', 'utf8', (err, data) ->
 		throw err if err
 		questions = (JSON.parse(line) for line in data.split("\n"))
 
@@ -92,8 +92,8 @@ if app.settings.env is 'production' and remote.deploy
 
 if app.settings.env is 'development'
 	app.use require('less-middleware')({
-		src: "assets/less",
-		dest: "assets",
+		src: "static/less",
+		dest: "static",
 		compress: true
 	})
 	Snockets = require 'snockets'
@@ -107,15 +107,15 @@ if app.settings.env is 'development'
 	app.use (req, res, next) ->
 		if req.url is '/app.js'
 			snockets.getConcatenation 'client/app.coffee', (err, js) ->
-				fs.writeFile 'assets/app.js', err || js, 'utf8', ->
+				fs.writeFile 'static/app.js', err || js, 'utf8', ->
 					next()
 		else if req.url is '/offline.js'
 			snockets.getConcatenation 'client/offline.coffee', (err, js) ->
-				fs.writeFile 'assets/offline.js', err || js, 'utf8', ->
+				fs.writeFile 'static/offline.js', err || js, 'utf8', ->
 					next()
 		# else if req.url is '/protobowl.css'
 		# 	parser = new(less.Parser)({
-		# 		paths: ['assets/less'],
+		# 		paths: ['static/less'],
 		# 		filename: 'protobowl.less'
 		# 	})
 		# 	parser.parse
@@ -124,10 +124,10 @@ if app.settings.env is 'development'
 
 	scheduledUpdate = null
 	updateCache = ->
-		fs.readFile 'assets/offline.appcache', 'utf8', (err, data) ->
+		fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
 			throw err if err
 			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
-			fs.writeFile 'assets/offline.appcache', data, (err) ->
+			fs.writeFile 'static/offline.appcache', data, (err) ->
 				throw err if err
 				setTimeout ->
 					io.sockets.emit 'force_application_update', +new Date
@@ -145,8 +145,8 @@ if app.settings.env is 'development'
 
 app.use express.compress()
 # app.use express.staticCache()
-app.use express.static('assets')
-app.use express.favicon('assets/img/favicon.ico')
+app.use express.static('static')
+app.use express.favicon('static/img/favicon.ico')
 
 
 Cookies = require 'cookies'
