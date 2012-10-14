@@ -55,10 +55,10 @@ catch err
 				temp_filtered = filterQuestions(diff, cat)
 				current_queue = (temp_filtered[index] for index in fisher_yates(temp_filtered.length))
 				cb current_queue.shift()
-		get_difficulties: (type) ->
-			listProps 'difficulty'
-		get_categories: (type) ->
-			listProps 'category'
+		
+		get_parameters: (type, difficulty, cb) ->
+			cb listProps('difficulty'), listProps('category')
+
 		count_questions: (type, diff, cat, cb) ->
 			cb filterQuestions(diff, cat).length
 	}
