@@ -17,7 +17,6 @@ initialize_offline = (cb) ->
 		success: cb
 	}
 
-
 if io?
 	sock = io.connect()
 
