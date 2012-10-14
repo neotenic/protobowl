@@ -3867,63 +3867,24 @@ QuizRoomSlave = (function(_super) {
 
   QuizRoomSlave.prototype.get_parameters = function(type, difficulty, cb) {
     return this.load_questions(function() {
-      var categories, difficulties, question, x, _i, _j, _len, _len1;
-      difficulties = {};
-      for (_i = 0, _len = offline_questions.length; _i < _len; _i++) {
-        question = offline_questions[_i];
-        difficulties[question.difficulty] = 1;
-      }
-      categories = {};
-      for (_j = 0, _len1 = offline_questions.length; _j < _len1; _j++) {
-        question = offline_questions[_j];
-        if (question.difficulty === difficulty || !difficulty) {
-          categories[question.category] = 1;
-        }
-      }
-      return cb((function() {
-        var _results;
-        _results = [];
-        for (x in difficulties) {
-          _results.push(x);
-        }
-        return _results;
-      })(), (function() {
-        var _results;
-        _results = [];
-        for (x in categories) {
-          _results.push(x);
-        }
-        return _results;
-      })());
+      return get_parameters(type, difficulty, cb);
     });
   };
 
   QuizRoomSlave.prototype.count_questions = function(type, difficulty, category, cb) {
     return this.load_questions(function() {
-      var candidates, question;
-      candidates = (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = offline_questions.length; _i < _len; _i++) {
-          question = offline_questions[_i];
-          if ((question.difficulty === difficulty || !difficulty) && (question.category === category || !category)) {
-            _results.push(question);
-          }
-        }
-        return _results;
-      })();
-      return cb(candidates.length);
+      return count_questions(type, difficulty, category, cb);
     });
   };
 
   QuizRoomSlave.prototype.get_question = function(cb) {
+    var _this = this;
     return this.load_questions(function() {
-      var question;
-      question = offline_questions.sort(function(a, b) {
-        return a._inc - b._inc;
-      })[0];
-      question._inc += Math.random() + 1;
-      return cb(question);
+      var category;
+      category = (_this.category === 'custom' ? _this.distribution : _this.category);
+      return get_question(_this.type, _this.difficulty, category, function(question) {
+        return cb(question || error_question);
+      });
     });
   };
 

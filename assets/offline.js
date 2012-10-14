@@ -1179,7 +1179,8 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.AliasMethod = AliasMethod;
 }
 
-var clone_shallow, count_cache, get_categories, get_difficulties, get_parameters, get_question, load_questions, offline_questions, recursive_counts;
+var clone_shallow, count_cache, count_questions, get_categories, get_difficulties, get_parameters, get_question, load_questions, offline_questions, recursive_counts,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 offline_questions = [];
 
@@ -1202,8 +1203,9 @@ load_questions = function(cb) {
       for (_i = 0, _len = offline_questions.length; _i < _len; _i++) {
         question = offline_questions[_i];
         question._inc = Math.random();
+        question.type = 'qb';
       }
-      return recursive_counts(['difficulty', 'category'], {}, function(layers) {
+      return recursive_counts(['type', 'difficulty', 'category'], {}, function(layers) {
         count_cache = layers;
         return setTimeout(cb, 100);
       });
@@ -1300,6 +1302,42 @@ recursive_counts = function(attributes, criterion, cb) {
   });
 };
 
+count_questions = function(type, difficulty, category, cb) {
+  var all_cats, all_diffs, cat, count, count_sum, diff, safe_count, search_cats, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+  all_cats = get_categories(type);
+  all_diffs = get_difficulties(type);
+  count_sum = 0;
+  search_cats = [category];
+  if (typeof category === "object") {
+    search_cats = (function() {
+      var _results;
+      _results = [];
+      for (cat in category) {
+        count = category[cat];
+        if (count > 0) {
+          _results.push(cat);
+        }
+      }
+      return _results;
+    })();
+  }
+  for (_i = 0, _len = all_cats.length; _i < _len; _i++) {
+    cat = all_cats[_i];
+    for (_j = 0, _len1 = all_diffs.length; _j < _len1; _j++) {
+      diff = all_diffs[_j];
+      if (difficulty && diff !== difficulty) {
+        continue;
+      }
+      if (category && __indexOf.call(search_cats, cat) < 0) {
+        continue;
+      }
+      safe_count = (_ref = count_cache[type]) != null ? (_ref1 = _ref.difficulty[diff]) != null ? (_ref2 = _ref1.category[cat]) != null ? _ref2.count : void 0 : void 0 : void 0;
+      count_sum += safe_count || 0;
+    }
+  }
+  return cb(count_sum);
+};
+
 get_question = function(type, difficulty, category, cb) {
   var question, sampler;
   if (count_cache === null) {
@@ -1361,9 +1399,8 @@ get_categories = function(type, difficulty) {
 get_parameters = function(type, difficulty, cb) {
   if (count_cache === null) {
     setTimeout(function() {
-      console.log('retrying to see if the count cache has been initialized (param search)');
       return get_parameters(type, difficulty, cb);
-    }, 1000);
+    }, 100);
     return;
   }
   return cb(get_difficulties(type), get_categories(type, difficulty));

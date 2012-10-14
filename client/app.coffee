@@ -99,26 +99,17 @@ class QuizRoomSlave extends QuizRoom
 
 	get_parameters: (type, difficulty, cb) ->
 		@load_questions ->
-			difficulties = {}
-			for question in offline_questions
-				difficulties[question.difficulty] = 1
-			categories = {}
-			for question in offline_questions when question.difficulty is difficulty or !difficulty
-				categories[question.category] = 1
-			cb (x for x of difficulties), (x for x of categories)
+			get_parameters(type, difficulty, cb)
 
 	count_questions: (type, difficulty, category, cb) ->
 		@load_questions ->
-			candidates = (question for question in offline_questions when (question.difficulty is difficulty or !difficulty) and (question.category is category or !category))
-			cb candidates.length
+			count_questions(type, difficulty, category, cb)
 
 	get_question: (cb) ->
-		@load_questions ->
-			# this is naive compared to the one on the server side
-			# which uses sampling and stuff
-			question = offline_questions.sort((a, b) -> a._inc - b._inc)[0]
-			question._inc += Math.random() + 1
-			cb(question)
+		@load_questions =>
+			category = (if @category is 'custom' then @distribution else @category)
+			get_question @type, @difficulty, category, (question) =>
+				cb(question || error_question)
 
 
 room = new QuizRoomSlave()

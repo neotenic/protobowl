@@ -15,9 +15,11 @@ load_questions = (cb) ->
 	if offline_questions.length is 0
 		$.ajax('sample.txt').done (text) ->
 			offline_questions = (jQuery.parseJSON(line) for line in text.split('\n'))
-			question._inc = Math.random() for question in offline_questions
+			for question in offline_questions
+				question._inc = Math.random()
+				question.type = 'qb'
 			
-			recursive_counts ['difficulty', 'category'], {}, (layers) ->
+			recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
 				count_cache = layers
 				setTimeout cb, 100		
 	else
@@ -74,6 +76,24 @@ recursive_counts = (attributes, criterion, cb) ->
 						next_slice()
 		next_slice()
 
+count_questions = (type, difficulty, category, cb) ->
+	all_cats = get_categories(type)
+	all_diffs = get_difficulties(type)
+	count_sum = 0
+	search_cats = [category]
+	if typeof category is "object"
+		search_cats = (cat for cat, count of category when count > 0)
+	# console.log 'cats', search_cats
+	for cat in all_cats
+		for diff in all_diffs
+			continue if difficulty and diff != difficulty
+			continue if category and cat not in search_cats
+			
+			safe_count = count_cache[type]?.difficulty[diff]?.category[cat]?.count
+			# console.log 'count of ',diff, cat, safe_count
+			count_sum += (safe_count || 0)
+
+	cb(count_sum)
 
 get_question = (type, difficulty, category, cb) ->
 	if count_cache == null
@@ -110,8 +130,7 @@ get_categories = (type, difficulty) ->
 get_parameters = (type, difficulty, cb) ->
 	if count_cache == null
 		setTimeout ->
-			console.log 'retrying to see if the count cache has been initialized (param search)'
 			get_parameters type, difficulty, cb
-		, 1000
+		, 100
 		return
 	cb get_difficulties(type), get_categories(type, difficulty)
