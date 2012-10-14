@@ -12,7 +12,7 @@ names = require '../shared/names'
 uptime_begin = +new Date
 
 try 
-	remote = require './remotee'
+	remote = require './remote'
 catch err
 	questions = []
 	count = 0
@@ -83,7 +83,7 @@ io.configure 'development', ->
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
 
-if app.settings.env is 'production'
+if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
 	console.log 'set to deployment defaults'
@@ -226,12 +226,14 @@ class SocketQuizPlayer extends QuizPlayer
 	online: -> @sockets.length > 0
 
 	report_question: (data) ->
+		return unless data
 		data.room = @room.name
 		data.user = @id + '-' + @name
 		remote.handle_report data if remote.handle_report
 		log 'report_question', data
 
-	report_answer: ->
+	report_answer: (data) ->
+		return unless data
 		data.room = @room.name
 		data.user = @id + '-' + @name
 		log 'report_answer', data
@@ -479,6 +481,15 @@ app.post '/stalkermode/kickoffline', (req, res) ->
 	clearInactive 1000 * 5 # five seconds
 	res.redirect '/stalkermode'
 
+app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
+	io.sockets.emit 'chat', {
+		text: req.body.message, 
+		session: Math.random().toString(36).slice(3), 
+		user: '__' + req.body.name, 
+		done: true,
+		time: +new Date
+	}
+	res.redirect '/stalkermode'
 
 app.get '/stalkermode/full', (req, res) ->
 	util = require('util')

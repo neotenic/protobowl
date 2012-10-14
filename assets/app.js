@@ -3817,7 +3817,9 @@ initialize_offline = function(cb) {
 };
 
 if (typeof io !== "undefined" && io !== null) {
-  sock = io.connect();
+  sock = io.connect(location.hostname, {
+    "connect timeout": 2000
+  });
   sock.on('connect', function() {
     $('.disconnect-notice').slideUp();
     return me.disco({

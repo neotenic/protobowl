@@ -18,8 +18,10 @@ initialize_offline = (cb) ->
 	}
 
 if io?
-	sock = io.connect()
-
+	sock = io.connect location.hostname, {
+		"connect timeout": 2000
+	}
+	
 	sock.on 'connect', ->
 		$('.disconnect-notice').slideUp()
 		me.disco { old_socket: localStorage.old_socket }
