@@ -1168,12 +1168,22 @@
 
 }(window.jQuery);
 
+var clone_shallow;
 
 window.requestAnimationFrame || (window.requestAnimationFrame = window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
   return window.setTimeout(function() {
     return callback(+new Date());
   }, 1000 / 60);
 });
+
+clone_shallow = function(obj) {
+  var attr, new_obj;
+  new_obj = {};
+  for (attr in obj) {
+    new_obj[attr] = obj[attr];
+  }
+  return new_obj;
+};
 
 jQuery.fn.disable = function(value) {
   var current;
@@ -1958,13 +1968,14 @@ $('.difficulties').change(function() {
 });
 
 $('.dist-picker .increase').live('click', function(e) {
-  var item, _i, _len, _ref, _results;
+  var item, obj, _i, _len, _ref, _results;
   if (!room.distribution) {
     return;
   }
   item = $(this).parents('.category-item');
-  room.distribution[$(item).data('value')]++;
-  me.set_distribution(room.distribution);
+  obj = clone_shallow(room.distribution);
+  obj[$(item).data('value')]++;
+  me.set_distribution(obj);
   _ref = $('.custom-category .category-item');
   _results = [];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -1975,7 +1986,7 @@ $('.dist-picker .increase').live('click', function(e) {
 });
 
 $('.dist-picker .decrease').live('click', function(e) {
-  var cat, item, s, val, _i, _len, _ref, _ref1, _results;
+  var cat, item, obj, s, val, _i, _len, _ref, _ref1, _results;
   if (!room.distribution) {
     return;
   }
@@ -1986,9 +1997,10 @@ $('.dist-picker .decrease').live('click', function(e) {
     val = _ref[cat];
     s += val;
   }
-  if (room.distribution[$(item).data('value')] > 0 && s > 1) {
-    room.distribution[$(item).data('value')]--;
-    me.set_distribution(room.distribution);
+  obj = clone_shallow(room.distribution);
+  if (obj[$(item).data('value')] > 0 && s > 1) {
+    obj[$(item).data('value')]--;
+    me.set_distribution(obj);
   }
   _ref1 = $('.custom-category .category-item');
   _results = [];
@@ -3262,6 +3274,7 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.reset_score = function() {
+    this.verb("was reset from " + this.correct + " correct of " + this.guesses + " guesses and " + (this.score()) + " points");
     this.seen = this.interrupts = this.guesses = this.correct = this.early = 0;
     return this.room.sync(1);
   };
@@ -3778,7 +3791,7 @@ if (typeof io !== "undefined" && io !== null) {
     line.append($('<p>').append("This may be due to a drop in the network 				connectivity or a malfunction in the server. The client will automatically 				attempt to reconnect to the server and in the mean time, the app has automatically transitioned				into <b>offline mode</b>. You can continue playing alone with a limited offline set				of questions without interruption. However, you might want to try <a href=''>reloading</a>."));
     return addImportant($('<div>').addClass('log disconnect-notice').append(line));
   });
-  setTimeout(initialize_offline, 100);
+  setTimeout(initialize_offline, 1000);
 } else {
   initialize_offline(function() {
     room.__listeners.joined({

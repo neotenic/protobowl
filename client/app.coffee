@@ -37,7 +37,7 @@ if io?
 				of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
 		addImportant $('<div>').addClass('log disconnect-notice').append(line)
 
-	setTimeout initialize_offline, 100
+	setTimeout initialize_offline, 1000
 else
 	initialize_offline ->
 		room.__listeners.joined {

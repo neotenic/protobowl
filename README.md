@@ -5,7 +5,6 @@
 # VERSION 3 YO
 # TODO (high priority)
 
-* Fix offline
 * Move past less-middleware
 
 
@@ -22,6 +21,7 @@
 * less jarring start offset interface
 
 # Mostly Done
+* Fix offline
 * Trolling voting interface
 * Keep Offline mode in-sync with protocol revisions
 * Add sounds

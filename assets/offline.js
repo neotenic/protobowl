@@ -1179,7 +1179,7 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.AliasMethod = AliasMethod;
 }
 
-var clone_shallow, count_cache, count_questions, get_categories, get_difficulties, get_parameters, get_question, load_questions, offline_questions, recursive_counts,
+var count_cache, count_questions, get_categories, get_difficulties, get_parameters, get_question, load_questions, offline_questions, recursive_counts,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 offline_questions = [];
@@ -1213,15 +1213,6 @@ load_questions = function(cb) {
   } else {
     return setTimeout(cb, 100);
   }
-};
-
-clone_shallow = function(obj) {
-  var attr, new_obj;
-  new_obj = {};
-  for (attr in obj) {
-    new_obj[attr] = obj[attr];
-  }
-  return new_obj;
 };
 
 recursive_counts = function(attributes, criterion, cb) {
