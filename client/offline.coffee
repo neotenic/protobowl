@@ -25,10 +25,6 @@ load_questions = (cb) ->
 	else
 		setTimeout cb, 100
 
-clone_shallow = (obj) ->
-	new_obj = {}
-	new_obj[attr] = obj[attr] for attr of obj
-	return new_obj
 
 recursive_counts = (attributes, criterion, cb) ->
 	criterion_filter = (criterion) ->

@@ -8,6 +8,10 @@ window.requestAnimationFrame ||=
       callback(+new Date())
     , 1000 / 60)
 
+clone_shallow = (obj) ->
+	new_obj = {}
+	new_obj[attr] = obj[attr] for attr of obj
+	return new_obj
 
 jQuery.fn.disable = (value) ->
 	current = $(this).attr('disabled') is 'disabled'
