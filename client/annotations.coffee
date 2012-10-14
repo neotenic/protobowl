@@ -64,7 +64,7 @@ addImportant = (el) ->
 	if $('#history .bundle.active .sticky').length isnt 0
 		el.css('display', 'none').prependTo $('#history .bundle.active .sticky')
 	else
-		el.css('display', 'none').prependTo $('#history')
+		el.css('display', 'none').prependTo $('#history .sticky:first')
 	el.slideDown()
 	return el
 
@@ -112,7 +112,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		# addAnnotation line
 		annotation_spot = $('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations')
 		if annotation_spot.length is 0
-			annotation_spot = $('#history')
+			annotation_spot = $('#history .annotations:first')
 		line.css('display', 'none').prependTo annotation_spot
 		line.slideDown()
 	if done

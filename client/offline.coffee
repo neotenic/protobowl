@@ -5,8 +5,8 @@
 #= require ../shared/porter.js
 #= require ../shared/syllable.js
 #= require ../shared/answerparse.coffee
-#= require ../shared/chatbot.js
 #= require ../shared/sample.coffee
+#= require chatbot.js
 
 offline_questions = []
 count_cache = null

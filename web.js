@@ -7,13 +7,3 @@
 require('coffee-script')
 process.chdir(__dirname)
 require('./server/main')
-
-
-
-
-// var  app = require('connect').createServer()
-// var assets = require('connect-assets')
-// app.use(assets({src: "server/../assets"}))
-// css.root = 'less'
-// console.log(css("protobowl"))
-// app.listen(3590)

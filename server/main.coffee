@@ -12,7 +12,9 @@ names = require '../shared/names'
 uptime_begin = +new Date
 
 try 
+	
 	remote = require './remote'
+
 catch err
 	questions = []
 	count = 0
@@ -122,10 +124,10 @@ if app.settings.env is 'development'
 
 	scheduledUpdate = null
 	updateCache = ->
-		fs.readFile 'assets/protobowl.appcache', 'utf8', (err, data) ->
+		fs.readFile 'assets/offline.appcache', 'utf8', (err, data) ->
 			throw err if err
 			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
-			fs.writeFile 'assets/protobowl.appcache', data, (err) ->
+			fs.writeFile 'assets/offline.appcache', data, (err) ->
 				throw err if err
 				setTimeout ->
 					io.sockets.emit 'force_application_update', +new Date
@@ -133,7 +135,7 @@ if app.settings.env is 'development'
 				scheduledUpdate = null
 
 	watcher = (event, filename) ->
-		return if filename in ["protobowl.appcache", "protobowl.css", "app.js"]
+		return if filename in ["offline.appcache", "protobowl.css", "app.js"]
 		console.log "changed file", filename
 		unless scheduledUpdate
 			scheduledUpdate = setTimeout updateCache, 500
@@ -188,7 +190,7 @@ log = (action, obj) ->
 	req = http.request log_config, ->
 		# console.log "saved log"
 	req.on 'error', ->
-		console.log "logging error"
+		console.log "backup log", action, obj
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
 	req.end()
 
@@ -260,15 +262,28 @@ class SocketQuizPlayer extends QuizPlayer
 		id = sock.id
 
 		@room.journal()
+		
+		user_count_log 'connected ' + @id + '-' + @name
 
 		sock.on 'disconnect', =>
 			@sockets = (s for s in @sockets when s isnt id)
 			@disconnect()
 			@room.journal()
+			user_count_log 'disconnected ' + @id + '-' + @name
+
 
 	emit: (name, data) ->
 		for sock in @sockets
 			io.sockets.socket(sock).emit(name, data)
+
+user_count_log = (message) ->
+	active_count = 0
+	online_count = 0
+	for name, room of rooms
+		for uid, user of room.users
+			online_count++ if user.online()
+			active_count++ if user.active()
+	log 'user_count', { online: online_count, active: active_count, message: message}
 
 io.sockets.on 'connection', (sock) ->
 	headers = sock.handshake.headers
@@ -310,6 +325,8 @@ io.sockets.on 'connection', (sock) ->
 	
 	user.add_socket sock
 	sock.join room_name
+	if is_god
+		sock.join name for name of rooms
 
 	sock.emit 'joined', { id: user.id, name: user.name }
 	
@@ -344,10 +361,12 @@ partial_journal = (name) ->
 		# console.log "committed journal for", name
 		res.on 'data', (chunk) ->
 			if chunk == 'do_full_sync'
-				console.log 'got trigger for doing a full journal sync'
+				# console.log 'got trigger for doing a full journal sync'
+				log 'log', 'got trigger to do full sync'
 				journal_queue = {} # full syncs clear queue
 				full_journal_sync()
 	req.on 'error', ->
+		log 'error', 'journal error ' + e.message
 		# console.log "journal error"
 	req.write(JSON.stringify(rooms[name].journal_export()))
 	req.end()
@@ -358,10 +377,10 @@ full_journal_sync = ->
 	journal_config.path = '/full_sync'
 	journal_config.method = 'POST'
 	req = http.request journal_config, (res) ->
-		# console.log "done full sync"
+		console.log "done full sync"
 		log 'log', 'completed full sync'
-	req.on 'error', ->
-		log 'error', 'full sync error'
+	req.on 'error', (e) ->
+		log 'error', 'full sync error ' + e.message
 	req.write(JSON.stringify(backup))
 	req.end()
 
