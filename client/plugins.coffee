@@ -8,6 +8,11 @@ window.requestAnimationFrame ||=
       callback(+new Date())
     , 1000 / 60)
 
+
+# for internet explorer
+unless String::trim
+	String::trim = -> @replace(/^\s+/, '').replace(/\s+$/, '')
+
 clone_shallow = (obj) ->
 	new_obj = {}
 	new_obj[attr] = obj[attr] for attr of obj
