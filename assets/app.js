@@ -2359,7 +2359,7 @@ renderTimer = function() {
 };
 
 renderUsers = function() {
-  var active_count, attr, attrs, badge, entities, id, idle_count, list, member, members, name, ranking, row, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+  var active_count, attr, attrs, badge, entities, id, idle_count, list, member, members, name, ranking, row, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
   if (!room.users) {
     return;
   }
@@ -2441,8 +2441,8 @@ renderUsers = function() {
       return _results;
     })();
     _ref1 = room.users;
-    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-      user = _ref1[_i];
+    for (id in _ref1) {
+      user = _ref1[id];
       if (!user.team) {
         entities.push(user);
       }
@@ -2452,7 +2452,7 @@ renderUsers = function() {
   _ref2 = entities.sort(function(a, b) {
     return b.score() - a.score();
   });
-  for (user_index = _j = 0, _len1 = _ref2.length; _j < _len1; user_index = ++_j) {
+  for (user_index = _i = 0, _len = _ref2.length; _i < _len; user_index = ++_i) {
     user = _ref2[user_index];
     if (entities[user_index - 1] && user.score() < entities[user_index - 1].score()) {
       ranking++;
@@ -2468,8 +2468,8 @@ renderUsers = function() {
       idle_count = 0;
       active_count = 0;
       _ref4 = user.members || [user.id];
-      for (_k = 0, _len2 = _ref4.length; _k < _len2; _k++) {
-        member = _ref4[_k];
+      for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
+        member = _ref4[_j];
         if (room.users[member].online()) {
           if (room.serverTime() - room.users[member].last_action > 1000 * 60 * 10) {
             idle_count++;
@@ -2494,8 +2494,8 @@ renderUsers = function() {
       _ref5 = user.members.sort(function(a, b) {
         return room.users[b].score() - room.users[a].score();
       });
-      for (_l = 0, _len3 = _ref5.length; _l < _len3; _l++) {
-        member = _ref5[_l];
+      for (_k = 0, _len2 = _ref5.length; _k < _len2; _k++) {
+        member = _ref5[_k];
         user = room.users[member];
         row = $('<tr>').addClass('subordinate').data('entity', user).appendTo(list);
         row.click(function() {
@@ -2656,9 +2656,15 @@ createBundle = function() {
     rel: "tooltip",
     title: "Bookmark this question"
   }).addClass('icon-star-empty bookmark').click(function(e) {
+    var info;
+    info = bundle.data('report_info');
     bundle.toggleClass('bookmarked');
     star.toggleClass('icon-star-empty', !bundle.hasClass('bookmarked'));
     star.toggleClass('icon-star', bundle.hasClass('bookmarked'));
+    me.bookmark({
+      id: info.qid,
+      value: bundle.hasClass('bookmarked')
+    });
     e.stopPropagation();
     return e.preventDefault();
   });
@@ -2997,6 +3003,12 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.emit = function(name, data) {
     return this.room.log('QuizPlayer.emit(name, data) not implemented');
+  };
+
+  QuizPlayer.prototype.bookmark = function(_arg) {
+    var id, value;
+    value = _arg.value, id = _arg.id;
+    return 0;
   };
 
   QuizPlayer.prototype.disco = function() {

@@ -315,7 +315,7 @@ renderUsers = ->
 			attrs.name = team
 			attrs
 			
-		for user in room.users when !user.team 
+		for id, user of room.users when !user.team 
 			entities.push user # add all the unaffiliated users
 
 	list.empty()
@@ -485,9 +485,12 @@ createBundle = ->
 			# whoever is reading this:
 			# if you decide to add a server-side notion of saved questions
 			# here is wher eyou shove it
+			info = bundle.data 'report_info'
+
 			bundle.toggleClass 'bookmarked'
 			star.toggleClass 'icon-star-empty', !bundle.hasClass 'bookmarked'
 			star.toggleClass 'icon-star', bundle.hasClass 'bookmarked'
+			me.bookmark { id: info.qid, value: bundle.hasClass 'bookmarked' }
 			e.stopPropagation()
 			e.preventDefault()
 

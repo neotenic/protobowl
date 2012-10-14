@@ -61,6 +61,7 @@ class QuizPlayer
 	emit: (name, data) ->
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
 
+	bookmark: ({ value, id }) -> 0 # not implemented
 
 	disco: -> 0 # skeleton method, not actually implemented
 
