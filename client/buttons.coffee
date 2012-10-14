@@ -281,6 +281,9 @@ $('body').keydown (e) ->
 		skip()
 	else if e.keyCode in [78, 74] # N, J
 		next()
+	else if e.keyCode in [75]
+		# toggle the thing for the most recent question
+		$('.bundle:not(.active):first .readout').slideToggle()
 	else if e.keyCode in [80, 82] # P, R
 		$('.pausebtn').click()
 	else if e.keyCode in [47, 111, 191, 67, 65] # / (forward slash), C, A

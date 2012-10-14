@@ -1892,7 +1892,7 @@ $('.prompt_form').submit(function(e) {
 });
 
 $('body').keydown(function(e) {
-  var _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+  var _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
   if (actionMode === 'chat') {
     return $('.chat_input').focus();
   }
@@ -1917,14 +1917,16 @@ $('body').keydown(function(e) {
     return skip();
   } else if ((_ref1 = e.keyCode) === 78 || _ref1 === 74) {
     return next();
-  } else if ((_ref2 = e.keyCode) === 80 || _ref2 === 82) {
+  } else if ((_ref2 = e.keyCode) === 75) {
+    return $('.bundle:not(.active):first .readout').slideToggle();
+  } else if ((_ref3 = e.keyCode) === 80 || _ref3 === 82) {
     return $('.pausebtn').click();
-  } else if ((_ref3 = e.keyCode) === 47 || _ref3 === 111 || _ref3 === 191 || _ref3 === 67 || _ref3 === 65) {
+  } else if ((_ref4 = e.keyCode) === 47 || _ref4 === 111 || _ref4 === 191 || _ref4 === 67 || _ref4 === 65) {
     e.preventDefault();
     return $('.chatbtn').click();
-  } else if ((_ref4 = e.keyCode) === 70) {
+  } else if ((_ref5 = e.keyCode) === 70) {
     return me.finish();
-  } else if ((_ref5 = e.keyCode) === 66) {
+  } else if ((_ref6 = e.keyCode) === 66) {
     return $('.bundle.active .bookmark').click();
   }
 });
