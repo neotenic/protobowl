@@ -84,7 +84,7 @@ renderUpdate = ->
 
 
 last_rendering = 0
-last_question = ''
+# last_question = ''
 
 renderPartial = ->
 	if (!room.time_freeze or room.attempt) and room.time() < room.end_time
@@ -107,9 +107,9 @@ renderPartial = ->
 	else
 		if $('.start-page').length isnt 0
 			$('.start-page').slideUp 'normal', -> $(this).remove()
-		if room.question + room.generated_time isnt last_question
+
+		if $('#history .bundle[name="question-' + sha1(room.generated_time + room.question) + '"]').length is 0
 			changeQuestion()
-			last_question = room.question + room.generated_time # these two should comprise a unique signal
 	
 	updateTextPosition()
 
@@ -469,7 +469,10 @@ changeQuestion = ->
 			$(this).dequeue()
 
 createBundle = ->
-	bundle = $('<div>').addClass('bundle').attr('name', room.qid).addClass('room-'+room.name?.replace(/[^a-z0-9]/g, ''))
+	bundle = $('<div>')
+		.addClass('bundle')
+		.attr('name', 'question-' + sha1(room.generated_time + room.question))
+		.addClass('room-'+room.name?.replace(/[^a-z0-9]/g, ''))
 	# important = $('<div>').addClass 'important'
 	# bundle.append(important)
 	breadcrumb = $('<ul>')

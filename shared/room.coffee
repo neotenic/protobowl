@@ -146,6 +146,9 @@ class QuizRoom
 		# question = questions[Math.floor(questions.length * Math.random())]
 		@generating_question = true
 		@get_question (question) =>
+			if !question or !question.question or !question.answer
+				question = error_question
+				
 			delete @generating_question;
 			@generated_time = @serverTime() # like begin_time but doesnt change when speed is altered
 			

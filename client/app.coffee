@@ -1,5 +1,6 @@
 #= require modernizr.js
 #= require bootstrap.js
+#= require sha1.js
 #= require plugins.coffee
 #= require annotations.coffee
 #= require buttons.coffee

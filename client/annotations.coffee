@@ -110,7 +110,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		line.append ' '
 		line.append ruling
 		# addAnnotation line
-		annotation_spot = $('#history .bundle[name="' + room.qid + '"]').eq(0).find('.annotations')
+		annotation_spot = $('#history .bundle[name="question-' + sha1(room.generated_time + room.question) + '"]:first .annotations')
 		if annotation_spot.length is 0
 			annotation_spot = $('#history .annotations:first')
 		line.css('display', 'none').prependTo annotation_spot

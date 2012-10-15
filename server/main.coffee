@@ -206,8 +206,7 @@ class SocketQuizRoom extends QuizRoom
 
 	get_question: (cb) ->
 		category = (if @category is 'custom' then @distribution else @category)
-		remote.get_question @type, @difficulty, category, (question) =>
-			cb(question || error_question)
+		remote.get_question @type, @difficulty, category, cb
 
 	get_parameters: (type, difficulty, callback) -> remote.get_parameters(type, difficulty, callback)
 
@@ -536,6 +535,9 @@ app.get '/stalkermode/full', (req, res) ->
 		rooms: rooms
 	}
 
+app.get '/stalkermode/users', (req, res) ->
+	res.render 'users.jade', { rooms: rooms }
+
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
 	res.render 'admin.jade', {
@@ -547,6 +549,9 @@ app.get '/stalkermode', (req, res) ->
 		queue: Object.keys(journal_queue).length,
 		rooms: rooms
 	}
+
+
+
 
 app.get '/new', (req, res) ->
 	res.redirect '/' + names.generatePage()

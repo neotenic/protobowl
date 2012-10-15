@@ -92,10 +92,15 @@ html(lang="en")
 		
 		if full_room
 			h4 FULL VIEW
-			a(href="/stalkermode") Summary Stalkermode View
+			a(href="/stalkermode") Summary Stalkermode View 
 		else
 			h4 SUMMARY VIEW
-			a(href="/stalkermode/full") Full Stalkermode View
+			a(href="/stalkermode/full") Full Stalkermode View 
+
+		| - 
+
+		a(href="/stalkermode/users") User View
+
 		p #{mem}
 		- var online = 0, active_users = 0, points = 0, room_num = 0, active_rooms = 0, time_spent = 0, total_users = 0
 		each room, room_name in rooms
