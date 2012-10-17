@@ -83,7 +83,7 @@ $('.buzzbtn').click ->
 	# and ask nicely for forgiveness otherwise
 	submit_time = +new Date
 	if $('.sounds')[0].checked and !$('.sounds').data('ding_sound')
-		$('.sounds').data('ding_sound', new Audio('sound/ding.wav'))
+		$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
 
 	me.buzz 'yay', (status) ->
 		if status is 'http://www.whosawesome.com/'
@@ -361,7 +361,7 @@ $('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
 
 $('.sounds').change -> 
 	me.set_sounds $('.sounds')[0].checked
-	$('.sounds').data('ding_sound', new Audio('sound/ding.wav'))
+	$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
 
 
 mobileLayout = -> 
