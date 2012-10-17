@@ -107,7 +107,9 @@ class QuizRoom
 	# 		user.sockets = (sock for sock in user.sockets when sock isnt socket)
 	# 	# journal @name
 
-	time: -> if @time_freeze then @time_freeze else @serverTime() - @time_offset
+	time: -> if @time_freeze then @time_freeze else @offsetTime()
+
+	offsetTime: -> @serverTime() - @time_offset
 
 	serverTime: -> new Date - @sync_offset
 
@@ -173,8 +175,9 @@ class QuizRoom
 			# console.log @info
 			# @qid = question.question
 			@qid = question?._id?.toString() || 'question_id'
-			@info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" +
-			@answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20)
+			
+			# @info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" +
+			# @answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20)
 			# console.log @qid
 
 			@begin_time = @time() + @start_offset
@@ -412,7 +415,7 @@ class QuizRoom
 		# 		delete @users[id][action] for id of @users
 		# 		this[action]()
 		
-		blacklist = ["question", "answer", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"]
+		blacklist = ["question", "answer", "generated_time", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"]
 		user_blacklist = ["sockets", "room"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
 			data[attr] = this[attr]
@@ -431,6 +434,7 @@ class QuizRoom
 			data.answer = @answer
 			data.timing = @timing
 			data.info = @info
+			data.generated_time = @generated_time
 
 		if level >= 3
 			data.distribution = @distribution

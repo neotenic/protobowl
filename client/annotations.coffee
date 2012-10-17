@@ -256,27 +256,39 @@ verbAnnotation = ({user, verb, time}) ->
 
 
 boxxyAnnotation = ({id, tribunal}) ->
-	return if id is me.id # who would vote for their own banning?
-	{votes, time, witnesses} = tribunal
+	{votes, time, witnesses, against} = tribunal
 	return if me.id not in witnesses # people who havent witnessed the crime do not constitute a jury of peers
+	# majority + opposers - votes
+	votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
 
 	line = $('<div>').addClass('alert').addClass('troll-' + id)
-	line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
-	line.append 'Protobowl has detected high rates of activity coming from the user '
-	line.append userSpan(id)
-	line.append '. If a majority of other active players vote to ban this user, the user will be sent to '
-	line.append "<a href='#{room.name}-banned'>/#{room.name}-banned</a> and banned from this room. This message will be automatically dismissed in a minute. <br> "
-	vote = $('<button>').addClass('btn btn-small').text('Ban this user')
-	line.append vote
-	line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{Math.floor((witnesses.length - 1)/2 + 1) - votes.length} more votes are needed to ban "
-	line.append userSpan(id)
-	line.append ")"
-	vote.click ->
-		me.vote_tribunal id
+	if id is me.id # who would vote for their own banning?
+		line.text('Protobowl has detected high rates of activity coming from your account.\n')
+		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room for 10 minutes)."
+	else
+		line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
+		line.append 'Protobowl has detected high rates of activity coming from the user '
+		line.append userSpan(id)
+		line.append '. If a majority of other active players vote to ban this user, the user will be sent to '
+		line.append "<a href='#{room.name}-banned'>/#{room.name}-banned</a> and banned from this room for 10 minutes. This message will be automatically dismissed in a minute. <br> "
+		guilty = $('<button>').addClass('btn btn-small').text('Ban this user')
+		line.append guilty
+		line.append ' '
+		not_guilty = $('<button>').addClass('btn btn-small').text("Don't ban")
+		line.append not_guilty
+		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban "
+		line.append userSpan(id)
+		line.append ")"
+		guilty.click ->
+			me.vote_tribunal {user: id, position: 'ban'}
+		not_guilty.click ->
+			me.vote_tribunal {user: id, position: 'free'}
+		
+		guilty.add(not_guilty).disable((me.id in votes) or (me.id in against))
 	
-	vote.disable(me.id in votes)
-	
-	if $('.troll-'+id).length > 0
+	if $('.troll-'+id).length > 0 and $('.troll-'+id).parents('.active').length > 0
 		$('.troll-'+id).replaceWith line
 	else
+		$('.troll-'+id).slideUp 'normal', ->
+			$(this).remove()
 		addImportant line

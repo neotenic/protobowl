@@ -9,6 +9,11 @@
 #= require ../shared/player.coffee
 #= require ../shared/room.coffee
 
+do ->
+	t = new Date protobowl_build
+	$('#version').text "#{t.getMonth()+1}/#{t.getDate()}/#{t.getFullYear() % 100} #{t.getHours()}:#{t.getMinutes()}"
+
+
 # asynchronously load the other code which doesn't need to be there on startup necessarily
 initialize_offline = (cb) ->	
 	$.ajax {
@@ -25,9 +30,15 @@ if io?
 
 	sock.on 'connect', ->
 		$('.disconnect-notice').slideUp()
+		# allow the user to reload/disconnect/reconnect
+		$('#reload, #disconnect, #reconnect').hide()
+		$('#disconnect').show()
+
 		me.disco { old_socket: localStorage.old_socket, version: 5 } # tell the server the client version to allow the server to disconnect
 
 	sock.on 'disconnect', ->
+		$('#reload, #disconnect, #reconnect').hide()
+		$('#reconnect').show()
 		room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
 		line = $('<div>').addClass 'alert alert-error'
 		line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
@@ -277,12 +288,13 @@ handleCacheEvent = ->
 	switch applicationCache.status
 		when applicationCache.UPDATEREADY
 			$('#cachestatus').text 'Updated'
-			applicationCache.swapCache()
+			#applicationCache.swapCache()
 			$('#update').slideDown()		
 			if localStorage.auto_reload is "yay" or $('#update').data('force') is true
 				setTimeout ->
 					location.reload()
-				, 1000
+				, 500 + Math.random() * 2000
+			applicationCache.swapCache()
 		when applicationCache.UNCACHED
 			$('#cachestatus').text 'Uncached'
 		when applicationCache.OBSOLETE

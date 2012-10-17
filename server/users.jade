@@ -72,9 +72,9 @@ html(lang="en")
 							td= user.interrupts
 							td= user.early
 							td= user.seen
-							td= precision
-							td= recall
-							td= 2 * (precision * recall) / (precision + recall + 0.001)
+							td= precision.toFixed(3)
+							td= recall.toFixed(3)
+							td= (2 * (precision * recall) / (precision + recall + 0.001)).toFixed(3)
 							td(sorttable_customkey="#{user.time_spent}")
 								mixin duration(user.time_spent)
 							td(sorttable_customkey="#{user.last_action}")

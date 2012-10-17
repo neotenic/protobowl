@@ -25,7 +25,7 @@ class QuizPlayer
 		# user settings
 		@show_typing = true
 		@team = ''
-		@banned = false
+		@banned = 0
 		@sounds = false
 
 		# rate limiting and banning
@@ -54,7 +54,7 @@ class QuizPlayer
 		return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
 
 	ban: ->
-		@banned = true
+		@banned = @room.serverTime()
 		@emit 'redirect', "/#{@room.name}-banned"
 
 
@@ -70,16 +70,17 @@ class QuizPlayer
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
 		return if witnesses.length <= 2 # under this case, you can just go to a new room!
 
-		window_size = 6
-		action_delay = 1000
+		window_size = 5
+		action_delay = 876
 		current_time = @room.serverTime()
 		@__recent_actions.push current_time
 		@__recent_actions = @__recent_actions.slice(-window_size) # get the last 10
 
-		if @__recent_actions.length is window_size and !@tribunal
+		if @__recent_actions.length is window_size
 			s = 0; s += time for time in @__recent_actions;
 			mean_elapsed = current_time - s / window_size
-			if mean_elapsed < window_size * action_delay / 2
+			# console.log mean_elapsed, window_size * action_delay / 2
+			if mean_elapsed < window_size * action_delay / 2 and !@tribunal
 				# Ummmm ahh such as like, 
 				# like the one where I'm like mmm and it says, 
 				# "I saw watchoo did there!" 
@@ -95,13 +96,13 @@ class QuizPlayer
 					@room.sync(1)
 				, 1000 * 60
 
-				@tribunal = { votes: [], time: current_time, witnesses }
+				@tribunal = { votes: [], against: [], time: current_time, witnesses }
 				
 				# @room.emit 'boxxy', {user: @id, time: current_time}
 				@room.sync(1)
 
 
-	vote_tribunal: (user) ->
+	vote_tribunal: ({user, position}) ->
 		
 		# Instruct democracy, if possible to reanimate its beliefs, to
 		# purify its mores, to regulate its movements, to substitute
@@ -113,18 +114,29 @@ class QuizPlayer
 
 		tribunal = @room.users[user].tribunal
 		if tribunal
-			return unless @id in tribunal.witnesses
-
-			votes = tribunal.votes
-			votes.push(@id) if votes and @id not in votes
-			if votes.length > (tribunal.witnesses.length - 1) / 2
+			{votes, against, witnesses} = tribunal
+			return unless @id in witnesses
+ 			return if @id in votes or @id in against
+			if position is 'ban'
+				votes.push @id
+				@verb 'voted to ban !@' + user
+			else if position is 'free'
+				against.push @id
+				@verb 'voted to free !@' + user
+			else
+				@verb 'voted with a hanging chad'
+			if votes.length > (witnesses.length - 1) / 2 + against.length
 				@room.users[user].verb 'got voted off the island', true
 				clearTimeout @room.users[user].__timeout
 				@room.users[user].tribunal = null
 				@room.users[user].ban()
 
-			else
-				@verb 'voted to ban !@' + user
+			undecided = (witnesses.length - against.length - votes.length - 1)
+			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
+				@room.users[user].verb 'was freed because of a hung jury', true
+				@room.users[user].tribunal = null
+				clearTimeout @room.users[user].__timeout
+
 
 			@room.sync(1)
 
@@ -181,9 +193,15 @@ class QuizPlayer
 			@room.sync()
 
 	unpause: ->
-		if !@room.attempt
-			@verb 'resumed the game'
-			@room.new_question() if !@room.question
+		if !@room.question
+			@room.new_question()
+			@room.unfreeze()
+		else if !@room.attempt
+			duration = Math.round((@room.offsetTime() - @room.time_freeze)/1000)
+			if duration > 2
+				@verb "resumed the game (paused for #{duration} seconds}"
+			else
+				@verb "resumed the game"
 			@room.unfreeze()
 		@room.sync()
 
@@ -259,6 +277,15 @@ class QuizPlayer
 			@verb "is playing as an individual"
 		@team = name
 		@room.sync(2)
+
+	set_type: (name) ->
+		if name
+			@room.type = name
+			@room.category = ''
+			@room.difficulty = ''
+			@room.sync(3)
+			@room.get_size (size) =>
+				@verb "changed the question type to #{name} (#{size} questions)"
 
 	set_show_typing: (data) ->
 		@show_typing = data

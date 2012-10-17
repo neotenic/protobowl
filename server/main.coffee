@@ -107,7 +107,7 @@ if app.settings.env is 'development'
 	app.use (req, res, next) ->
 		if req.url is '/app.js'
 			snockets.getConcatenation 'client/app.coffee', (err, js) ->
-				fs.writeFile 'static/app.js', err || js, 'utf8', ->
+				fs.writeFile 'static/app.js', "protobowl_build = '#{new Date}';\n#{err || js}", 'utf8', ->
 					next()
 		else if req.url is '/offline.js'
 			snockets.getConcatenation 'client/offline.coffee', (err, js) ->
@@ -280,9 +280,10 @@ class SocketQuizPlayer extends QuizPlayer
 
 		sock.on 'disconnect', =>
 			@sockets = (s for s in @sockets when s isnt id)
-			@disconnect()
-			@room.journal()
-			user_count_log 'disconnected ' + @id + '-' + @name
+			if @sockets.length is 0
+				@disconnect()
+				@room.journal()
+				user_count_log 'disconnected ' + @id + '-' + @name
 
 
 	emit: (name, data) ->
@@ -316,21 +317,25 @@ io.sockets.on 'connection', (sock) ->
 	is_god = /god/.test config.search
 	is_ninja = /ninja/.test config.search
 	# configger the things which are derived from said parsed stuff
-	room_name = config.pathname.replace(/\//g, '').toLowerCase()
+	room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
+	question_type = room_name.split('/').shift() || 'qb'
 	publicID = sha1(cookie.protocookie + room_name)
 
 	publicID = "__secret_ninja" if is_ninja
 	publicID += "_god" if is_god
 	
 	# get the room
-	rooms[room_name] = new SocketQuizRoom(room_name) unless rooms[room_name]
+	unless rooms[room_name]
+		rooms[room_name] = new SocketQuizRoom(room_name) 
+		rooms[room_name].type = question_type
+
 	room = rooms[room_name]
 
 	# get the user's identity
 	existing_user = (publicID of room.users)
 	room.users[publicID] = new SocketQuizPlayer(room, publicID) unless room.users[publicID]
 	user = room.users[publicID]
-	if user.banned
+	if new Date - user.banned < 1000 * 60 * 10
 		sock.emit 'redirect', "/#{room_name}-banned"
 		sock.disconnect()
 		return
@@ -366,6 +371,7 @@ process_journal_queue = ->
 
 setInterval process_journal_queue, 1000
 
+last_full_sync = 0
 partial_journal = (name) ->
 	journal_config.path = '/journal'
 	journal_config.method = 'POST'
@@ -374,10 +380,11 @@ partial_journal = (name) ->
 		# console.log "committed journal for", name
 		res.on 'data', (chunk) ->
 			if chunk == 'do_full_sync'
-				# console.log 'got trigger for doing a full journal sync'
-				log 'log', 'got trigger to do full sync'
-				journal_queue = {} # full syncs clear queue
-				full_journal_sync()
+				if last_full_sync < new Date - 1000 * 60 * 2
+					log 'log', 'got trigger to do full sync'
+					last_full_sync = +new Date
+					journal_queue = {} # full syncs clear queue
+					full_journal_sync()
 	req.on 'error', (e) ->
 		log 'error', 'journal error ' + e.message
 		# console.log "journal error"
@@ -390,7 +397,7 @@ full_journal_sync = ->
 	journal_config.path = '/full_sync'
 	journal_config.method = 'POST'
 	req = http.request journal_config, (res) ->
-		console.log "done full sync"
+		# console.log "done full sync"
 		log 'log', 'completed full sync'
 	req.on 'error', (e) ->
 		log 'error', 'full sync error ' + e.message
@@ -509,6 +516,9 @@ clearInactive = (threshold) ->
 			delete rooms[name]
 			reaped.rooms++
 
+
+util = require('util')
+
 app.post '/stalkermode/kickoffline', (req, res) ->
 	clearInactive 1000 * 5 # five seconds
 	res.redirect '/stalkermode'
@@ -523,8 +533,12 @@ app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
 	}
 	res.redirect '/stalkermode'
 
+
+app.post '/stalkermode/algore', (req, res) ->
+	remote.initialize_remote (time, layers) ->
+		res.end("counted all cats in #{time}ms: #{util.inspect(layers)}")
+
 app.get '/stalkermode/full', (req, res) ->
-	util = require('util')
 	res.render 'admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
@@ -537,6 +551,7 @@ app.get '/stalkermode/full', (req, res) ->
 
 app.get '/stalkermode/users', (req, res) ->
 	res.render 'users.jade', { rooms: rooms }
+
 
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
@@ -567,6 +582,10 @@ app.get '/', (req, res) ->
 
 
 app.get '/:channel', (req, res) ->
+	name = req.params.channel
+	res.render 'room.jade', { name }
+
+app.get '/:type/:channel', (req, res) ->
 	name = req.params.channel
 	res.render 'room.jade', { name }
 

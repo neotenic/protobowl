@@ -47,8 +47,11 @@ renderParameters = ->
 
 renderUpdate = ->
 	if room.category is 'custom'
+		createCategoryList()
 		$('.custom-category').slideDown()
-	
+	else
+		$('.custom-category').slideUp()
+
 	$('.categories').val room.category
 	$('.difficulties').val room.difficulty
 	$('.multibuzz').attr 'checked', !room.max_buzz
@@ -513,8 +516,12 @@ createBundle = ->
 	
 	addInfo 'Category', room.info.category
 	addInfo 'Difficulty', room.info.difficulty
-	addInfo 'Tournament', room.info.year + ' ' + room.info.tournament
-
+	if room.info.tournament and room.info.year
+		addInfo 'Tournament', room.info.year + ' ' + room.info.tournament
+	else if room.info.year
+		addInfo 'Year', room.info.year
+	else if room.info.tournament
+		addInfo 'Tournament', room.info.tournament
 	addInfo room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category
 	# addInfo 'Year', room.info.year
 	# addInfo 'Number', room.info.num

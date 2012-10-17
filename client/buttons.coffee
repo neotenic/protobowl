@@ -181,7 +181,11 @@ chat = (text, done) ->
 			# doesnt matter to set protobot last because you dont repeat afterwars anyway
 
 	if text.slice(0, 1) is '@'
-		text = findReferences(text).join(' ')
+		refs = findReferences(text)
+		if refs[0] is '@'
+			text = '@' + refs[1]
+		else
+			text = refs.join(' ')
 
 	me.chat {
 		text: text, 
@@ -289,6 +293,11 @@ $('body').keydown (e) ->
 	else if e.keyCode in [47, 111, 191, 67, 65, 13] # / (forward slash), C, A
 		e.preventDefault()
 		$('.chatbtn').click()
+	else if e.keyCode in [87] # W
+		# whisper
+		e.preventDefault()
+		$('.chatbtn').click()
+		$('.chat_input').val('@')
 	else if e.keyCode in [70] # F
 		me.finish()
 	else if e.keyCode in [66]
@@ -310,11 +319,6 @@ $('.speed').change ->
 	# console.log rate
 		
 $('.categories').change ->
-	if  $('.categories').val() is 'custom'
-		createCategoryList()
-		$('.custom-category').slideDown()
-	else
-		$('.custom-category').slideUp()
 	me.set_category $('.categories').val()
 
 $('.difficulties').change -> me.set_difficulty $('.difficulties').val()
