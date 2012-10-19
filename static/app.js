@@ -1,4 +1,4 @@
-protobowl_build = 'Thu Oct 18 2012 22:09:33 GMT-0400 (EDT)';
+protobowl_build = 'Fri Oct 19 2012 16:39:58 GMT-0400 (EDT)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2242,6 +2242,10 @@ $('.allowskip').change(function() {
   return me.set_skip($('.allowskip')[0].checked);
 });
 
+$('.showbonus').change(function() {
+  return me.set_bonus($('.showbonus')[0].checked);
+});
+
 $('.livechat').change(function() {
   return me.set_show_typing($('.livechat')[0].checked);
 });
@@ -3564,6 +3568,11 @@ QuizPlayer = (function() {
     return this.room.sync(1);
   };
 
+  QuizPlayer.prototype.set_bonus = function(data) {
+    this.room.show_bonus = data;
+    return this.room.sync(1);
+  };
+
   QuizPlayer.prototype.reset_score = function() {
     this.verb("was reset from " + this.correct + " correct of " + this.guesses + " guesses and " + (this.score()) + " points");
     this.seen = this.interrupts = this.guesses = this.correct = this.early = 0;
@@ -3590,7 +3599,7 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.QuizPlayer = QuizPlayer;
 }
 
-var QuizRoom, default_distribution, error_question,
+var QuizRoom, default_distribution, error_bonus, error_question,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 error_question = {
@@ -3601,7 +3610,19 @@ error_question = {
   'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
   'answer': 'error',
   'year': 1970,
-  'round': '0x080483ba'
+  'round': '0x080483ba',
+  'next': '__error_bonus'
+};
+
+error_bonus = {
+  'category': 'Mission Accomplished',
+  'difficulty': 'null',
+  'num': 'undefined',
+  'tournament': 'magic smoke',
+  'question': 'This question has not yet been written.',
+  'answer': 'failure',
+  'year': 2003,
+  'round': '1'
 };
 
 default_distribution = {
@@ -3640,6 +3661,7 @@ QuizRoom = (function() {
     this.category = '';
     this.max_buzz = null;
     this.no_skip = false;
+    this.show_bonus = false;
   }
 
   QuizRoom.prototype.log = function(message) {
@@ -3675,8 +3697,13 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.get_question = function(cb) {
+    var _this = this;
     setTimeout(function() {
-      return cb(error_question);
+      if (_this.next_id === '__error_bonus') {
+        return cb(error_bonus);
+      } else {
+        return cb(error_question);
+      }
     }, 10);
     return this.log('NOT IMPLEMENTED (async get question)');
   };
@@ -3740,6 +3767,7 @@ QuizRoom = (function() {
       delete _this.generating_question;
       _this.generated_time = _this.serverTime();
       _this.attempt = null;
+      _this.next_id = question.next || null;
       _this.info = {
         category: question.category,
         difficulty: question.difficulty,
@@ -4074,7 +4102,7 @@ QuizRoom = (function() {
       }
       return _results;
     }).call(this);
-    settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"];
+    settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus"];
     for (_i = 0, _len = settings.length; _i < _len; _i++) {
       field = settings[_i];
       data[field] = this[field];

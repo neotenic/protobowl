@@ -299,6 +299,10 @@ class QuizPlayer
 		@room.no_skip = !data
 		@room.sync(1)
 
+	set_bonus: (data) ->
+		@room.show_bonus = data
+		@room.sync(1)
+
 	reset_score: ->
 		@verb "was reset from #{@correct} correct of #{@guesses} guesses and #{@score()} points"
 		@seen = @interrupts = @guesses = @correct = @early = 0

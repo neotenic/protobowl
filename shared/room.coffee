@@ -14,7 +14,19 @@ error_question = {
 	'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
 	'answer': 'error',
 	'year': 1970,
-	'round': '0x080483ba'
+	'round': '0x080483ba',
+	'next': '__error_bonus'
+}
+
+error_bonus = {
+	'category': 'Mission Accomplished',
+	'difficulty': 'null',
+	'num': 'undefined',
+	'tournament': 'magic smoke',
+	'question': 'This question has not yet been written.',
+	'answer': 'failure',
+	'year': 2003,
+	'round': '1'	
 }
 
 default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
@@ -50,6 +62,7 @@ class QuizRoom
 		@category = ''
 		@max_buzz = null
 		@no_skip = false
+		@show_bonus = false
 
 	log: (message) -> @emit 'log', { verb: message }
 
@@ -66,8 +79,11 @@ class QuizRoom
 			cb count
 
 	get_question: (cb) ->
-		setTimeout ->
-			cb error_question
+		setTimeout =>
+			if @next_id is '__error_bonus'
+				cb error_bonus
+			else
+				cb error_question
 		, 10
 		@log 'NOT IMPLEMENTED (async get question)'
 
@@ -156,6 +172,9 @@ class QuizRoom
 			@generated_time = @serverTime() # like begin_time but doesnt change when speed is altered
 			
 			@attempt = null
+			
+			@next_id = question.next || null # might be null
+
 			@info = {
 				category: question.category, 
 				difficulty: question.difficulty, 
@@ -462,7 +481,7 @@ class QuizRoom
 				user[attr] = @users[id][attr]
 			user
 		# global room settings
-		settings = ["name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution"]
+		settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus"]
 		for field in settings
 			data[field] = @[field]
 		# actually save stuff

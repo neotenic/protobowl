@@ -206,8 +206,11 @@ class SocketQuizRoom extends QuizRoom
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
 
 	get_question: (cb) ->
-		category = (if @category is 'custom' then @distribution else @category)
-		remote.get_question @type, @difficulty, category, cb
+		if @next_id and @show_bonus
+			remote.get_by_id @next_id, cb
+		else
+			category = (if @category is 'custom' then @distribution else @category)
+			remote.get_question @type, @difficulty, category, cb
 
 	get_parameters: (type, difficulty, callback) -> remote.get_parameters(type, difficulty, callback)
 
@@ -423,7 +426,7 @@ restore_journal = (callback) ->
 			json = JSON.parse(packet)
 
 			# a new question's gonna be pickt, so just restore settings 
-			fields = ["difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz"]
+			fields = ["type", "difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz", "no_skip"]
 			for name, data of json
 				# console.log data
 				unless name of rooms

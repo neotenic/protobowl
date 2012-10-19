@@ -381,13 +381,13 @@ $('.multibuzz').change -> me.set_max_buzz (if $('.multibuzz')[0].checked then nu
 
 $('.allowskip').change -> me.set_skip $('.allowskip')[0].checked
 
+$('.showbonus').change -> me.set_bonus $('.showbonus')[0].checked
 
 $('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
 
 $('.sounds').change -> 
 	me.set_sounds $('.sounds')[0].checked
 	$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
-
 
 mobileLayout = -> 
 	if window.matchMedia
