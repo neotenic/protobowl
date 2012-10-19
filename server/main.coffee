@@ -145,6 +145,7 @@ if app.settings.env is 'development'
 
 app.use express.compress()
 # app.use express.staticCache()
+app.use express.bodyParser()
 app.use express.static('static')
 app.use express.favicon('static/img/favicon.ico')
 
@@ -318,7 +319,7 @@ io.sockets.on 'connection', (sock) ->
 	is_ninja = /ninja/.test config.search
 	# configger the things which are derived from said parsed stuff
 	room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
-	question_type = room_name.split('/').shift() || 'qb'
+	question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
 	publicID = sha1(cookie.protocookie + room_name)
 
 	publicID = "__secret_ninja" if is_ninja
@@ -566,6 +567,27 @@ app.get '/stalkermode', (req, res) ->
 	}
 
 
+app.post '/stalkermode/reports/remove_report/:id', (req, res) ->
+	mongoose = require 'mongoose'
+	remote.Report.remove {_id: mongoose.Types.ObjectId(req.params.id)}, (err, docs) ->
+		res.end 'REMOVED IT' + req.params.id
+
+app.post '/stalkermode/reports/change_question/:id', (req, res) ->
+	mongoose = require 'mongoose'
+	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
+		for key, val of req.body
+			doc[key] = val
+		console.log(doc)
+		doc.save()
+		res.end('gots it')
+	# remote.Report.remove {_id: mongoose.Types.ObjectId(req.params.id)}, (err, docs) ->
+	# 	res.end 'REMOVED IT' + req.params.id
+
+
+app.get '/stalkermode/reports/:type', (req, res) ->
+
+	remote.Report.find {describe: req.params.type}, (err, docs) ->
+		res.render 'reports.jade', { reports: docs }
 
 
 app.get '/new', (req, res) ->

@@ -13,7 +13,7 @@ count_cache = null
 
 load_questions = (cb) ->
 	if offline_questions.length is 0
-		$.ajax('sample.txt').done (text) ->
+		$.ajax('/sample.txt').done (text) ->
 			offline_questions = (jQuery.parseJSON(line) for line in text.split('\n'))
 			for question in offline_questions
 				question._inc = Math.random()
@@ -98,26 +98,30 @@ get_question = (type, difficulty, category, cb) ->
 		, 100
 		return
 	# TODO: be smarter about the sampling, permute difficulty and categories to find respective likelihoods
-	if !difficulty
-		difficulty = count_cache[type].sampler.next()
-	if !category
-		category = count_cache[type].difficulty[difficulty].sampler.next()
-	if typeof category == 'object'
-		sampler = new AliasMethod(category)
-		category = sampler.next()
-	
-	question = offline_questions.sort((a, b) -> a._inc - b._inc)[0]
-	question._inc += Math.random() + 1
-	setTimeout ->
-		cb question, get_difficulties(type), get_categories(type)
-	, 10
+	if count_cache[type]
+		if !difficulty
+			difficulty = count_cache[type].sampler.next()
+		if !category
+			category = count_cache[type].difficulty[difficulty].sampler.next()
+		if typeof category == 'object'
+			sampler = new AliasMethod(category)
+			category = sampler.next()
+		
+		question = offline_questions.sort((a, b) -> a._inc - b._inc)[0]
+		question._inc += Math.random() + 1
+		setTimeout ->
+			cb question, get_difficulties(type), get_categories(type)
+		, 10
+	else
+		setTimeout ->
+			cb null, get_difficulties(type), get_categories(type)
+		, 10
 
-
-get_difficulties = (type) -> (d for d of count_cache[type].difficulty)
+get_difficulties = (type) -> (d for d of count_cache[type]?.difficulty)
 
 get_categories = (type, difficulty) ->
 	cat_map = {}
-	for d, {category} of count_cache[type].difficulty when !difficulty or difficulty is d
+	for d, {category} of count_cache[type]?.difficulty when !difficulty or difficulty is d
 		# console.log d, a.category
 		for c of category
 			cat_map[c] = 1

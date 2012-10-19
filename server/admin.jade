@@ -52,14 +52,14 @@ html(lang="en")
 					if user.users || user.rooms
 						li
 							| users: #{user.users} rooms: #{user.rooms}
-					if user.banned
+					if new Date - user.banned < 10 * 60 * 1000
 						li
-							| BANNED BANNED BANNED BANNED BANNED BANNED BANNED BANNED
+							| BANNED
 		- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].sockets.length > 0})}
 		- function get_active(room){return get_online(room).filter(function(e){return room.users[e].last_action > new Date - 1000 * 60 * 10})}
 		- function count_online(room) {return get_online(room).length}
 		- function count_active(room) {return get_active(room).length}
-		- function weight_room(room) {return count_online(room) + count_active(room)}
+		- function weight_room(room) {return count_online(room) * 0.1 + count_active(room)}
 		mixin display_room(room, room_name)
 			li
 				a(href="/#{room_name}") #{room_name}

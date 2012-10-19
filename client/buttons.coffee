@@ -124,8 +124,12 @@ $('.chat_input').typeahead {
 		prefix = '@' + this.query.slice(1).split(',').slice(0, -1).join(',')
 		existing = ($.trim(option) for option in this.query.slice(1).split(',').slice(0, -1))
 		prefix += ', ' if prefix.length > 1
-		names = (user.name for id, user of room.users when user isnt me)
-		("#{prefix}#{name}" for name in names when name not in existing)
+		# names = (user.name for id, user of room.users when user isnt me)
+		names = ['individuals']
+		for id, user of room.users
+			names.push user.name if user.name not in names
+			names.push user.team if user.team and user.team not in names
+		("#{prefix}#{name}" for name in names when name not in existing and name isnt me.name)
 	matcher: (candidate) ->
 		this.query[0] == '@' and !findReferences(this.query)[1]
 }
@@ -133,15 +137,29 @@ $('.chat_input').typeahead {
 findReferences = (text) ->
 	reconstructed = '@'
 	changed = true
+	entities = {}
+	for id, {name, team} of room.users
+		entities[name] = '!@' + id + ', '
+		team ||= 'individuals'
+		entities[team] = '' if !entities[team]
+		entities[team] += entities[name]
+
+
 	while changed is true
 		changed = false
 		text = text.replace(/^[@\s,]*/g, '')
-		for id, {name} of room.users
+		for name, identity of entities
 			if text.slice(0, name.length) is name
-				reconstructed += '!@' + id + ', '
+				reconstructed += identity
 				text = text.slice(name.length)
 				changed = true
 				break
+		# for id, {name} of room.users
+		# 	if text.slice(0, name.length) is name
+		# 		reconstructed += '!@' + id + ', '
+		# 		text = text.slice(name.length)
+		# 		changed = true
+		# 		break
 	# text = reconstructed.replace(/[\s,]*$/g, '') + ' ' + text
 	return [reconstructed.replace(/[\s,]*$/g, ''), text]
 
@@ -298,6 +316,10 @@ $('body').keydown (e) ->
 		e.preventDefault()
 		$('.chatbtn').click()
 		$('.chat_input').val('@')
+	else if e.keyCode in [84] # T
+		e.preventDefault()
+		$('.chatbtn').click()
+		$('.chat_input').val('@' + (me.team || 'individuals') + " ")
 	else if e.keyCode in [70] # F
 		me.finish()
 	else if e.keyCode in [66]
@@ -356,6 +378,9 @@ $('.teams').change ->
 		me.set_team $('.teams').val()
 
 $('.multibuzz').change -> me.set_max_buzz (if $('.multibuzz')[0].checked then null else 1)
+
+$('.allowskip').change -> me.set_skip $('.allowskip')[0].checked
+
 
 $('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
 

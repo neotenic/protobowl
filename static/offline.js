@@ -1209,7 +1209,7 @@ count_cache = null;
 
 load_questions = function(cb) {
   if (offline_questions.length === 0) {
-    return $.ajax('sample.txt').done(function(text) {
+    return $.ajax('/sample.txt').done(function(text) {
       var line, question, _i, _len;
       offline_questions = (function() {
         var _i, _len, _ref, _results;
@@ -1358,40 +1358,46 @@ get_question = function(type, difficulty, category, cb) {
     }, 100);
     return;
   }
-  if (!difficulty) {
-    difficulty = count_cache[type].sampler.next();
+  if (count_cache[type]) {
+    if (!difficulty) {
+      difficulty = count_cache[type].sampler.next();
+    }
+    if (!category) {
+      category = count_cache[type].difficulty[difficulty].sampler.next();
+    }
+    if (typeof category === 'object') {
+      sampler = new AliasMethod(category);
+      category = sampler.next();
+    }
+    question = offline_questions.sort(function(a, b) {
+      return a._inc - b._inc;
+    })[0];
+    question._inc += Math.random() + 1;
+    return setTimeout(function() {
+      return cb(question, get_difficulties(type), get_categories(type));
+    }, 10);
+  } else {
+    return setTimeout(function() {
+      return cb(null, get_difficulties(type), get_categories(type));
+    }, 10);
   }
-  if (!category) {
-    category = count_cache[type].difficulty[difficulty].sampler.next();
-  }
-  if (typeof category === 'object') {
-    sampler = new AliasMethod(category);
-    category = sampler.next();
-  }
-  question = offline_questions.sort(function(a, b) {
-    return a._inc - b._inc;
-  })[0];
-  question._inc += Math.random() + 1;
-  return setTimeout(function() {
-    return cb(question, get_difficulties(type), get_categories(type));
-  }, 10);
 };
 
 get_difficulties = function(type) {
-  var d, _results;
+  var d, _ref, _results;
   _results = [];
-  for (d in count_cache[type].difficulty) {
+  for (d in (_ref = count_cache[type]) != null ? _ref.difficulty : void 0) {
     _results.push(d);
   }
   return _results;
 };
 
 get_categories = function(type, difficulty) {
-  var c, cat_map, category, d, _ref;
+  var c, cat_map, category, d, _ref, _ref1;
   cat_map = {};
-  _ref = count_cache[type].difficulty;
-  for (d in _ref) {
-    category = _ref[d].category;
+  _ref1 = (_ref = count_cache[type]) != null ? _ref.difficulty : void 0;
+  for (d in _ref1) {
+    category = _ref1[d].category;
     if (!difficulty || difficulty === d) {
       for (c in category) {
         cat_map[c] = 1;

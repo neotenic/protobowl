@@ -171,7 +171,7 @@ class QuizPlayer
 	
 	skip: ->
 		@touch()
-		unless @room.attempt
+		if !@room.attempt and !@room.no_skip
 			@room.new_question()
 			@verb 'skipped a question'
 
@@ -294,6 +294,10 @@ class QuizPlayer
 	set_sounds: (data) ->
 		@sounds = data
 		@room.sync(2)
+
+	set_skip: (data) ->
+		@room.no_skip = !data
+		@room.sync(1)
 
 	reset_score: ->
 		@verb "was reset from #{@correct} correct of #{@guesses} guesses and #{@score()} points"

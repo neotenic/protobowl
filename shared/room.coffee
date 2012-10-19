@@ -49,6 +49,7 @@ class QuizRoom
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null
+		@no_skip = false
 
 	log: (message) -> @emit 'log', { verb: message }
 

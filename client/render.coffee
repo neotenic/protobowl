@@ -55,6 +55,7 @@ renderUpdate = ->
 	$('.categories').val room.category
 	$('.difficulties').val room.difficulty
 	$('.multibuzz').attr 'checked', !room.max_buzz
+	$('.allowskip').attr 'checked', !room.no_skip
 
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
@@ -231,6 +232,9 @@ renderTimer = ->
 		fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100
 		$('.progress .primary-bar').width Math.min(progress * 100, fraction) + '%'
 		$('.progress .aux-bar').width Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%'
+
+	if room.no_skip
+		$('.skipbtn').disable true
 
 	ms = Math.max(0, ms) # force time into positive range, comment this out to show negones
 	sign = ""
@@ -564,11 +568,14 @@ createBundle = ->
 				.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))
 				.append(option)
 
+		submit_btn = $('<button type=submit>').addClass('btn btn-primary').text('Submit')
+
 		form.find(":radio").change ->
 			if form.find(":radio:checked").val() is 'category'
 				ctype.slideDown()
 			else
 				ctype.slideUp()
+				submit_btn.disable(false)
 		
 		ctype = $('<div>').addClass('control-group').appendTo(form)
 		ctype.append $("<label>").addClass('control-label').text('Category')
@@ -578,11 +585,23 @@ createBundle = ->
 		controls.find('input:radio')[0].checked = true
 
 		cat_list.append new Option(cat) for cat in room.categories
+		$(cat_list).change ->
+			submit_btn.disable(cat_list.val() is info.category)
+
 		cat_list.val(info.category)
+		$(cat_list).change()
+		
 		stype = $('<div>').addClass('control-group').appendTo(form)
+		cancel_btn = $('<button>').addClass('btn').text('Cancel').click (e) ->
+			div.slideUp 'normal', ->
+				$(this).remove()
+			e.stopPropagation()
+			e.preventDefault()
 
 		$("<div>").addClass('controls').appendTo(stype)
-			.append($('<button type=submit>').addClass('btn btn-primary').text('Submit'))
+			.append(submit_btn)
+			.append(' ')
+			.append(cancel_btn)
 
 		$(form).submit ->
 			describe = form.find(":radio:checked").val()

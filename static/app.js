@@ -1,4 +1,4 @@
-protobowl_build = 'Wed Oct 17 2012 12:29:32 GMT-0400 (EDT)';
+protobowl_build = 'Thu Oct 18 2012 22:09:33 GMT-0400 (EDT)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1869,7 +1869,7 @@ $('.buzzbtn').click(function() {
   $('.guess_input').val('').addClass('disabled').focus();
   submit_time = +(new Date);
   if ($('.sounds')[0].checked && !$('.sounds').data('ding_sound')) {
-    $('.sounds').data('ding_sound', new Audio('sound/ding.wav'));
+    $('.sounds').data('ding_sound', new Audio('/sound/ding.wav'));
   }
   return me.buzz('yay', function(status) {
     if (status === 'http://www.whosawesome.com/') {
@@ -1924,7 +1924,7 @@ $('input').keydown(function(e) {
 
 $('.chat_input').typeahead({
   source: function() {
-    var existing, id, name, names, option, prefix, user, _i, _len, _results;
+    var existing, id, name, names, option, prefix, user, _i, _len, _ref, _ref1, _ref2, _results;
     prefix = '@' + this.query.slice(1).split(',').slice(0, -1).join(',');
     existing = (function() {
       var _i, _len, _ref, _results;
@@ -1939,22 +1939,21 @@ $('.chat_input').typeahead({
     if (prefix.length > 1) {
       prefix += ', ';
     }
-    names = (function() {
-      var _ref, _results;
-      _ref = room.users;
-      _results = [];
-      for (id in _ref) {
-        user = _ref[id];
-        if (user !== me) {
-          _results.push(user.name);
-        }
+    names = ['individuals'];
+    _ref = room.users;
+    for (id in _ref) {
+      user = _ref[id];
+      if (_ref1 = user.name, __indexOf.call(names, _ref1) < 0) {
+        names.push(user.name);
       }
-      return _results;
-    })();
+      if (user.team && (_ref2 = user.team, __indexOf.call(names, _ref2) < 0)) {
+        names.push(user.team);
+      }
+    }
     _results = [];
     for (_i = 0, _len = names.length; _i < _len; _i++) {
       name = names[_i];
-      if (__indexOf.call(existing, name) < 0) {
+      if (__indexOf.call(existing, name) < 0 && name !== me.name) {
         _results.push("" + prefix + name);
       }
     }
@@ -1966,17 +1965,27 @@ $('.chat_input').typeahead({
 });
 
 findReferences = function(text) {
-  var changed, id, name, reconstructed, _ref;
+  var changed, entities, id, identity, name, reconstructed, team, _ref, _ref1;
   reconstructed = '@';
   changed = true;
+  entities = {};
+  _ref = room.users;
+  for (id in _ref) {
+    _ref1 = _ref[id], name = _ref1.name, team = _ref1.team;
+    entities[name] = '!@' + id + ', ';
+    team || (team = 'individuals');
+    if (!entities[team]) {
+      entities[team] = '';
+    }
+    entities[team] += entities[name];
+  }
   while (changed === true) {
     changed = false;
     text = text.replace(/^[@\s,]*/g, '');
-    _ref = room.users;
-    for (id in _ref) {
-      name = _ref[id].name;
+    for (name in entities) {
+      identity = entities[name];
       if (text.slice(0, name.length) === name) {
-        reconstructed += '!@' + id + ', ';
+        reconstructed += identity;
         text = text.slice(name.length);
         changed = true;
         break;
@@ -2106,7 +2115,7 @@ $('.prompt_form').submit(function(e) {
 });
 
 $('body').keydown(function(e) {
-  var _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+  var _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
   if (actionMode === 'chat') {
     return $('.chat_input').focus();
   }
@@ -2142,9 +2151,13 @@ $('body').keydown(function(e) {
     e.preventDefault();
     $('.chatbtn').click();
     return $('.chat_input').val('@');
-  } else if ((_ref6 = e.keyCode) === 70) {
+  } else if ((_ref6 = e.keyCode) === 84) {
+    e.preventDefault();
+    $('.chatbtn').click();
+    return $('.chat_input').val('@' + (me.team || 'individuals') + " ");
+  } else if ((_ref7 = e.keyCode) === 70) {
     return me.finish();
-  } else if ((_ref7 = e.keyCode) === 66) {
+  } else if ((_ref8 = e.keyCode) === 66) {
     return $('.bundle.active .bookmark').click();
   }
 });
@@ -2225,13 +2238,17 @@ $('.multibuzz').change(function() {
   return me.set_max_buzz(($('.multibuzz')[0].checked ? null : 1));
 });
 
+$('.allowskip').change(function() {
+  return me.set_skip($('.allowskip')[0].checked);
+});
+
 $('.livechat').change(function() {
   return me.set_show_typing($('.livechat')[0].checked);
 });
 
 $('.sounds').change(function() {
   me.set_sounds($('.sounds')[0].checked);
-  return $('.sounds').data('ding_sound', new Audio('sound/ding.wav'));
+  return $('.sounds').data('ding_sound', new Audio('/sound/ding.wav'));
 });
 
 mobileLayout = function() {
@@ -2380,6 +2397,7 @@ renderUpdate = function() {
   $('.categories').val(room.category);
   $('.difficulties').val(room.difficulty);
   $('.multibuzz').attr('checked', !room.max_buzz);
+  $('.allowskip').attr('checked', !room.no_skip);
   if ($('.settings').is(':hidden')) {
     $('.settings').slideDown();
     $(window).resize();
@@ -2533,6 +2551,9 @@ renderTimer = function() {
     fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100;
     $('.progress .primary-bar').width(Math.min(progress * 100, fraction) + '%');
     $('.progress .aux-bar').width(Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%');
+  }
+  if (room.no_skip) {
+    $('.skipbtn').disable(true);
   }
   ms = Math.max(0, ms);
   sign = "";
@@ -2909,7 +2930,7 @@ createBundle = function() {
     answer: room.answer
   });
   breadcrumb.append($('<li>').addClass('clickable hidden-phone').text('Report').click(function(e) {
-    var cat, cat_list, controls, ctype, div, form, info, option, rtype, stype, _i, _j, _len, _len1, _ref1, _ref2;
+    var cancel_btn, cat, cat_list, controls, ctype, div, form, info, option, rtype, stype, submit_btn, _i, _j, _len, _len1, _ref1, _ref2;
     info = bundle.data('report_info');
     div = $("<div>").addClass("alert alert-block alert-info").insertBefore(bundle.find(".annotations")).hide();
     div.append($("<button>").attr("data-dismiss", "alert").attr("type", "button").html("&times;").addClass("close"));
@@ -2924,11 +2945,13 @@ createBundle = function() {
       option = _ref1[_i];
       controls.append($("<label>").addClass("radio").append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase())).append(option));
     }
+    submit_btn = $('<button type=submit>').addClass('btn btn-primary').text('Submit');
     form.find(":radio").change(function() {
       if (form.find(":radio:checked").val() === 'category') {
         return ctype.slideDown();
       } else {
-        return ctype.slideUp();
+        ctype.slideUp();
+        return submit_btn.disable(false);
       }
     });
     ctype = $('<div>').addClass('control-group').appendTo(form);
@@ -2941,9 +2964,20 @@ createBundle = function() {
       cat = _ref2[_j];
       cat_list.append(new Option(cat));
     }
+    $(cat_list).change(function() {
+      return submit_btn.disable(cat_list.val() === info.category);
+    });
     cat_list.val(info.category);
+    $(cat_list).change();
     stype = $('<div>').addClass('control-group').appendTo(form);
-    $("<div>").addClass('controls').appendTo(stype).append($('<button type=submit>').addClass('btn btn-primary').text('Submit'));
+    cancel_btn = $('<button>').addClass('btn').text('Cancel').click(function(e) {
+      div.slideUp('normal', function() {
+        return $(this).remove();
+      });
+      e.stopPropagation();
+      return e.preventDefault();
+    });
+    $("<div>").addClass('controls').appendTo(stype).append(submit_btn).append(' ').append(cancel_btn);
     $(form).submit(function() {
       var describe;
       describe = form.find(":radio:checked").val();
@@ -3358,7 +3392,7 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.skip = function() {
     this.touch();
-    if (!this.room.attempt) {
+    if (!this.room.attempt && !this.room.no_skip) {
       this.room.new_question();
       return this.verb('skipped a question');
     }
@@ -3525,6 +3559,11 @@ QuizPlayer = (function() {
     return this.room.sync(2);
   };
 
+  QuizPlayer.prototype.set_skip = function(data) {
+    this.room.no_skip = !data;
+    return this.room.sync(1);
+  };
+
   QuizPlayer.prototype.reset_score = function() {
     this.verb("was reset from " + this.correct + " correct of " + this.guesses + " guesses and " + (this.score()) + " points");
     this.seen = this.interrupts = this.guesses = this.correct = this.early = 0;
@@ -3600,6 +3639,7 @@ QuizRoom = (function() {
     this.difficulty = '';
     this.category = '';
     this.max_buzz = null;
+    this.no_skip = false;
   }
 
   QuizRoom.prototype.log = function(message) {
