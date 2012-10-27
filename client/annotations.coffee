@@ -25,7 +25,7 @@ userSpan = (user, global) ->
 	text = ''
 
 	if user.slice(0, 2) == "__"
-		text = prefix + user.slice(2)
+		text = prefix + user.slice(2).replace(/_/g, ' ')
 	else
 		text = prefix + (room.users[user]?.name || "[name missing]")
 	
@@ -167,7 +167,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 
 		answer = room.answer
 		ruling.click ->
-			sock.emit 'report_answer', {guess: text, answer: answer, ruling: decision}
+			me.report_answer {guess: text, answer: answer, ruling: decision}
 			createAlert ruling.parents('.bundle'), 'Reported Answer', "You have successfully told me that my algorithm sucks. Thanks, I'll fix it eventually. "
 			# I've been informed that this green box might make you feel bad and that I should change the wording so that it doesn't induce a throbbing pang of guilt in your gut. But the truth is that I really do appreciate flagging this stuff, it helps improve this product and with moar data, I can do science with it.
 
@@ -186,6 +186,8 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 	return line
 
 chatAnnotation = ({session, text, user, done, time}) ->
+	if !session
+		session = 'auto-'+Math.random().toString(36).slice(3)
 	id = user + '-' + session
 	if $('#' + id).length > 0
 		line = $('#' + id)

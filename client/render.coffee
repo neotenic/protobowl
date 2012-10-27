@@ -608,7 +608,7 @@ createBundle = ->
 			if describe is 'category'
 				info.fixed_category = cat_list.val()
 			info.describe = describe
-			sock.emit 'report_question', info
+			me.report_question info
 			
 			createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
 			div.slideUp()

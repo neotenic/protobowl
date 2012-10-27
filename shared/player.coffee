@@ -112,7 +112,7 @@ class QuizPlayer
 		# to modify it according to circumstances and men: such is the
 		# first duty imposed on those who direct society in our day
 
-		tribunal = @room.users[user].tribunal
+		tribunal = @room.users[user]?.tribunal
 		if tribunal
 			{votes, against, witnesses} = tribunal
 			return unless @id in witnesses

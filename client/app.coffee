@@ -61,6 +61,10 @@ else
 		room.sync(3)
 		me.verb 'joined the room'
 
+	setTimeout ->
+		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
+	, 30 * 1000
+
 connected = -> sock? and sock.socket.connected
 
 class QuizPlayerClient extends QuizPlayer

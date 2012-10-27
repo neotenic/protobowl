@@ -1,4 +1,4 @@
-protobowl_build = 'Fri Oct 19 2012 16:39:58 GMT-0400 (EDT)';
+protobowl_build = 'Sat Oct 27 2012 12:04:05 GMT-0400 (EDT)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1493,7 +1493,7 @@ userSpan = function(user, global) {
   }
   text = '';
   if (user.slice(0, 2) === "__") {
-    text = prefix + user.slice(2);
+    text = prefix + user.slice(2).replace(/_/g, ' ');
   } else {
     text = prefix + (((_ref2 = room.users[user]) != null ? _ref2.name : void 0) || "[name missing]");
   }
@@ -1636,7 +1636,7 @@ guessAnnotation = function(_arg) {
     }
     answer = room.answer;
     ruling.click(function() {
-      sock.emit('report_answer', {
+      me.report_answer({
         guess: text,
         answer: answer,
         ruling: decision
@@ -1654,6 +1654,9 @@ guessAnnotation = function(_arg) {
 chatAnnotation = function(_arg) {
   var done, html, id, line, session, text, time, url_regex, user, _ref, _ref1;
   session = _arg.session, text = _arg.text, user = _arg.user, done = _arg.done, time = _arg.time;
+  if (!session) {
+    session = 'auto-' + Math.random().toString(36).slice(3);
+  }
   id = user + '-' + session;
   if ($('#' + id).length > 0) {
     line = $('#' + id);
@@ -2989,7 +2992,7 @@ createBundle = function() {
         info.fixed_category = cat_list.val();
       }
       info.describe = describe;
-      sock.emit('report_question', info);
+      me.report_question(info);
       createAlert(bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.');
       div.slideUp();
       return false;
@@ -3309,13 +3312,13 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.vote_tribunal = function(_arg) {
-    var against, position, tribunal, undecided, user, votes, witnesses, _ref, _ref1, _ref2;
+    var against, position, tribunal, undecided, user, votes, witnesses, _ref, _ref1, _ref2, _ref3;
     user = _arg.user, position = _arg.position;
-    tribunal = this.room.users[user].tribunal;
+    tribunal = (_ref = this.room.users[user]) != null ? _ref.tribunal : void 0;
     if (tribunal) {
       votes = tribunal.votes, against = tribunal.against, witnesses = tribunal.witnesses;
-      if (_ref = this.id, __indexOf.call(witnesses, _ref) < 0) {
-        if ((_ref1 = this.id, __indexOf.call(votes, _ref1) >= 0) || (_ref2 = this.id, __indexOf.call(against, _ref2) >= 0)) {
+      if (_ref1 = this.id, __indexOf.call(witnesses, _ref1) < 0) {
+        if ((_ref2 = this.id, __indexOf.call(votes, _ref2) >= 0) || (_ref3 = this.id, __indexOf.call(against, _ref3) >= 0)) {
 
         }
       }
@@ -3610,8 +3613,7 @@ error_question = {
   'question': 'This type of event occurs when the queried database returns an invalid question and is frequently indicative of a set of constraints which yields a null set. Certain manifestations of this kind of event lead to significant monetary loss and often result in large public relations campaigns to recover from the damaged brand valuation. This type of event is most common with computer software and hardware, and one way to diagnose this type of event when it happens on the bootstrapping phase of a computer operating system is by looking for the POST information. Kernel varieties of this event which are unrecoverable are referred to as namesake panics in the BSD/Mach hybrid microkernel which powers Mac OS X. The infamous Disk Operating System variety of this type of event is known for its primary color backdrop and continues to plague many of the contemporary descendents of DOS with code names such as Whistler, Longhorn and Chidori. For 10 points, name this event which happened right now.',
   'answer': 'error',
   'year': 1970,
-  'round': '0x080483ba',
-  'next': '__error_bonus'
+  'round': '0x080483ba'
 };
 
 error_bonus = {
@@ -4173,6 +4175,13 @@ if (typeof io !== "undefined" && io !== null) {
     room.sync(3);
     return me.verb('joined the room');
   });
+  setTimeout(function() {
+    return chatAnnotation({
+      text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!',
+      user: '__protobot',
+      done: true
+    });
+  }, 30 * 1000);
 }
 
 connected = function() {

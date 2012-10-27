@@ -580,7 +580,7 @@ app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
 		for key, val of req.body
 			doc[key] = val
-		console.log(doc)
+		# console.log(doc)
 		doc.save()
 		res.end('gots it')
 	# remote.Report.remove {_id: mongoose.Types.ObjectId(req.params.id)}, (err, docs) ->
@@ -608,7 +608,10 @@ app.get '/', (req, res) ->
 
 app.get '/:channel', (req, res) ->
 	name = req.params.channel
-	res.render 'room.jade', { name }
+	if name in remote.get_types()
+		res.redirect "/#{name}/lobby"
+	else
+		res.render 'room.jade', { name }
 
 app.get '/:type/:channel', (req, res) ->
 	name = req.params.channel
