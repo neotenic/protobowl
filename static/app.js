@@ -1,4 +1,4 @@
-protobowl_build = 'Sat Oct 27 2012 12:04:05 GMT-0400 (EDT)';
+protobowl_build = 'Mon Oct 29 2012 12:15:51 GMT-0400 (EDT)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -3013,7 +3013,7 @@ reader_children = null;
 reader_last_state = -1;
 
 updateTextPosition = function() {
-  var index, start_index, timeDelta, word_index, _i;
+  var index, start_index, timeDelta, word_index, _i, _j;
   if (!(room.question && room.timing)) {
     return;
   }
@@ -3023,7 +3023,12 @@ updateTextPosition = function() {
   while (timeDelta > room.cumulative[index]) {
     index++;
   }
-  for (word_index = _i = start_index; start_index <= index ? _i < index : _i > index; word_index = start_index <= index ? ++_i : --_i) {
+  if (start_index > index) {
+    for (word_index = _i = index; index <= start_index ? _i < start_index : _i > start_index; word_index = index <= start_index ? ++_i : --_i) {
+      reader_children[word_index].className = 'unread';
+    }
+  }
+  for (word_index = _j = start_index; start_index <= index ? _j < index : _j > index; word_index = start_index <= index ? ++_j : --_j) {
     reader_children[word_index].className = '';
   }
   return reader_last_state = index - 1;
@@ -3068,7 +3073,9 @@ updateInlineSymbols = function() {
     elements.push(element);
   }
   for (i = _j = 0, _ref1 = words.length; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
-    if (children.eq(i).html() !== elements[i].html()) {
+    if (children.eq(i).html() === elements[i].html()) {
+      children.eq(i).addClass('unread');
+    } else {
       if (children.eq(i).length > 0) {
         children.eq(i).replaceWith(elements[i]);
       } else {
@@ -4120,7 +4127,7 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.QuizRoom = QuizRoom;
 }
 
-var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, handleCacheEvent, initialize_offline, last_freeze, latency_log, listen, me, room, sock, sync_offsets, synchronize, testLatency,
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, computeScore, compute_sync_offset, connected, handleCacheEvent, initialize_offline, last_freeze, latency_log, listen, me, offline_startup, online_startup, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -4140,9 +4147,32 @@ initialize_offline = function(cb) {
   });
 };
 
-if (typeof io !== "undefined" && io !== null) {
-  sock = io.connect(location.hostname, {
-    "connect timeout": 2000
+offline_startup = function() {
+  initialize_offline(function() {
+    room.__listeners.joined({
+      id: 'offline',
+      name: 'offline user'
+    });
+    room.sync(3);
+    return me.verb('joined the room');
+  });
+  return setTimeout(function() {
+    return chatAnnotation({
+      text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!',
+      user: '__protobot',
+      done: true
+    });
+  }, 30 * 1000);
+};
+
+sock = null;
+
+online_startup = function(url) {
+  if (!url && location.hostname === 'protobowl.com') {
+    url = 'https://protobowl.jitsu.com:443/';
+  }
+  sock = io.connect(url, {
+    "connect timeout": 4000
   });
   sock.on('connect', function() {
     $('.disconnect-notice').slideUp();
@@ -4153,7 +4183,7 @@ if (typeof io !== "undefined" && io !== null) {
       version: 5
     });
   });
-  sock.on('disconnect', function() {
+  return sock.on('disconnect', function() {
     var line, _ref;
     $('#reload, #disconnect, #reconnect').hide();
     $('#reconnect').show();
@@ -4165,23 +4195,18 @@ if (typeof io !== "undefined" && io !== null) {
     line.append($('<p>').append("This may be due to a drop in the network 				connectivity or a malfunction in the server. The client will automatically 				attempt to reconnect to the server and in the mean time, the app has automatically transitioned				into <b>offline mode</b>. You can continue playing alone with a limited offline set				of questions without interruption. However, you might want to try <a href=''>reloading</a>."));
     return addImportant($('<div>').addClass('log disconnect-notice').append(line));
   });
+};
+
+if (typeof io !== "undefined" && io !== null) {
+  online_startup();
+  setTimeout(function() {
+    if (!sock.socket.connected) {
+      return $('#slow').slideDown();
+    }
+  }, 1000 * 3);
   setTimeout(initialize_offline, 1000);
 } else {
-  initialize_offline(function() {
-    room.__listeners.joined({
-      id: 'offline',
-      name: 'offline user'
-    });
-    room.sync(3);
-    return me.verb('joined the room');
-  });
-  setTimeout(function() {
-    return chatAnnotation({
-      text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!',
-      user: '__protobot',
-      done: true
-    });
-  }, 30 * 1000);
+  offline_startup();
 }
 
 connected = function() {
@@ -4338,6 +4363,7 @@ listen('sync', function(data) {
 });
 
 listen('joined', function(data) {
+  $('#slow').slideUp();
   me.id = data.id;
   me.name = data.name;
   room.users[me.id] = me;

@@ -647,6 +647,10 @@ updateTextPosition = ->
 	index = start_index
 	index++ while timeDelta > room.cumulative[index]
 
+	if start_index > index
+		for word_index in [index...start_index]		
+			reader_children[word_index].className = 'unread'
+
 	for word_index in [start_index...index]
 		reader_children[word_index].className = ''
 		# console.log reader_children[word_index]
@@ -712,7 +716,9 @@ updateInlineSymbols = ->
 		elements.push element
 
 	for i in [0...words.length]
-		unless children.eq(i).html() is elements[i].html()
+		if children.eq(i).html() is elements[i].html()
+			children.eq(i).addClass('unread')
+		else
 			if children.eq(i).length > 0
 				children.eq(i).replaceWith(elements[i])
 			else

@@ -101,6 +101,18 @@ html(lang="en", manifest="/offline.appcache")
 							div.sticky
 							div.annotations
 
+					div#slow.well(style="display: none")
+						p
+							| It looks like Protobowl is taking a while to connect to the server. 
+							| This might not mean anything more than a slow connection, or it could
+							| be a sign of several possible issues. You could <a href="#" onclick="offline_startup();return false">enter offline mode</a>
+							| which will start Protobowl as if it did not have a connection to the server at all, but that 
+							| has the obvious drawback of being offline and only being able to access a limited pool of questions.
+
+						p
+							| If you wait a little bit, Protobowl will keep on trying to connect using different
+							| transports until it finds something that works.
+
 					noscript
 						h4 Please Enable Javascript
 						| Protobowl is built to use many modern browser features which rely on the presence of a powerful 

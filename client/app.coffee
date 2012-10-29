@@ -23,9 +23,30 @@ initialize_offline = (cb) ->
 		success: cb
 	}
 
-if io?
-	sock = io.connect location.hostname, {
-		"connect timeout": 2000
+
+offline_startup = ->
+	initialize_offline ->
+		room.__listeners.joined {
+			id: 'offline',
+			name: 'offline user'
+		}
+		
+		room.sync(3)
+		me.verb 'joined the room'
+
+	setTimeout ->
+		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
+	, 30 * 1000
+
+sock = null
+
+online_startup = (url) ->
+	if !url and location.hostname is 'protobowl.com'
+		url = 'https://protobowl.jitsu.com:443/'
+		# try the secure one when on nodejitsu to evade school proxies
+
+	sock = io.connect url, {
+		"connect timeout": 4000
 	}
 
 	sock.on 'connect', ->
@@ -50,20 +71,17 @@ if io?
 				of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
 		addImportant $('<div>').addClass('log disconnect-notice').append(line)
 
-	setTimeout initialize_offline, 1000
-else
-	initialize_offline ->
-		room.__listeners.joined {
-			id: 'offline',
-			name: 'offline user'
-		}
-		
-		room.sync(3)
-		me.verb 'joined the room'
+if io?
+	online_startup()
 
 	setTimeout ->
-		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
-	, 30 * 1000
+		$('#slow').slideDown() if !sock.socket.connected
+	, 1000 * 3
+
+	setTimeout initialize_offline, 1000
+else
+	offline_startup()	
+
 
 connected = -> sock? and sock.socket.connected
 
@@ -152,10 +170,13 @@ listen 'log', (data) -> verbAnnotation data
 listen 'sync', (data) -> synchronize data
 
 listen 'joined', (data) ->
+	$('#slow').slideUp()
+
 	me.id = data.id
 	me.name = data.name
 	room.users[me.id] = me
 	$('.actionbar button').disable false
+
 	$('#username').val me.name
 	$('#username').disable false
 
