@@ -1019,6 +1019,8 @@ input[type=range]{vertical-align:middle;height:30px;}
 .settings .checkbox{text-align:left;padding-left:33px;overflow:hidden;}.settings .checkbox input[type=checkbox]{margin-left:-24px;}
 .settings .checkbox .electorate{font-size:80%;padding-left:5px;}
 .settings hr{margin-top:7px;margin-bottom:7px;}
+.banhammer{opacity:0.2;transition:opacity 0.5s;-webkit-transition:opacity 0.5s;-moz-transition:opacity 0.5s;-o-transition:opacity 0.5s;}
+.banhammer:hover{opacity:0.8;}
 .annotations{word-wrap:break-word;}.annotations .author{font-weight:bold;}
 .annotations .recipient{font-weight:bold;color:green;}
 .annotations .typing{opacity:0.7;}

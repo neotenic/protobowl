@@ -58,6 +58,7 @@ class QuizPlayer
 
 	ban: ->
 		@banned = @room.serverTime()
+		@verb "was banned from #{@room.name}", true
 		@emit 'redirect', "/#{@room.name}-banned"
 
 
@@ -84,7 +85,7 @@ class QuizPlayer
 			mean_elapsed = current_time - s / window_size
 			# console.log mean_elapsed, window_size * action_delay / 2
 			if mean_elapsed < window_size * action_delay / 2
-				create_tribunal()
+				@create_tribunal()
 
 	create_tribunal: ->
 		if !@tribunal
@@ -112,6 +113,7 @@ class QuizPlayer
 
 
 	trigger_tribunal: (user) ->
+		@verb 'created a ban tribunal for !@' + user
 		@room.users[user]?.create_tribunal()
 
 	ban_user: (user) ->
@@ -196,7 +198,8 @@ class QuizPlayer
 
 	finish: ->
 		@touch()
-		unless @room.attempt
+		if !@room.attempt and !@room.no_skip
+			@verb 'skipped to the end of a question'
 			@room.finish()
 			@room.sync(1)
 
@@ -273,15 +276,15 @@ class QuizPlayer
 				@verb "set category to #{data.toLowerCase() || 'potpourri'} (#{size} questions)"
 		
 	set_max_buzz: (data) ->
-		@room.max_buzz = data
-		@touch()
 		if @room.max_buzz isnt data
-			if data is 0
+			if !data
 				@verb 'allowed players to buzz multiple times'
 			else if data is 1
 				@verb 'restricted players and teams to a single buzz per question'
 			else if data > 1
 				@verb "restricted players and teams to #{data} buzzes per question"
+		@room.max_buzz = data
+		@touch()
 		@room.sync()
 
 	set_speed: (speed) ->
@@ -325,9 +328,17 @@ class QuizPlayer
 	set_skip: (data) ->
 		@room.no_skip = !data
 		@room.sync(1)
+		if @room.no_skip
+			@verb 'disabled question skipping'
+		else
+			@verb 'enabled question skipping'
 
 	set_bonus: (data) ->
 		@room.show_bonus = data
+		if @room.show_bonus
+			@verb 'enabled showing bonus questions'
+		else
+			@verb 'disabled showing bonus questions'
 		@room.sync(1)
 
 	reset_score: ->

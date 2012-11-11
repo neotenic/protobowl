@@ -1,0 +1,61 @@
+doctype 5
+html(lang="en")
+	head
+		title REPORTS
+		link(rel="stylesheet", href="/protobowl.css")
+		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
+	body
+		script
+			$(".closereport").live('click', function(){
+				var bundle = $(this).parents('.bundle');
+				var parsed = bundle.data('info');
+				console.log(parsed)
+				$.post('/stalkermode/reports/remove_report/' + parsed._id, {}, function(data, status){
+					console.log(data, status)
+					bundle.slideUp('fast', function(){
+						$(this).remove()
+					})
+				})
+			});
+			$(".changecat").live('click', function(){
+				var bundle = $(this).parents('.bundle');
+				var parsed = $(this).parents('.bundle').data('info');
+				console.log(parsed)
+				
+				$.post('/stalkermode/reports/change_question/' + parsed.qid, {category: bundle.find('.catefix').val()}, function(data, status){
+					console.log(data, status)
+					bundle.find('.closereport').click()
+				})
+			});
+			$('body').keydown(function(e){
+				if(e.keyCode == 75){ //k
+					$('.bundle:visible:first .closereport').click()
+				}else if(e.keyCode == 74){ //j
+					$('.bundle:visible:first .changecat').click()
+				}else{
+					console.log(e.keyCode)	
+				}
+				
+			})
+		div#history.container
+			each report in reports
+				div.bundle(data-info="#{JSON.stringify(report)}")
+					ul.breadcrumb
+						li Category: #{report.category}
+						span.divider /
+						li Difficulty: #{report.difficulty}
+						span.divider /
+						li Tournament: #{report.tournament}
+						li.answer.pull-right= report.answer
+					div.well= report.question
+					if report.fixed_category
+						select.catefix(style="margin: 5px")
+							each category in categories
+								option(value="#{category}", selected=category == report.fixed_category)= category
+						button.btn.changecat Change Question (j)
+
+					|  
+					button.btn.closereport Close Report (k)
+					span.pull-right= report.qid
+					hr
+		

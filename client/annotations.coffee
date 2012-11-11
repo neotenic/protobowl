@@ -20,7 +20,7 @@ createAlert = (bundle, title, message) ->
 userSpan = (user, global) ->
 	prefix = ''
 
-	if me.id and me.id.slice(0, 2) == "__"
+	if /superstalkers/.test room.name
 		prefix = (room.users[user]?.room?.name || 'unknown') + '/'
 	text = ''
 
@@ -67,6 +67,23 @@ addImportant = (el) ->
 		el.css('display', 'none').prependTo $('#history .sticky:first')
 	el.slideDown()
 	return el
+
+
+banButton = (id, line) ->
+	if me.id[0] != '_'
+		return if id is me.id
+		return if me.score() < 50
+		return if (1 for i, u of room.users when u.active()).length < 3
+	line.append $('<a>')
+		.attr('href', '#')
+		.attr('title', 'Initiate ban tribunal for this user')
+		.attr('rel', 'tooltip')
+		.addClass('label label-important pull-right banhammer')
+		.append($("<i>").addClass('icon-ban-circle'))
+		.click (e) ->
+			e.preventDefault()
+			me.trigger_tribunal id
+			# console.log 'banhammer'
 
 guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt}) ->
 	# TODO: make this less like chats
@@ -159,6 +176,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
+			if user of room.users and room.users[user].score() < 0
+				banButton user, line
+			
 			if user is me.id and me.id of room.users
 				old_score = me.score()
 				if old_score < -100 # just a little way of saying "you suck"
@@ -208,10 +228,14 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	).replace(url_regex, (url) ->
 		real_url = url
 		real_url = "http://#{url}" unless /:\//.test(url)
-		if /\.(jpe?g|gif|png)$/.test(url)
-			return "<img src='#{real_url}' alt='#{url}'>"
+		if /\.(jpe?g|gif|png)$/i.test(url)
+			# return ""
+			return "<a href='#{real_url}' class='show_image' target='_blank'>#{url}</a> (click to show) 
+				<div style='display:none;overflow:hidden' class='chat_image'>
+					<img src='#{real_url}' alt='#{url}'>
+				</div>"
 		else
-			return "<a href='#{real_url}' target='_blank' class='chat_image'>#{url}</a>"
+			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
 	).replace /!@([a-z0-9]+)/g, (match, user) ->
 		return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html()
 	
@@ -245,7 +269,14 @@ verbAnnotation = ({user, verb, time}) ->
 			return userSpan(user).clone().wrap('<div>').parent().html()
 	else
 		line.append verb
+
+
+	if /paused the/.test(verb) or /skipped/.test(verb) or /category/.test(verb) or /difficulty/.test(verb) or /ban tribunal/.test(verb) or me.id[0] == '_'
+		banButton user, line
 	addAnnotation line
+
+
+
 
 # logAnnotation = (text) ->
 # 	line = $('<p>').addClass 'log'
@@ -259,7 +290,7 @@ verbAnnotation = ({user, verb, time}) ->
 
 boxxyAnnotation = ({id, tribunal}) ->
 	{votes, time, witnesses, against} = tribunal
-	return if me.id not in witnesses # people who havent witnessed the crime do not constitute a jury of peers
+	return if me.id not in witnesses and me.id[0] != '_' # people who havent witnessed the crime do not constitute a jury of peers
 	# majority + opposers - votes
 	votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
 
@@ -293,4 +324,5 @@ boxxyAnnotation = ({id, tribunal}) ->
 	else
 		$('.troll-'+id).slideUp 'normal', ->
 			$(this).remove()
-		addImportant line
+		if id isnt me.id or votes.length > 1
+			addImportant line

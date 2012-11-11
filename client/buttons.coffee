@@ -435,6 +435,10 @@ $('.singleuser').click ->
 		renderUsers()
 		$(this).dequeue().slideDown()
 
+$('.show_image').live 'click', (e) ->
+	e.preventDefault()
+	$(this).parent().find('.chat_image').slideToggle()
+
 $(".leaderboard tbody tr").live 'click', (e) ->
 	# console.log this
 	# tmp = $('.popover')

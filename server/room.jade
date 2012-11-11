@@ -188,16 +188,17 @@ html(lang="en", manifest="/offline.appcache")
 											span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
 												i.icon-trash
 											button.btn.input.score-reset Reset My Score 
+									
+									label.checkbox
+										input.movingwindow(type="checkbox")
+										| Points earned in last 20 questions
+
 									label.checkbox
 										input.livechat(type="checkbox", checked)
 										| Show chat messages while typing
 									label.checkbox
 										input.sounds(type="checkbox")
 										| Play sound on successful buzz
-									
-									label.checkbox
-										input.movingwindow(type="checkbox")
-										| Calculate scores from last 20 questions
 
 									label.checkbox.lockvote(style="display:none")
 										input.lock(type="checkbox")

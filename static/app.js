@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 11 2012 13:33:25 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 11 2012 15:33:20 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1466,7 +1466,7 @@ setTimeout(function() {
   return $(window).resize();
 }, 6022);
 
-var addAnnotation, addImportant, boxxyAnnotation, chatAnnotation, createAlert, guessAnnotation, userSpan, verbAnnotation,
+var addAnnotation, addImportant, banButton, boxxyAnnotation, chatAnnotation, createAlert, guessAnnotation, userSpan, verbAnnotation,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 createAlert = function(bundle, title, message) {
@@ -1488,7 +1488,7 @@ createAlert = function(bundle, title, message) {
 userSpan = function(user, global) {
   var c, el, hash, prefix, scope, text, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
   prefix = '';
-  if (me.id && me.id.slice(0, 2) === "__") {
+  if (/superstalkers/.test(room.name)) {
     prefix = (((_ref = room.users[user]) != null ? (_ref1 = _ref.room) != null ? _ref1.name : void 0 : void 0) || 'unknown') + '/';
   }
   text = '';
@@ -1544,6 +1544,36 @@ addImportant = function(el) {
   }
   el.slideDown();
   return el;
+};
+
+banButton = function(id, line) {
+  var i, u;
+  if (me.id[0] !== '_') {
+    if (id === me.id) {
+      return;
+    }
+    if (me.score() < 50) {
+      return;
+    }
+    if (((function() {
+      var _ref, _results;
+      _ref = room.users;
+      _results = [];
+      for (i in _ref) {
+        u = _ref[i];
+        if (u.active()) {
+          _results.push(1);
+        }
+      }
+      return _results;
+    })()).length < 3) {
+      return;
+    }
+  }
+  return line.append($('<a>').attr('href', '#').attr('title', 'Initiate ban tribunal for this user').attr('rel', 'tooltip').addClass('label label-important pull-right banhammer').append($("<i>").addClass('icon-ban-circle')).click(function(e) {
+    e.preventDefault();
+    return me.trigger_tribunal(id);
+  }));
 };
 
 guessAnnotation = function(_arg) {
@@ -1627,6 +1657,9 @@ guessAnnotation = function(_arg) {
     } else {
       decision = "wrong";
       ruling.addClass('label-warning').text('Wrong');
+      if (user in room.users && room.users[user].score() < 0) {
+        banButton(user, line);
+      }
       if (user === me.id && me.id in room.users) {
         old_score = me.score();
         if (old_score < -100) {
@@ -1676,10 +1709,10 @@ chatAnnotation = function(_arg) {
     if (!/:\//.test(url)) {
       real_url = "http://" + url;
     }
-    if (/\.(jpe?g|gif|png)$/.test(url)) {
-      return "<img src='" + real_url + "' alt='" + url + "'>";
+    if (/\.(jpe?g|gif|png)$/i.test(url)) {
+      return "<a href='" + real_url + "' class='show_image' target='_blank'>" + url + "</a> (click to show) 				<div style='display:none;overflow:hidden' class='chat_image'>					<img src='" + real_url + "' alt='" + url + "'>				</div>";
     } else {
-      return "<a href='" + real_url + "' target='_blank' class='chat_image'>" + url + "</a>";
+      return "<a href='" + real_url + "' target='_blank'>" + url + "</a>";
     }
   }).replace(/!@([a-z0-9]+)/g, function(match, user) {
     return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html();
@@ -1719,6 +1752,9 @@ verbAnnotation = function(_arg) {
   } else {
     line.append(verb);
   }
+  if (/paused the/.test(verb) || /skipped/.test(verb) || /category/.test(verb) || /difficulty/.test(verb) || /ban tribunal/.test(verb) || me.id[0] === '_') {
+    banButton(user, line);
+  }
   return addAnnotation(line);
 };
 
@@ -1726,7 +1762,7 @@ boxxyAnnotation = function(_arg) {
   var against, guilty, id, line, not_guilty, time, tribunal, votes, votes_needed, witnesses, _ref, _ref1, _ref2;
   id = _arg.id, tribunal = _arg.tribunal;
   votes = tribunal.votes, time = tribunal.time, witnesses = tribunal.witnesses, against = tribunal.against;
-  if (_ref = me.id, __indexOf.call(witnesses, _ref) < 0) {
+  if ((_ref = me.id, __indexOf.call(witnesses, _ref) < 0) && me.id[0] !== '_') {
     return;
   }
   votes_needed = Math.floor((witnesses.length - 1) / 2 + 1) - votes.length + against.length;
@@ -1768,7 +1804,9 @@ boxxyAnnotation = function(_arg) {
     $('.troll-' + id).slideUp('normal', function() {
       return $(this).remove();
     });
-    return addImportant(line);
+    if (id !== me.id || votes.length > 1) {
+      return addImportant(line);
+    }
   }
 };
 
@@ -2323,6 +2361,11 @@ $('.singleuser').click(function() {
     renderUsers();
     return $(this).dequeue().slideDown();
   });
+});
+
+$('.show_image').live('click', function(e) {
+  e.preventDefault();
+  return $(this).parent().find('.chat_image').slideToggle();
 });
 
 $(".leaderboard tbody tr").live('click', function(e) {
@@ -3323,6 +3366,7 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.ban = function() {
     this.banned = this.room.serverTime();
+    this.verb("was banned from " + this.room.name, true);
     return this.emit('redirect', "/" + this.room.name + "-banned");
   };
 
@@ -3371,7 +3415,7 @@ QuizPlayer = (function() {
       }
       mean_elapsed = current_time - s / window_size;
       if (mean_elapsed < window_size * action_delay / 2) {
-        return create_tribunal();
+        return this.create_tribunal();
       }
     }
   };
@@ -3410,6 +3454,7 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.trigger_tribunal = function(user) {
     var _ref;
+    this.verb('created a ban tribunal for !@' + user);
     return (_ref = this.room.users[user]) != null ? _ref.create_tribunal() : void 0;
   };
 
@@ -3519,7 +3564,8 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.finish = function() {
     this.touch();
-    if (!this.room.attempt) {
+    if (!this.room.attempt && !this.room.no_skip) {
+      this.verb('skipped to the end of a question');
       this.room.finish();
       return this.room.sync(1);
     }
@@ -3623,10 +3669,8 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.set_max_buzz = function(data) {
-    this.room.max_buzz = data;
-    this.touch();
     if (this.room.max_buzz !== data) {
-      if (data === 0) {
+      if (!data) {
         this.verb('allowed players to buzz multiple times');
       } else if (data === 1) {
         this.verb('restricted players and teams to a single buzz per question');
@@ -3634,6 +3678,8 @@ QuizPlayer = (function() {
         this.verb("restricted players and teams to " + data + " buzzes per question");
       }
     }
+    this.room.max_buzz = data;
+    this.touch();
     return this.room.sync();
   };
 
@@ -3690,11 +3736,21 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.set_skip = function(data) {
     this.room.no_skip = !data;
-    return this.room.sync(1);
+    this.room.sync(1);
+    if (this.room.no_skip) {
+      return this.verb('disabled question skipping');
+    } else {
+      return this.verb('enabled question skipping');
+    }
   };
 
   QuizPlayer.prototype.set_bonus = function(data) {
     this.room.show_bonus = data;
+    if (this.room.show_bonus) {
+      this.verb('enabled showing bonus questions');
+    } else {
+      this.verb('disabled showing bonus questions');
+    }
     return this.room.sync(1);
   };
 
