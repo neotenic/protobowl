@@ -12,7 +12,6 @@ names = require '../shared/names'
 uptime_begin = +new Date
 
 try 
-	
 	remote = require './remote'
 
 catch err
@@ -68,6 +67,7 @@ catch err
 app = express.createServer()
 app.set 'views', "server" # directory where the jade files are
 app.set 'view options', layout: false
+app.set 'trust proxy', true
 
 io = require('socket.io').listen(app)
 
@@ -176,7 +176,7 @@ app.use (req, res, next) ->
 	next()
 
 app.use (req, res, next) ->
-	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'
+	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development' and req.protocol is 'http'
 		options = url.parse(req.url)
 		options.host = 'protobowl.com'
 		res.writeHead 301, {Location: url.format(options)}
@@ -307,8 +307,7 @@ io.sockets.on 'connection', (sock) ->
 	headers = sock.handshake.headers
 	return sock.disconnect() unless headers.referer and headers.cookie
 	config = url.parse(headers.referer)
-
-	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development'
+	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
 		config.host = 'protobowl.com'
 		sock.emit 'application_update', +new Date
 		sock.emit 'redirect', url.format(config)
@@ -556,6 +555,33 @@ app.get '/stalkermode/full', (req, res) ->
 app.get '/stalkermode/users', (req, res) ->
 	res.render 'users.jade', { rooms: rooms }
 
+app.get '/stalkermode/user/:room/:user', (req, res) ->
+	u = rooms?[req.params.room]?.users?[req.params.user]
+	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u)}
+
+app.post '/stalkermode/emit/:room/:user', express.bodyParser(), (req, res) ->
+	u = rooms?[req.params.room]?.users?[req.params.user]
+	u.emit req.body.action, req.body.text
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+app.post '/stalkermode/ban/:room/:user', (req, res) ->
+	rooms?[req.params.room]?.users?[req.params.user]?.ban()
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+app.post '/stalkermode/tribunal/:room/:user', (req, res) ->
+	rooms?[req.params.room]?.users?[req.params.user]?.create_tribunal()
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+app.post '/stalkermode/reset/:room/:user', (req, res) ->
+	rooms?[req.params.room]?.users?[req.params.user]?.reset_score()
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+app.post '/stalkermode/disco/:room/:user', (req, res) ->
+	u = rooms?[req.params.room]?.users?[req.params.user]
+	io.sockets.socket(sock).disconnect() for sock in u.sockets
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+
 
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
@@ -588,21 +614,14 @@ app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 
 
 app.get '/stalkermode/reports/:type', (req, res) ->
-
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
-		res.render 'reports.jade', { reports: docs }
+		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 
 app.get '/new', (req, res) ->
 	res.redirect '/' + names.generatePage()
 
 app.get '/', (req, res) ->
-	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development'
-		options = url.parse(req.url)
-		options.host = 'protobowl.com'
-		res.writeHead 301, {Location: url.format(options)}
-		res.end()
-		return
 	res.redirect '/lobby'
 
 

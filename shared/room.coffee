@@ -213,6 +213,8 @@ class QuizRoom
 				user.times_buzzed = 0
 				# if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
 				user.seen++ if user.active()
+				user.history.push user.score()
+				user.history = user.history.slice(-30)
 
 			@sync(2)
 
@@ -314,6 +316,7 @@ class QuizRoom
 			@unfreeze()
 			if @attempt.correct
 				@users[@attempt.user].correct++
+
 				if @attempt.early 
 					@users[@attempt.user].early++
 				@finish()

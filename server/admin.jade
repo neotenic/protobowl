@@ -37,8 +37,10 @@ html(lang="en")
 				| #{Math.floor(secs / 60) % 60} minutes 
 			| #{Math.floor(secs % 60)} seconds
 
-		mixin display_user(user, room)
+		mixin display_user(user)
 			li #{user.team || ''} <b>#{user.name}</b> 
+				if !('users' in user)
+					a(href="/stalkermode/user/#{user.room.name}/#{user.id}") &rarr; 
 				| (last seen 
 				mixin time(user.last_action)
 				| )
@@ -162,8 +164,8 @@ html(lang="en")
 		form(action="/stalkermode/fullsync", method="post")
 			button(type="submit") Rewrite the Journal
 
-		form(action="/stalkermode/kickoffline", method="post")
-			button(type="submit") Kick Offline Users
+		//- form(action="/stalkermode/kickoffline", method="post")
+		//- 	button(type="submit") Kick Offline Users
 
 
 		//- form(action="/stalkermode/update", method="post")

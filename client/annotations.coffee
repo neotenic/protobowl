@@ -140,9 +140,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "correct"
 			ruling.addClass('label-success').text('Correct')
 			if user is me.id # if the person who got it right was me
-				old_score = computeScore(me)
+				old_score = me.score()
 				checkScoreUpdate = ->
-					updated_score = computeScore(me)
+					updated_score = me.score()
 					if updated_score is old_score
 						setTimeout checkScoreUpdate, 100
 						return
@@ -160,7 +160,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
 			if user is me.id and me.id of room.users
-				old_score = computeScore(me)
+				old_score = me.score()
 				if old_score < -100 # just a little way of saying "you suck"
 					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.'
 
@@ -211,7 +211,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		if /\.(jpe?g|gif|png)$/.test(url)
 			return "<img src='#{real_url}' alt='#{url}'>"
 		else
-			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
+			return "<a href='#{real_url}' target='_blank' class='chat_image'>#{url}</a>"
 	).replace /!@([a-z0-9]+)/g, (match, user) ->
 		return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html()
 	

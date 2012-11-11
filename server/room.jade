@@ -171,51 +171,63 @@ html(lang="en", manifest="/offline.appcache")
 								| Settings
 
 							div(style="text-align: center; padding-right: 4px; padding-left: 4px; padding-top: 4px")
-								div.expando
-									div.input-prepend
-										span.add-on(style="width:21px", title="Public name", rel='tooltip')
-											i.icon-user
-										input#username(type='text', value='', disabled)
-								div.expando
-									div.input-prepend
-										span.add-on(style="width:21px", title="Teams", rel='tooltip')
-											i.icon-group
-										select.input.teams
-											option(value="") Individual
-								div.expando
-									div.input-prepend
-										span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
-											i.icon-trash
-										button.btn.input.score-reset Reset My Score 
-								label.checkbox
-									input.livechat(type="checkbox", checked)
-									| Show chat messages while typing
-								label.checkbox
-									input.sounds(type="checkbox")
-									| Play sound on successful buzz
-								hr
-								div.expando
-									div.input-prepend
-										span.add-on(style="width:21px", title="Read speed", rel='tooltip')
-											i.icon-step-forward
-										input.speed(type="range", value="200", min="60", max="600")
-								div.expando
-									div.input-prepend
-										span.add-on(style="width:21px", title="Difficulty/Category", rel='tooltip')
-											i.icon-briefcase
-										select.padd-on.difficulties(style="width: 60px; border-right: 0")
-										select.input.categories(style="border-left: 0")
+								div.localsettings
+									div.expando
+										div.input-prepend
+											span.add-on(style="width:21px", title="Public name", rel='tooltip')
+												i.icon-user
+											input#username(type='text', value='', disabled)
+									div.expando
+										div.input-prepend
+											span.add-on(style="width:21px", title="Teams", rel='tooltip')
+												i.icon-group
+											select.input.teams
+												option(value="") Individual
+									div.expando
+										div.input-prepend
+											span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
+												i.icon-trash
+											button.btn.input.score-reset Reset My Score 
+									label.checkbox
+										input.livechat(type="checkbox", checked)
+										| Show chat messages while typing
+									label.checkbox
+										input.sounds(type="checkbox")
+										| Play sound on successful buzz
+									
+									label.checkbox
+										input.movingwindow(type="checkbox")
+										| Calculate scores from last 20 questions
 
-								div.custom-category(style="display:none")
-								label.checkbox
-									input.showbonus(type="checkbox")
-									| Show bonus questions
-								label.checkbox
-									input.multibuzz(type="checkbox", checked)
-									| Allow players to buzz multiple times
-								label.checkbox
-									input.allowskip(type="checkbox", checked)
-									| Allow players to skip questions
+									label.checkbox.lockvote(style="display:none")
+										input.lock(type="checkbox")
+										| Lock settings <span class='electorate'>0/1 votes</span>
+										i(style="padding-left: 5px").icon-unlock.status_icon
+								hr
+								div.globalsettings
+									div.expando
+										div.input-prepend
+											span.add-on(style="width:21px", title="Read speed", rel='tooltip')
+												i.icon-step-forward
+											input.speed(type="range", value="200", min="60", max="600")
+									div.expando
+										div.input-prepend
+											span.add-on(style="width:21px", title="Difficulty/Category", rel='tooltip')
+												i.icon-briefcase
+											select.padd-on.difficulties(style="width: 60px; border-right: 0")
+											select.input.categories(style="border-left: 0")
+
+									div.custom-category(style="display:none")
+
+									label.checkbox
+										input.showbonus(type="checkbox")
+										| Show bonus questions
+									label.checkbox
+										input.multibuzz(type="checkbox", checked)
+										| Allow players to buzz multiple times
+									label.checkbox
+										input.allowskip(type="checkbox", checked)
+										| Allow players to skip questions
 								
 					div.span3.thumbnail.show-keyboard
 						h5 

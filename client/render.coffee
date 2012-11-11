@@ -57,6 +57,7 @@ renderUpdate = ->
 	$('.multibuzz').attr 'checked', !room.max_buzz
 	$('.allowskip').attr 'checked', !room.no_skip
 
+
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
 		$(window).resize()
@@ -64,9 +65,11 @@ renderUpdate = ->
 	if me.id of room.users and 'show_typing' of room.users[me.id]
 		$('.livechat').attr 'checked', room.users[me.id].show_typing
 		$('.sounds').attr 'checked', room.users[me.id].sounds
+		$('.lock').attr 'checked', room.users[me.id].lock
 		$('.teams').val room.users[me.id].team
 
-	
+	# 
+
 	if room.attempt
 		guessAnnotation room.attempt
 
@@ -255,6 +258,17 @@ renderTimer = ->
 			str
 		$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
 
+
+get_score = (user) -> 
+	if me.movingwindow
+		user.score() - [0].concat(user.history).slice(-me.movingwindow)[0]
+		# basis = user.history.concat [user.score()]
+		# basis[basis.length - 1]
+	else
+		# nice and simple; use the actual scores
+		user.score()
+
+
 renderUsers = ->
 	# render the user list and that stuff
 	return unless room.users
@@ -284,6 +298,33 @@ renderUsers = ->
 
 		# user.name + " (" + user.id + ") " + votes.join(", ")
 	
+	lock_votes = 0
+	lock_electorate = 0
+	for id, user of room.users when user.active()
+		if user.active()
+			lock_electorate++
+			if user.lock
+				lock_votes++
+	if lock_electorate < 2
+		$('.lockvote').slideUp()
+	else
+		$('.lockvote').slideDown()
+		$('.lockvote .electorate').text "#{lock_votes}/#{lock_electorate} votes"
+		$('.lockvote .status_icon').removeClass('icon-lock icon-unlock')
+		if lock_votes > lock_electorate / 2
+			$('.lockvote .status_icon').addClass('icon-lock')
+			$('.globalsettings .checkbox, .globalsettings .expando')
+				.css('opacity', '0.5')
+				.find('select, input')
+				.disable(true)
+		else
+			$('.lockvote .status_icon').addClass('icon-unlock')
+
+			$('.globalsettings .checkbox, .globalsettings .expando')
+				.css('opacity', '1')
+				.find('select, input')
+				.disable(false)
+
 	if $('.teams').data('teamhash') isnt team_hash
 		$('.teams').data('teamhash', team_hash)
 		$('.teams').empty()
@@ -325,12 +366,13 @@ renderUsers = ->
 			entities.push user # add all the unaffiliated users
 
 	list.empty()
-	for user, user_index in entities.sort((a, b) -> b.score() - a.score())
+
+	for user, user_index in entities.sort((a, b) -> get_score(b) - get_score(a))
 		# if the score is worse, increment ranks
-		ranking++ if entities[user_index - 1] and user.score() < entities[user_index - 1].score()
+		ranking++ if entities[user_index - 1] and get_score(user) < get_score(entities[user_index - 1])
 		row = $('<tr>').data('entity', user).appendTo list
 		row.click -> 1
-		badge = $('<span>').addClass('badge pull-right').text user.score()
+		badge = $('<span>').addClass('badge pull-right').text get_score(user)
 		if me.id in (user.members || [user.id])
 			badge.addClass('badge-info').attr('title', 'You')
 		else
@@ -356,11 +398,11 @@ renderUsers = ->
 		else
 			name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
 		
-			for member in user.members.sort((a, b) -> room.users[b].score() - room.users[a].score())
+			for member in user.members.sort((a, b) -> get_score(room.users[b]) - get_score(room.users[a]))
 				user = room.users[member]
 				row = $('<tr>').addClass('subordinate').data('entity', user).appendTo list
 				row.click -> 1
-				badge = $('<span>').addClass('badge pull-right').text(user.score())
+				badge = $('<span>').addClass('badge pull-right').text get_score(user)
 				if user.id is me.id
 					badge.addClass('badge-info').attr('title', 'You')
 				else
@@ -425,7 +467,7 @@ createStatSheet = (user, full) ->
 			.append($("<th>").text(name))
 			.append($("<td>").addClass("value").append(val))
 	
-	row	"Score", $('<span>').addClass('badge').text(user.score())
+	row	"Score", $('<span>').addClass('badge').text(get_score(user))
 	row	"Correct", user.correct
 	row "Interrupts", user.interrupts
 	row "Early", user.early  if full

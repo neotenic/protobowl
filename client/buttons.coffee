@@ -308,7 +308,7 @@ $('body').keydown (e) ->
 		$('.bundle:not(.active):first .readout').slideToggle()
 	else if e.keyCode in [80, 82] # P, R
 		$('.pausebtn').click()
-	else if e.keyCode in [47, 111, 191, 67, 65, 13] # / (forward slash), C, A
+	else if e.keyCode in [47, 111, 191, 67, 65, 13] # / (forward slash), C, A, Enter
 		e.preventDefault()
 		$('.chatbtn').click()
 	else if e.keyCode in [87] # W
@@ -324,6 +324,15 @@ $('body').keydown (e) ->
 		me.finish()
 	else if e.keyCode in [66]
 		$('.bundle.active .bookmark').click()
+
+	# debugging shortcuts	
+	if location.hostname is 'localhost'
+		if e.keyCode in [68] # D
+			me.buzz()
+			me.guess { text: room.answer, done: true }
+		else if e.keyCode in [69] # E
+			me.buzz()
+			me.guess { text: '', done: true }
 
 	# console.log e.keyCode
 
@@ -384,6 +393,14 @@ $('.allowskip').change -> me.set_skip $('.allowskip')[0].checked
 $('.showbonus').change -> me.set_bonus $('.showbonus')[0].checked
 
 $('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
+
+$('.lock').change -> me.set_lock $('.lock')[0].checked
+
+$('.movingwindow').change -> 
+	if $('.movingwindow')[0].checked
+		me.set_movingwindow 20
+	else
+		me.set_movingwindow false
 
 $('.sounds').change -> 
 	me.set_sounds $('.sounds')[0].checked

@@ -11,7 +11,8 @@
 
 do ->
 	t = new Date protobowl_build
-	$('#version').text "#{t.getMonth()+1}/#{t.getDate()}/#{t.getFullYear() % 100} #{t.getHours()}:#{t.getMinutes()}"
+	# todo: add padding to minute so it looks less weird
+	$('#version').text "#{t.getMonth()+1}/#{t.getDate()}/#{t.getFullYear() % 100} #{t.getHours()}:#{(t.getMinutes()/100).toFixed(2).slice(2)}"
 
 
 # asynchronously load the other code which doesn't need to be there on startup necessarily
@@ -40,12 +41,12 @@ offline_startup = ->
 
 sock = null
 
-online_startup = (url) ->
-	if !url and location.hostname is 'protobowl.com'
-		url = 'https://protobowl.jitsu.com:443/'
-		# try the secure one when on nodejitsu to evade school proxies
+online_startup = ->
+	# if !url and location.hostname is 'protobowl.com'
+	# 	url = 'https://protobowl.jitsu.com:443/'
+	# 	# try the secure one when on nodejitsu to evade school proxies
 
-	sock = io.connect url, {
+	sock = io.connect location.hostname, {
 		"connect timeout": 4000
 	}
 
@@ -110,6 +111,12 @@ class QuizPlayerSlave extends QuizPlayerClient
 
 	constructor: (room, id) ->
 		super(room, id)
+		# the difference between local-exec and remote-exec code is a little weird
+		# i don't exactly like the concept of needing to maintain an exception list
+		# and it would have been probably a good idea if it was instead something like
+		# functions starting with get_ are treated as local-exec, but I dont feel like
+		# propagating a breaking change 
+
 		blacklist = ['envelop_action', 'score', 'online', 'active']
 		@envelop_action name for name, method of this when typeof method is 'function' and name not in blacklist
 
@@ -235,14 +242,6 @@ synchronize = (data) ->
 
 	renderUsers() if 'users' of data
 	
-
-# in theory this would belong in QuizPlayer
-# but this doesnt fit into the architecture quite yet
-# possibly part of a bigger statistics class if that ever
-# gets actually built
-
-computeScore = (user) -> user.score()
-
 
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s

@@ -14,6 +14,7 @@ class QuizPlayer
 		@early = 0
 		@seen = 0
 		@correct = 0
+		@history = [] # todo: store history as a string?
 		
 		# timekeeping and other stuff
 		@time_spent = 0
@@ -27,6 +28,8 @@ class QuizPlayer
 		@team = ''
 		@banned = 0
 		@sounds = false
+		@lock = false
+		@movingwindow = false
 
 		# rate limiting and banning
 		@tribunal = null
@@ -80,27 +83,39 @@ class QuizPlayer
 			s = 0; s += time for time in @__recent_actions;
 			mean_elapsed = current_time - s / window_size
 			# console.log mean_elapsed, window_size * action_delay / 2
-			if mean_elapsed < window_size * action_delay / 2 and !@tribunal
-				# Ummmm ahh such as like, 
-				# like the one where I'm like mmm and it says, 
-				# "I saw watchoo did there!" 
-				# And like and and then like you peoples were all like, 
-				# "YOU IS TROLLIN!" and I was like 
-				# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
-				
-				# @verb 'is getting a boxxy tribunal', true
+			if mean_elapsed < window_size * action_delay / 2
+				create_tribunal()
 
-				@__timeout = setTimeout =>
-					@verb 'survived the tribunal', true
-					@tribunal = null
-					@room.sync(1)
-				, 1000 * 60
+	create_tribunal: ->
+		if !@tribunal
+			current_time = @room.serverTime()
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+			# Ummmm ahh such as like, 
+			# like the one where I'm like mmm and it says, 
+			# "I saw watchoo did there!" 
+			# And like and and then like you peoples were all like, 
+			# "YOU IS TROLLIN!" and I was like 
+			# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
+			
+			# @verb 'is getting a boxxy tribunal', true
 
-				@tribunal = { votes: [], against: [], time: current_time, witnesses }
-				
-				# @room.emit 'boxxy', {user: @id, time: current_time}
+			@__timeout = setTimeout =>
+				@verb 'survived the tribunal', true
+				@tribunal = null
 				@room.sync(1)
+			, 1000 * 60
 
+			@tribunal = { votes: [], against: [], time: current_time, witnesses }
+			
+			# @room.emit 'boxxy', {user: @id, time: current_time}
+			@room.sync(1)
+
+
+	trigger_tribunal: (user) ->
+		@room.users[user]?.create_tribunal()
+
+	ban_user: (user) ->
+		@room.users[user]?.ban()
 
 	vote_tribunal: ({user, position}) ->
 		
@@ -206,6 +221,11 @@ class QuizPlayer
 		@room.sync()
 
 
+	set_lock: (val) ->
+		@lock = !!val
+		@touch()
+		@room.sync(1)
+
 	set_name: (name) ->
 		if name.trim().length > 0
 			@name = name.trim().slice(0, 140)
@@ -276,7 +296,7 @@ class QuizPlayer
 		else
 			@verb "is playing as an individual"
 		@team = name
-		@room.sync(2)
+		@room.sync(1)
 
 	set_type: (name) ->
 		if name
@@ -289,11 +309,18 @@ class QuizPlayer
 
 	set_show_typing: (data) ->
 		@show_typing = data
-		@room.sync(2)
+		@room.sync(1)
 
 	set_sounds: (data) ->
 		@sounds = data
-		@room.sync(2)
+		@room.sync(1)
+
+	set_movingwindow: (num) ->
+		if num
+			@movingwindow = num
+		else
+			@movingwindow = false
+		@room.sync(1)
 
 	set_skip: (data) ->
 		@room.no_skip = !data
@@ -306,6 +333,7 @@ class QuizPlayer
 	reset_score: ->
 		@verb "was reset from #{@correct} correct of #{@guesses} guesses and #{@score()} points"
 		@seen = @interrupts = @guesses = @correct = @early = 0
+		@history = []
 		@room.sync(1)
 
 	report_question: ->
