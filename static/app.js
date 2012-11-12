@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 11 2012 15:33:20 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 11 2012 17:05:37 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1367,11 +1367,13 @@ clone_shallow = function(obj) {
 };
 
 jQuery.fn.disable = function(value) {
-  var current;
-  current = $(this).attr('disabled') === 'disabled';
-  if (current !== value) {
-    return $(this).attr('disabled', value);
-  }
+  return $(this).each(function() {
+    var current;
+    current = $(this).attr('disabled') === 'disabled';
+    if (current !== value) {
+      return $(this).attr('disabled', value);
+    }
+  });
 };
 
 jQuery.fn.fireworks = function(times) {
@@ -2569,11 +2571,11 @@ renderTimer = function() {
     } else {
       $('.label.pause').fadeIn();
       $('.label.buzz').hide();
-    }
-    if ($('.pausebtn').hasClass('btn-warning')) {
-      $('.pausebtn .resume').show();
-      $('.pausebtn .pause').hide();
-      $('.pausebtn').addClass('btn-success').removeClass('btn-warning');
+      if ($('.pausebtn').hasClass('btn-warning')) {
+        $('.pausebtn .resume').show();
+        $('.pausebtn .pause').hide();
+        $('.pausebtn').addClass('btn-success').removeClass('btn-warning');
+      }
     }
   } else {
     $('.label.pause').fadeOut();
@@ -2590,7 +2592,7 @@ renderTimer = function() {
       $('.skipbtn').hide();
     }
   } else {
-    if ($(".skipbtn").is(":hidden")) {
+    if (!$(".nextbtn").is(":hidden")) {
       $('.nextbtn').hide();
       $('.skipbtn').show();
     }

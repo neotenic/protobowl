@@ -19,9 +19,10 @@ clone_shallow = (obj) ->
 	return new_obj
 
 jQuery.fn.disable = (value) ->
-	current = $(this).attr('disabled') is 'disabled'
-	if current != value
-		$(this).attr 'disabled', value
+	$(this).each ->
+		current = $(this).attr('disabled') is 'disabled'
+		if current != value
+			$(this).attr 'disabled', value
 
 jQuery.fn.fireworks = (times = 5) ->
 	for i in [0...times]

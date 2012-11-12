@@ -151,15 +151,15 @@ renderTimer = ->
 			$('.label.buzz').hide()
 			
 
-		# show the resume button
-		if $('.pausebtn').hasClass('btn-warning')
+			# show the resume button
+			if $('.pausebtn').hasClass('btn-warning')
 
-			$('.pausebtn .resume').show()
-			$('.pausebtn .pause').hide()
+				$('.pausebtn .resume').show()
+				$('.pausebtn .pause').hide()
 
-			$('.pausebtn')
-			.addClass('btn-success')
-			.removeClass('btn-warning')
+				$('.pausebtn')
+				.addClass('btn-success')
+				.removeClass('btn-warning')
 
 	else
 		# show the pause button
@@ -184,7 +184,7 @@ renderTimer = ->
 			$('.skipbtn').hide() 
 	else
 		# $('.progress').removeClass 'progress-info'
-		if $(".skipbtn").is(":hidden")
+		if !$(".nextbtn").is(":hidden")
 			$('.nextbtn').hide()
 			$('.skipbtn').show()
 
