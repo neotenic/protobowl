@@ -209,6 +209,10 @@ synchronize = (data) ->
 			room.__last_rate = room.rate
 
 		if  'users' of data
+			# keep the number of people in the leaderboard at a manageable number
+			if (1 for u of room.users).length > data.users.length + 5
+				room.users = {}
+
 			user_blacklist = ['id']
 			for user in data.users
 				if user.id is me.id

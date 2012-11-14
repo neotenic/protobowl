@@ -305,13 +305,22 @@ renderUsers = ->
 			lock_electorate++
 			if user.lock
 				lock_votes++
-	if lock_electorate < 2
+	if lock_electorate <= 2
 		$('.lockvote').slideUp()
+
+		$('.globalsettings .checkbox, .globalsettings .expando')
+				.css('opacity', '1')
+				.find('select, input')
+				.disable(false)
 	else
 		$('.lockvote').slideDown()
-		$('.lockvote .electorate').text "#{lock_votes}/#{lock_electorate} votes"
+		needed = Math.floor(lock_electorate / 2 + 1)
+		if lock_votes < needed
+			$('.lockvote .electorate').text "#{needed-lock_votes} needed"
+		else
+			$('.lockvote .electorate').text "#{lock_votes}/#{lock_electorate} votes"
 		$('.lockvote .status_icon').removeClass('icon-lock icon-unlock')
-		if lock_votes > lock_electorate / 2
+		if lock_votes >= needed
 			$('.lockvote .status_icon').addClass('icon-lock')
 			$('.globalsettings .checkbox, .globalsettings .expando')
 				.css('opacity', '0.5')

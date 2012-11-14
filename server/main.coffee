@@ -197,6 +197,7 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
+public_room_list = ['hsquizbowl', 'lobby']
 
 
 class SocketQuizRoom extends QuizRoom
@@ -260,13 +261,12 @@ class SocketQuizPlayer extends QuizPlayer
 
 	check_public: (_, fn) ->
 		output = {}
-		checklist = ['hsquizbowl', 'lobby']
-		for check_name in checklist
+		for check_name in public_room_list
 			output[check_name] = 0
 			if rooms[check_name]?.users
 				for uid, udat of rooms[check_name].users
 					output[check_name]++ if udat.active()
-		fn output
+		fn output if fn
 
 	add_socket: (sock) ->
 		@sockets.push sock.id unless sock.id in @sockets
@@ -336,7 +336,11 @@ io.sockets.on 'connection', (sock) ->
 
 	# get the user's identity
 	existing_user = (publicID of room.users)
-	room.users[publicID] = new SocketQuizPlayer(room, publicID) unless room.users[publicID]
+	unless room.users[publicID]
+		room.users[publicID] = new SocketQuizPlayer(room, publicID) 
+		if room_name in public_room_list
+			room.users[publicID].lock = (Math.random() < 0.6) # set defaults on big public rooms to lock
+
 	user = room.users[publicID]
 	if new Date - user.banned < 1000 * 60 * 10
 		sock.emit 'redirect', "/#{room_name}-banned"

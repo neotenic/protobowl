@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"rate",
+				"rate_limit_check"
+			],
+			[
 				"remove",
 				"removeClass"
 			],
@@ -118,10 +122,6 @@
 			[
 				"exist",
 				"existing_user"
-			],
-			[
-				"rate",
-				"rate_threshold"
 			],
 			[
 				"online",
@@ -455,7 +455,7 @@
 			"file": "client/annotations.coffee",
 			"settings":
 			{
-				"buffer_size": 11272,
+				"buffer_size": 11345,
 				"line_ending": "Unix"
 			}
 		},
@@ -463,7 +463,7 @@
 			"file": "client/buttons.coffee",
 			"settings":
 			{
-				"buffer_size": 13249,
+				"buffer_size": 13298,
 				"line_ending": "Unix"
 			}
 		},
@@ -503,7 +503,7 @@
 			"file": "server/main.coffee",
 			"settings":
 			{
-				"buffer_size": 19225,
+				"buffer_size": 19372,
 				"line_ending": "Unix"
 			}
 		},
@@ -528,7 +528,7 @@
 			"file": "client/render.coffee",
 			"settings":
 			{
-				"buffer_size": 24066,
+				"buffer_size": 24332,
 				"line_ending": "Unix"
 			}
 		},
@@ -536,7 +536,7 @@
 			"file": "server/room.jade",
 			"settings":
 			{
-				"buffer_size": 13310,
+				"buffer_size": 13301,
 				"line_ending": "Unix"
 			}
 		},
@@ -544,7 +544,7 @@
 			"file": "shared/room.coffee",
 			"settings":
 			{
-				"buffer_size": 15439,
+				"buffer_size": 15463,
 				"line_ending": "Unix"
 			}
 		},
@@ -552,15 +552,7 @@
 			"file": "client/app.coffee",
 			"settings":
 			{
-				"buffer_size": 10334,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "shared/names.coffee",
-			"settings":
-			{
-				"buffer_size": 3022,
+				"buffer_size": 10489,
 				"line_ending": "Unix"
 			}
 		},
@@ -593,6 +585,14 @@
 			"settings":
 			{
 				"buffer_size": 2653,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "package.json",
+			"settings":
+			{
+				"buffer_size": 459,
 				"line_ending": "Unix"
 			}
 		}
@@ -745,6 +745,8 @@
 	},
 	"file_history":
 	[
+		"/home/antimatter15/Dropbox/Projects/protobowl/shared/names.coffee",
+		"/home/antimatter15/Dropbox/Projects/protobowl/node_modules/socket.io/node_modules/policyfile/lib/server.js",
 		"/home/antimatter15/Dropbox/Projects/protobowl/shared/player.js",
 		"/home/antimatter15/Dropbox/Projects/protobowl/static/app.js",
 		"/home/antimatter15/Dropbox/Projects/protobowl/node_modules/socket.io/lib/client.js",
@@ -774,7 +776,6 @@
 		"/home/antimatter15/Dropbox/Projects/protobowl/tools/journal.coffee",
 		"/home/antimatter15/Dropbox/Projects/protobowl/shared/checker.coffee",
 		"/home/antimatter15/Dropbox/Projects/protobowl/client/plugins.coffee",
-		"/home/antimatter15/Dropbox/Projects/protobowl/shared/names.coffee",
 		"/home/antimatter15/Dropbox/Projects/protobowl/static/protobowl.appcache",
 		"/home/antimatter15/Dropbox/Projects/protobowl/assets/protobowl.appcache",
 		"/home/antimatter15/Dropbox/Projects/protobowl3/server/main.coffee",
@@ -871,8 +872,7 @@
 		"/home/antimatter15/Dropbox/Projects/quiz/old/train.py",
 		"/home/antimatter15/Dropbox/Projects/quiz/tmp.json",
 		"/home/antimatter15/.cache/.fr-MFey2T/bootstrap/js/bootstrap.min.js",
-		"/home/antimatter15/.cache/.fr-PwSEep/bootstrap/js/bootstrap.js",
-		"/home/antimatter15/Dropbox/School/TODO_MOVE_TOK_SEP10.txt"
+		"/home/antimatter15/.cache/.fr-PwSEep/bootstrap/js/bootstrap.js"
 	],
 	"find":
 	{
@@ -907,6 +907,37 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"next",
+			"speed",
+			",",
+			"adamant",
+			"abstemious,adamant",
+			",",
+			"reserved",
+			"reap",
+			"true",
+			" ",
+			",",
+			"warthog",
+			"axolotl,warthog",
+			",",
+			"warthog",
+			"axolotl,warthog",
+			",",
+			"warthog",
+			"axolotl,warthog",
+			",",
+			"mallard",
+			"lion",
+			",",
+			"buffalo",
+			"fish",
+			"kitten",
+			"checklist",
+			"public",
+			"lock",
+			"votes",
+			"static",
 			"banbutton",
 			"banned",
 			"live",
@@ -1003,38 +1034,7 @@
 			"wombat",
 			"chat",
 			"disco",
-			"assets",
-			"answerparse",
-			"checker",
-			"protobowl",
-			"annotations",
-			"addimpor",
-			"guessannotat",
-			"journal_config",
-			"restore_jour",
-			"removing empty",
-			"deploy",
-			"protobowl.com",
-			"get_parameters",
-			"console.log",
-			"production",
-			"console.log",
-			"journal_queue",
-			"journal ",
-			"journal(",
-			"log",
-			".log",
-			"log =",
-			"bookmark",
-			"decrease",
-			"question",
-			"real_time",
-			"buzz",
-			"rate_limit",
-			"message",
-			"(no mess",
-			"renderpartial",
-			"addImport"
+			"assets"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1117,7 +1117,7 @@
 	"groups":
 	[
 		{
-			"selected": 4,
+			"selected": 3,
 			"sheets":
 			[
 				{
@@ -1358,15 +1358,15 @@
 					"file": "client/annotations.coffee",
 					"settings":
 					{
-						"buffer_size": 11272,
+						"buffer_size": 11345,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2304,
-								2304
+								6943,
+								6943
 							]
 						],
 						"settings":
@@ -1465,7 +1465,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 714.0,
+						"translation.y": 3486.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1475,15 +1475,15 @@
 					"file": "client/buttons.coffee",
 					"settings":
 					{
-						"buffer_size": 13249,
+						"buffer_size": 13298,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								11816,
-								11816
+								1788,
+								1788
 							]
 						],
 						"settings":
@@ -1582,7 +1582,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 6895.0,
+						"translation.y": 537.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1599,8 +1599,8 @@
 						"selection":
 						[
 							[
-								6017,
-								6017
+								6495,
+								6495
 							]
 						],
 						"settings":
@@ -1699,7 +1699,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 3001.0,
+						"translation.y": 94.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1716,8 +1716,8 @@
 						"selection":
 						[
 							[
-								8189,
-								8189
+								7884,
+								7884
 							]
 						],
 						"settings":
@@ -1816,7 +1816,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 3903.0,
+						"translation.y": 4379.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1833,8 +1833,8 @@
 						"selection":
 						[
 							[
-								5303,
-								5303
+								5195,
+								5195
 							]
 						],
 						"settings":
@@ -2060,15 +2060,15 @@
 					"file": "server/main.coffee",
 					"settings":
 					{
-						"buffer_size": 19225,
+						"buffer_size": 19372,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								15937,
-								15937
+								14778,
+								14778
 							]
 						],
 						"settings":
@@ -2167,7 +2167,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 8909.0,
+						"translation.y": 7906.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -2411,15 +2411,15 @@
 					"file": "client/render.coffee",
 					"settings":
 					{
-						"buffer_size": 24066,
+						"buffer_size": 24332,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								6030,
-								6030
+								8017,
+								8017
 							]
 						],
 						"settings":
@@ -2518,7 +2518,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 11308.0,
+						"translation.y": 4545.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -2528,15 +2528,15 @@
 					"file": "server/room.jade",
 					"settings":
 					{
-						"buffer_size": 13310,
+						"buffer_size": 13301,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								6386,
-								6386
+								1942,
+								1942
 							]
 						],
 						"settings":
@@ -2635,7 +2635,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 2856.0,
+						"translation.y": 3366.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -2645,15 +2645,15 @@
 					"file": "shared/room.coffee",
 					"settings":
 					{
-						"buffer_size": 15439,
+						"buffer_size": 15463,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								8233,
-								8233
+								11383,
+								11383
 							]
 						],
 						"settings":
@@ -2752,7 +2752,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 3978.0,
+						"translation.y": 5475.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -2762,132 +2762,15 @@
 					"file": "client/app.coffee",
 					"settings":
 					{
-						"buffer_size": 10334,
+						"buffer_size": 10489,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5525,
-								5525
-							]
-						],
-						"settings":
-						{
-							"annotations":
-							[
-								"TODO",
-								"README",
-								"FIXME"
-							],
-							"csslint_options":
-							{
-								"adjoining-classes": "warning",
-								"box-model": true,
-								"box-sizing": "warning",
-								"compatible-vendor-prefixes": "warning",
-								"display-property-grouping": true,
-								"duplicate-background-images": "warning",
-								"duplicate-properties": true,
-								"empty-rules": true,
-								"errors": true,
-								"fallback-colors": "warning",
-								"floats": "warning",
-								"font-faces": "warning",
-								"font-sizes": "warning",
-								"gradients": "warning",
-								"ids": "warning",
-								"import": "warning",
-								"important": "warning",
-								"known-properties": true,
-								"outline-none": "warning",
-								"overqualified-elements": "warning",
-								"qualified-headings": "warning",
-								"regex-selectors": "warning",
-								"rules-count": "warning",
-								"shorthand": "warning",
-								"star-property-hack": "warning",
-								"text-indent": "warning",
-								"underscore-property-hack": "warning",
-								"unique-headings": "warning",
-								"universal-selector": "warning",
-								"vendor-prefix": true,
-								"zero-units": "warning"
-							},
-							"gjslint_ignore":
-							[
-								110
-							],
-							"gjslint_options":
-							[
-							],
-							"javascript_linter": "jshint",
-							"jshint_options":
-							{
-								"browser": true,
-								"evil": true,
-								"regexdash": true,
-								"sub": true,
-								"trailing": true,
-								"wsh": true
-							},
-							"pep8": true,
-							"pep8_ignore":
-							[
-								"E501"
-							],
-							"perl_linter": "perlcritic",
-							"pyflakes_ignore":
-							[
-							],
-							"pyflakes_ignore_import_*": true,
-							"remote_loading": false,
-							"sublimelinter": true,
-							"sublimelinter_delay": 2,
-							"sublimelinter_disable":
-							[
-							],
-							"sublimelinter_executable_map":
-							{
-							},
-							"sublimelinter_fill_outlines": false,
-							"sublimelinter_gutter_marks": false,
-							"sublimelinter_mark_style": "outline",
-							"sublimelinter_notes": false,
-							"sublimelinter_objj_check_ascii": false,
-							"sublimelinter_popup_errors_on_save": false,
-							"sublimelinter_syntax_map":
-							{
-								"C++": "c",
-								"Python Django": "python",
-								"Ruby on Rails": "ruby"
-							},
-							"sublimelinter_wrap_find": true,
-							"synced": false,
-							"syntax": "Packages/CoffeeScript/Syntaxes/CoffeeScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 2397.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 15,
-					"file": "shared/names.coffee",
-					"settings":
-					{
-						"buffer_size": 3022,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1652,
-								1652
+								265,
+								265
 							]
 						],
 						"settings":
@@ -2992,7 +2875,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 16,
+					"buffer": 15,
 					"file": "server/reports.jade",
 					"settings":
 					{
@@ -3003,8 +2886,8 @@
 						"selection":
 						[
 							[
-								0,
-								0
+								1304,
+								1304
 							]
 						],
 						"settings":
@@ -3103,13 +2986,13 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 510.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 17,
+					"buffer": 16,
 					"file": "server/remote.coffee",
 					"settings":
 					{
@@ -3120,8 +3003,8 @@
 						"selection":
 						[
 							[
-								4091,
-								4091
+								4558,
+								4558
 							]
 						],
 						"settings":
@@ -3226,7 +3109,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 18,
+					"buffer": 17,
 					"file": "static/less/protobowl.less",
 					"settings":
 					{
@@ -3343,7 +3226,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 19,
+					"buffer": 18,
 					"file": "client/plugins.coffee",
 					"settings":
 					{
@@ -3458,6 +3341,124 @@
 						"zoom_level": 1.0
 					},
 					"type": "text"
+				},
+				{
+					"buffer": 19,
+					"file": "package.json",
+					"settings":
+					{
+						"buffer_size": 459,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								416,
+								416
+							]
+						],
+						"settings":
+						{
+							"annotations":
+							[
+								"TODO",
+								"README",
+								"FIXME"
+							],
+							"csslint_options":
+							{
+								"adjoining-classes": "warning",
+								"box-model": true,
+								"box-sizing": "warning",
+								"compatible-vendor-prefixes": "warning",
+								"display-property-grouping": true,
+								"duplicate-background-images": "warning",
+								"duplicate-properties": true,
+								"empty-rules": true,
+								"errors": true,
+								"fallback-colors": "warning",
+								"floats": "warning",
+								"font-faces": "warning",
+								"font-sizes": "warning",
+								"gradients": "warning",
+								"ids": "warning",
+								"import": "warning",
+								"important": "warning",
+								"known-properties": true,
+								"outline-none": "warning",
+								"overqualified-elements": "warning",
+								"qualified-headings": "warning",
+								"regex-selectors": "warning",
+								"rules-count": "warning",
+								"shorthand": "warning",
+								"star-property-hack": "warning",
+								"text-indent": "warning",
+								"underscore-property-hack": "warning",
+								"unique-headings": "warning",
+								"universal-selector": "warning",
+								"vendor-prefix": true,
+								"zero-units": "warning"
+							},
+							"gjslint_ignore":
+							[
+								110
+							],
+							"gjslint_options":
+							[
+							],
+							"javascript_linter": "jshint",
+							"jshint_options":
+							{
+								"browser": true,
+								"evil": true,
+								"regexdash": true,
+								"sub": true,
+								"trailing": true,
+								"wsh": true
+							},
+							"pep8": true,
+							"pep8_ignore":
+							[
+								"E501"
+							],
+							"perl_linter": "perlcritic",
+							"pyflakes_ignore":
+							[
+							],
+							"pyflakes_ignore_import_*": true,
+							"remote_loading": false,
+							"sublimelinter": true,
+							"sublimelinter_delay": 2,
+							"sublimelinter_disable":
+							[
+							],
+							"sublimelinter_executable_map":
+							{
+							},
+							"sublimelinter_fill_outlines": false,
+							"sublimelinter_gutter_marks": false,
+							"sublimelinter_mark_style": "outline",
+							"sublimelinter_notes": false,
+							"sublimelinter_objj_check_ascii": false,
+							"sublimelinter_popup_errors_on_save": false,
+							"sublimelinter_syntax_map":
+							{
+								"C++": "c",
+								"Python Django": "python",
+								"Ruby on Rails": "ruby"
+							},
+							"sublimelinter_wrap_find": true,
+							"synced": false,
+							"syntax": "Packages/JavaScript/JSON.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
 				}
 			]
 		}
@@ -3516,16 +3517,48 @@
 		"selected_items":
 		[
 			[
-				"render",
-				"client/render.coffee"
+				"room",
+				"shared/room.coffee"
+			],
+			[
+				"button",
+				"client/buttons.coffee"
+			],
+			[
+				"player",
+				"shared/player.coffee"
+			],
+			[
+				"app.cof",
+				"client/app.coffee"
 			],
 			[
 				"annotations",
 				"client/annotations.coffee"
 			],
 			[
-				"player",
-				"shared/player.coffee"
+				"main",
+				"server/main.coffee"
+			],
+			[
+				"server",
+				"node_modules/socket.io/node_modules/policyfile/lib/server.js"
+			],
+			[
+				"room.jade",
+				"server/room.jade"
+			],
+			[
+				"render",
+				"client/render.coffee"
+			],
+			[
+				"names",
+				"shared/names.coffee"
+			],
+			[
+				"package",
+				"package.json"
 			],
 			[
 				"annotat",
@@ -3552,20 +3585,8 @@
 				"static/less/protobowl.less"
 			],
 			[
-				"main",
-				"server/main.coffee"
-			],
-			[
 				"user",
 				"server/user.jade"
-			],
-			[
-				"button",
-				"client/buttons.coffee"
-			],
-			[
-				"room",
-				"shared/room.coffee"
 			],
 			[
 				"buttons",
@@ -3604,10 +3625,6 @@
 				"server/admin.jade"
 			],
 			[
-				"names",
-				"shared/names.coffee"
-			],
-			[
 				"app.co",
 				"client/app.coffee"
 			],
@@ -3622,10 +3639,6 @@
 			[
 				"admin.",
 				"server/admin.jade"
-			],
-			[
-				"room.jade",
-				"server/room.jade"
 			],
 			[
 				"room.",

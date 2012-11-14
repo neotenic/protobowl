@@ -248,6 +248,9 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			if text.slice(0, 1) is '@'
 				line.prepend '<i class="icon-user"></i> '
 			line.find('.comment').html html
+
+			if user of room.users and text.length > 140
+				banButton user, line
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
 			line.addClass('buffer')

@@ -354,7 +354,8 @@ class QuizRoom
             
 		if @max_buzz and @users[user].times_buzzed >= @max_buzz
 			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
-			@emit 'log', {user: user, verb: 'has already buzzed'}
+			if @attempt is null
+				@emit 'log', {user: user, verb: 'has already buzzed'}
 
 		else if @max_buzz and team_buzzed >= @max_buzz
 			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
