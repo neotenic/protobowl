@@ -347,7 +347,7 @@ class QuizPlayer
 		@room.sync(1)
 
 	reset_score: ->
-		@verb "was reset from #{@correct} correct of #{@guesses} guesses and #{@score()} points"
+		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
 		@seen = @interrupts = @guesses = @correct = @early = 0
 		@history = []
 		@room.sync(1)

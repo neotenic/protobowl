@@ -102,16 +102,16 @@ if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
 	console.log 'set to deployment defaults'
-	
+
 
 app.use express.compress()
 # app.use express.staticCache()
+app.use express.cookieParser()
 app.use express.bodyParser()
 app.use express.static('static')
 app.use express.favicon('static/img/favicon.ico')
 
-
-Cookies = require 'cookies'
+# Cookies = require 'cookies'
 crypto = require 'crypto'
 
 # simple helper function that hashes things
@@ -122,18 +122,19 @@ sha1 = (text) ->
 
 # inject the cookies into the session... yo
 app.use (req, res, next) ->
-	cookies = new Cookies(req, res)
-	unless cookies.get 'protocookie'
+	unless req.cookies['protocookie']
 		seed = "proto" + Math.random() + "bowl" + Math.random() + "client" + req.headers['user-agent']
 		expire_date = new Date()
 		expire_date.setFullYear expire_date.getFullYear() + 2
-		cookies.set 'protocookie', sha1(seed), {
+
+		res.cookie 'protocookie', sha1(seed), {
 			expires: expire_date,
 			httpOnly: false,
 			signed: false,
 			secure: false,
 			path: '/'
 		}
+
 	next()
 
 app.use (req, res, next) ->
@@ -144,8 +145,7 @@ app.use (req, res, next) ->
 		res.end()
 	else
 		if /stalkermode/.test(req.path) or 'ninja' of req.query
-			cookies = new Cookies(req, res)
-			if !remote.authorized or remote.authorized(req, cookies)
+			if !remote.authorized or remote.authorized(req)
 				next()
 			else
 				res.redirect "/401"

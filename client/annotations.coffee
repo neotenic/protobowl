@@ -40,11 +40,17 @@ userSpan = (user, global) ->
 			
 	else
 		scope = $('<span>')
+
+
 	scope
 		.addClass(hash)
 		.addClass('user-'+user)
 		.addClass('username')
 		.text(text)
+
+	if user.slice(0, 2) == "__"
+		scope.prepend "<i class='icon-magic' style='padding-right: 5px'></i>"
+	scope
 		
 addAnnotation = (el, name = sync?.name) ->
 	# destroy the tooltip
@@ -265,7 +271,12 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 
 verbAnnotation = ({user, verb, time}) ->
+	verbclass = "verb-#{user}-#{verb.split(' ')[0]}"
+
 	line = $('<p>').addClass 'log'
+	line.addClass(verbclass)
+	
+
 	if user
 		line.append userSpan(user).attr('title', formatTime(time))
 		line.append " " + verb.replace /!@([a-z0-9]+)/g, (match, user) ->
@@ -274,22 +285,45 @@ verbAnnotation = ({user, verb, time}) ->
 		line.append verb
 
 
+	# if /paused the/.test(verb)
 	if /paused the/.test(verb) or /skipped/.test(verb) or /category/.test(verb) or /difficulty/.test(verb) or /ban tribunal/.test(verb) or me.id[0] == '_'
 		banButton user, line
+	
+	if verb.split(' ')[0] is 'joined' and $(".bundle.active .verb-#{user}-left").length > 0
+		$(".bundle.active .verb-#{user}-left").slideUp()
+		verbAnnotation {user, verb: 'reloaded the page', time}
+		return
+
+
+
+	selection = $(".bundle.active .#{verbclass}")
+
+	if selection.length > 0
+		line.data 'count', selection.data('count') + 1
+		line.hide()
+		line.prepend $('<span style="margin-right:5px">').addClass('badge').text(line.data('count') + 'x')
+		selection.slideUp 'normal', ->
+			$(this).remove()
+		# line.slideDown 'normal'
+		addAnnotation line
+	else
+		line.data 'count', 1
+		addAnnotation line
+
+logAnnotation = (text) ->
+	line = $('<p>').addClass 'log'
+	line.append text
 	addAnnotation line
 
+# Ummmm ahh such as like, like the one where I'm like mmm and it says, 
+# "I saw watchoo did there!" 
+# And like and and then like you peoples were all like, 
+# "YOU IS TROLLIN!" 
+# and I was like 
+# "I AM NOT TROLLING!! 
+# I AM BOXXY YOU SEE! Mm!"
 
-
-
-# logAnnotation = (text) ->
-# 	line = $('<p>').addClass 'log'
-# 	line.append text
-# 	addAnnotation line
-
-# sock.on 'log',
-
-# logAnnotation 'Initializing ProtoBowl v3'
-
+# (contemporary poetry)
 
 boxxyAnnotation = ({id, tribunal}) ->
 	{votes, time, witnesses, against} = tribunal

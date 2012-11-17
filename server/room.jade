@@ -178,13 +178,13 @@ html(lang="en", manifest="/offline.appcache")
 											span.add-on(style="width:21px", title="Public name", rel='tooltip')
 												i.icon-user
 											input#username(type='text', value='', disabled)
-									div.expando
+									div.expando.set-team(style="display:none")
 										div.input-prepend
 											span.add-on(style="width:21px", title="Teams", rel='tooltip')
 												i.icon-group
 											select.input.teams
 												option(value="") Individual
-									div.expando
+									div.expando.reset-score(style="display:none")
 										div.input-prepend
 											span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
 												i.icon-trash

@@ -68,7 +68,17 @@ renderUpdate = ->
 		$('.lock').attr 'checked', room.users[me.id].lock
 		$('.teams').val room.users[me.id].team
 
-	# 
+		if me.guesses > 0
+			$('.reset-score').slideDown()
+		else
+			$('.reset-score').slideUp()
+
+		count = (1 for u of room.users).length
+		if count > 1
+			$('.set-team').slideDown()
+		else
+			$('.set-team').slideUp()
+
 
 	if room.attempt
 		guessAnnotation room.attempt
@@ -92,6 +102,7 @@ renderUpdate = ->
 
 last_rendering = 0
 # last_question = ''
+
 
 renderPartial = ->
 	if (!room.time_freeze or room.attempt) and room.time() < room.end_time

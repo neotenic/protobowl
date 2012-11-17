@@ -229,7 +229,9 @@ synchronize = (data) ->
 
 	renderUpdate()
 
-	# if 'time_freeze' in difflist # includes buzzes
+	renderPartial()
+
+	
 	if last_freeze isnt room.time_freeze
 		last_freeze = room.time_freeze
 		variable = (if room.attempt then 'starts' else 'stops')
@@ -242,7 +244,6 @@ synchronize = (data) ->
 
 		updateInlineSymbols()
 
-	renderPartial()
 
 	renderUsers() if 'users' of data
 	
