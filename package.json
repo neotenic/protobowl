@@ -2,7 +2,7 @@
   "name": "protobowl",
   "version": "0.4.0-35",
   "dependencies": {
-    "express": "2.5.x",
+    "express": "3.0.x",
     "socket.io": "0.9.x",
     "jade": "0.26.x",
     "cookies": "0.3.x",

@@ -1,6 +1,7 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd()
 express = require 'express'
 fs = require 'fs'
+http = require 'http'
 url = require 'url'
 parseCookie = require('express/node_modules/connect').utils.parseCookie
 rooms = {}
@@ -17,10 +18,13 @@ try
 catch err
 	questions = []
 	count = 0
+	console.log 'loading local questions'
 	fs.readFile 'static/sample.txt', 'utf8', (err, data) ->
 		throw err if err
+		console.log 'parsing questions'
 		questions = (JSON.parse(line) for line in data.split("\n"))
-
+		console.log 'done parsing questions'
+		
 	listProps = (prop) ->
 		propmap = {}
 		for q in questions
@@ -62,14 +66,23 @@ catch err
 
 		count_questions: (type, diff, cat, cb) ->
 			cb filterQuestions(diff, cat).length
+			
+		get_types: ->
+			return ['qb']
+			
+		authorized: (req) ->
+			return true
 	}
 
-app = express.createServer()
+app = express()
+server = http.createServer(app)
+
 app.set 'views', "server" # directory where the jade files are
 app.set 'view options', layout: false
 app.set 'trust proxy', true
 
-io = require('socket.io').listen(app)
+
+io = require('socket.io').listen(server)
 
 io.configure 'production', ->
 	io.set "log level", 0
@@ -182,11 +195,17 @@ app.use (req, res, next) ->
 		res.writeHead 301, {Location: url.format(options)}
 		res.end()
 	else
-		next()
+		if /stalkermode/.test(req.path) or 'ninja' of req.query
+			cookies = new Cookies(req, res)
+			if remote.authorized(req, cookies)
+				next()
+			else
+				res.redirect "/401"
+		else
+			next()
 
 	
 
-http = require('http')
 log = (action, obj) ->
 	req = http.request log_config, ->
 		# console.log "saved log"
@@ -621,6 +640,10 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
+app.get '/401', (req, res) ->
+	res.type 'html'
+	res.end "<img src='http://i.imgur.com/p6NxS.jpg' alt='401'>"
+
 
 app.get '/new', (req, res) ->
 	res.redirect '/' + names.generatePage()
@@ -644,5 +667,5 @@ app.get '/:type/:channel', (req, res) ->
 remote.initialize_remote()
 port = process.env.PORT || 5555
 restore_journal ->
-	app.listen port, ->
+	server.listen port, ->
 		console.log "listening on port", port
