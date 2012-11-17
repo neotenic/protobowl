@@ -19,6 +19,7 @@ class QuizPlayer
 		# timekeeping and other stuff
 		@time_spent = 0
 		@last_action = @room.serverTime()
+		@created = @room.serverTime()
 
 		# used to keep track of buzz limits
 		@times_buzzed = 0
@@ -230,6 +231,10 @@ class QuizPlayer
 		@room.sync(1)
 
 	set_name: (name) ->
+		# ensure no naming conflicts
+		# for i, u of @room.users
+		# 	return if name is u.name
+
 		if name.trim().length > 0
 			@name = name.trim().slice(0, 140)
 			@touch()

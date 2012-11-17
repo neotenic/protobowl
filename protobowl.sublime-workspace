@@ -479,7 +479,7 @@
 			"file": "shared/player.coffee",
 			"settings":
 			{
-				"buffer_size": 9375,
+				"buffer_size": 9497,
 				"line_ending": "Unix"
 			}
 		},
@@ -503,7 +503,7 @@
 			"file": "server/main.coffee",
 			"settings":
 			{
-				"buffer_size": 19372,
+				"buffer_size": 19378,
 				"line_ending": "Unix"
 			}
 		},
@@ -560,7 +560,7 @@
 			"file": "server/reports.jade",
 			"settings":
 			{
-				"buffer_size": 1903,
+				"buffer_size": 2032,
 				"line_ending": "Unix"
 			}
 		},
@@ -745,6 +745,7 @@
 	},
 	"file_history":
 	[
+		"/home/antimatter15/Dropbox/Projects/protobowl/node_modules/mongoose/node_modules/mongodb/lib/mongodb/commands/insert_command.js",
 		"/home/antimatter15/Dropbox/Projects/protobowl/shared/names.coffee",
 		"/home/antimatter15/Dropbox/Projects/protobowl/node_modules/socket.io/node_modules/policyfile/lib/server.js",
 		"/home/antimatter15/Dropbox/Projects/protobowl/shared/player.js",
@@ -871,8 +872,7 @@
 		"/home/antimatter15/Dropbox/Projects/quiz/old/questions.txt",
 		"/home/antimatter15/Dropbox/Projects/quiz/old/train.py",
 		"/home/antimatter15/Dropbox/Projects/quiz/tmp.json",
-		"/home/antimatter15/.cache/.fr-MFey2T/bootstrap/js/bootstrap.min.js",
-		"/home/antimatter15/.cache/.fr-PwSEep/bootstrap/js/bootstrap.js"
+		"/home/antimatter15/.cache/.fr-MFey2T/bootstrap/js/bootstrap.min.js"
 	],
 	"find":
 	{
@@ -907,6 +907,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"userspan",
+			"disco",
+			"reap",
 			"next",
 			"speed",
 			",",
@@ -1031,10 +1034,7 @@
 			"gopher",
 			"lemur",
 			"lark",
-			"wombat",
-			"chat",
-			"disco",
-			"assets"
+			"wombat"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1117,7 +1117,7 @@
 	"groups":
 	[
 		{
-			"selected": 3,
+			"selected": 5,
 			"sheets":
 			[
 				{
@@ -1365,8 +1365,8 @@
 						"selection":
 						[
 							[
-								6943,
-								6943
+								829,
+								829
 							]
 						],
 						"settings":
@@ -1465,7 +1465,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 3486.0,
+						"translation.y": 255.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1482,8 +1482,8 @@
 						"selection":
 						[
 							[
-								1788,
-								1788
+								1509,
+								1509
 							]
 						],
 						"settings":
@@ -1709,15 +1709,15 @@
 					"file": "shared/player.coffee",
 					"settings":
 					{
-						"buffer_size": 9375,
+						"buffer_size": 9497,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								7884,
-								7884
+								4570,
+								4570
 							]
 						],
 						"settings":
@@ -1816,7 +1816,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 4379.0,
+						"translation.y": 2544.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -1950,8 +1950,8 @@
 						"selection":
 						[
 							[
-								1755,
-								1755
+								365,
+								365
 							]
 						],
 						"settings":
@@ -2060,15 +2060,15 @@
 					"file": "server/main.coffee",
 					"settings":
 					{
-						"buffer_size": 19372,
+						"buffer_size": 19378,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								14778,
-								14778
+								2224,
+								2224
 							]
 						],
 						"settings":
@@ -2167,7 +2167,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 7906.0,
+						"translation.y": 1156.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -2879,15 +2879,15 @@
 					"file": "server/reports.jade",
 					"settings":
 					{
-						"buffer_size": 1903,
+						"buffer_size": 2032,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1304,
-								1304
+								1004,
+								1004
 							]
 						],
 						"settings":
@@ -2986,7 +2986,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 510.0,
+						"translation.y": 255.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -3517,6 +3517,30 @@
 		"selected_items":
 		[
 			[
+				"player",
+				"shared/player.coffee"
+			],
+			[
+				"reports",
+				"server/reports.jade"
+			],
+			[
+				"annot",
+				"client/annotations.coffee"
+			],
+			[
+				"user",
+				"server/user.jade"
+			],
+			[
+				"main",
+				"server/main.coffee"
+			],
+			[
+				"disco",
+				"node_modules/mongoose/node_modules/mongodb/lib/mongodb/commands/insert_command.js"
+			],
+			[
 				"room",
 				"shared/room.coffee"
 			],
@@ -3525,20 +3549,12 @@
 				"client/buttons.coffee"
 			],
 			[
-				"player",
-				"shared/player.coffee"
-			],
-			[
 				"app.cof",
 				"client/app.coffee"
 			],
 			[
 				"annotations",
 				"client/annotations.coffee"
-			],
-			[
-				"main",
-				"server/main.coffee"
 			],
 			[
 				"server",
@@ -3565,10 +3581,6 @@
 				"client/annotations.coffee"
 			],
 			[
-				"annot",
-				"client/annotations.coffee"
-			],
-			[
 				"players",
 				"shared/player.js"
 			],
@@ -3583,10 +3595,6 @@
 			[
 				"protobowl",
 				"static/less/protobowl.less"
-			],
-			[
-				"user",
-				"server/user.jade"
 			],
 			[
 				"buttons",
@@ -3611,10 +3619,6 @@
 			[
 				"play",
 				"shared/player.coffee"
-			],
-			[
-				"reports",
-				"server/reports.jade"
 			],
 			[
 				"remote",

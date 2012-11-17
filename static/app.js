@@ -1,4 +1,4 @@
-protobowl_build = 'Tue Nov 13 2012 23:11:34 GMT-0500 (EST)';
+protobowl_build = 'Thu Nov 15 2012 01:01:35 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -3341,6 +3341,7 @@ QuizPlayer = (function() {
     this.history = [];
     this.time_spent = 0;
     this.last_action = this.room.serverTime();
+    this.created = this.room.serverTime();
     this.times_buzzed = 0;
     this.show_typing = true;
     this.team = '';
