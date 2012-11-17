@@ -14,11 +14,6 @@ rooms = {}
 names = require '../shared/names'
 uptime_begin = +new Date
 
-try 
-	remote = require './remoter'
-catch err
-	remote = require './local'
-
 app = express()
 server = http.createServer(app)
 
@@ -43,10 +38,6 @@ io.configure 'development', ->
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
 
-if app.settings.env is 'production' and remote.deploy
-	log_config = remote.deploy.log
-	journal_config = remote.deploy.journal
-	console.log 'set to deployment defaults'
 
 if app.settings.env is 'development'
 	app.use require('less-middleware')({
@@ -100,6 +91,18 @@ if app.settings.env is 'development'
 
 	fs.watch "shared", watcher
 	fs.watch "client", watcher
+
+
+try 
+	remote = require './remoter'
+catch err
+	remote = require './local'
+
+if app.settings.env is 'production' and remote.deploy
+	log_config = remote.deploy.log
+	journal_config = remote.deploy.journal
+	console.log 'set to deployment defaults'
+	
 
 app.use express.compress()
 # app.use express.staticCache()
