@@ -290,14 +290,23 @@ renderUsers = ->
 
 	teams = {}
 	team_hash = ''
+
+	name_map = {}
+
 	for id, user of room.users
-		# votes = []
-		# for action of room.voting
-		# 	if user.id in room.voting[action]
-		# 		votes.push action
-		# user.votes = votes.join(', ')
-		# user.room = room.name
-		# users[user.id] = user
+		name_map[user.name] = [] unless name_map[user.name]
+		name_map[user.name].push(id)
+
+	for name, ids of name_map
+		if ids.length > 1
+			sorted = ids.sort (a, b) -> room.users[a].last_session - room.users[b].last_session
+			for num in [0...sorted.length]
+				room.users[sorted[num]]._suffix = "(#{num + 1})"
+		else
+			delete room.users[ids[0]]._suffix
+
+	for id, user of room.users
+
 		if user.team
 			teams['t-' + user.team] = [] unless 't-' + user.team of teams
 			teams['t-' + user.team].push user.id
@@ -312,7 +321,7 @@ renderUsers = ->
 				$(this).remove()
 
 		# user.name + " (" + user.id + ") " + votes.join(", ")
-	
+
 	lock_votes = 0
 	lock_electorate = 0
 	for id, user of room.users when user.active()

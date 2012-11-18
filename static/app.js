@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 18 2012 00:17:50 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 18 2012 00:45:48 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1488,7 +1488,7 @@ createAlert = function(bundle, title, message) {
 };
 
 userSpan = function(user, global) {
-  var c, el, hash, prefix, scope, text, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+  var hash, prefix, scope, text, _ref, _ref1, _ref2, _ref3;
   prefix = '';
   if (/superstalkers/.test(room.name)) {
     prefix = (((_ref = room.users[user]) != null ? (_ref1 = _ref.room) != null ? _ref1.name : void 0 : void 0) || 'unknown') + '/';
@@ -1499,19 +1499,12 @@ userSpan = function(user, global) {
   } else {
     text = prefix + (((_ref2 = room.users[user]) != null ? _ref2.name : void 0) || "[name missing]");
   }
+  if ((_ref3 = room.users[user]) != null ? _ref3._suffix : void 0) {
+    text += ' ' + room.users[user]._suffix;
+  }
   hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (global) {
-    scope = $(".user-" + user + ":not(." + hash + ")");
-    for (_i = 0, _len = scope.length; _i < _len; _i++) {
-      el = scope[_i];
-      _ref3 = $(el).attr('class').split('\s');
-      for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
-        c = _ref3[_j];
-        if (c.slice(0, 8) === 'userhash') {
-          $(el).removeClass(c);
-        }
-      }
-    }
+    scope = $(".user-" + user + ":not(." + hash + ")").attr('class', '');
   } else {
     scope = $('<span>');
   }
@@ -1705,7 +1698,7 @@ chatAnnotation = function(_arg) {
     line = $('#' + id);
   } else {
     line = $('<p>').attr('id', id);
-    line.append(userSpan(user).addClass('author').attr('title', formatTime(time)));
+    line.append($('<span>').addClass('author').append(userSpan(user).attr('title', formatTime(time))));
     line.append(document.createTextNode(' '));
     $('<span>').addClass('comment').appendTo(line);
     addAnnotation(line, (_ref = room.users[user]) != null ? (_ref1 = _ref.room) != null ? _ref1.name : void 0 : void 0);
@@ -1754,7 +1747,7 @@ chatAnnotation = function(_arg) {
 };
 
 verbAnnotation = function(_arg) {
-  var line, selection, time, user, verb, verbclass;
+  var left, line, selection, time, user, verb, verbclass;
   user = _arg.user, verb = _arg.verb, time = _arg.time;
   verbclass = "verb-" + user + "-" + (verb.split(' ').slice(0, 2).join('-'));
   line = $('<p>').addClass('log');
@@ -1770,8 +1763,9 @@ verbAnnotation = function(_arg) {
   if (/paused the/.test(verb) || /skipped/.test(verb) || /category/.test(verb) || /difficulty/.test(verb) || /ban tribunal/.test(verb) || me.id[0] === '_') {
     banButton(user, line);
   }
-  if (verb.split(' ')[0] === 'joined' && $(".bundle.active .verb-" + user + "-left").length > 0) {
-    $(".bundle.active .verb-" + user + "-left").slideUp();
+  left = $(".bundle.active .verb-" + user + "-left-the");
+  if (verb.split(' ')[0] === 'joined' && left.length > 0) {
+    left.slideUp();
     verbAnnotation({
       user: user,
       verb: 'reloaded the page',
@@ -2738,15 +2732,37 @@ get_score = function(user) {
 };
 
 renderUsers = function() {
-  var active_count, attr, attrs, badge, entities, id, idle_count, list, lock_electorate, lock_votes, member, members, name, needed, ranking, row, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+  var active_count, attr, attrs, badge, entities, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
   if (!room.users) {
     return;
   }
   teams = {};
   team_hash = '';
+  name_map = {};
   _ref = room.users;
   for (id in _ref) {
     user = _ref[id];
+    if (!name_map[user.name]) {
+      name_map[user.name] = [];
+    }
+    name_map[user.name].push(id);
+  }
+  for (name in name_map) {
+    ids = name_map[name];
+    if (ids.length > 1) {
+      sorted = ids.sort(function(a, b) {
+        return room.users[a].last_session - room.users[b].last_session;
+      });
+      for (num = _i = 0, _ref1 = sorted.length; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; num = 0 <= _ref1 ? ++_i : --_i) {
+        room.users[sorted[num]]._suffix = "(" + (num + 1) + ")";
+      }
+    } else {
+      delete room.users[ids[0]]._suffix;
+    }
+  }
+  _ref2 = room.users;
+  for (id in _ref2) {
+    user = _ref2[id];
     if (user.team) {
       if (!('t-' + user.team in teams)) {
         teams['t-' + user.team] = [];
@@ -2765,9 +2781,9 @@ renderUsers = function() {
   }
   lock_votes = 0;
   lock_electorate = 0;
-  _ref1 = room.users;
-  for (id in _ref1) {
-    user = _ref1[id];
+  _ref3 = room.users;
+  for (id in _ref3) {
+    user = _ref3[id];
     if (user.active()) {
       if (user.active()) {
         lock_electorate++;
@@ -2814,11 +2830,11 @@ renderUsers = function() {
   list = $('.leaderboard tbody');
   ranking = 1;
   entities = (function() {
-    var _ref2, _results;
-    _ref2 = room.users;
+    var _ref4, _results;
+    _ref4 = room.users;
     _results = [];
-    for (id in _ref2) {
-      user = _ref2[id];
+    for (id in _ref4) {
+      user = _ref4[id];
       _results.push(user);
     }
     return _results;
@@ -2827,18 +2843,18 @@ renderUsers = function() {
   team_count = 0;
   if ($('.teams').val() || me.id.slice(0, 2) === "__") {
     entities = (function() {
-      var _i, _len, _ref2, _results;
+      var _j, _len, _ref4, _results;
       _results = [];
       for (team in teams) {
         members = teams[team];
         team = team.slice(2);
         attrs = new QuizPlayer(room, 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, ''));
         team_count++;
-        for (_i = 0, _len = members.length; _i < _len; _i++) {
-          member = members[_i];
-          _ref2 = room.users[member];
-          for (attr in _ref2) {
-            val = _ref2[attr];
+        for (_j = 0, _len = members.length; _j < _len; _j++) {
+          member = members[_j];
+          _ref4 = room.users[member];
+          for (attr in _ref4) {
+            val = _ref4[attr];
             if (typeof val === 'number') {
               if (!(attr in attrs)) {
                 attrs[attr] = 0;
@@ -2853,20 +2869,20 @@ renderUsers = function() {
       }
       return _results;
     })();
-    _ref2 = room.users;
-    for (id in _ref2) {
-      user = _ref2[id];
+    _ref4 = room.users;
+    for (id in _ref4) {
+      user = _ref4[id];
       if (!user.team) {
         entities.push(user);
       }
     }
   }
   list.empty();
-  _ref3 = entities.sort(function(a, b) {
+  _ref5 = entities.sort(function(a, b) {
     return get_score(b) - get_score(a);
   });
-  for (user_index = _i = 0, _len = _ref3.length; _i < _len; user_index = ++_i) {
-    user = _ref3[user_index];
+  for (user_index = _j = 0, _len = _ref5.length; _j < _len; user_index = ++_j) {
+    user = _ref5[user_index];
     if (entities[user_index - 1] && get_score(user) < get_score(entities[user_index - 1])) {
       ranking++;
     }
@@ -2875,14 +2891,14 @@ renderUsers = function() {
       return 1;
     });
     badge = $('<span>').addClass('badge pull-right').text(get_score(user));
-    if (_ref4 = me.id, __indexOf.call(user.members || [user.id], _ref4) >= 0) {
+    if (_ref6 = me.id, __indexOf.call(user.members || [user.id], _ref6) >= 0) {
       badge.addClass('badge-info').attr('title', 'You');
     } else {
       idle_count = 0;
       active_count = 0;
-      _ref5 = user.members || [user.id];
-      for (_j = 0, _len1 = _ref5.length; _j < _len1; _j++) {
-        member = _ref5[_j];
+      _ref7 = user.members || [user.id];
+      for (_k = 0, _len1 = _ref7.length; _k < _len1; _k++) {
+        member = _ref7[_k];
         if (room.users[member].online()) {
           if (room.serverTime() - room.users[member].last_action > 1000 * 60 * 10) {
             idle_count++;
@@ -2904,11 +2920,11 @@ renderUsers = function() {
       name.append($('<span>').text(user.name));
     } else {
       name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
-      _ref6 = user.members.sort(function(a, b) {
+      _ref8 = user.members.sort(function(a, b) {
         return get_score(room.users[b]) - get_score(room.users[a]);
       });
-      for (_k = 0, _len2 = _ref6.length; _k < _len2; _k++) {
-        member = _ref6[_k];
+      for (_l = 0, _len2 = _ref8.length; _l < _len2; _l++) {
+        member = _ref8[_l];
         user = room.users[member];
         row = $('<tr>').addClass('subordinate').data('entity', user).appendTo(list);
         row.click(function() {

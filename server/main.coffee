@@ -319,8 +319,9 @@ io.sockets.on 'connection', (sock) ->
 		return
 	user.name = 'secret ninja' if is_ninja
 	
-	user.add_socket sock
 	sock.join room_name
+	
+	user.add_socket sock
 	if is_god
 		sock.join name for name of rooms
 

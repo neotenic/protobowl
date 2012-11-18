@@ -29,14 +29,13 @@ userSpan = (user, global) ->
 	else
 		text = prefix + (room.users[user]?.name || "[name missing]")
 	
+	if room.users[user]?._suffix
+		text += ' ' + room.users[user]._suffix
+
 	hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
 	
 	if global
-		scope = $(".user-#{user}:not(.#{hash})")
-		# get rid of the old hashes
-		for el in scope
-			for c in $(el).attr('class').split('\s') when c.slice(0, 8) is 'userhash'
-				$(el).removeClass(c)
+		scope = $(".user-#{user}:not(.#{hash})").attr('class', '')
 	else
 		scope = $('<span>')
 
@@ -220,7 +219,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		line = $('#' + id)
 	else
 		line = $('<p>').attr('id', id)
-		line.append userSpan(user).addClass('author').attr('title', formatTime(time))
+		line.append $('<span>').addClass('author').append(userSpan(user).attr('title', formatTime(time)))
 		line.append document.createTextNode ' '
 		$('<span>')
 			.addClass('comment')
@@ -289,9 +288,10 @@ verbAnnotation = ({user, verb, time}) ->
 	# if /paused the/.test(verb)
 	if /paused the/.test(verb) or /skipped/.test(verb) or /category/.test(verb) or /difficulty/.test(verb) or /ban tribunal/.test(verb) or me.id[0] == '_'
 		banButton user, line
-	
-	if verb.split(' ')[0] is 'joined' and $(".bundle.active .verb-#{user}-left").length > 0
-		$(".bundle.active .verb-#{user}-left").slideUp()
+
+	left = $(".bundle.active .verb-#{user}-left-the")
+	if verb.split(' ')[0] is 'joined' and left.length > 0
+		left.slideUp()
 		verbAnnotation {user, verb: 'reloaded the page', time}
 		return
 
