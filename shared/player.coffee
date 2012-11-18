@@ -58,11 +58,9 @@ class QuizPlayer
 		INTERRUPT = -5
 		return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
 
-	ban: ->
-		@banned = @room.serverTime()
-		@verb "was banned from #{@room.name}", true
+	ban: (duration = 1000 * 60 * 10) ->
+		@banned = @room.serverTime() + duration
 		@emit 'redirect', "/#{@room.name}-banned"
-
 
 	emit: (name, data) ->
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
@@ -70,7 +68,6 @@ class QuizPlayer
 	bookmark: ({ value, id }) -> 0 # not implemented
 
 	disco: -> 0 # skeleton method, not actually implemented
-
 
 	rate_limit: ->
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
@@ -100,8 +97,6 @@ class QuizPlayer
 			# "YOU IS TROLLIN!" and I was like 
 			# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
 			
-			# @verb 'is getting a boxxy tribunal', true
-
 			@__timeout = setTimeout =>
 				@verb 'survived the tribunal', true
 				@tribunal = null
@@ -110,16 +105,20 @@ class QuizPlayer
 
 			@tribunal = { votes: [], against: [], time: current_time, witnesses }
 			
-			# @room.emit 'boxxy', {user: @id, time: current_time}
 			@room.sync(1)
 
 
 	trigger_tribunal: (user) ->
-		@verb 'created a ban tribunal for !@' + user
-		@room.users[user]?.create_tribunal()
+		is_admin = @id in @room.admins or @id[0] is '_'
+		if is_admin or @score() > 50
+			@verb 'created a ban tribunal for !@' + user
+			@room.users[user]?.create_tribunal()
 
 	ban_user: (user) ->
-		@room.users[user]?.ban()
+		is_admin = @id in @room.admins or @id[0] is '_'
+		if is_admin
+			@verb 'banned !@' + user + ' from /' + @room.name
+			@room.users[user]?.ban(1000 * 60 * 5)
 
 	vote_tribunal: ({user, position}) ->
 		
@@ -148,6 +147,7 @@ class QuizPlayer
 				@room.users[user].verb 'got voted off the island', true
 				clearTimeout @room.users[user].__timeout
 				@room.users[user].tribunal = null
+				# @room.users[user].verb "was banned from #{@room.name}", true
 				@room.users[user].ban()
 
 			undecided = (witnesses.length - against.length - votes.length - 1)
@@ -375,6 +375,10 @@ class QuizPlayer
 
 	check_public: ->
 		@verb "did something unimplemented (check public)"
+
+	apotheify: ->
+		@room.admins.push(@id) unless @id in @room.admins
+		@room.sync(1) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 
 
 

@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 18 2012 00:51:29 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 18 2012 11:39:00 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1515,6 +1515,8 @@ userSpan = function(user, global) {
     } else {
       scope.prepend("<i class='icon-bullhorn' style='padding-right: 5px'></i>");
     }
+  } else if (room.admins && __indexOf.call(room.admins, user) >= 0) {
+    scope.prepend("<i class='icon-star-empty' style='padding-right: 5px'></i>");
   }
   return scope;
 };
@@ -1550,33 +1552,35 @@ addImportant = function(el) {
 };
 
 banButton = function(id, line) {
-  var i, u;
-  if (me.id[0] !== '_') {
-    if (id === me.id) {
-      return;
-    }
-    if (me.score() < 50) {
-      return;
-    }
-    if (((function() {
-      var _ref, _results;
-      _ref = room.users;
-      _results = [];
-      for (i in _ref) {
-        u = _ref[i];
-        if (u.active()) {
-          _results.push(1);
-        }
-      }
-      return _results;
-    })()).length < 3) {
-      return;
-    }
+  var i, is_admin, u, usercount, _ref;
+  if (id === me.id) {
+    return;
   }
-  return line.append($('<a>').attr('href', '#').attr('title', 'Initiate ban tribunal for this user').attr('rel', 'tooltip').addClass('label label-important pull-right banhammer').append($("<i>").addClass('icon-ban-circle')).click(function(e) {
-    e.preventDefault();
-    return me.trigger_tribunal(id);
-  }));
+  usercount = ((function() {
+    var _ref, _results;
+    _ref = room.users;
+    _results = [];
+    for (i in _ref) {
+      u = _ref[i];
+      if (u.active()) {
+        _results.push(1);
+      }
+    }
+    return _results;
+  })()).length;
+  is_admin = me.id[0] === '_' || (_ref = me.id, __indexOf.call(room.admins, _ref) >= 0);
+  if (is_admin || (me.score() > 50 && usercount > 2)) {
+    line.append($('<a>').attr('href', '#').attr('title', 'Initiate ban tribunal for this user').attr('rel', 'tooltip').addClass('label label-warning pull-right banhammer').append($("<i>").addClass('icon-legal')).click(function(e) {
+      e.preventDefault();
+      return me.trigger_tribunal(id);
+    }));
+  }
+  if (is_admin) {
+    return line.append($('<a>').attr('href', '#').attr('title', 'Instantly ban this user for 10 minutes').attr('rel', 'tooltip').addClass('label label-important pull-right banhammer').append($("<i>").addClass('icon-ban-circle')).click(function(e) {
+      e.preventDefault();
+      return me.ban_user(id);
+    }));
+  }
 };
 
 guessAnnotation = function(_arg) {
@@ -2732,7 +2736,7 @@ get_score = function(user) {
 };
 
 renderUsers = function() {
-  var active_count, attr, attrs, badge, entities, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
+  var active_count, attr, attrs, badge, entities, get_weight, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
   if (!room.users) {
     return;
   }
@@ -2878,8 +2882,11 @@ renderUsers = function() {
     }
   }
   list.empty();
+  get_weight = function(user) {
+    return get_score(user) + (room.serverTime() - user.created) / 1e15;
+  };
   _ref5 = entities.sort(function(a, b) {
-    return get_score(b) - get_score(a);
+    return get_weight(b) - get_weight(a);
   });
   for (user_index = _j = 0, _len = _ref5.length; _j < _len; user_index = ++_j) {
     user = _ref5[user_index];
@@ -2921,7 +2928,7 @@ renderUsers = function() {
     } else {
       name.append($('<span>').append(userSpan(user.id)).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
       _ref8 = user.members.sort(function(a, b) {
-        return get_score(room.users[b]) - get_score(room.users[a]);
+        return get_weight(room.users[b]) - get_weight(room.users[a]);
       });
       for (_l = 0, _len2 = _ref8.length; _l < _len2; _l++) {
         member = _ref8[_l];
@@ -3456,9 +3463,11 @@ QuizPlayer = (function() {
     return this.early * EARLY + (this.correct - this.early) * CORRECT + this.interrupts * INTERRUPT;
   };
 
-  QuizPlayer.prototype.ban = function() {
-    this.banned = this.room.serverTime();
-    this.verb("was banned from " + this.room.name, true);
+  QuizPlayer.prototype.ban = function(duration) {
+    if (duration == null) {
+      duration = 1000 * 60 * 10;
+    }
+    this.banned = this.room.serverTime() + duration;
     return this.emit('redirect', "/" + this.room.name + "-banned");
   };
 
@@ -3545,14 +3554,21 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.trigger_tribunal = function(user) {
-    var _ref;
-    this.verb('created a ban tribunal for !@' + user);
-    return (_ref = this.room.users[user]) != null ? _ref.create_tribunal() : void 0;
+    var is_admin, _ref, _ref1;
+    is_admin = (_ref = this.id, __indexOf.call(this.room.admins, _ref) >= 0) || this.id[0] === '_';
+    if (is_admin || this.score() > 50) {
+      this.verb('created a ban tribunal for !@' + user);
+      return (_ref1 = this.room.users[user]) != null ? _ref1.create_tribunal() : void 0;
+    }
   };
 
   QuizPlayer.prototype.ban_user = function(user) {
-    var _ref;
-    return (_ref = this.room.users[user]) != null ? _ref.ban() : void 0;
+    var is_admin, _ref, _ref1;
+    is_admin = (_ref = this.id, __indexOf.call(this.room.admins, _ref) >= 0) || this.id[0] === '_';
+    if (is_admin) {
+      this.verb('banned !@' + user + ' from /' + this.room.name);
+      return (_ref1 = this.room.users[user]) != null ? _ref1.ban(1000 * 60 * 5) : void 0;
+    }
   };
 
   QuizPlayer.prototype.vote_tribunal = function(_arg) {
@@ -3882,6 +3898,14 @@ QuizPlayer = (function() {
     return this.verb("did something unimplemented (check public)");
   };
 
+  QuizPlayer.prototype.apotheify = function() {
+    var _ref;
+    if (_ref = this.id, __indexOf.call(this.room.admins, _ref) < 0) {
+      this.room.admins.push(this.id);
+    }
+    return this.room.sync(1);
+  };
+
   return QuizPlayer;
 
 })();
@@ -3947,6 +3971,7 @@ QuizRoom = (function() {
     this.distribution = default_distribution;
     this.freeze();
     this.users = {};
+    this.admins = [];
     this.difficulty = '';
     this.category = '';
     this.max_buzz = null;
@@ -4396,7 +4421,7 @@ QuizRoom = (function() {
       }
       return _results;
     }).call(this);
-    settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus"];
+    settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus", "admins"];
     for (_i = 0, _len = settings.length; _i < _len; _i++) {
       field = settings[_i];
       data[field] = this[field];

@@ -313,7 +313,7 @@ io.sockets.on 'connection', (sock) ->
 			room.users[publicID].lock = (Math.random() < 0.6) # set defaults on big public rooms to lock
 
 	user = room.users[publicID]
-	if new Date - user.banned < 1000 * 60 * 10
+	if room.serverTime() < user.banned
 		sock.emit 'redirect', "/#{room_name}-banned"
 		sock.disconnect()
 		return
@@ -399,7 +399,7 @@ restore_journal = (callback) ->
 			json = JSON.parse(packet)
 
 			# a new question's gonna be pickt, so just restore settings 
-			fields = ["type", "difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz", "no_skip"]
+			fields = ["type", "difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz", "no_skip", "admins"]
 			for name, data of json
 				# console.log data
 				unless name of rooms
@@ -526,8 +526,7 @@ app.get '/stalkermode/full', (req, res) ->
 		rooms: rooms
 	}
 
-app.get '/stalkermode/users', (req, res) ->
-	res.render 'users.jade', { rooms: rooms }
+app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
 
 app.get '/stalkermode/logout', (req, res) ->
 	res.clearCookie 'protoauth'
@@ -590,17 +589,13 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
-app.get '/401', (req, res) ->
-	res.render 'auth.jade', {}
+app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
-app.post '/401', (req, res) ->
-	remote.authenticate(req, res)
+app.post '/401', (req, res) -> remote.authenticate(req, res)
 
-app.get '/new', (req, res) ->
-	res.redirect '/' + names.generatePage()
+app.get '/new', (req, res) -> res.redirect '/' + names.generatePage()
 
-app.get '/', (req, res) ->
-	res.redirect '/lobby'
+app.get '/', (req, res) -> res.redirect '/lobby'
 
 
 app.get '/:channel', (req, res) ->

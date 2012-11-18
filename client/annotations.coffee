@@ -50,6 +50,8 @@ userSpan = (user, global) ->
 			scope.prepend "<i class='icon-magic' style='padding-right: 5px'></i>"	
 		else
 			scope.prepend "<i class='icon-bullhorn' style='padding-right: 5px'></i>"
+	else if room.admins and user in room.admins
+		scope.prepend "<i class='icon-star-empty' style='padding-right: 5px'></i>"	
 	scope
 		
 addAnnotation = (el, name = sync?.name) ->
@@ -76,20 +78,33 @@ addImportant = (el) ->
 
 
 banButton = (id, line) ->
-	if me.id[0] != '_'
-		return if id is me.id
-		return if me.score() < 50
-		return if (1 for i, u of room.users when u.active()).length < 3
-	line.append $('<a>')
-		.attr('href', '#')
-		.attr('title', 'Initiate ban tribunal for this user')
-		.attr('rel', 'tooltip')
-		.addClass('label label-important pull-right banhammer')
-		.append($("<i>").addClass('icon-ban-circle'))
-		.click (e) ->
-			e.preventDefault()
-			me.trigger_tribunal id
-			# console.log 'banhammer'
+	return if id is me.id # stop hitting yourself
+
+	usercount = (1 for i, u of room.users when u.active()).length
+	is_admin = me.id[0] is '_' or me.id in room.admins
+	
+	if is_admin or (me.score() > 50 and usercount > 2)
+		line.append $('<a>')
+			.attr('href', '#')
+			.attr('title', 'Initiate ban tribunal for this user')
+			.attr('rel', 'tooltip')
+			.addClass('label label-warning pull-right banhammer')
+			.append($("<i>").addClass('icon-legal'))
+			.click (e) ->
+				e.preventDefault()
+				me.trigger_tribunal id
+
+	if is_admin
+		line.append $('<a>')
+			.attr('href', '#')
+			.attr('title', 'Instantly ban this user for 10 minutes')
+			.attr('rel', 'tooltip')
+			.addClass('label label-important pull-right banhammer')
+			.append($("<i>").addClass('icon-ban-circle'))
+			.click (e) ->
+				e.preventDefault()
+				me.ban_user id
+		
 
 guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt}) ->
 	# TODO: make this less like chats

@@ -57,11 +57,13 @@ class QuizRoom
 
 		@freeze()
 		@users = {} 
+		@admins = []
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null
 		@no_skip = false
 		@show_bonus = false
+
 
 	log: (message) -> @emit 'log', { verb: message }
 
@@ -91,37 +93,10 @@ class QuizRoom
 	# 	@log 'room.emit_user(id, name, data) not implemented'
 
 
-	emit: (name, data) ->
-		# note to self, do not change this into an @log, because thats recursive
-		console.log 'room.emit(name, data) not implemented'
+	# note to self, do not change this into an @log, because thats recursive
+	emit: (name, data) -> console.log 'room.emit(name, data) not implemented'
 
-	reset_distribution: ->
-		@distribution = default_distribution
-
-	# ban: (id) ->
-	# 	@users[id].banned = true
-	# 	@emit_user id, 'redirect', "/#{@name}-banned"
-	# 	@emit 'log', {user: id, verb: 'was banned from this room'}
-		
-
-	# vote: (id, action, val) ->
-	# 	# room.add_socket publicID, sock.id
-	# 	@users[id][action] = val
-	# 	@sync()
-
-	# touch: (id, no_add_time) ->
-	# 	unless no_add_time
-	# 		elapsed = @serverTime() - @users[id].last_action
-	# 		if elapsed < 1000 * 60 * 10
-	# 			@users[id].time_spent += elapsed
-	# 	@users[id].last_action = @serverTime()
-
-	# del_socket: (id, socket) ->
-	# 	user = @users[id]
-	# 	if user
-	# 		@touch(id)
-	# 		user.sockets = (sock for sock in user.sockets when sock isnt socket)
-	# 	# journal @name
+	reset_distribution: -> @distribution = default_distribution
 
 	time: -> if @time_freeze then @time_freeze else @offsetTime()
 
@@ -137,22 +112,6 @@ class QuizRoom
 		if @time_freeze
 			@set_time @time_freeze
 			@time_freeze = 0
-
-	# pause: -> @freeze() unless @attempt or @time() > @end_time
-		
-	#freeze with access controls	
-	# unpause: -> @unfreeze() unless @attempt
-	
-	# timeout: (metric, time, callback) ->
-	# 	@clear_timeout()
-
-	# 	diff = time - metric()
-	# 	if diff < 0
-	# 		callback()
-	# 	else
-	# 		@__timeout = setTimeout =>
-	# 			@timeout(metric, time, callback)
-	# 		, diff
 
 	timeout: (delay, callback) ->
 		@clear_timeout()
@@ -227,7 +186,6 @@ class QuizRoom
 			for num in [5].concat(list).slice(0, -1)
 				sum += Math.round(num) * rate #always round!
 
-
 		now = @time() # take a snapshot of time to do math with
 		#first thing's first, recalculate the cumulative array
 		@cumulative = cumsum @timing, @rate
@@ -269,7 +227,6 @@ class QuizRoom
 		return Math.random() > 0.3
 
 	end_buzz: (session) -> #killit, killitwithfire
-
 		return unless @attempt?.session is session
 		# touch the user in weird places
 		# @touch @attempt.user
@@ -467,7 +424,7 @@ class QuizRoom
 				user[attr] = @users[id][attr]
 			user
 		# global room settings
-		settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus"]
+		settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus", "admins"]
 		for field in settings
 			data[field] = @[field]
 		# actually save stuff

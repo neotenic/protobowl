@@ -400,7 +400,13 @@ renderUsers = ->
 
 	list.empty()
 
-	for user, user_index in entities.sort((a, b) -> get_score(b) - get_score(a))
+	get_weight = (user) ->
+		# make the user's age a tiny factor, so that the ordering is
+		# at least consistent for all users, regardless of whether or
+		# not they actually have the same score
+		return get_score(user) + (room.serverTime() - user.created) / 1e15 
+
+	for user, user_index in entities.sort((a, b) -> get_weight(b) - get_weight(a))
 		# if the score is worse, increment ranks
 		ranking++ if entities[user_index - 1] and get_score(user) < get_score(entities[user_index - 1])
 		row = $('<tr>').data('entity', user).appendTo list
@@ -431,7 +437,7 @@ renderUsers = ->
 		else
 			name.append($('<span>').append(userSpan(user.id)).css('font-weight', 'bold')).append(" (#{user.members.length})")
 		
-			for member in user.members.sort((a, b) -> get_score(room.users[b]) - get_score(room.users[a]))
+			for member in user.members.sort((a, b) -> get_weight(room.users[b]) - get_weight(room.users[a]))
 				user = room.users[member]
 				row = $('<tr>').addClass('subordinate').data('entity', user).appendTo list
 				row.click -> 1
