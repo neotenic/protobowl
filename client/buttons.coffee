@@ -87,7 +87,7 @@ $('.buzzbtn').click ->
 	if $('.sounds')[0].checked and !$('.sounds').data('ding_sound')
 		$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
 
-	me.buzz 'yay', (status) ->
+	me.buzz room.qid, (status) ->
 		if status is 'http://www.whosawesome.com/'
 			$('.guess_input').removeClass('disabled')
 			if $('.sounds')[0].checked
@@ -453,6 +453,13 @@ $(".leaderboard tbody tr").live 'click', (e) ->
 	user = $(this).data('entity')
 	enabled = $(this).data('popover')?.enabled
 	# console.log $('.leaderboard tbody tr').not(this).popover 'toggle'
+	accessible = $('.leaderboard tbody tr').map ->
+		$(this).data('popover')?.$tip[0]
+	
+	$('.popover').not(accessible).fadeOut 'fast', ->
+		$(this).remove()
+	
+
 	$('.leaderboard tbody tr').popover 'destroy'
 	unless enabled
 		$(this).popover {

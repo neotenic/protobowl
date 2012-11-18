@@ -253,28 +253,28 @@ class SocketQuizPlayer extends QuizPlayer
 
 		@room.journal()
 		
-		user_count_log 'connected ' + @id + '-' + @name
+		user_count_log 'connected ' + @id + '-' + @name, @room.name
 
 		sock.on 'disconnect', =>
 			@sockets = (s for s in @sockets when s isnt id)
 			if @sockets.length is 0
 				@disconnect()
 				@room.journal()
-				user_count_log 'disconnected ' + @id + '-' + @name
+				user_count_log 'disconnected ' + @id + '-' + @name, @room.name
 
 
 	emit: (name, data) ->
 		for sock in @sockets
 			io.sockets.socket(sock).emit(name, data)
 
-user_count_log = (message) ->
+user_count_log = (message, room_name) ->
 	active_count = 0
 	online_count = 0
 	for name, room of rooms
 		for uid, user of room.users
 			online_count++ if user.online()
 			active_count++ if user.active()
-	log 'user_count', { online: online_count, active: active_count, message: message}
+	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name}
 
 io.sockets.on 'connection', (sock) ->
 	headers = sock.handshake.headers
@@ -599,7 +599,6 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 app.get '/stalkermode/patriot', (req, res) -> res.render 'dash.jade'
 
 app.get '/stalkermode/:other', (req, res) -> res.redirect '/stalkermode'
-
 
 app.get '/401', (req, res) -> res.render 'auth.jade', {}
 

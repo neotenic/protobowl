@@ -183,7 +183,10 @@ class QuizPlayer
 	echo: (data, callback) -> callback @room.serverTime()
 
 	buzz: (data, fn) -> 
-		if @room.buzz @id, fn
+		# TODO: get rid of 'yay' conditional, it's only here for
+		# backwards compibility, in case lag is so great that 
+		# it doesnt recieve until the next question
+		if (@room.qid is data or data is 'yay') and @room.buzz @id, fn
 			@rate_limit()
 
 	guess: (data) -> @room.guess @id, data
@@ -193,7 +196,9 @@ class QuizPlayer
 		# at this moment private messages are enforced on the end of the recipient
 		# which is not a good thing because technically anyone can see the messages
 		# and they aren't actually private, but that's problby okay for now
-		id = @id
+
+
+		id = @id # ninjas should be able to choose their names
 		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
 
 		@room.emit 'chat', { text, session, user: id, done, time: @room.serverTime() }	

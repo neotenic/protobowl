@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 18 2012 13:30:02 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 18 2012 15:10:05 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1958,7 +1958,7 @@ $('.buzzbtn').click(function() {
   if ($('.sounds')[0].checked && !$('.sounds').data('ding_sound')) {
     $('.sounds').data('ding_sound', new Audio('/sound/ding.wav'));
   }
-  return me.buzz('yay', function(status) {
+  return me.buzz(room.qid, function(status) {
     if (status === 'http://www.whosawesome.com/') {
       $('.guess_input').removeClass('disabled');
       if ($('.sounds')[0].checked) {
@@ -2422,9 +2422,16 @@ $('.show_image').live('click', function(e) {
 });
 
 $(".leaderboard tbody tr").live('click', function(e) {
-  var enabled, user, _ref;
+  var accessible, enabled, user, _ref;
   user = $(this).data('entity');
   enabled = (_ref = $(this).data('popover')) != null ? _ref.enabled : void 0;
+  accessible = $('.leaderboard tbody tr').map(function() {
+    var _ref1;
+    return (_ref1 = $(this).data('popover')) != null ? _ref1.$tip[0] : void 0;
+  });
+  $('.popover').not(accessible).fadeOut('fast', function() {
+    return $(this).remove();
+  });
   $('.leaderboard tbody tr').popover('destroy');
   if (!enabled) {
     $(this).popover({
@@ -3650,7 +3657,7 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.buzz = function(data, fn) {
-    if (this.room.buzz(this.id, fn)) {
+    if ((this.room.qid === data || data === 'yay') && this.room.buzz(this.id, fn)) {
       return this.rate_limit();
     }
   };

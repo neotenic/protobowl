@@ -164,12 +164,6 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 
 	if done
 		ruling = line.find('.ruling').show().css('display', 'inline')
-		# setTimeout ->
-		# 	ruling.tooltip('show')
-		# , 100
-		# setTimeout ->
-		# 	ruling.tooltip('hide')
-		# , 1000
 		decision = ""
 		if correct is "prompt"
 			ruling.addClass('label-info').text('Prompt')
