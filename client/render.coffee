@@ -731,7 +731,6 @@ updateTextPosition = ->
 	# children.slice(index).addClass('unread')
 
 
-
 updateInlineSymbols = ->
 	return unless room.question and room.timing
 	# console.log 'update inline symbols'

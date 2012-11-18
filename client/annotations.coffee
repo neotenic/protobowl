@@ -299,6 +299,14 @@ verbAnnotation = ({user, verb, time}) ->
 	selection = $(".bundle.active .#{verbclass}")
 
 	if selection.length > 0
+		# For Thine is
+		# Life is
+		# For Thine is the
+
+		# (3x) This is the way the world ends
+		# Not with a bang but a whimper.
+
+
 		line.data 'count', selection.data('count') + 1
 		line.hide()
 		line.prepend $('<span style="margin-right:5px">').addClass('badge').text(line.data('count') + 'x')

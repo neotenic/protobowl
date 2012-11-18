@@ -84,7 +84,7 @@ do ->
 		return stemmer word.replace(/ez$/g, 'es').replace(/[^\w]/g, '')
 
 	splitWords = (text) ->
-		arr = (word.trim() for word in text.toLowerCase().split(/\s+/))
+		arr = (word.trim() for word in text.toLowerCase().split(/[\s\/\-]+/))
 		words = (stem(word) for word in arr when word not in stopwords and word isnt '')
 		return words
 

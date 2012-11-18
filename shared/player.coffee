@@ -19,6 +19,7 @@ class QuizPlayer
 		# timekeeping and other stuff
 		@time_spent = 0
 		@last_action = @room.serverTime()
+		@last_session = @room.serverTime()
 		@created = @room.serverTime()
 
 		# used to keep track of buzz limits
@@ -167,7 +168,15 @@ class QuizPlayer
 
 	
 	disconnect: ->
-		@verb 'left the room'
+		if @sockets.length is 0
+			seconds = (@room.serverTime() - @last_session) / 1000
+			if seconds > 90
+				@verb "left the room (logged on #{Math.round(seconds/60)} minutes ago)"
+			else if seconds > 1
+				@verb "left the room (logged on #{Math.round(seconds)} seconds ago)"
+			else
+				@verb "left the room"
+				
 		@touch()
 		@room.sync(1)
 
@@ -206,12 +215,18 @@ class QuizPlayer
 
 	pause: ->
 		@touch()
+		
+		return if @room.time_freeze
+
 		if !@room.attempt and @room.time() < @room.end_time
 			@verb 'paused the game'
 			@room.freeze()
 			@room.sync()
 
 	unpause: ->
+		@touch()
+		return if !@room.time_freeze
+
 		if !@room.question
 			@room.new_question()
 			@room.unfreeze()

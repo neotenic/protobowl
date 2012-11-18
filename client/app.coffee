@@ -81,7 +81,7 @@ if io?
 
 	setTimeout initialize_offline, 1000
 else
-	offline_startup()	
+	offline_startup()
 
 
 connected = -> sock? and sock.socket.connected

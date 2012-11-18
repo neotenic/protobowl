@@ -1,4 +1,4 @@
-protobowl_build = 'Sat Nov 17 2012 18:40:15 GMT-0500 (EST)';
+protobowl_build = 'Sat Nov 17 2012 19:42:55 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -3389,6 +3389,7 @@ QuizPlayer = (function() {
     this.history = [];
     this.time_spent = 0;
     this.last_action = this.room.serverTime();
+    this.last_session = this.room.serverTime();
     this.created = this.room.serverTime();
     this.times_buzzed = 0;
     this.show_typing = true;
@@ -3580,7 +3581,17 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.disconnect = function() {
-    this.verb('left the room');
+    var seconds;
+    if (this.sockets.length === 0) {
+      seconds = (this.room.serverTime() - this.last_session) / 1000;
+      if (seconds > 90) {
+        this.verb("left the room (logged on " + (Math.round(seconds / 60)) + " minutes ago)");
+      } else if (seconds > 1) {
+        this.verb("left the room (logged on " + (Math.round(seconds)) + " seconds ago)");
+      } else {
+        this.verb("left the room");
+      }
+    }
     this.touch();
     return this.room.sync(1);
   };
@@ -3639,6 +3650,9 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.pause = function() {
     this.touch();
+    if (this.room.time_freeze) {
+      return;
+    }
     if (!this.room.attempt && this.room.time() < this.room.end_time) {
       this.verb('paused the game');
       this.room.freeze();
@@ -3648,6 +3662,10 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.unpause = function() {
     var duration;
+    this.touch();
+    if (!this.room.time_freeze) {
+      return;
+    }
     if (!this.room.question) {
       this.room.new_question();
       this.room.unfreeze();

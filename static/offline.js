@@ -895,7 +895,7 @@ var __slice = [].slice,
     var arr, word, words;
     arr = (function() {
       var _i, _len, _ref, _results;
-      _ref = text.toLowerCase().split(/\s+/);
+      _ref = text.toLowerCase().split(/[\s\/\-]+/);
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         word = _ref[_i];

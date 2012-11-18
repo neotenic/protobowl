@@ -94,7 +94,7 @@ if app.settings.env is 'development'
 
 
 try 
-	remote = require './remoter'
+	remote = require './remote'
 catch err
 	remote = require './local'
 
@@ -236,6 +236,10 @@ class SocketQuizPlayer extends QuizPlayer
 		fn output if fn
 
 	add_socket: (sock) ->
+		if @sockets.length is 0
+			@last_session = @room.serverTime()
+			@verb 'joined the room'
+
 		@sockets.push sock.id unless sock.id in @sockets
 		blacklist = ['add_socket', 'emit', 'disconnect']
 		
@@ -325,8 +329,6 @@ io.sockets.on 'connection', (sock) ->
 	# tell that there's a new person at the partaay
 	room.sync(3)
 
-	user.verb 'joined the room'
-	
 	# # detect if the server had been recently restarted
 	if new Date - uptime_begin < 1000 * 60 and existing_user
 		sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental and not necessarily reliable). The journal does not record the current question, chat messages, or current attempts, so you may need to manually advance a question. This may have been part of a server or client software update, or the result of an unexpected server crash. We apologize for any inconvienience this may have caused.'}
