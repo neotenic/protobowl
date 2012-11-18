@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 18 2012 15:10:05 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 18 2012 17:40:19 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1932,11 +1932,6 @@ skip = function() {
 };
 
 next = function() {
-  if (room.rate < 1) {
-    if (rate_limit_check()) {
-      return;
-    }
-  }
   return me.next();
 };
 
@@ -2257,13 +2252,13 @@ $('body').keydown(function(e) {
   }
   if (location.hostname === 'localhost') {
     if ((_ref9 = e.keyCode) === 68) {
-      me.buzz();
+      me.buzz(room.qid);
       return me.guess({
         text: room.answer,
         done: true
       });
     } else if ((_ref10 = e.keyCode) === 69) {
-      me.buzz();
+      me.buzz(room.qid);
       return me.guess({
         text: '',
         done: true

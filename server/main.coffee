@@ -190,7 +190,8 @@ class SocketQuizRoom extends QuizRoom
 
 	end_buzz: (session) ->
 		if @attempt?.user
-			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer]
+			ruling = @check_answer @attempt.text, @answer, @question
+			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, ruling]
 		super(session)
 
 class SocketQuizPlayer extends QuizPlayer
@@ -211,6 +212,9 @@ class SocketQuizPlayer extends QuizPlayer
 		super(data)
 		log 'chat', [@room.name, @id + '-' + @name, data.text] if data.done
 
+	verb: (action, no_rate_limit) -> 
+		super(action, no_rate_limit)
+		log 'verb', [@room.name, @id + '-' + @name, action]
 
 	online: -> @sockets.length > 0
 

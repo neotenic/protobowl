@@ -61,8 +61,8 @@ skip = ->
 	me.skip()
 
 next = ->
-	if room.rate < 1
-		return if rate_limit_check()
+	# if room.rate < 1
+	# 	return if rate_limit_check()
 	me.next()
 
 $('.skipbtn').click skip
@@ -331,11 +331,12 @@ $('body').keydown (e) ->
 
 	# debugging shortcuts	
 	if location.hostname is 'localhost'
+		# console.log e.keyCode, 'local'
 		if e.keyCode in [68] # D
-			me.buzz()
+			me.buzz(room.qid)
 			me.guess { text: room.answer, done: true }
 		else if e.keyCode in [69] # E
-			me.buzz()
+			me.buzz(room.qid)
 			me.guess { text: '', done: true }
 
 	# console.log e.keyCode
