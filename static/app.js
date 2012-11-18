@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 18 2012 00:45:48 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 18 2012 00:51:29 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2754,7 +2754,7 @@ renderUsers = function() {
         return room.users[a].last_session - room.users[b].last_session;
       });
       for (num = _i = 0, _ref1 = sorted.length; 0 <= _ref1 ? _i < _ref1 : _i > _ref1; num = 0 <= _ref1 ? ++_i : --_i) {
-        room.users[sorted[num]]._suffix = "(" + (num + 1) + ")";
+        room.users[sorted[num]]._suffix = "#" + (num + 1);
       }
     } else {
       delete room.users[ids[0]]._suffix;
@@ -2917,9 +2917,9 @@ renderUsers = function() {
     name = $('<td>').appendTo(row);
     $('<td>').text(user.interrupts).appendTo(row);
     if (!user.members) {
-      name.append($('<span>').text(user.name));
+      name.append($('<span>').append(userSpan(user.id)));
     } else {
-      name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
+      name.append($('<span>').append(userSpan(user.id)).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
       _ref8 = user.members.sort(function(a, b) {
         return get_score(room.users[b]) - get_score(room.users[a]);
       });
@@ -2943,7 +2943,7 @@ renderUsers = function() {
           }
         }
         $('<td>').css("border", 0).append(badge).appendTo(row);
-        name = $('<td>').text(user.name);
+        name = $('<td>').append(userSpan(user.id));
         name.appendTo(row);
         $('<td>').text(user.interrupts).appendTo(row);
       }

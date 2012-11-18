@@ -301,7 +301,7 @@ renderUsers = ->
 		if ids.length > 1
 			sorted = ids.sort (a, b) -> room.users[a].last_session - room.users[b].last_session
 			for num in [0...sorted.length]
-				room.users[sorted[num]]._suffix = "(#{num + 1})"
+				room.users[sorted[num]]._suffix = "##{num + 1}"
 		else
 			delete room.users[ids[0]]._suffix
 
@@ -427,9 +427,9 @@ renderUsers = ->
 		
 		$('<td>').text(user.interrupts).appendTo row
 		if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
-			name.append($('<span>').text(user.name)) #.css('font-weight', 'bold'))
+			name.append($('<span>').append(userSpan(user.id))) #.css('font-weight', 'bold'))
 		else
-			name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
+			name.append($('<span>').append(userSpan(user.id)).css('font-weight', 'bold')).append(" (#{user.members.length})")
 		
 			for member in user.members.sort((a, b) -> get_score(room.users[b]) - get_score(room.users[a]))
 				user = room.users[member]
@@ -446,7 +446,7 @@ renderUsers = ->
 							badge.addClass('badge-success').attr('title', 'Online')
 
 				$('<td>').css("border", 0).append(badge).appendTo row
-				name = $('<td>').text(user.name)
+				name = $('<td>').append(userSpan(user.id))
 				name.appendTo row
 				$('<td>').text(user.interrupts).appendTo row
 
