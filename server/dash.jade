@@ -1,0 +1,13 @@
+script(src="/socket.io/socket.io.js")
+script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
+script
+	sock = io.connect()
+	sock.on('chat', function(e){
+		console.log('chat', e)
+	})
+	sock.on('buzz', function(e){
+		console.log('buzz', e)
+	})
+	sock.on('user_count', function(e){
+		console.log('user_count', e)
+	})
