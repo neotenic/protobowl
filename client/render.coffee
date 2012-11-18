@@ -192,7 +192,7 @@ renderTimer = ->
 	# else
 	# 	$('.label.finished').hide()
 
-	if time > room.end_time - room.answer_duration
+	if time >= room.end_time
 		# $('.progress').addClass 'progress-info'
 		if $(".nextbtn").is(":hidden")
 			$('.nextbtn').show() 

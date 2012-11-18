@@ -1,4 +1,4 @@
-protobowl_build = 'Sat Nov 17 2012 23:52:35 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 18 2012 00:17:50 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2653,7 +2653,7 @@ renderTimer = function() {
       $('.pausebtn').addClass('btn-warning').removeClass('btn-success');
     }
   }
-  if (time > room.end_time - room.answer_duration) {
+  if (time >= room.end_time) {
     if ($(".nextbtn").is(":hidden")) {
       $('.nextbtn').show();
       $('.skipbtn').hide();
@@ -4122,7 +4122,7 @@ QuizRoom = (function() {
   };
 
   QuizRoom.prototype.next = function() {
-    if (this.time() > this.end_time - this.answer_duration && !this.generating_question && !this.attempt) {
+    if (this.time() >= this.end_time && !this.generating_question && !this.attempt) {
       this.unfreeze();
       return this.new_question();
     }

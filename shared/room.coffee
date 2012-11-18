@@ -258,7 +258,7 @@ class QuizRoom
 	finish: -> @set_time @end_time
 
 	next: ->
-		if @time() > @end_time - @answer_duration and !@generating_question and !@attempt
+		if @time() >= @end_time and !@generating_question and !@attempt
 			@unfreeze()
 			@new_question()
 			
