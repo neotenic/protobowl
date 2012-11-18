@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 18 2012 11:39:00 GMT-0500 (EST)';
+protobowl_build = 'Sun Nov 18 2012 13:30:02 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2079,6 +2079,14 @@ findReferences = function(text) {
       }
     }
   }
+  for (name in entities) {
+    identity = entities[name];
+    if (text.slice(0, name.length) === name.slice(0, text.length) && text.length > 0) {
+      reconstructed += identity;
+      text = text.slice(name.length);
+      break;
+    }
+  }
   return [reconstructed.replace(/[\s,]*$/g, ''), text];
 };
 
@@ -2926,7 +2934,7 @@ renderUsers = function() {
     if (!user.members) {
       name.append($('<span>').append(userSpan(user.id)));
     } else {
-      name.append($('<span>').append(userSpan(user.id)).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
+      name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
       _ref8 = user.members.sort(function(a, b) {
         return get_weight(room.users[b]) - get_weight(room.users[a]);
       });
@@ -3652,13 +3660,17 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.chat = function(_arg) {
-    var done, session, text;
+    var done, id, session, text;
     text = _arg.text, done = _arg.done, session = _arg.session;
     this.touch();
+    id = this.id;
+    if (id[0] === '_') {
+      id = '__' + this.name.replace(/\s+/g, '_');
+    }
     this.room.emit('chat', {
       text: text,
       session: session,
-      user: this.id,
+      user: id,
       done: done,
       time: this.room.serverTime()
     });

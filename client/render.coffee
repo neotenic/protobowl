@@ -320,8 +320,6 @@ renderUsers = ->
 			$('.troll-'+user.id).slideUp 'normal', ->
 				$(this).remove()
 
-		# user.name + " (" + user.id + ") " + votes.join(", ")
-
 	lock_votes = 0
 	lock_electorate = 0
 	for id, user of room.users when user.active()
@@ -435,7 +433,7 @@ renderUsers = ->
 		if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
 			name.append($('<span>').append(userSpan(user.id))) #.css('font-weight', 'bold'))
 		else
-			name.append($('<span>').append(userSpan(user.id)).css('font-weight', 'bold')).append(" (#{user.members.length})")
+			name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
 		
 			for member in user.members.sort((a, b) -> get_weight(room.users[b]) - get_weight(room.users[a]))
 				user = room.users[member]

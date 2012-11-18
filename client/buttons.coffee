@@ -133,6 +133,7 @@ $('.chat_input').typeahead {
 			names.push user.team if user.team and user.team not in names
 		("#{prefix}#{name}" for name in names when name not in existing and name isnt me.name)
 	matcher: (candidate) ->
+		# console.log this.query[0], findReferences(this.query)[1] 
 		this.query[0] == '@' and !findReferences(this.query)[1]
 }
 
@@ -156,13 +157,14 @@ findReferences = (text) ->
 				text = text.slice(name.length)
 				changed = true
 				break
-		# for id, {name} of room.users
-		# 	if text.slice(0, name.length) is name
-		# 		reconstructed += '!@' + id + ', '
-		# 		text = text.slice(name.length)
-		# 		changed = true
-		# 		break
-	# text = reconstructed.replace(/[\s,]*$/g, '') + ' ' + text
+	# final pass for incompletes
+	for name, identity of entities
+		if text.slice(0, name.length) is name.slice(0, text.length) and text.length > 0
+			reconstructed += identity
+			text = text.slice(name.length)
+			# changed = true
+			break
+
 	return [reconstructed.replace(/[\s,]*$/g, ''), text]
 
 protobot_engaged = false

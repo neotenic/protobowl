@@ -193,7 +193,10 @@ class QuizPlayer
 		# at this moment private messages are enforced on the end of the recipient
 		# which is not a good thing because technically anyone can see the messages
 		# and they aren't actually private, but that's problby okay for now
-		@room.emit 'chat', { text, session, user: @id, done, time: @room.serverTime() }	
+		id = @id
+		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
+
+		@room.emit 'chat', { text, session, user: id, done, time: @room.serverTime() }	
 		@rate_limit() if done
 	
 	skip: ->

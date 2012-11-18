@@ -162,6 +162,8 @@ log = (action, obj) ->
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
 	req.end()
 
+	io.sockets.in("stalkermode-dash").emit action, obj
+
 log 'server_restart', {}
 
 public_room_list = ['hsquizbowl', 'lobby']
@@ -278,11 +280,16 @@ io.sockets.on 'connection', (sock) ->
 	headers = sock.handshake.headers
 	return sock.disconnect() unless headers.referer and headers.cookie
 	config = url.parse(headers.referer)
+	
 	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
 		config.host = 'protobowl.com'
 		sock.emit 'application_update', +new Date
 		sock.emit 'redirect', url.format(config)
 		sock.disconnect()
+		return
+
+	if config.pathname is '/stalkermode/patriot'
+		sock.join 'stalkermode-dash'
 		return
 
 	cookie = parseCookie(headers.cookie)
@@ -295,7 +302,7 @@ io.sockets.on 'connection', (sock) ->
 	question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
 	publicID = sha1(cookie.protocookie + room_name)
 
-	publicID = "__secret_ninja" if is_ninja
+	publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" if is_ninja
 	publicID += "_god" if is_god
 	
 	# get the room
@@ -589,6 +596,11 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
+app.get '/stalkermode/patriot', (req, res) -> res.render 'dash.jade'
+
+app.get '/stalkermode/:other', (req, res) -> res.redirect '/stalkermode'
+
+
 app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
 app.post '/401', (req, res) -> remote.authenticate(req, res)
@@ -596,7 +608,6 @@ app.post '/401', (req, res) -> remote.authenticate(req, res)
 app.get '/new', (req, res) -> res.redirect '/' + names.generatePage()
 
 app.get '/', (req, res) -> res.redirect '/lobby'
-
 
 app.get '/:channel', (req, res) ->
 	name = req.params.channel

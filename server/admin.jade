@@ -111,6 +111,11 @@ html(lang="en")
 
 		| - 
 
+		a(href="/stalkermode/patriot") Wiretap
+
+
+		| - 
+
 		a(href="/stalkermode/reports/category") Category Reports
 
 		p #{mem}
@@ -143,7 +148,7 @@ html(lang="en")
 			mixin time(start)
 		ul
 			li
-				a(href="/superstalkers?ninjagod") annuit coeptis
+				a(href="/superstalkers?god") annuit coeptis
 			mixin display_user(reaped)
 			- var sorted_names = Object.keys(rooms).sort(function(b,a){return weight_room(rooms[a]) - weight_room(rooms[b])})
 			each room_name in sorted_names
