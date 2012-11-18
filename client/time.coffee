@@ -1,3 +1,13 @@
+# Ticking away the moments 
+# That make up a dull day 
+# Fritter and waste the hours 
+# In an off-hand way 
+
+# Kicking around on a piece of ground 
+# In your home town 
+# Waiting for someone or something 
+# To show you the way 
+
 getTimeSpan = do ->
 	# https://github.com/skovalyov/coffee-script-utils/tree/master/date
 	SECOND_IN_MILLISECONDS = 1000
@@ -84,6 +94,16 @@ getTimeSpan = do ->
 		return result
 	return getTimeSpan
 
+# Tired of lying in the sunshine 
+# Staying home to watch the rain 
+# You are young and life is long 
+# And there is time to kill today 
+
+# And then the one day you find 
+# Ten years have got behind you 
+# No one told you when to run 
+# You missed the starting gun
+
 formatRelativeTime = (timestamp) ->
 	date = new Date
 	date.setTime timestamp
@@ -101,3 +121,4 @@ formatTime = (timestamp) ->
 	('0'+date.getMinutes()).substr(-2,2)+
 	#':'+ ('0'+date.getSeconds()).substr(-2,2) +
 	(if date.getHours() > 12 then "pm" else "am")
+

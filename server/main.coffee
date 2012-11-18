@@ -111,7 +111,6 @@ app.use express.bodyParser()
 app.use express.static('static')
 app.use express.favicon('static/img/favicon.ico')
 
-# Cookies = require 'cookies'
 crypto = require 'crypto'
 
 # simple helper function that hashes things
@@ -144,11 +143,12 @@ app.use (req, res, next) ->
 		res.writeHead 301, {Location: url.format(options)}
 		res.end()
 	else
-		if /stalkermode/.test(req.path) or 'ninja' of req.query
-			if !remote.authorized or remote.authorized(req)
-				next()
-			else
-				res.redirect "/401"
+		if remote.authorized and (/stalkermode/.test(req.path) or 'ninja' of req.query)
+			remote.authorized req, (allow) ->
+				if allow
+					next()
+				else
+					res.redirect "/401"
 		else
 			next()
 
@@ -499,7 +499,7 @@ app.post '/stalkermode/kickoffline', (req, res) ->
 	clearInactive 1000 * 5 # five seconds
 	res.redirect '/stalkermode'
 
-app.post '/stalkermode/announce', express.bodyParser(), (req, res) ->
+app.post '/stalkermode/announce', (req, res) ->
 	io.sockets.emit 'chat', {
 		text: req.body.message, 
 		session: Math.random().toString(36).slice(3), 
@@ -528,11 +528,16 @@ app.get '/stalkermode/full', (req, res) ->
 app.get '/stalkermode/users', (req, res) ->
 	res.render 'users.jade', { rooms: rooms }
 
+app.get '/stalkermode/logout', (req, res) ->
+	res.clearCookie 'protoauth'
+	res.redirect '/stalkermode'
+
+
 app.get '/stalkermode/user/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]
 	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u)}
 
-app.post '/stalkermode/emit/:room/:user', express.bodyParser(), (req, res) ->
+app.post '/stalkermode/emit/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]
 	u.emit req.body.action, req.body.text
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
@@ -585,9 +590,10 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/401', (req, res) ->
-	res.type 'html'
-	res.end "<img src='http://i.imgur.com/p6NxS.jpg' alt='401'>"
+	res.render 'auth.jade', {}
 
+app.post '/401', (req, res) ->
+	remote.authenticate(req, res)
 
 app.get '/new', (req, res) ->
 	res.redirect '/' + names.generatePage()

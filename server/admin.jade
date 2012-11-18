@@ -12,6 +12,7 @@ html(lang="en")
 			.idle {
 				color: #F89406;
 			}
+
 	body
 		mixin score(user)
 			| #{user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5}
@@ -103,6 +104,10 @@ html(lang="en")
 
 		a(href="/stalkermode/users") User View
 
+		| - 
+
+		a(href="/stalkermode/logout") Logout
+
 
 		| - 
 
@@ -176,3 +181,26 @@ html(lang="en")
 
 		//- form(action="/stalkermode/crash", method="post")
 		//- 	button(type="submit") Crash Server
+
+
+		//- I see a beautiful city and a brilliant people 
+		//- rising from this abyss, 
+		//- and, in their struggles to be truly free, 
+		//- in their triumphs and defeats, 
+		//- through long years to come, 
+		//- I see the evil of this time and of the previous time 
+		//- of which this is the natural birth, 
+		//- gradually making expiation for itself 
+		//- and wearing out.
+
+		//- I see the lives for which I lay down my life, 
+		//- peaceful, useful, prosperous and happy
+
+		//- I see that I hold a sanctuary in their hearts, 
+		//- and in the hearts of their descendants, 
+		//- generations hence. 
+
+		//- It is a far, far better thing that I do, 
+		//- than I have ever done; 
+		//- it is a far, far better rest that I go to 
+		//- than I have ever known.

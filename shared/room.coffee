@@ -412,32 +412,15 @@ class QuizRoom
 			else
 				@sync()
 
+	# 'Living backwards!' Alice repeated in great astonishment. 'I never heard of such a thing!'
+	# '--but there's one great advantage in it, that one's memory works both ways.'
+	# 'I'm sure MINE only works one way,' Alice remarked. 'I can't remember things before they happen.'
+	# 'It's a poor sort of memory that only works backwards,' the Queen remarked.
+
 	sync: (level = 0) ->
 		data = {
-			real_time: @serverTime() #,
-			# voting: {}
+			real_time: @serverTime()
 		}
-		# voting = ['skip', 'pause', 'unpause']
-		# for action in voting
-		# 	yay = 0
-		# 	nay = 0
-		# 	actionvotes = []
-		# 	for id of @users
-		# 		vote = @users[id][action]
-		# 		if vote is 'yay'
-		# 			yay++
-		# 			actionvotes.push id
-		# 		else
-		# 			nay++
-		# 	# console.log yay, 'yay', nay, 'nay', action
-		# 	if actionvotes.length > 0
-		# 		data.voting[action] = actionvotes
-		# 	# console.log yay, nay, "VOTES FOR", action
-		# 	if yay / (yay + nay) > 0
-		# 		# client.del(action) for client in io.sockets.clients(@name)
-		# 		delete @users[id][action] for id of @users
-		# 		this[action]()
-		
 		blacklist = ["question", "answer", "generated_time", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"]
 		user_blacklist = ["sockets", "room"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"

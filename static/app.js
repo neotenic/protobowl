@@ -1,4 +1,4 @@
-protobowl_build = 'Sat Nov 17 2012 19:42:55 GMT-0500 (EST)';
+protobowl_build = 'Sat Nov 17 2012 23:52:35 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1517,7 +1517,11 @@ userSpan = function(user, global) {
   }
   scope.addClass(hash).addClass('user-' + user).addClass('username').text(text);
   if (user.slice(0, 2) === "__") {
-    scope.prepend("<i class='icon-magic' style='padding-right: 5px'></i>");
+    if (/ninja/.test(user)) {
+      scope.prepend("<i class='icon-magic' style='padding-right: 5px'></i>");
+    } else {
+      scope.prepend("<i class='icon-bullhorn' style='padding-right: 5px'></i>");
+    }
   }
   return scope;
 };
@@ -1752,7 +1756,7 @@ chatAnnotation = function(_arg) {
 verbAnnotation = function(_arg) {
   var line, selection, time, user, verb, verbclass;
   user = _arg.user, verb = _arg.verb, time = _arg.time;
-  verbclass = "verb-" + user + "-" + (verb.split(' ')[0]);
+  verbclass = "verb-" + user + "-" + (verb.split(' ').slice(0, 2).join('-'));
   line = $('<p>').addClass('log');
   line.addClass(verbclass);
   if (user) {
@@ -2546,6 +2550,11 @@ renderUpdate = function() {
     } else {
       $('.set-team').slideUp();
     }
+  }
+  if (me.id && me.id[0] === '_') {
+    $('a.brand').attr('href', '/stalkermode');
+    $('div.navbar-inner').css('background', 'rgb(224, 235, 225)');
+    $('.motto').text('omg did you know im a ninja?');
   }
   if (room.attempt) {
     guessAnnotation(room.attempt);

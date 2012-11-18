@@ -79,6 +79,10 @@ renderUpdate = ->
 		else
 			$('.set-team').slideUp()
 
+	if me.id and me.id[0] is '_'
+		$('a.brand').attr('href', '/stalkermode')
+		$('div.navbar-inner').css('background', 'rgb(224, 235, 225)')
+		$('.motto').text('omg did you know im a ninja?')
 
 	if room.attempt
 		guessAnnotation room.attempt

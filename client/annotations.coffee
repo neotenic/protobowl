@@ -37,10 +37,8 @@ userSpan = (user, global) ->
 		for el in scope
 			for c in $(el).attr('class').split('\s') when c.slice(0, 8) is 'userhash'
 				$(el).removeClass(c)
-			
 	else
 		scope = $('<span>')
-
 
 	scope
 		.addClass(hash)
@@ -49,7 +47,10 @@ userSpan = (user, global) ->
 		.text(text)
 
 	if user.slice(0, 2) == "__"
-		scope.prepend "<i class='icon-magic' style='padding-right: 5px'></i>"
+		if /ninja/.test user
+			scope.prepend "<i class='icon-magic' style='padding-right: 5px'></i>"	
+		else
+			scope.prepend "<i class='icon-bullhorn' style='padding-right: 5px'></i>"
 	scope
 		
 addAnnotation = (el, name = sync?.name) ->
@@ -271,7 +272,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 
 verbAnnotation = ({user, verb, time}) ->
-	verbclass = "verb-#{user}-#{verb.split(' ')[0]}"
+	verbclass = "verb-#{user}-#{verb.split(' ').slice(0, 2).join('-')}"
 
 	line = $('<p>').addClass 'log'
 	line.addClass(verbclass)
