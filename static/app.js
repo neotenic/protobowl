@@ -1,4 +1,4 @@
-protobowl_build = 'Mon Nov 19 2012 20:58:14 GMT-0500 (EST)';
+protobowl_build = 'Tue Nov 20 2012 14:54:00 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1499,9 +1499,6 @@ userSpan = function(user, global) {
   } else {
     text = prefix + (((_ref2 = room.users[user]) != null ? _ref2.name : void 0) || "[name missing]");
   }
-  if ((_ref3 = room.users[user]) != null ? _ref3._suffix : void 0) {
-    text += ' ' + room.users[user]._suffix;
-  }
   special = '';
   if (__indexOf.call(room.admins, user) >= 0) {
     special = 'admin';
@@ -1513,6 +1510,10 @@ userSpan = function(user, global) {
     scope = $('<span>');
   }
   scope.addClass(hash).addClass('user-' + user).addClass('username').text(text);
+  if ((_ref3 = room.users[user]) != null ? _ref3._suffix : void 0) {
+    scope.append(' ');
+    scope.append($('<span style="color: rgb(150, 150, 150)">').text(room.users[user]._suffix));
+  }
   if (user.slice(0, 2) === "__") {
     if (/ninja/.test(user)) {
       scope.prepend("<i class='icon-magic' style='padding-right: 5px'></i>");

@@ -29,8 +29,7 @@ userSpan = (user, global) ->
 	else
 		text = prefix + (room.users[user]?.name || "[name missing]")
 	
-	if room.users[user]?._suffix
-		text += ' ' + room.users[user]._suffix
+	
 	special = ''
 	if user in room.admins
 		special = 'admin'
@@ -48,11 +47,18 @@ userSpan = (user, global) ->
 		.addClass('username')
 		.text(text)
 
+	if room.users[user]?._suffix
+		scope.append ' '
+		scope.append $('<span style="color: rgb(150, 150, 150)">').text(room.users[user]._suffix)
+		
+	
+
 	if user.slice(0, 2) == "__"
 		if /ninja/.test user
 			scope.prepend "<i class='icon-magic' style='padding-right: 5px'></i>"	
 		else
 			scope.prepend "<i class='icon-bullhorn' style='padding-right: 5px'></i>"
+	
 	else if room.admins and user in room.admins
 		scope.prepend "<i class='icon-star-empty' style='padding-right: 5px'></i>"	
 	scope
