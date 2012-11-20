@@ -31,8 +31,11 @@ userSpan = (user, global) ->
 	
 	if room.users[user]?._suffix
 		text += ' ' + room.users[user]._suffix
+	special = ''
+	if user in room.admins
+		special = 'admin'
 
-	hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
+	hash = 'userhash-' + special + '-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
 	
 	if global
 		scope = $(".user-#{user}:not(.#{hash})").attr('class', '')

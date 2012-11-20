@@ -10,6 +10,7 @@ script
 	durat = 3141
 	end = Date.now() + durat
 	quasi_end = end
+	dont_fade = ('ontouchstart' in document.documentElement);
 	incremaco = function(){
 		splivide = 0.03
 		end = (quasi_end) * splivide + end * (1 - splivide)
@@ -17,7 +18,12 @@ script
 
 		opaco = Math.pow(frac, 2)
 		document.getElementById("gatekeeper").style.opacity =  opaco;
-		document.getElementById('chell').style.opacity = Math.pow(1 - frac, 2);
+		if(dont_fade){
+			document.getElementById('chell').style.opacity = 1;
+		}else{
+			document.getElementById('chell').style.opacity = Math.pow(1 - frac, 2);
+		}
+		
 		setTimeout(incremaco, 10)
 	}
 	incremaco()
@@ -31,4 +37,8 @@ script
 	}
 	document.body.onclick = function(){
 		document.getElementById('chell').focus()
+	}
+	if(dont_fade){
+		document.getElementById('chell').style.visibility = 'visible';
+		document.getElementById('chell').focus();
 	}

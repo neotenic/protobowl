@@ -17,7 +17,7 @@ html(lang="en")
 			h4= id
 
 			pre= text
-			form(action="/stalkermode/tribunal/#{room}/#{id}", method="post")
+			form(action="/stalkermode/exec/create_tribunal/#{room}/#{id}", method="post")
 				button(type="submit") Create Tribunal
 				| Preferred system for banning users, allow people in the room to vote to decide upon the innocence of this user
 
@@ -29,15 +29,27 @@ html(lang="en")
 
 			br
 
-			form(action="/stalkermode/ban/#{room}/#{id}", method="post")
+			form(action="/stalkermode/exec/ban/#{room}/#{id}", method="post")
 				button(type="submit") Ban
 				| Use with discretion
 
 			br
 
-			form(action="/stalkermode/reset/#{room}/#{id}", method="post")
+			form(action="/stalkermode/exec/reset_score/#{room}/#{id}", method="post")
 				button(type="submit") Reset Score
 				| Set the user's score to zero
+
+			hr
+
+			form(action="/stalkermode/exec/_apotheify/#{room}/#{id}", method="post")
+				button(type="submit") Apotheify
+				| Make into an administrator for the room
+
+			br 
+			
+			form(action="/stalkermode/exec/cincinnatus/#{room}/#{id}", method="post")
+				button(type="submit") Discharge
+				| Unhonorably discharge this user from the managerial staff
 
 			hr
 

@@ -1,4 +1,4 @@
-protobowl_build = 'Sun Nov 18 2012 17:40:19 GMT-0500 (EST)';
+protobowl_build = 'Mon Nov 19 2012 20:58:14 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1488,7 +1488,7 @@ createAlert = function(bundle, title, message) {
 };
 
 userSpan = function(user, global) {
-  var hash, prefix, scope, text, _ref, _ref1, _ref2, _ref3;
+  var hash, prefix, scope, special, text, _ref, _ref1, _ref2, _ref3;
   prefix = '';
   if (/superstalkers/.test(room.name)) {
     prefix = (((_ref = room.users[user]) != null ? (_ref1 = _ref.room) != null ? _ref1.name : void 0 : void 0) || 'unknown') + '/';
@@ -1502,7 +1502,11 @@ userSpan = function(user, global) {
   if ((_ref3 = room.users[user]) != null ? _ref3._suffix : void 0) {
     text += ' ' + room.users[user]._suffix;
   }
-  hash = 'userhash-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '');
+  special = '';
+  if (__indexOf.call(room.admins, user) >= 0) {
+    special = 'admin';
+  }
+  hash = 'userhash-' + special + '-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (global) {
     scope = $(".user-" + user + ":not(." + hash + ")").attr('class', '');
   } else {
@@ -1973,6 +1977,10 @@ $('.buzzbtn').click(function() {
 
 $('.score-reset').click(function() {
   return me.reset_score();
+});
+
+$('.lose-command').click(function() {
+  return me.cincinnatus();
 });
 
 $('.pausebtn').click(function() {
@@ -2520,7 +2528,7 @@ renderParameters = function() {
 };
 
 renderUpdate = function() {
-  var count, u, wpm;
+  var count, u, wpm, _ref;
   if (room.category === 'custom') {
     createCategoryList();
     $('.custom-category').slideDown();
@@ -2544,6 +2552,11 @@ renderUpdate = function() {
       $('.reset-score').slideDown();
     } else {
       $('.reset-score').slideUp();
+    }
+    if (room.admins && (_ref = me.id, __indexOf.call(room.admins, _ref) >= 0)) {
+      $('.relinquish-command').slideDown();
+    } else {
+      $('.relinquish-command').slideUp();
     }
     count = ((function() {
       var _results;
@@ -3912,12 +3925,33 @@ QuizPlayer = (function() {
     return this.verb("did something unimplemented (check public)");
   };
 
-  QuizPlayer.prototype.apotheify = function() {
+  QuizPlayer.prototype._apotheify = function() {
     var _ref;
     if (_ref = this.id, __indexOf.call(this.room.admins, _ref) < 0) {
+      this.verb('is now an administrator of this room');
       this.room.admins.push(this.id);
+      return this.room.sync(1);
     }
-    return this.room.sync(1);
+  };
+
+  QuizPlayer.prototype.cincinnatus = function() {
+    var id, _ref;
+    if (_ref = this.id, __indexOf.call(this.room.admins, _ref) >= 0) {
+      this.verb('is no longer an administrator of this room');
+      this.room.admins = (function() {
+        var _i, _len, _ref1, _results;
+        _ref1 = this.room.admins;
+        _results = [];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          id = _ref1[_i];
+          if (id !== this.id) {
+            _results.push(id);
+          }
+        }
+        return _results;
+      }).call(this);
+      return this.room.sync(1);
+    }
   };
 
   return QuizPlayer;

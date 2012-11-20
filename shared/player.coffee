@@ -384,9 +384,17 @@ class QuizPlayer
 	check_public: ->
 		@verb "did something unimplemented (check public)"
 
-	apotheify: ->
-		@room.admins.push(@id) unless @id in @room.admins
-		@room.sync(1) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+	_apotheify: ->
+		unless @id in @room.admins
+			@verb 'is now an administrator of this room'
+			@room.admins.push(@id) 
+			@room.sync(1) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+
+	cincinnatus: ->
+		if @id in @room.admins
+			@verb 'is no longer an administrator of this room'
+			@room.admins = (id for id in @room.admins when id isnt @id)
+			@room.sync(1) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 
 
 

@@ -31,6 +31,9 @@ style
 		min-width: 250px;
 		-webkit-flex: auto;
 	}
+	.messages {
+		max-width: 400px;
+	}
 	.datetime { font-style: italic; }
 	span.reveal, .status { font-style: italic; }
 	h1 { font-size: 120%; margin: 0 }
@@ -71,6 +74,7 @@ script
 				rooms[i].parentNode.removeChild(rooms[i]);
 				delete rooms[i];
 			}
+
 		}
 	}, 1000);
 	setInterval(function(){
@@ -78,7 +82,16 @@ script
 			var line = document.createElement('p');
 			line.className = 'datetime'
 			line.innerText = (new Date()).toString();
-			rooms[i].messages.appendChild(line)
+			//rooms[i].messages.appendChild(line);
+			var room = i;
+			$(rooms[room].messages).append($(line))
+			$(line).hide();
+			$(line).slideDown();
+			if(rooms[room].messages.childNodes.length > 20){
+				$(rooms[room].messages.childNodes).slice(0, -20).slideUp('normal', function(){
+					$(this).remove()
+				})
+			}
 		}
 	}, 1000 * 60);
 	var start_time = Date.now();
@@ -94,14 +107,14 @@ script
 			rooms[room].className = 'room thumbnail real';
 			rooms[room].appendChild(headerlink)
 			rooms[room].messages = document.createElement('div')
+			rooms[room].messages.className = 'messages'
 			rooms[room].appendChild(rooms[room].messages);
 			rooms[room].activity = start_time;
 		}
 		if(rooms[room].messages.childNodes.length > 20){
-			$(rooms[room].messages.childNodes).slice(20).slideUp('normal', function(){
+			$(rooms[room].messages.childNodes).slice(0, -20).slideUp('normal', function(){
 				$(this).remove()
 			})
-			// rooms[room].messages.removeChild(rooms[room].messages.childNodes[0])
 		}
 		$(rooms[room].messages).append($(line))
 		$(line).hide();

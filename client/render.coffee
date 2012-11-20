@@ -73,6 +73,11 @@ renderUpdate = ->
 		else
 			$('.reset-score').slideUp()
 
+		if room.admins and me.id in room.admins
+			$('.relinquish-command').slideDown()
+		else
+			$('.relinquish-command').slideUp()
+
 		count = (1 for u of room.users).length
 		if count > 1
 			$('.set-team').slideDown()

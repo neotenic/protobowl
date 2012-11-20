@@ -99,6 +99,8 @@ $('.buzzbtn').click ->
 
 $('.score-reset').click -> me.reset_score()
 
+$('.lose-command').click -> me.cincinnatus()
+
 $('.pausebtn').click ->
 	return if rate_limit_check()
 	if !!room.time_freeze

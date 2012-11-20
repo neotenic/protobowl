@@ -249,7 +249,7 @@ class SocketQuizPlayer extends QuizPlayer
 		@sockets.push sock.id unless sock.id in @sockets
 		blacklist = ['add_socket', 'emit', 'disconnect']
 		
-		for attr of this when typeof this[attr] is 'function' and attr not in blacklist
+		for attr of this when typeof this[attr] is 'function' and attr not in blacklist and attr[0] != '_'
 			# wow this is a pretty mesed up line
 			do (attr) => sock.on attr, (args...) => this[attr](args...)
 
@@ -539,6 +539,10 @@ app.get '/stalkermode/full', (req, res) ->
 
 app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
 
+app.get '/stalkermode/cook', (req, res) ->
+	remote.cook(req, res)
+	res.redirect '/stalkermode'
+
 app.get '/stalkermode/logout', (req, res) ->
 	res.clearCookie 'protoauth'
 	res.redirect '/stalkermode'
@@ -553,16 +557,8 @@ app.post '/stalkermode/emit/:room/:user', (req, res) ->
 	u.emit req.body.action, req.body.text
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
-app.post '/stalkermode/ban/:room/:user', (req, res) ->
-	rooms?[req.params.room]?.users?[req.params.user]?.ban()
-	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
-
-app.post '/stalkermode/tribunal/:room/:user', (req, res) ->
-	rooms?[req.params.room]?.users?[req.params.user]?.create_tribunal()
-	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
-
-app.post '/stalkermode/reset/:room/:user', (req, res) ->
-	rooms?[req.params.room]?.users?[req.params.user]?.reset_score()
+app.post '/stalkermode/exec/:command/:room/:user', (req, res) ->
+	rooms?[req.params.room]?.users?[req.params.user]?[req.params.command]?()
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 app.post '/stalkermode/disco/:room/:user', (req, res) ->
