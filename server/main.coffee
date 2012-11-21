@@ -468,7 +468,7 @@ clearInactive = (threshold) ->
 
 		for username, user of room.users
 			len++
-			if !user.online()
+			if !user.online() and user.id not in user.room.admins
 				evict_user = false
 				if overcrowded_room and username is oldest_user
 					evict_user = true
