@@ -1,6 +1,9 @@
 createCategoryList = ->
 	$('.custom-category').empty()
 	return unless room.distribution
+	
+	s = 0; s += val for cat, val of room.distribution
+
 	for cat in room.categories
 		item = $('<div>').addClass('category-item').appendTo('.custom-category').data('value', cat)
 		$('<span>').addClass('name').text(cat).appendTo item
@@ -12,22 +15,38 @@ createCategoryList = ->
 			.append($('<i>').addClass('icon-plus'))
 			.appendTo(picker)
 		$('<span>').addClass('percentage pull-right').css('color', 'gray').appendTo item
-		renderCategoryItem(item)
+		
 
-renderCategoryItem = (item) ->
+		value = $(item).data('value')
+		percentage = room.distribution[value] / s
+		$(item).find('.percentage').html("#{Math.round(100 * percentage)}% &nbsp;")
+		$(item).find('.increase').removeClass('disabled')
+		if percentage > 0 and s > 1
+			$(item).find('.decrease').removeClass('disabled')
+		else
+			$(item).find('.decrease').addClass('disabled')
+			$(item).find('.name').css('font-weight', 'normal')
+		if percentage > 0
+			$(item).find('.name').css('font-weight', 'bold')
+
+
+$('.dist-picker .increase').live 'click', (e) ->
 	return unless room.distribution
-	s = 0; s += val for cat, val of room.distribution
-	value = $(item).data('value')
-	percentage = room.distribution[value] / s
-	$(item).find('.percentage').html("#{Math.round(100 * percentage)}% &nbsp;")
-	$(item).find('.increase').removeClass('disabled')
-	if percentage > 0 and s > 1
-		$(item).find('.decrease').removeClass('disabled')
-	else
-		$(item).find('.decrease').addClass('disabled')
-		$(item).find('.name').css('font-weight', 'normal')
-	if percentage > 0
-		$(item).find('.name').css('font-weight', 'bold')
+	item = $(this).parents('.category-item')
+	obj = clone_shallow(room.distribution)
+	obj[$(item).data('value')]++
+	me.set_distribution obj
+
+$('.dist-picker .decrease').live 'click', (e) ->
+	return unless room.distribution
+	item = $(this).parents('.category-item')
+	s = 0
+	s += val for cat, val of room.distribution
+	obj = clone_shallow(room.distribution)
+	if obj[$(item).data('value')] > 0 and s > 1
+		obj[$(item).data('value')]--
+		me.set_distribution obj
+
 
 renderParameters = ->
 	# re-generate the lists, yaaay
@@ -559,6 +578,182 @@ changeQuestion = ->
 			old.find('.readout').slideUp("normal")
 			$(this).dequeue()
 
+toggle_bookmark = (info, state) ->
+	me.bookmark { id: info.qid, value: state}
+	bookmarks = []
+	try
+		bookmarks = JSON.parse(localStorage.bookmarks)
+	
+	if state is true
+		# create bookmark
+		bookmarks.push info
+	else
+		# remove bookmark
+		bookmarks = (b for b in bookmarks when b.qid isnt info.qid)
+
+	localStorage.bookmarks = JSON.stringify(bookmarks)
+
+
+create_report_form = ->
+	# console.log 'report question'
+	# $('#report-question').modal('show')
+	info = bundle.data 'report_info'
+
+	div = $("<div>").addClass("alert alert-block alert-info")
+		.insertBefore(bundle.find(".annotations")).hide()
+	div.append $("<button>")
+		.attr("data-dismiss", "alert")
+		.attr("type", "button")
+		.html("&times;")
+		.addClass("close")
+	div.append $("<h4>").text "Report Question"
+	form = $("<form>")
+	form.addClass('form-horizontal').appendTo div
+	rtype = $('<div>').addClass('control-group').appendTo(form)
+	rtype.append $("<label>").addClass('control-label').text('Description')
+	controls = $("<div>").addClass('controls').appendTo rtype
+	for option in ["Wrong category", "Wrong details", "Broken question"]
+		controls.append $("<label>")
+			.addClass("radio")
+			.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))
+			.append(option)
+
+	submit_btn = $('<button type=submit>').addClass('btn btn-primary').text('Submit')
+
+	form.find(":radio").change ->
+		if form.find(":radio:checked").val() is 'category'
+			ctype.slideDown()
+		else
+			ctype.slideUp()
+			submit_btn.disable(false)
+	
+	ctype = $('<div>').addClass('control-group').appendTo(form)
+	ctype.append $("<label>").addClass('control-label').text('Category')
+	cat_list = $('<select>')
+	ctype.append $("<div>").addClass('controls').append cat_list
+	
+	controls.find('input:radio')[0].checked = true
+
+	cat_list.append new Option(cat) for cat in room.categories
+	$(cat_list).change ->
+		submit_btn.disable(cat_list.val() is info.category)
+
+	cat_list.val(info.category)
+	$(cat_list).change()
+	
+	stype = $('<div>').addClass('control-group').appendTo(form)
+	cancel_btn = $('<button>').addClass('btn').text('Cancel').click (e) ->
+		div.slideUp 'normal', ->
+			$(this).remove()
+		e.stopPropagation()
+		e.preventDefault()
+
+	$("<div>").addClass('controls').appendTo(stype)
+		.append(submit_btn)
+		.append(' ')
+		.append(cancel_btn)
+
+	$(form).submit ->
+		describe = form.find(":radio:checked").val()
+		if describe is 'category'
+			info.fixed_category = cat_list.val()
+		info.describe = describe
+		me.report_question info
+		
+		createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
+		div.slideUp()
+		return false
+	div.slideDown()
+
+	# createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
+	# sock.emit 'report_question', bundle.data 'report_info'
+
+	e.stopPropagation()
+	e.preventDefault()
+
+
+create_bundle = (info) ->
+	bundle = $('<div>').addClass('bundle')
+	# important = $('<div>').addClass 'important'
+	# bundle.append(important)
+	breadcrumb = $('<ul>')
+	star = $('<a>', {
+		href: "#",
+		rel: "tooltip",
+		title: "Bookmark this question"
+	})
+		.addClass('icon-star-empty bookmark')
+		.click (e) ->
+			info = bundle.data 'report_info'
+
+			bundle.toggleClass 'bookmarked'
+			state = bundle.hasClass 'bookmarked'
+			star.toggleClass 'icon-star-empty', !state
+			star.toggleClass 'icon-star', state
+			toggle_bookmark info, state
+
+			e.stopPropagation()
+			e.preventDefault()
+
+	breadcrumb.append $('<li>').addClass('pull-right').append(star)
+
+	addInfo = (name, value) ->
+		breadcrumb.find('li:not(.pull-right)').last().append $('<span>').addClass('divider').text('/')
+		if value
+			name += ": " + value
+		el = $('<li>').text(name).appendTo(breadcrumb)
+		if value
+			el.addClass('hidden-phone')
+		else
+			el.addClass('visible-phone')
+
+	if (me.id + '').slice(0, 2) is "__"
+		addInfo 'Room', room.name
+	
+	addInfo 'Category', room.info.category
+	addInfo 'Difficulty', room.info.difficulty
+	if room.info.tournament and room.info.year
+		addInfo 'Tournament', room.info.year + ' ' + room.info.tournament
+	else if room.info.year
+		addInfo 'Year', room.info.year
+	else if room.info.tournament
+		addInfo 'Tournament', room.info.tournament
+	addInfo room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category
+	# addInfo 'Year', room.info.year
+	# addInfo 'Number', room.info.num
+	# addInfo 'Round', room.info.round
+	# addInfo 'Report', ''
+
+	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone').text('/')
+	bundle.data 'report_info', {
+		year: room.info.year, 
+		difficulty: room.info.difficulty, 
+		category: room.info.category, 
+		tournament: room.info.tournament,
+		round: room.info.round,
+		num: room.info.num,
+		qid: room.qid,
+		question: room.question,
+		answer: room.answer
+	}
+	breadcrumb.append $('<li>').addClass('clickable hidden-phone').text('Report').click (e) ->
+		create_report_form()
+
+	breadcrumb.append $('<li>').addClass('pull-right answer').text(room.answer)
+
+	readout = $('<div>').addClass('readout')
+	well = $('<div>').addClass('well').appendTo(readout)
+	# well.append $('<span>').addClass('visible')
+	# well.append document.createTextNode(' ') #space: the frontier in between visible and unread
+	well.append $('<span>').addClass('unread').text(room.question)
+	bundle
+		.append($('<ul>').addClass('breadcrumb').append(breadcrumb))
+		.append(readout)
+		.append($('<div>').addClass('sticky'))
+		.append($('<div>').addClass('annotations'))
+
+
+
 createBundle = ->
 	bundle = $('<div>')
 		.addClass('bundle')
@@ -584,6 +779,16 @@ createBundle = ->
 			star.toggleClass 'icon-star-empty', !bundle.hasClass 'bookmarked'
 			star.toggleClass 'icon-star', bundle.hasClass 'bookmarked'
 			me.bookmark { id: info.qid, value: bundle.hasClass 'bookmarked' }
+
+			bookmarks = []
+			try
+				bookmarks = JSON.parse(localStorage.bookmarks)
+			if bundle.hasClass 'bookmarked'
+				bookmarks.push info
+			else
+				bookmarks = (b for b in bookmarks when b.qid isnt info.qid)
+			localStorage.bookmarks = JSON.stringify(bookmarks)
+
 			e.stopPropagation()
 			e.preventDefault()
 

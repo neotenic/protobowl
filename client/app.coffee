@@ -35,6 +35,8 @@ offline_startup = ->
 		room.sync(3)
 		me.verb 'joined the room'
 
+		load_bookmarked_questions()
+
 	setTimeout ->
 		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
 	, 30 * 1000
@@ -55,6 +57,8 @@ online_startup = ->
 		# allow the user to reload/disconnect/reconnect
 		$('#reload, #disconnect, #reconnect').hide()
 		$('#disconnect').show()
+
+		load_bookmarked_questions()
 
 		me.disco { old_socket: localStorage.old_socket, version: 5 } # tell the server the client version to allow the server to disconnect
 
@@ -82,6 +86,13 @@ if io?
 	setTimeout initialize_offline, 1000
 else
 	offline_startup()
+
+load_bookmarked_questions = ->
+	bookmarks = []
+	try
+		bookmarks = JSON.parse(localStorage.bookmarks)
+	# for bookmark in bookmarks
+	# 	$('#history').prepend create_bundle()
 
 
 connected = -> sock? and sock.socket.connected

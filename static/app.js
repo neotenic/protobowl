@@ -1,4 +1,4 @@
-protobowl_build = 'Tue Nov 20 2012 14:54:00 GMT-0500 (EST)';
+protobowl_build = 'Wed Nov 21 2012 00:22:01 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2296,50 +2296,6 @@ $('.difficulties').change(function() {
   return me.set_difficulty($('.difficulties').val());
 });
 
-$('.dist-picker .increase').live('click', function(e) {
-  var item, obj, _i, _len, _ref, _results;
-  if (!room.distribution) {
-    return;
-  }
-  item = $(this).parents('.category-item');
-  obj = clone_shallow(room.distribution);
-  obj[$(item).data('value')]++;
-  me.set_distribution(obj);
-  _ref = $('.custom-category .category-item');
-  _results = [];
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    item = _ref[_i];
-    _results.push(renderCategoryItem(item));
-  }
-  return _results;
-});
-
-$('.dist-picker .decrease').live('click', function(e) {
-  var cat, item, obj, s, val, _i, _len, _ref, _ref1, _results;
-  if (!room.distribution) {
-    return;
-  }
-  item = $(this).parents('.category-item');
-  s = 0;
-  _ref = room.distribution;
-  for (cat in _ref) {
-    val = _ref[cat];
-    s += val;
-  }
-  obj = clone_shallow(room.distribution);
-  if (obj[$(item).data('value')] > 0 && s > 1) {
-    obj[$(item).data('value')]--;
-    me.set_distribution(obj);
-  }
-  _ref1 = $('.custom-category .category-item');
-  _results = [];
-  for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-    item = _ref1[_i];
-    _results.push(renderCategoryItem(item));
-  }
-  return _results;
-});
-
 $('.teams').change(function() {
   if ($('.teams').val() === 'create') {
     return me.set_team(prompt('Enter Team Name') || '');
@@ -2458,32 +2414,12 @@ if (Modernizr.touch) {
   $('.show-touch').hide();
 }
 
-var changeQuestion, checkAlone, createBundle, createCategoryList, createStatSheet, get_score, last_rendering, reader_children, reader_last_state, renderCategoryItem, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, updateInlineSymbols, updateTextPosition,
+var changeQuestion, checkAlone, createBundle, createCategoryList, createStatSheet, create_bundle, create_report_form, get_score, last_rendering, reader_children, reader_last_state, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, toggle_bookmark, updateInlineSymbols, updateTextPosition,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 createCategoryList = function() {
-  var cat, item, picker, _i, _len, _ref, _results;
+  var cat, item, percentage, picker, s, val, value, _i, _len, _ref, _ref1, _results;
   $('.custom-category').empty();
-  if (!room.distribution) {
-    return;
-  }
-  _ref = room.categories;
-  _results = [];
-  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    cat = _ref[_i];
-    item = $('<div>').addClass('category-item').appendTo('.custom-category').data('value', cat);
-    $('<span>').addClass('name').text(cat).appendTo(item);
-    picker = $('<div>').addClass('btn-group pull-right dist-picker').appendTo(item);
-    $('<button>').addClass('btn btn-small decrease disabled').append($('<i>').addClass('icon-minus')).appendTo(picker);
-    $('<button>').addClass('btn btn-small increase disabled').append($('<i>').addClass('icon-plus')).appendTo(picker);
-    $('<span>').addClass('percentage pull-right').css('color', 'gray').appendTo(item);
-    _results.push(renderCategoryItem(item));
-  }
-  return _results;
-};
-
-renderCategoryItem = function(item) {
-  var cat, percentage, s, val, value, _ref;
   if (!room.distribution) {
     return;
   }
@@ -2493,20 +2429,64 @@ renderCategoryItem = function(item) {
     val = _ref[cat];
     s += val;
   }
-  value = $(item).data('value');
-  percentage = room.distribution[value] / s;
-  $(item).find('.percentage').html("" + (Math.round(100 * percentage)) + "% &nbsp;");
-  $(item).find('.increase').removeClass('disabled');
-  if (percentage > 0 && s > 1) {
-    $(item).find('.decrease').removeClass('disabled');
-  } else {
-    $(item).find('.decrease').addClass('disabled');
-    $(item).find('.name').css('font-weight', 'normal');
+  _ref1 = room.categories;
+  _results = [];
+  for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+    cat = _ref1[_i];
+    item = $('<div>').addClass('category-item').appendTo('.custom-category').data('value', cat);
+    $('<span>').addClass('name').text(cat).appendTo(item);
+    picker = $('<div>').addClass('btn-group pull-right dist-picker').appendTo(item);
+    $('<button>').addClass('btn btn-small decrease disabled').append($('<i>').addClass('icon-minus')).appendTo(picker);
+    $('<button>').addClass('btn btn-small increase disabled').append($('<i>').addClass('icon-plus')).appendTo(picker);
+    $('<span>').addClass('percentage pull-right').css('color', 'gray').appendTo(item);
+    value = $(item).data('value');
+    percentage = room.distribution[value] / s;
+    $(item).find('.percentage').html("" + (Math.round(100 * percentage)) + "% &nbsp;");
+    $(item).find('.increase').removeClass('disabled');
+    if (percentage > 0 && s > 1) {
+      $(item).find('.decrease').removeClass('disabled');
+    } else {
+      $(item).find('.decrease').addClass('disabled');
+      $(item).find('.name').css('font-weight', 'normal');
+    }
+    if (percentage > 0) {
+      _results.push($(item).find('.name').css('font-weight', 'bold'));
+    } else {
+      _results.push(void 0);
+    }
   }
-  if (percentage > 0) {
-    return $(item).find('.name').css('font-weight', 'bold');
-  }
+  return _results;
 };
+
+$('.dist-picker .increase').live('click', function(e) {
+  var item, obj;
+  if (!room.distribution) {
+    return;
+  }
+  item = $(this).parents('.category-item');
+  obj = clone_shallow(room.distribution);
+  obj[$(item).data('value')]++;
+  return me.set_distribution(obj);
+});
+
+$('.dist-picker .decrease').live('click', function(e) {
+  var cat, item, obj, s, val, _ref;
+  if (!room.distribution) {
+    return;
+  }
+  item = $(this).parents('.category-item');
+  s = 0;
+  _ref = room.distribution;
+  for (cat in _ref) {
+    val = _ref[cat];
+    s += val;
+  }
+  obj = clone_shallow(room.distribution);
+  if (obj[$(item).data('value')] > 0 && s > 1) {
+    obj[$(item).data('value')]--;
+    return me.set_distribution(obj);
+  }
+});
 
 renderParameters = function() {
   var cat, dif, _i, _j, _len, _len1, _ref, _ref1;
@@ -3107,6 +3087,168 @@ changeQuestion = function() {
   }
 };
 
+toggle_bookmark = function(info, state) {
+  var b, bookmarks;
+  me.bookmark({
+    id: info.qid,
+    value: state
+  });
+  bookmarks = [];
+  try {
+    bookmarks = JSON.parse(localStorage.bookmarks);
+  } catch (_error) {}
+  if (state === true) {
+    bookmarks.push(info);
+  } else {
+    bookmarks = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = bookmarks.length; _i < _len; _i++) {
+        b = bookmarks[_i];
+        if (b.qid !== info.qid) {
+          _results.push(b);
+        }
+      }
+      return _results;
+    })();
+  }
+  return localStorage.bookmarks = JSON.stringify(bookmarks);
+};
+
+create_report_form = function() {
+  var cancel_btn, cat, cat_list, controls, ctype, div, form, info, option, rtype, stype, submit_btn, _i, _j, _len, _len1, _ref, _ref1;
+  info = bundle.data('report_info');
+  div = $("<div>").addClass("alert alert-block alert-info").insertBefore(bundle.find(".annotations")).hide();
+  div.append($("<button>").attr("data-dismiss", "alert").attr("type", "button").html("&times;").addClass("close"));
+  div.append($("<h4>").text("Report Question"));
+  form = $("<form>");
+  form.addClass('form-horizontal').appendTo(div);
+  rtype = $('<div>').addClass('control-group').appendTo(form);
+  rtype.append($("<label>").addClass('control-label').text('Description'));
+  controls = $("<div>").addClass('controls').appendTo(rtype);
+  _ref = ["Wrong category", "Wrong details", "Broken question"];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    option = _ref[_i];
+    controls.append($("<label>").addClass("radio").append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase())).append(option));
+  }
+  submit_btn = $('<button type=submit>').addClass('btn btn-primary').text('Submit');
+  form.find(":radio").change(function() {
+    if (form.find(":radio:checked").val() === 'category') {
+      return ctype.slideDown();
+    } else {
+      ctype.slideUp();
+      return submit_btn.disable(false);
+    }
+  });
+  ctype = $('<div>').addClass('control-group').appendTo(form);
+  ctype.append($("<label>").addClass('control-label').text('Category'));
+  cat_list = $('<select>');
+  ctype.append($("<div>").addClass('controls').append(cat_list));
+  controls.find('input:radio')[0].checked = true;
+  _ref1 = room.categories;
+  for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+    cat = _ref1[_j];
+    cat_list.append(new Option(cat));
+  }
+  $(cat_list).change(function() {
+    return submit_btn.disable(cat_list.val() === info.category);
+  });
+  cat_list.val(info.category);
+  $(cat_list).change();
+  stype = $('<div>').addClass('control-group').appendTo(form);
+  cancel_btn = $('<button>').addClass('btn').text('Cancel').click(function(e) {
+    div.slideUp('normal', function() {
+      return $(this).remove();
+    });
+    e.stopPropagation();
+    return e.preventDefault();
+  });
+  $("<div>").addClass('controls').appendTo(stype).append(submit_btn).append(' ').append(cancel_btn);
+  $(form).submit(function() {
+    var describe;
+    describe = form.find(":radio:checked").val();
+    if (describe === 'category') {
+      info.fixed_category = cat_list.val();
+    }
+    info.describe = describe;
+    me.report_question(info);
+    createAlert(bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.');
+    div.slideUp();
+    return false;
+  });
+  div.slideDown();
+  e.stopPropagation();
+  return e.preventDefault();
+};
+
+create_bundle = function(info) {
+  var addInfo, breadcrumb, bundle, readout, star, well;
+  bundle = $('<div>').addClass('bundle');
+  breadcrumb = $('<ul>');
+  star = $('<a>', {
+    href: "#",
+    rel: "tooltip",
+    title: "Bookmark this question"
+  }).addClass('icon-star-empty bookmark').click(function(e) {
+    var state;
+    info = bundle.data('report_info');
+    bundle.toggleClass('bookmarked');
+    state = bundle.hasClass('bookmarked');
+    star.toggleClass('icon-star-empty', !state);
+    star.toggleClass('icon-star', state);
+    toggle_bookmark(info, state);
+    e.stopPropagation();
+    return e.preventDefault();
+  });
+  breadcrumb.append($('<li>').addClass('pull-right').append(star));
+  addInfo = function(name, value) {
+    var el;
+    breadcrumb.find('li:not(.pull-right)').last().append($('<span>').addClass('divider').text('/'));
+    if (value) {
+      name += ": " + value;
+    }
+    el = $('<li>').text(name).appendTo(breadcrumb);
+    if (value) {
+      return el.addClass('hidden-phone');
+    } else {
+      return el.addClass('visible-phone');
+    }
+  };
+  if ((me.id + '').slice(0, 2) === "__") {
+    addInfo('Room', room.name);
+  }
+  addInfo('Category', room.info.category);
+  addInfo('Difficulty', room.info.difficulty);
+  if (room.info.tournament && room.info.year) {
+    addInfo('Tournament', room.info.year + ' ' + room.info.tournament);
+  } else if (room.info.year) {
+    addInfo('Year', room.info.year);
+  } else if (room.info.tournament) {
+    addInfo('Tournament', room.info.tournament);
+  }
+  addInfo(room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category);
+  breadcrumb.find('li').last().append($('<span>').addClass('divider hidden-phone').text('/'));
+  bundle.data('report_info', {
+    year: room.info.year,
+    difficulty: room.info.difficulty,
+    category: room.info.category,
+    tournament: room.info.tournament,
+    round: room.info.round,
+    num: room.info.num,
+    qid: room.qid,
+    question: room.question,
+    answer: room.answer
+  });
+  breadcrumb.append($('<li>').addClass('clickable hidden-phone').text('Report').click(function(e) {
+    return create_report_form();
+  }));
+  breadcrumb.append($('<li>').addClass('pull-right answer').text(room.answer));
+  readout = $('<div>').addClass('readout');
+  well = $('<div>').addClass('well').appendTo(readout);
+  well.append($('<span>').addClass('unread').text(room.question));
+  return bundle.append($('<ul>').addClass('breadcrumb').append(breadcrumb)).append(readout).append($('<div>').addClass('sticky')).append($('<div>').addClass('annotations'));
+};
+
 createBundle = function() {
   var addInfo, breadcrumb, bundle, readout, star, well, _ref;
   bundle = $('<div>').addClass('bundle').attr('name', 'question-' + sha1(room.generated_time + room.question)).addClass('room-' + ((_ref = room.name) != null ? _ref.replace(/[^a-z0-9]/g, '') : void 0));
@@ -3116,7 +3258,7 @@ createBundle = function() {
     rel: "tooltip",
     title: "Bookmark this question"
   }).addClass('icon-star-empty bookmark').click(function(e) {
-    var info;
+    var b, bookmarks, info;
     info = bundle.data('report_info');
     bundle.toggleClass('bookmarked');
     star.toggleClass('icon-star-empty', !bundle.hasClass('bookmarked'));
@@ -3125,6 +3267,26 @@ createBundle = function() {
       id: info.qid,
       value: bundle.hasClass('bookmarked')
     });
+    bookmarks = [];
+    try {
+      bookmarks = JSON.parse(localStorage.bookmarks);
+    } catch (_error) {}
+    if (bundle.hasClass('bookmarked')) {
+      bookmarks.push(info);
+    } else {
+      bookmarks = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = bookmarks.length; _i < _len; _i++) {
+          b = bookmarks[_i];
+          if (b.qid !== info.qid) {
+            _results.push(b);
+          }
+        }
+        return _results;
+      })();
+    }
+    localStorage.bookmarks = JSON.stringify(bookmarks);
     e.stopPropagation();
     return e.preventDefault();
   });
@@ -4486,7 +4648,7 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.QuizRoom = QuizRoom;
 }
 
-var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, compute_sync_offset, connected, handleCacheEvent, initialize_offline, last_freeze, latency_log, listen, me, offline_startup, online_startup, room, sock, sync_offsets, synchronize, testLatency,
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, compute_sync_offset, connected, handleCacheEvent, initialize_offline, last_freeze, latency_log, listen, load_bookmarked_questions, me, offline_startup, online_startup, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -4513,7 +4675,8 @@ offline_startup = function() {
       name: 'offline user'
     });
     room.sync(3);
-    return me.verb('joined the room');
+    me.verb('joined the room');
+    return load_bookmarked_questions();
   });
   return setTimeout(function() {
     return chatAnnotation({
@@ -4534,6 +4697,7 @@ online_startup = function() {
     $('.disconnect-notice').slideUp();
     $('#reload, #disconnect, #reconnect').hide();
     $('#disconnect').show();
+    load_bookmarked_questions();
     return me.disco({
       old_socket: localStorage.old_socket,
       version: 5
@@ -4564,6 +4728,14 @@ if (typeof io !== "undefined" && io !== null) {
 } else {
   offline_startup();
 }
+
+load_bookmarked_questions = function() {
+  var bookmarks;
+  bookmarks = [];
+  try {
+    return bookmarks = JSON.parse(localStorage.bookmarks);
+  } catch (_error) {}
+};
 
 connected = function() {
   return (sock != null) && sock.socket.connected;

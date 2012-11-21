@@ -362,30 +362,6 @@ $('.categories').change ->
 $('.difficulties').change -> me.set_difficulty $('.difficulties').val()
 
 
-$('.dist-picker .increase').live 'click', (e) ->
-	return unless room.distribution
-	item = $(this).parents('.category-item')
-	obj = clone_shallow(room.distribution)
-	obj[$(item).data('value')]++
-	# sock.emit 'distribution', room.distribution
-	me.set_distribution obj
-	for item in $('.custom-category .category-item')
-		renderCategoryItem(item)
-
-$('.dist-picker .decrease').live 'click', (e) ->
-	return unless room.distribution
-	item = $(this).parents('.category-item')
-	s = 0
-	s += val for cat, val of room.distribution
-	obj = clone_shallow(room.distribution)
-	if obj[$(item).data('value')] > 0 and s > 1
-		obj[$(item).data('value')]--
-		# sock.emit 'distribution', room.distribution
-		me.set_distribution obj
-	for item in $('.custom-category .category-item')
-		renderCategoryItem(item)
-
-
 
 $('.teams').change ->
 	if $('.teams').val() is 'create'
