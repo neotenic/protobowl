@@ -494,10 +494,10 @@ renderUsers = ->
 	# console.time('resize')
 	# $(window).resize() #fix all the expandos
 	# console.timeEnd('resize')
-	checkAlone() # ~ 1 msec
+	check_alone() # ~ 1 msec
 	
 
-checkAlone = ->
+check_alone = ->
 	return unless connected()
 	active_count = 0
 	for id, user of room.users
@@ -580,6 +580,8 @@ changeQuestion = ->
 			old.find('.readout').slideUp("normal")
 			$(this).dequeue()
 
+
+
 toggle_bookmark = (info, state) ->
 	me.bookmark { id: info.qid, value: state}
 	bookmarks = []
@@ -588,6 +590,7 @@ toggle_bookmark = (info, state) ->
 
 	# remove bookmark; even if being set on to reload data
 	bookmarks = (b for b in bookmarks when b.qid isnt info.qid)
+
 	
 	if state is true
 		# create bookmark
@@ -660,13 +663,14 @@ create_report_form = (info) ->
 		createAlert div.parent(), 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
 		div.slideUp 'normal', ->
 			$(this).remove()
-			
+
 		return false
 	return div
 
 
 create_bundle = (info) ->
 	bundle = $('<div>').addClass('bundle')
+		.addClass("qid-#{info.qid}")
 		.attr('name', 'question-' + sha1(room.generated_time + info.question))
 		.addClass('room-'+room.name?.replace(/[^a-z0-9]/g, ''))
 
@@ -682,8 +686,11 @@ create_bundle = (info) ->
 			e.preventDefault()
 			info.bookmarked = !info.bookmarked
 			bundle.toggleClass 'bookmarked', info.bookmarked
-			star.toggleClass 'icon-star-empty', !info.bookmarked
-			star.toggleClass 'icon-star', info.bookmarked
+			
+			$(".qid-#{info.qid} .bookmark")
+				.toggleClass('icon-star-empty', !info.bookmarked)
+				.toggleClass('icon-star', info.bookmarked)
+			
 			toggle_bookmark info, info.bookmarked
 
 	star.toggleClass 'icon-star-empty', !info.bookmarked

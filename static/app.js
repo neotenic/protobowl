@@ -1,4 +1,4 @@
-protobowl_build = 'Wed Nov 21 2012 00:52:03 GMT-0500 (EST)';
+protobowl_build = 'Wed Nov 21 2012 01:04:17 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2414,7 +2414,7 @@ if (Modernizr.touch) {
   $('.show-touch').hide();
 }
 
-var changeQuestion, checkAlone, createBundle, createStatSheet, create_bundle, create_report_form, get_score, last_rendering, reader_children, reader_last_state, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, render_categories, toggle_bookmark, updateInlineSymbols, updateTextPosition,
+var changeQuestion, check_alone, createBundle, createStatSheet, create_bundle, create_report_form, get_score, last_rendering, reader_children, reader_last_state, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, render_categories, toggle_bookmark, updateInlineSymbols, updateTextPosition,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 render_categories = function() {
@@ -2972,10 +2972,10 @@ renderUsers = function() {
       $('.singleuser').slideDown();
     }
   }
-  return checkAlone();
+  return check_alone();
 };
 
-checkAlone = function() {
+check_alone = function() {
   var active_count, id, user, _ref;
   if (!connected()) {
     return;
@@ -3181,7 +3181,7 @@ create_report_form = function(info) {
 
 create_bundle = function(info) {
   var breadcrumb, bundle, field, readout, star, well, _ref;
-  bundle = $('<div>').addClass('bundle').attr('name', 'question-' + sha1(room.generated_time + info.question)).addClass('room-' + ((_ref = room.name) != null ? _ref.replace(/[^a-z0-9]/g, '') : void 0));
+  bundle = $('<div>').addClass('bundle').addClass("qid-" + info.qid).attr('name', 'question-' + sha1(room.generated_time + info.question)).addClass('room-' + ((_ref = room.name) != null ? _ref.replace(/[^a-z0-9]/g, '') : void 0));
   breadcrumb = $('<ul>');
   star = $('<a>', {
     href: "#",
@@ -3192,8 +3192,7 @@ create_bundle = function(info) {
     e.preventDefault();
     info.bookmarked = !info.bookmarked;
     bundle.toggleClass('bookmarked', info.bookmarked);
-    star.toggleClass('icon-star-empty', !info.bookmarked);
-    star.toggleClass('icon-star', info.bookmarked);
+    $(".qid-" + info.qid + " .bookmark").toggleClass('icon-star-empty', !info.bookmarked).toggleClass('icon-star', info.bookmarked);
     return toggle_bookmark(info, info.bookmarked);
   });
   star.toggleClass('icon-star-empty', !info.bookmarked);
@@ -4501,7 +4500,7 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.QuizRoom = QuizRoom;
 }
 
-var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, cache_event, compute_sync_offset, connected, initialize_offline, last_freeze, latency_log, listen, load_bookmarked_questions, me, offline_startup, online_startup, room, sock, sync_offsets, synchronize, testLatency,
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, cache_event, compute_sync_offset, connected, initialize_offline, last_freeze, latency_log, listen, load_bookmarked_questions, me, offline_startup, online_startup, room, sock, sync_offsets, synchronize, test_latency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -4910,7 +4909,7 @@ compute_sync_offset = function() {
   return $('#sync_offset').text(room.sync_offset.toFixed(1) + '/' + StDev(below).toFixed(1) + '/' + StDev(sync_offsets).toFixed(1));
 };
 
-testLatency = function() {
+test_latency = function() {
   var initialTime;
   if (!connected()) {
     return;
@@ -4939,9 +4938,9 @@ testLatency = function() {
 };
 
 setTimeout(function() {
-  testLatency();
+  test_latency();
   return setInterval(function() {
-    return testLatency();
+    return test_latency();
   }, 30 * 1000);
 }, 2000);
 

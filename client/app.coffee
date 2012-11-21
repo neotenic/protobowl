@@ -293,7 +293,7 @@ compute_sync_offset = ->
 	# console.log 'sec iter', below
 	$('#sync_offset').text(room.sync_offset.toFixed(1) + '/' + StDev(below).toFixed(1) + '/' + StDev(sync_offsets).toFixed(1))
 
-testLatency = ->
+test_latency = ->
 	return unless connected()
 	initialTime = +new Date
 	sock.emit 'echo', {}, (firstServerTime) ->
@@ -319,9 +319,9 @@ testLatency = ->
 
 
 setTimeout ->
-	testLatency()
+	test_latency()
 	setInterval -> 
-		testLatency()
+		test_latency()
 	, 30 * 1000
 , 2000
 
