@@ -1,4 +1,4 @@
-protobowl_build = 'Wed Nov 21 2012 00:22:01 GMT-0500 (EST)';
+protobowl_build = 'Wed Nov 21 2012 00:52:03 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2414,10 +2414,10 @@ if (Modernizr.touch) {
   $('.show-touch').hide();
 }
 
-var changeQuestion, checkAlone, createBundle, createCategoryList, createStatSheet, create_bundle, create_report_form, get_score, last_rendering, reader_children, reader_last_state, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, toggle_bookmark, updateInlineSymbols, updateTextPosition,
+var changeQuestion, checkAlone, createBundle, createStatSheet, create_bundle, create_report_form, get_score, last_rendering, reader_children, reader_last_state, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, render_categories, toggle_bookmark, updateInlineSymbols, updateTextPosition,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-createCategoryList = function() {
+render_categories = function() {
   var cat, item, percentage, picker, s, val, value, _i, _len, _ref, _ref1, _results;
   $('.custom-category').empty();
   if (!room.distribution) {
@@ -2505,13 +2505,13 @@ renderParameters = function() {
     cat = _ref1[_j];
     $('.categories')[0].options.add(new Option(cat, cat));
   }
-  return createCategoryList();
+  return render_categories();
 };
 
 renderUpdate = function() {
   var count, u, wpm, _ref;
   if (room.category === 'custom') {
-    createCategoryList();
+    render_categories();
     $('.custom-category').slideDown();
   } else {
     $('.custom-category').slideUp();
@@ -3063,7 +3063,7 @@ changeQuestion = function() {
     return $(this).remove();
   });
   old = $('#history .bundle').first();
-  old.removeClass('active');
+  $('.bundle').removeClass('active');
   old.find('.breadcrumb').click(function() {
     return 1;
   });
@@ -3097,28 +3097,26 @@ toggle_bookmark = function(info, state) {
   try {
     bookmarks = JSON.parse(localStorage.bookmarks);
   } catch (_error) {}
+  bookmarks = (function() {
+    var _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = bookmarks.length; _i < _len; _i++) {
+      b = bookmarks[_i];
+      if (b.qid !== info.qid) {
+        _results.push(b);
+      }
+    }
+    return _results;
+  })();
   if (state === true) {
     bookmarks.push(info);
-  } else {
-    bookmarks = (function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = bookmarks.length; _i < _len; _i++) {
-        b = bookmarks[_i];
-        if (b.qid !== info.qid) {
-          _results.push(b);
-        }
-      }
-      return _results;
-    })();
   }
   return localStorage.bookmarks = JSON.stringify(bookmarks);
 };
 
-create_report_form = function() {
-  var cancel_btn, cat, cat_list, controls, ctype, div, form, info, option, rtype, stype, submit_btn, _i, _j, _len, _len1, _ref, _ref1;
-  info = bundle.data('report_info');
-  div = $("<div>").addClass("alert alert-block alert-info").insertBefore(bundle.find(".annotations")).hide();
+create_report_form = function(info) {
+  var cancel_btn, cat, cat_list, controls, ctype, div, form, option, rtype, stype, submit_btn, _i, _j, _len, _len1, _ref, _ref1;
+  div = $("<div>").addClass("alert alert-block alert-info report-form");
   div.append($("<button>").attr("data-dismiss", "alert").attr("type", "button").html("&times;").addClass("close"));
   div.append($("<h4>").text("Report Question"));
   form = $("<form>");
@@ -3172,36 +3170,36 @@ create_report_form = function() {
     }
     info.describe = describe;
     me.report_question(info);
-    createAlert(bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.');
-    div.slideUp();
+    createAlert(div.parent(), 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.');
+    div.slideUp('normal', function() {
+      return $(this).remove();
+    });
     return false;
   });
-  div.slideDown();
-  e.stopPropagation();
-  return e.preventDefault();
+  return div;
 };
 
 create_bundle = function(info) {
-  var addInfo, breadcrumb, bundle, readout, star, well;
-  bundle = $('<div>').addClass('bundle');
+  var breadcrumb, bundle, field, readout, star, well, _ref;
+  bundle = $('<div>').addClass('bundle').attr('name', 'question-' + sha1(room.generated_time + info.question)).addClass('room-' + ((_ref = room.name) != null ? _ref.replace(/[^a-z0-9]/g, '') : void 0));
   breadcrumb = $('<ul>');
   star = $('<a>', {
     href: "#",
     rel: "tooltip",
     title: "Bookmark this question"
-  }).addClass('icon-star-empty bookmark').click(function(e) {
-    var state;
-    info = bundle.data('report_info');
-    bundle.toggleClass('bookmarked');
-    state = bundle.hasClass('bookmarked');
-    star.toggleClass('icon-star-empty', !state);
-    star.toggleClass('icon-star', state);
-    toggle_bookmark(info, state);
+  }).addClass('bookmark').click(function(e) {
     e.stopPropagation();
-    return e.preventDefault();
+    e.preventDefault();
+    info.bookmarked = !info.bookmarked;
+    bundle.toggleClass('bookmarked', info.bookmarked);
+    star.toggleClass('icon-star-empty', !info.bookmarked);
+    star.toggleClass('icon-star', info.bookmarked);
+    return toggle_bookmark(info, info.bookmarked);
   });
+  star.toggleClass('icon-star-empty', !info.bookmarked);
+  star.toggleClass('icon-star', info.bookmarked);
   breadcrumb.append($('<li>').addClass('pull-right').append(star));
-  addInfo = function(name, value) {
+  field = function(name, value) {
     var el;
     breadcrumb.find('li:not(.pull-right)').last().append($('<span>').addClass('divider').text('/'));
     if (value) {
@@ -3214,111 +3212,36 @@ create_bundle = function(info) {
       return el.addClass('visible-phone');
     }
   };
-  if ((me.id + '').slice(0, 2) === "__") {
-    addInfo('Room', room.name);
+  if (/stalker/.test(room.name)) {
+    field('Room', info.name);
   }
-  addInfo('Category', room.info.category);
-  addInfo('Difficulty', room.info.difficulty);
-  if (room.info.tournament && room.info.year) {
-    addInfo('Tournament', room.info.year + ' ' + room.info.tournament);
-  } else if (room.info.year) {
-    addInfo('Year', room.info.year);
-  } else if (room.info.tournament) {
-    addInfo('Tournament', room.info.tournament);
+  field('Category', info.category);
+  field('Difficulty', info.difficulty);
+  if (info.tournament && info.year) {
+    field('Tournament', info.year + ' ' + info.tournament);
+  } else if (info.year) {
+    field('Year', info.year);
+  } else if (info.tournament) {
+    field('Tournament', info.tournament);
   }
-  addInfo(room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category);
+  field(info.year + ' ' + info.difficulty + ' ' + info.category);
   breadcrumb.find('li').last().append($('<span>').addClass('divider hidden-phone').text('/'));
-  bundle.data('report_info', {
-    year: room.info.year,
-    difficulty: room.info.difficulty,
-    category: room.info.category,
-    tournament: room.info.tournament,
-    round: room.info.round,
-    num: room.info.num,
-    qid: room.qid,
-    question: room.question,
-    answer: room.answer
-  });
   breadcrumb.append($('<li>').addClass('clickable hidden-phone').text('Report').click(function(e) {
-    return create_report_form();
+    if (!(bundle.find('.report-form').length > 0)) {
+      create_report_form(info).insertBefore(bundle.find(".annotations")).hide().slideDown();
+    }
+    e.stopPropagation();
+    return e.preventDefault();
   }));
-  breadcrumb.append($('<li>').addClass('pull-right answer').text(room.answer));
+  breadcrumb.append($('<li>').addClass('pull-right answer').text(info.answer));
   readout = $('<div>').addClass('readout');
   well = $('<div>').addClass('well').appendTo(readout);
-  well.append($('<span>').addClass('unread').text(room.question));
+  well.append($('<span>').addClass('unread').text(info.question));
   return bundle.append($('<ul>').addClass('breadcrumb').append(breadcrumb)).append(readout).append($('<div>').addClass('sticky')).append($('<div>').addClass('annotations'));
 };
 
 createBundle = function() {
-  var addInfo, breadcrumb, bundle, readout, star, well, _ref;
-  bundle = $('<div>').addClass('bundle').attr('name', 'question-' + sha1(room.generated_time + room.question)).addClass('room-' + ((_ref = room.name) != null ? _ref.replace(/[^a-z0-9]/g, '') : void 0));
-  breadcrumb = $('<ul>');
-  star = $('<a>', {
-    href: "#",
-    rel: "tooltip",
-    title: "Bookmark this question"
-  }).addClass('icon-star-empty bookmark').click(function(e) {
-    var b, bookmarks, info;
-    info = bundle.data('report_info');
-    bundle.toggleClass('bookmarked');
-    star.toggleClass('icon-star-empty', !bundle.hasClass('bookmarked'));
-    star.toggleClass('icon-star', bundle.hasClass('bookmarked'));
-    me.bookmark({
-      id: info.qid,
-      value: bundle.hasClass('bookmarked')
-    });
-    bookmarks = [];
-    try {
-      bookmarks = JSON.parse(localStorage.bookmarks);
-    } catch (_error) {}
-    if (bundle.hasClass('bookmarked')) {
-      bookmarks.push(info);
-    } else {
-      bookmarks = (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = bookmarks.length; _i < _len; _i++) {
-          b = bookmarks[_i];
-          if (b.qid !== info.qid) {
-            _results.push(b);
-          }
-        }
-        return _results;
-      })();
-    }
-    localStorage.bookmarks = JSON.stringify(bookmarks);
-    e.stopPropagation();
-    return e.preventDefault();
-  });
-  breadcrumb.append($('<li>').addClass('pull-right').append(star));
-  addInfo = function(name, value) {
-    var el;
-    breadcrumb.find('li:not(.pull-right)').last().append($('<span>').addClass('divider').text('/'));
-    if (value) {
-      name += ": " + value;
-    }
-    el = $('<li>').text(name).appendTo(breadcrumb);
-    if (value) {
-      return el.addClass('hidden-phone');
-    } else {
-      return el.addClass('visible-phone');
-    }
-  };
-  if ((me.id + '').slice(0, 2) === "__") {
-    addInfo('Room', room.name);
-  }
-  addInfo('Category', room.info.category);
-  addInfo('Difficulty', room.info.difficulty);
-  if (room.info.tournament && room.info.year) {
-    addInfo('Tournament', room.info.year + ' ' + room.info.tournament);
-  } else if (room.info.year) {
-    addInfo('Year', room.info.year);
-  } else if (room.info.tournament) {
-    addInfo('Tournament', room.info.tournament);
-  }
-  addInfo(room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category);
-  breadcrumb.find('li').last().append($('<span>').addClass('divider hidden-phone').text('/'));
-  bundle.data('report_info', {
+  return create_bundle({
     year: room.info.year,
     difficulty: room.info.difficulty,
     category: room.info.category,
@@ -3329,76 +3252,6 @@ createBundle = function() {
     question: room.question,
     answer: room.answer
   });
-  breadcrumb.append($('<li>').addClass('clickable hidden-phone').text('Report').click(function(e) {
-    var cancel_btn, cat, cat_list, controls, ctype, div, form, info, option, rtype, stype, submit_btn, _i, _j, _len, _len1, _ref1, _ref2;
-    info = bundle.data('report_info');
-    div = $("<div>").addClass("alert alert-block alert-info").insertBefore(bundle.find(".annotations")).hide();
-    div.append($("<button>").attr("data-dismiss", "alert").attr("type", "button").html("&times;").addClass("close"));
-    div.append($("<h4>").text("Report Question"));
-    form = $("<form>");
-    form.addClass('form-horizontal').appendTo(div);
-    rtype = $('<div>').addClass('control-group').appendTo(form);
-    rtype.append($("<label>").addClass('control-label').text('Description'));
-    controls = $("<div>").addClass('controls').appendTo(rtype);
-    _ref1 = ["Wrong category", "Wrong details", "Broken question"];
-    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-      option = _ref1[_i];
-      controls.append($("<label>").addClass("radio").append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase())).append(option));
-    }
-    submit_btn = $('<button type=submit>').addClass('btn btn-primary').text('Submit');
-    form.find(":radio").change(function() {
-      if (form.find(":radio:checked").val() === 'category') {
-        return ctype.slideDown();
-      } else {
-        ctype.slideUp();
-        return submit_btn.disable(false);
-      }
-    });
-    ctype = $('<div>').addClass('control-group').appendTo(form);
-    ctype.append($("<label>").addClass('control-label').text('Category'));
-    cat_list = $('<select>');
-    ctype.append($("<div>").addClass('controls').append(cat_list));
-    controls.find('input:radio')[0].checked = true;
-    _ref2 = room.categories;
-    for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-      cat = _ref2[_j];
-      cat_list.append(new Option(cat));
-    }
-    $(cat_list).change(function() {
-      return submit_btn.disable(cat_list.val() === info.category);
-    });
-    cat_list.val(info.category);
-    $(cat_list).change();
-    stype = $('<div>').addClass('control-group').appendTo(form);
-    cancel_btn = $('<button>').addClass('btn').text('Cancel').click(function(e) {
-      div.slideUp('normal', function() {
-        return $(this).remove();
-      });
-      e.stopPropagation();
-      return e.preventDefault();
-    });
-    $("<div>").addClass('controls').appendTo(stype).append(submit_btn).append(' ').append(cancel_btn);
-    $(form).submit(function() {
-      var describe;
-      describe = form.find(":radio:checked").val();
-      if (describe === 'category') {
-        info.fixed_category = cat_list.val();
-      }
-      info.describe = describe;
-      me.report_question(info);
-      createAlert(bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.');
-      div.slideUp();
-      return false;
-    });
-    div.slideDown();
-    e.stopPropagation();
-    return e.preventDefault();
-  }));
-  breadcrumb.append($('<li>').addClass('pull-right answer').text(room.answer));
-  readout = $('<div>').addClass('readout');
-  well = $('<div>').addClass('well').appendTo(readout);
-  well.append($('<span>').addClass('unread').text(room.question));
-  return bundle.append($('<ul>').addClass('breadcrumb').append(breadcrumb)).append(readout).append($('<div>').addClass('sticky')).append($('<div>').addClass('annotations'));
 };
 
 reader_children = null;
@@ -4648,7 +4501,7 @@ if (typeof exports !== "undefined" && exports !== null) {
   exports.QuizRoom = QuizRoom;
 }
 
-var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, compute_sync_offset, connected, handleCacheEvent, initialize_offline, last_freeze, latency_log, listen, load_bookmarked_questions, me, offline_startup, online_startup, room, sock, sync_offsets, synchronize, testLatency,
+var Avg, QuizPlayerClient, QuizPlayerSlave, QuizRoomSlave, StDev, Sum, cache_event, compute_sync_offset, connected, initialize_offline, last_freeze, latency_log, listen, load_bookmarked_questions, me, offline_startup, online_startup, room, sock, sync_offsets, synchronize, testLatency,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -4730,11 +4583,19 @@ if (typeof io !== "undefined" && io !== null) {
 }
 
 load_bookmarked_questions = function() {
-  var bookmarks;
+  var bookmarks, bundle, question, _i, _len, _results;
   bookmarks = [];
   try {
-    return bookmarks = JSON.parse(localStorage.bookmarks);
+    bookmarks = JSON.parse(localStorage.bookmarks);
   } catch (_error) {}
+  _results = [];
+  for (_i = 0, _len = bookmarks.length; _i < _len; _i++) {
+    question = bookmarks[_i];
+    bundle = create_bundle(question);
+    bundle.find('.readout').hide();
+    _results.push($('#history').prepend(bundle));
+  }
+  return _results;
 };
 
 connected = function() {
@@ -5084,7 +4945,7 @@ setTimeout(function() {
   }, 30 * 1000);
 }, 2000);
 
-handleCacheEvent = function() {
+cache_event = function() {
   var status;
   status = applicationCache.status;
   switch (applicationCache.status) {
@@ -5117,7 +4978,7 @@ handleCacheEvent = function() {
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       name = _ref[_i];
-      _results.push(applicationCache.addEventListener(name, handleCacheEvent));
+      _results.push(applicationCache.addEventListener(name, cache_event));
     }
     return _results;
   }

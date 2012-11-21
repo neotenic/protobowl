@@ -1,4 +1,4 @@
-createCategoryList = ->
+render_categories = ->
 	$('.custom-category').empty()
 	return unless room.distribution
 	
@@ -62,11 +62,11 @@ renderParameters = ->
 	for cat in room.categories
 		$('.categories')[0].options.add new Option(cat, cat)
 		
-	createCategoryList()
+	render_categories()
 
 renderUpdate = ->
 	if room.category is 'custom'
-		createCategoryList()
+		render_categories()
 		$('.custom-category').slideDown()
 	else
 		$('.custom-category').slideUp()
@@ -553,7 +553,9 @@ changeQuestion = ->
 			$(this).remove()
 	old = $('#history .bundle').first()
 	# old.find('.answer').css('visibility', 'visible')
-	old.removeClass 'active'
+	
+	$('.bundle').removeClass 'active'
+
 	old.find('.breadcrumb').click -> 1 # register a empty event handler so touch devices recognize
 	#merge the text nodes, perhaps for performance reasons
 	bundle = createBundle().width($('#history').width()) #.css('display', 'none')
@@ -583,24 +585,19 @@ toggle_bookmark = (info, state) ->
 	bookmarks = []
 	try
 		bookmarks = JSON.parse(localStorage.bookmarks)
+
+	# remove bookmark; even if being set on to reload data
+	bookmarks = (b for b in bookmarks when b.qid isnt info.qid)
 	
 	if state is true
 		# create bookmark
 		bookmarks.push info
-	else
-		# remove bookmark
-		bookmarks = (b for b in bookmarks when b.qid isnt info.qid)
 
 	localStorage.bookmarks = JSON.stringify(bookmarks)
 
 
-create_report_form = ->
-	# console.log 'report question'
-	# $('#report-question').modal('show')
-	info = bundle.data 'report_info'
-
-	div = $("<div>").addClass("alert alert-block alert-info")
-		.insertBefore(bundle.find(".annotations")).hide()
+create_report_form = (info) ->
+	div = $("<div>").addClass("alert alert-block alert-info report-form")
 	div.append $("<button>")
 		.attr("data-dismiss", "alert")
 		.attr("type", "button")
@@ -660,141 +657,41 @@ create_report_form = ->
 		info.describe = describe
 		me.report_question info
 		
-		createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
-		div.slideUp()
+		createAlert div.parent(), 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
+		div.slideUp 'normal', ->
+			$(this).remove()
+			
 		return false
-	div.slideDown()
-
-	# createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
-	# sock.emit 'report_question', bundle.data 'report_info'
-
-	e.stopPropagation()
-	e.preventDefault()
+	return div
 
 
 create_bundle = (info) ->
 	bundle = $('<div>').addClass('bundle')
-	# important = $('<div>').addClass 'important'
-	# bundle.append(important)
-	breadcrumb = $('<ul>')
-	star = $('<a>', {
-		href: "#",
-		rel: "tooltip",
-		title: "Bookmark this question"
-	})
-		.addClass('icon-star-empty bookmark')
-		.click (e) ->
-			info = bundle.data 'report_info'
-
-			bundle.toggleClass 'bookmarked'
-			state = bundle.hasClass 'bookmarked'
-			star.toggleClass 'icon-star-empty', !state
-			star.toggleClass 'icon-star', state
-			toggle_bookmark info, state
-
-			e.stopPropagation()
-			e.preventDefault()
-
-	breadcrumb.append $('<li>').addClass('pull-right').append(star)
-
-	addInfo = (name, value) ->
-		breadcrumb.find('li:not(.pull-right)').last().append $('<span>').addClass('divider').text('/')
-		if value
-			name += ": " + value
-		el = $('<li>').text(name).appendTo(breadcrumb)
-		if value
-			el.addClass('hidden-phone')
-		else
-			el.addClass('visible-phone')
-
-	if (me.id + '').slice(0, 2) is "__"
-		addInfo 'Room', room.name
-	
-	addInfo 'Category', room.info.category
-	addInfo 'Difficulty', room.info.difficulty
-	if room.info.tournament and room.info.year
-		addInfo 'Tournament', room.info.year + ' ' + room.info.tournament
-	else if room.info.year
-		addInfo 'Year', room.info.year
-	else if room.info.tournament
-		addInfo 'Tournament', room.info.tournament
-	addInfo room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category
-	# addInfo 'Year', room.info.year
-	# addInfo 'Number', room.info.num
-	# addInfo 'Round', room.info.round
-	# addInfo 'Report', ''
-
-	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone').text('/')
-	bundle.data 'report_info', {
-		year: room.info.year, 
-		difficulty: room.info.difficulty, 
-		category: room.info.category, 
-		tournament: room.info.tournament,
-		round: room.info.round,
-		num: room.info.num,
-		qid: room.qid,
-		question: room.question,
-		answer: room.answer
-	}
-	breadcrumb.append $('<li>').addClass('clickable hidden-phone').text('Report').click (e) ->
-		create_report_form()
-
-	breadcrumb.append $('<li>').addClass('pull-right answer').text(room.answer)
-
-	readout = $('<div>').addClass('readout')
-	well = $('<div>').addClass('well').appendTo(readout)
-	# well.append $('<span>').addClass('visible')
-	# well.append document.createTextNode(' ') #space: the frontier in between visible and unread
-	well.append $('<span>').addClass('unread').text(room.question)
-	bundle
-		.append($('<ul>').addClass('breadcrumb').append(breadcrumb))
-		.append(readout)
-		.append($('<div>').addClass('sticky'))
-		.append($('<div>').addClass('annotations'))
-
-
-
-createBundle = ->
-	bundle = $('<div>')
-		.addClass('bundle')
-		.attr('name', 'question-' + sha1(room.generated_time + room.question))
+		.attr('name', 'question-' + sha1(room.generated_time + info.question))
 		.addClass('room-'+room.name?.replace(/[^a-z0-9]/g, ''))
-	# important = $('<div>').addClass 'important'
-	# bundle.append(important)
-	breadcrumb = $('<ul>')
 
+	breadcrumb = $('<ul>')
 	star = $('<a>', {
 		href: "#",
 		rel: "tooltip",
 		title: "Bookmark this question"
 	})
-		.addClass('icon-star-empty bookmark')
+		.addClass('bookmark')
 		.click (e) ->
-			# whoever is reading this:
-			# if you decide to add a server-side notion of saved questions
-			# here is wher eyou shove it
-			info = bundle.data 'report_info'
-
-			bundle.toggleClass 'bookmarked'
-			star.toggleClass 'icon-star-empty', !bundle.hasClass 'bookmarked'
-			star.toggleClass 'icon-star', bundle.hasClass 'bookmarked'
-			me.bookmark { id: info.qid, value: bundle.hasClass 'bookmarked' }
-
-			bookmarks = []
-			try
-				bookmarks = JSON.parse(localStorage.bookmarks)
-			if bundle.hasClass 'bookmarked'
-				bookmarks.push info
-			else
-				bookmarks = (b for b in bookmarks when b.qid isnt info.qid)
-			localStorage.bookmarks = JSON.stringify(bookmarks)
-
 			e.stopPropagation()
 			e.preventDefault()
+			info.bookmarked = !info.bookmarked
+			bundle.toggleClass 'bookmarked', info.bookmarked
+			star.toggleClass 'icon-star-empty', !info.bookmarked
+			star.toggleClass 'icon-star', info.bookmarked
+			toggle_bookmark info, info.bookmarked
+
+	star.toggleClass 'icon-star-empty', !info.bookmarked
+	star.toggleClass 'icon-star', info.bookmarked
 
 	breadcrumb.append $('<li>').addClass('pull-right').append(star)
 
-	addInfo = (name, value) ->
+	field = (name, value) ->
 		breadcrumb.find('li:not(.pull-right)').last().append $('<span>').addClass('divider').text('/')
 		if value
 			name += ": " + value
@@ -804,125 +701,48 @@ createBundle = ->
 		else
 			el.addClass('visible-phone')
 
-	if (me.id + '').slice(0, 2) is "__"
-		addInfo 'Room', room.name
-	
-	addInfo 'Category', room.info.category
-	addInfo 'Difficulty', room.info.difficulty
-	if room.info.tournament and room.info.year
-		addInfo 'Tournament', room.info.year + ' ' + room.info.tournament
-	else if room.info.year
-		addInfo 'Year', room.info.year
-	else if room.info.tournament
-		addInfo 'Tournament', room.info.tournament
-	addInfo room.info.year + ' ' + room.info.difficulty + ' ' + room.info.category
-	# addInfo 'Year', room.info.year
-	# addInfo 'Number', room.info.num
-	# addInfo 'Round', room.info.round
-	# addInfo 'Report', ''
+	field 'Room', info.name if /stalker/.test(room.name)
+	field 'Category', info.category
+	field 'Difficulty', info.difficulty
+	if info.tournament and info.year
+		field 'Tournament', info.year + ' ' + info.tournament
+	else if info.year
+		field 'Year', info.year
+	else if info.tournament
+		field 'Tournament', info.tournament
+	field info.year + ' ' + info.difficulty + ' ' + info.category
 
 	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone').text('/')
-	bundle.data 'report_info', {
-		year: room.info.year, 
-		difficulty: room.info.difficulty, 
-		category: room.info.category, 
-		tournament: room.info.tournament,
-		round: room.info.round,
-		num: room.info.num,
-		qid: room.qid,
-		question: room.question,
-		answer: room.answer
-	}
+
 	breadcrumb.append $('<li>').addClass('clickable hidden-phone').text('Report').click (e) ->
-		# console.log 'report question'
-		# $('#report-question').modal('show')
-		info = bundle.data 'report_info'
-
-		div = $("<div>").addClass("alert alert-block alert-info")
-			.insertBefore(bundle.find(".annotations")).hide()
-		div.append $("<button>")
-			.attr("data-dismiss", "alert")
-			.attr("type", "button")
-			.html("&times;")
-			.addClass("close")
-		div.append $("<h4>").text "Report Question"
-		form = $("<form>")
-		form.addClass('form-horizontal').appendTo div
-		rtype = $('<div>').addClass('control-group').appendTo(form)
-		rtype.append $("<label>").addClass('control-label').text('Description')
-		controls = $("<div>").addClass('controls').appendTo rtype
-		for option in ["Wrong category", "Wrong details", "Broken question"]
-			controls.append $("<label>")
-				.addClass("radio")
-				.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))
-				.append(option)
-
-		submit_btn = $('<button type=submit>').addClass('btn btn-primary').text('Submit')
-
-		form.find(":radio").change ->
-			if form.find(":radio:checked").val() is 'category'
-				ctype.slideDown()
-			else
-				ctype.slideUp()
-				submit_btn.disable(false)
-		
-		ctype = $('<div>').addClass('control-group').appendTo(form)
-		ctype.append $("<label>").addClass('control-label').text('Category')
-		cat_list = $('<select>')
-		ctype.append $("<div>").addClass('controls').append cat_list
-		
-		controls.find('input:radio')[0].checked = true
-
-		cat_list.append new Option(cat) for cat in room.categories
-		$(cat_list).change ->
-			submit_btn.disable(cat_list.val() is info.category)
-
-		cat_list.val(info.category)
-		$(cat_list).change()
-		
-		stype = $('<div>').addClass('control-group').appendTo(form)
-		cancel_btn = $('<button>').addClass('btn').text('Cancel').click (e) ->
-			div.slideUp 'normal', ->
-				$(this).remove()
-			e.stopPropagation()
-			e.preventDefault()
-
-		$("<div>").addClass('controls').appendTo(stype)
-			.append(submit_btn)
-			.append(' ')
-			.append(cancel_btn)
-
-		$(form).submit ->
-			describe = form.find(":radio:checked").val()
-			if describe is 'category'
-				info.fixed_category = cat_list.val()
-			info.describe = describe
-			me.report_question info
-			
-			createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
-			div.slideUp()
-			return false
-		div.slideDown()
-
-		# createAlert bundle, 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
-		# sock.emit 'report_question', bundle.data 'report_info'
-
+		unless bundle.find('.report-form').length > 0
+			create_report_form(info).insertBefore(bundle.find(".annotations")).hide().slideDown()
 		e.stopPropagation()
 		e.preventDefault()
 
-
-	breadcrumb.append $('<li>').addClass('pull-right answer').text(room.answer)
-
+	breadcrumb.append $('<li>').addClass('pull-right answer').text(info.answer)
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
-	# well.append $('<span>').addClass('visible')
-	# well.append document.createTextNode(' ') #space: the frontier in between visible and unread
-	well.append $('<span>').addClass('unread').text(room.question)
+	well.append $('<span>').addClass('unread').text(info.question)
 	bundle
 		.append($('<ul>').addClass('breadcrumb').append(breadcrumb))
 		.append(readout)
 		.append($('<div>').addClass('sticky'))
 		.append($('<div>').addClass('annotations'))
+
+
+createBundle = ->
+	create_bundle {
+		year: room.info.year, 
+		difficulty: room.info.difficulty, 
+		category: room.info.category, 
+		tournament: room.info.tournament,
+		round: room.info.round,
+		num: room.info.num,
+		qid: room.qid,
+		question: room.question,
+		answer: room.answer
+	}
 
 
 reader_children = null

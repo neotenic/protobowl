@@ -91,8 +91,11 @@ load_bookmarked_questions = ->
 	bookmarks = []
 	try
 		bookmarks = JSON.parse(localStorage.bookmarks)
-	# for bookmark in bookmarks
-	# 	$('#history').prepend create_bundle()
+	for question in bookmarks
+		bundle = create_bundle(question)
+		bundle.find('.readout').hide()
+		$('#history').prepend bundle
+
 
 
 connected = -> sock? and sock.socket.connected
@@ -323,7 +326,7 @@ setTimeout ->
 , 2000
 
 
-handleCacheEvent = ->
+cache_event = ->
 	status = applicationCache.status
 	switch applicationCache.status
 		when applicationCache.UPDATEREADY
@@ -349,5 +352,5 @@ handleCacheEvent = ->
 do -> # isolate variables from globals
 	if window.applicationCache
 		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
-			applicationCache.addEventListener name, handleCacheEvent
+			applicationCache.addEventListener name, cache_event
 
