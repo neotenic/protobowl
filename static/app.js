@@ -1,4 +1,4 @@
-protobowl_build = 'Thu Nov 22 2012 14:00:23 GMT-0500 (EST)';
+protobowl_build = 'Thu Nov 22 2012 16:07:21 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1868,6 +1868,13 @@ $('#username').keyup(function(e) {
   if (name.length > 0) {
     me.set_name(name);
     return localStorage.username = name;
+  }
+});
+
+$('.generate-name').click(function() {
+  if (typeof generateName !== "undefined" && generateName !== null) {
+    $('#username').val(generateName());
+    return $('#username').keyup().focus();
   }
 });
 

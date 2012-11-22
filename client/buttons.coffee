@@ -6,7 +6,12 @@ $('#username').keyup (e) ->
 	if name.length > 0
 		me.set_name name
 		localStorage.username = name
-		
+
+$('.generate-name').click ->
+	if generateName?
+		$('#username').val generateName()
+		$('#username').keyup().focus()
+
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()
 		readout = $(this).parent().find('.readout')
