@@ -39,7 +39,10 @@ html(lang="en")
 			| #{Math.floor(secs % 60)} seconds
 
 		mixin display_user(user)
-			li #{user.team || ''} <b>#{user.name}</b> 
+			li #{user.team || ''}
+				if user.room && user.room.admins && user.room.admins.indexOf(user.id) != -1
+					i *ADMIN* 
+				b #{user.name}
 				if !('users' in user)
 					a(href="/stalkermode/user/#{user.room.name}/#{user.id}") &rarr; 
 				| (last seen 
