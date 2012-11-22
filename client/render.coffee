@@ -299,14 +299,16 @@ renderTimer = ->
 
 
 get_score = (user) -> 
-	if me.movingwindow
-		user.score() - [0].concat(user.history).slice(-me.movingwindow)[0]
-		# basis = user.history.concat [user.score()]
-		# basis[basis.length - 1]
-	else
-		# nice and simple; use the actual scores
-		user.score()
-
+	if user.members
+		return Sum(get_score(member) for member in user.members)
+	else	
+		if me.movingwindow
+			user.score() - [0].concat(user.history).slice(-me.movingwindow)[0]
+			# basis = user.history.concat [user.score()]
+			# basis[basis.length - 1]
+		else
+			# nice and simple; use the actual scores
+			user.score()
 
 renderUsers = ->
 	# render the user list and that stuff
@@ -404,15 +406,16 @@ renderUsers = ->
 		entities = for team, members of teams
 			team = team.slice(2)
 
-			attrs = new QuizPlayer(room, 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, ''))
+			# attrs = new QuizPlayer(room, 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, ''))
+			attrs = {room: room} #new Team(room)
 			team_count++
-			for member in members
-				for attr, val of room.users[member]
-					if typeof val is 'number'
-						attrs[attr] = 0 unless attr of attrs
-						attrs[attr] += val
+			# for member in members
+			# 	for attr, val of room.users[member]
+			# 		if typeof val is 'number'
+			# 			attrs[attr] = 0 unless attr of attrs
+			# 			attrs[attr] += val
 
-			attrs.members = members
+			attrs.members = (room.users[member] for member in members)
 			
 			attrs.name = team
 			attrs
@@ -440,11 +443,12 @@ renderUsers = ->
 			idle_count = 0
 			active_count = 0
 			for member in (user.members || [user.id])
-				if room.users[member].online()
-					if room.serverTime() - room.users[member].last_action > 1000 * 60 * 10
-						idle_count++
-					else
+				if member.online()
+					if member.active()
 						active_count++
+					else
+						idle_count++
+						
 			if active_count > 0
 				badge.addClass('badge-success').attr('title', 'Online')
 			else if idle_count > 0
@@ -459,8 +463,8 @@ renderUsers = ->
 		else
 			name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
 		
-			for member in user.members.sort((a, b) -> get_weight(room.users[b]) - get_weight(room.users[a]))
-				user = room.users[member]
+			for user in user.members.sort((a, b) -> get_weight(b) - get_weight(a))
+				# user = room.users[member]
 				row = $('<tr>').addClass('subordinate').data('entity', user).appendTo list
 				row.click -> 1
 				badge = $('<span>').addClass('badge pull-right').text get_score(user)
@@ -519,7 +523,13 @@ check_alone = ->
 	else
 		$('.foreveralone').slideUp()
 
-createStatSheet = (user, full) ->
+createStatSheet = (entity, full) ->
+	if entity.members
+		return createTeamStatSheet(entity, full)
+	else
+		return createUserStatSheet(entity, full)
+
+createUserStatSheet = (user, full) ->
 	table = $('<table>').addClass('table headless')
 	body = $('<tbody>').appendTo(table)
 	row = (name, val) ->
@@ -540,6 +550,28 @@ createStatSheet = (user, full) ->
 	row "Last Seen", formatRelativeTime(user.last_action) if full
 	return table
 
+createTeamStatSheet = (team, full) ->
+	table = $('<table>').addClass('table headless')
+	body = $('<tbody>').appendTo(table)
+	row = (name, val) ->
+		$('<tr>')
+			.appendTo(body)
+			.append($("<th>").text(name))
+			.append($("<td>").addClass("value").append(val))
+	
+	row	"Score", $('<span>').addClass('badge').text(get_score(team))
+	row	"Correct", Sum(user.correct for user in team.members)
+	row "Interrupts", Sum(user.interrupts for user in team.members)
+	row "Early", Sum(user.early for user in team.members) if full
+	# row "Incorrect", team.guesses - team.correct  if full
+	row "Guesses", Sum(user.guesses for user in team.members)
+	# row "Seen", team.seen
+	
+	row "Members", team.members.length
+
+	# row "ID", team.id.slice(0, 10) if full
+	# row "Last Seen", formatRelativeTime(team.last_action) if full
+	return table
 
 changeQuestion = ->
 	return unless room.question and room.generated_time

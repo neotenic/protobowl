@@ -1,4 +1,4 @@
-protobowl_build = 'Thu Nov 22 2012 11:25:25 GMT-0500 (EST)';
+protobowl_build = 'Thu Nov 22 2012 12:18:13 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2417,7 +2417,7 @@ if (Modernizr.touch) {
   $('.show-touch').hide();
 }
 
-var changeQuestion, check_alone, createBundle, createStatSheet, create_bundle, create_report_form, get_score, last_rendering, reader_children, reader_last_state, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, render_categories, toggle_bookmark, updateInlineSymbols, updateTextPosition,
+var changeQuestion, check_alone, createBundle, createStatSheet, createTeamStatSheet, createUserStatSheet, create_bundle, create_report_form, get_score, last_rendering, reader_children, reader_last_state, renderParameters, renderPartial, renderTimer, renderUpdate, renderUsers, render_categories, toggle_bookmark, updateInlineSymbols, updateTextPosition,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 render_categories = function() {
@@ -2735,15 +2735,29 @@ renderTimer = function() {
 };
 
 get_score = function(user) {
-  if (me.movingwindow) {
-    return user.score() - [0].concat(user.history).slice(-me.movingwindow)[0];
+  var member;
+  if (user.members) {
+    return Sum((function() {
+      var _i, _len, _ref, _results;
+      _ref = user.members;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        member = _ref[_i];
+        _results.push(get_score(member));
+      }
+      return _results;
+    })());
   } else {
-    return user.score();
+    if (me.movingwindow) {
+      return user.score() - [0].concat(user.history).slice(-me.movingwindow)[0];
+    } else {
+      return user.score();
+    }
   }
 };
 
 renderUsers = function() {
-  var active_count, attr, attrs, badge, entities, get_weight, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, val, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
+  var active_count, attrs, badge, entities, get_weight, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
   if (!room.users) {
     return;
   }
@@ -2854,27 +2868,24 @@ renderUsers = function() {
   team_count = 0;
   if ($('.teams').val() || me.id.slice(0, 2) === "__") {
     entities = (function() {
-      var _j, _len, _ref4, _results;
+      var _results;
       _results = [];
       for (team in teams) {
         members = teams[team];
         team = team.slice(2);
-        attrs = new QuizPlayer(room, 't-' + team.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        attrs = {
+          room: room
+        };
         team_count++;
-        for (_j = 0, _len = members.length; _j < _len; _j++) {
-          member = members[_j];
-          _ref4 = room.users[member];
-          for (attr in _ref4) {
-            val = _ref4[attr];
-            if (typeof val === 'number') {
-              if (!(attr in attrs)) {
-                attrs[attr] = 0;
-              }
-              attrs[attr] += val;
-            }
+        attrs.members = (function() {
+          var _j, _len, _results1;
+          _results1 = [];
+          for (_j = 0, _len = members.length; _j < _len; _j++) {
+            member = members[_j];
+            _results1.push(room.users[member]);
           }
-        }
-        attrs.members = members;
+          return _results1;
+        })();
         attrs.name = team;
         _results.push(attrs);
       }
@@ -2913,11 +2924,11 @@ renderUsers = function() {
       _ref7 = user.members || [user.id];
       for (_k = 0, _len1 = _ref7.length; _k < _len1; _k++) {
         member = _ref7[_k];
-        if (room.users[member].online()) {
-          if (room.serverTime() - room.users[member].last_action > 1000 * 60 * 10) {
-            idle_count++;
-          } else {
+        if (member.online()) {
+          if (member.active()) {
             active_count++;
+          } else {
+            idle_count++;
           }
         }
       }
@@ -2935,11 +2946,10 @@ renderUsers = function() {
     } else {
       name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
       _ref8 = user.members.sort(function(a, b) {
-        return get_weight(room.users[b]) - get_weight(room.users[a]);
+        return get_weight(b) - get_weight(a);
       });
       for (_l = 0, _len2 = _ref8.length; _l < _len2; _l++) {
-        member = _ref8[_l];
-        user = room.users[member];
+        user = _ref8[_l];
         row = $('<tr>').addClass('subordinate').data('entity', user).appendTo(list);
         row.click(function() {
           return 1;
@@ -3022,7 +3032,15 @@ check_alone = function() {
   }
 };
 
-createStatSheet = function(user, full) {
+createStatSheet = function(entity, full) {
+  if (entity.members) {
+    return createTeamStatSheet(entity, full);
+  } else {
+    return createUserStatSheet(entity, full);
+  }
+};
+
+createUserStatSheet = function(user, full) {
   var body, row, table;
   table = $('<table>').addClass('table headless');
   body = $('<tbody>').appendTo(table);
@@ -3049,6 +3067,60 @@ createStatSheet = function(user, full) {
   if (full) {
     row("Last Seen", formatRelativeTime(user.last_action));
   }
+  return table;
+};
+
+createTeamStatSheet = function(team, full) {
+  var body, row, table, user;
+  table = $('<table>').addClass('table headless');
+  body = $('<tbody>').appendTo(table);
+  row = function(name, val) {
+    return $('<tr>').appendTo(body).append($("<th>").text(name)).append($("<td>").addClass("value").append(val));
+  };
+  row("Score", $('<span>').addClass('badge').text(get_score(team)));
+  row("Correct", Sum((function() {
+    var _i, _len, _ref, _results;
+    _ref = team.members;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      user = _ref[_i];
+      _results.push(user.correct);
+    }
+    return _results;
+  })()));
+  row("Interrupts", Sum((function() {
+    var _i, _len, _ref, _results;
+    _ref = team.members;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      user = _ref[_i];
+      _results.push(user.interrupts);
+    }
+    return _results;
+  })()));
+  if (full) {
+    row("Early", Sum((function() {
+      var _i, _len, _ref, _results;
+      _ref = team.members;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        user = _ref[_i];
+        _results.push(user.early);
+      }
+      return _results;
+    })()));
+  }
+  row("Guesses", Sum((function() {
+    var _i, _len, _ref, _results;
+    _ref = team.members;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      user = _ref[_i];
+      _results.push(user.guesses);
+    }
+    return _results;
+  })()));
+  row("Members", team.members.length);
   return table;
 };
 

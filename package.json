@@ -6,7 +6,8 @@
     "socket.io": "0.9.x",
     "jade": "0.26.x",
     "coffee-script": "1.3.x",
-    "mongoose": "3.0.x"
+    "mongoose": "3.0.x",
+    "nodefly": "stable"
   },
   "devDependencies": {
     "less-middleware": "0.1.x",
