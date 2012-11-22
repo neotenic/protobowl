@@ -176,7 +176,10 @@ class SocketQuizRoom extends QuizRoom
 
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
 
-	get_question: (cb) ->
+	get_question: (callback) ->
+		cb = (question) =>
+			log 'next', [@name, question.answer]
+			callback(question)
 		if @next_id and @show_bonus
 			remote.get_by_id @next_id, cb
 		else
