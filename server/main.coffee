@@ -336,7 +336,7 @@ io.sockets.on 'connection', (sock) ->
 	if is_god
 		sock.join name for name of rooms
 
-	sock.emit 'joined', { id: user.id, name: user.name }
+	sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
 	
 	# tell that there's a new person at the partaay
 	room.sync(3)

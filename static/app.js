@@ -1,4 +1,4 @@
-protobowl_build = 'Wed Nov 21 2012 01:04:17 GMT-0500 (EST)';
+protobowl_build = 'Thu Nov 22 2012 11:25:25 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1860,11 +1860,14 @@ var actionMode, chat, findReferences, mobileLayout, next, protobot_engaged, prot
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 $('#username').keyup(function(e) {
+  var name;
   if (e.keyCode === 13) {
     $(this).blur();
   }
-  if ($(this).val().length > 0) {
-    return me.set_name($(this).val());
+  name = $(this).val();
+  if (name.length > 0) {
+    me.set_name(name);
+    return localStorage.username = name;
   }
 });
 
@@ -4751,10 +4754,18 @@ listen('sync', function(data) {
 });
 
 listen('joined', function(data) {
-  $('#slow').slideUp();
   me.id = data.id;
-  me.name = data.name;
   room.users[me.id] = me;
+  me.name = data.name;
+  if (localStorage.username) {
+    if (!data.existing) {
+      me.name = localStorage.username;
+      me.set_name(me.name);
+    }
+  } else {
+    localStorage.username = data.name;
+  }
+  $('#slow').slideUp();
   $('.actionbar button').disable(false);
   $('#username').val(me.name);
   return $('#username').disable(false);

@@ -2,8 +2,10 @@ $('#username').keyup (e) ->
 	if e.keyCode is 13
 		$(this).blur()
 
-	if $(this).val().length > 0
-		me.set_name $(this).val()
+	name = $(this).val()
+	if name.length > 0
+		me.set_name name
+		localStorage.username = name
 		
 jQuery('.bundle .breadcrumb').live 'click', ->
 	unless $(this).is jQuery('.bundle .breadcrumb').first()

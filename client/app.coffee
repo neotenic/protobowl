@@ -191,15 +191,27 @@ listen 'log', (data) -> verbAnnotation data
 listen 'sync', (data) -> synchronize data
 
 listen 'joined', (data) ->
+	me.id = data.id
+	room.users[me.id] = me
+
+	me.name = data.name
+
+	if localStorage.username
+		if !data.existing
+			me.name = localStorage.username
+			me.set_name me.name
+	else
+		localStorage.username = data.name
+
 	$('#slow').slideUp()
 
-	me.id = data.id
-	me.name = data.name
-	room.users[me.id] = me
 	$('.actionbar button').disable false
 
 	$('#username').val me.name
 	$('#username').disable false
+
+
+
 
 sync_offsets = []
 latency_log = []
