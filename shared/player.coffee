@@ -21,6 +21,7 @@ class QuizPlayer
 		@last_action = @room.serverTime()
 		@last_session = @room.serverTime()
 		@created = @room.serverTime()
+		@idle = false
 
 		# used to keep track of buzz limits
 		@times_buzzed = 0
@@ -41,6 +42,7 @@ class QuizPlayer
 	# keep track of how long someone's been online
 
 	touch: (no_add_time) ->
+		@idle = false
 		current_time = @room.serverTime() 
 		unless no_add_time
 			elapsed = current_time - @last_action
@@ -48,7 +50,7 @@ class QuizPlayer
 				@time_spent += elapsed
 		@last_action = current_time
 
-	active: -> @online() and (@room.serverTime() - @last_action) < 1000 * 60 * 10
+	active: -> @online() and (@room.serverTime() - @last_action) < 1000 * 60 * 10 and !@idle
 
 	online: -> true
 
@@ -247,6 +249,7 @@ class QuizPlayer
 			@room.unfreeze()
 		@room.sync()
 
+	set_idle: (val) ->  @idle = !!val
 
 	set_lock: (val) ->
 		@lock = !!val

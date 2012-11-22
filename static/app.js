@@ -1,4 +1,4 @@
-protobowl_build = 'Thu Nov 22 2012 12:18:13 GMT-0500 (EST)';
+protobowl_build = 'Thu Nov 22 2012 14:00:23 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2757,7 +2757,7 @@ get_score = function(user) {
 };
 
 renderUsers = function() {
-  var active_count, attrs, badge, entities, get_weight, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
+  var active_count, attrs, badge, entities, get_weight, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
   if (!room.users) {
     return;
   }
@@ -2916,14 +2916,14 @@ renderUsers = function() {
       return 1;
     });
     badge = $('<span>').addClass('badge pull-right').text(get_score(user));
-    if (_ref6 = me.id, __indexOf.call(user.members || [user.id], _ref6) >= 0) {
+    if (__indexOf.call(user.members || [user], me) >= 0) {
       badge.addClass('badge-info').attr('title', 'You');
     } else {
       idle_count = 0;
       active_count = 0;
-      _ref7 = user.members || [user.id];
-      for (_k = 0, _len1 = _ref7.length; _k < _len1; _k++) {
-        member = _ref7[_k];
+      _ref6 = user.members || [user];
+      for (_k = 0, _len1 = _ref6.length; _k < _len1; _k++) {
+        member = _ref6[_k];
         if (member.online()) {
           if (member.active()) {
             active_count++;
@@ -2945,11 +2945,11 @@ renderUsers = function() {
       name.append($('<span>').append(userSpan(user.id)));
     } else {
       name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (" + user.members.length + ")");
-      _ref8 = user.members.sort(function(a, b) {
+      _ref7 = user.members.sort(function(a, b) {
         return get_weight(b) - get_weight(a);
       });
-      for (_l = 0, _len2 = _ref8.length; _l < _len2; _l++) {
-        user = _ref8[_l];
+      for (_l = 0, _len2 = _ref7.length; _l < _len2; _l++) {
+        user = _ref7[_l];
         row = $('<tr>').addClass('subordinate').data('entity', user).appendTo(list);
         row.click(function() {
           return 1;
@@ -3536,6 +3536,7 @@ QuizPlayer = (function() {
     this.last_action = this.room.serverTime();
     this.last_session = this.room.serverTime();
     this.created = this.room.serverTime();
+    this.idle = false;
     this.times_buzzed = 0;
     this.show_typing = true;
     this.team = '';
@@ -3550,6 +3551,7 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.touch = function(no_add_time) {
     var current_time, elapsed;
+    this.idle = false;
     current_time = this.room.serverTime();
     if (!no_add_time) {
       elapsed = current_time - this.last_action;
@@ -3561,7 +3563,7 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.active = function() {
-    return this.online() && (this.room.serverTime() - this.last_action) < 1000 * 60 * 10;
+    return this.online() && (this.room.serverTime() - this.last_action) < 1000 * 60 * 10 && !this.idle;
   };
 
   QuizPlayer.prototype.online = function() {
@@ -3837,6 +3839,10 @@ QuizPlayer = (function() {
       this.room.unfreeze();
     }
     return this.room.sync();
+  };
+
+  QuizPlayer.prototype.set_idle = function(val) {
+    return this.idle = !!val;
   };
 
   QuizPlayer.prototype.set_lock = function(val) {
@@ -5054,7 +5060,25 @@ cache_event = function() {
 };
 
 (function() {
-  var name, _i, _len, _ref, _results;
+  var event, hidden, name, _i, _len, _ref, _results;
+  if (document.hidden != null) {
+    hidden = 'hidden';
+    event = 'visibilitychange';
+  } else if (document.mozHidden != null) {
+    hidden = 'mozHidden';
+    event = 'mozvisibilitychange';
+  } else if (document.msHidden != null) {
+    hidden = 'msHidden';
+    event = 'msvisibilitychange';
+  } else if (document.webkitHidden != null) {
+    hidden = 'webkitHidden';
+    event = 'webkitvisibilitychange';
+  }
+  if (hidden) {
+    document.addEventListener(event, function() {
+      return me.set_idle(document[hidden]);
+    }, false);
+  }
   if (window.applicationCache) {
     _ref = ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready'];
     _results = [];
