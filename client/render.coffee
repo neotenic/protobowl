@@ -390,6 +390,7 @@ renderUsers = ->
 			team = team.slice(2)
 			$('.teams')[0].options.add new Option("#{team} (#{members.length})", team)
 		$('.teams')[0].options.add new Option('Create Team', 'create')
+		
 		if me.id of room.users
 			$('.teams').val(room.users[me.id].team)
 	

@@ -364,10 +364,12 @@ $('.categories').change ->
 $('.difficulties').change -> me.set_difficulty $('.difficulties').val()
 
 
-
 $('.teams').change ->
 	if $('.teams').val() is 'create'
-		me.set_team prompt('Enter Team Name') || ''
+		$("#team_modal").modal("show")
+		$("#make_button").click () ->
+			me.set_team $("#team_input").val()
+			$("#team_modal").modal("hide")
 	else
 		me.set_team $('.teams').val()
 

@@ -45,6 +45,20 @@ html(lang="en", manifest="/offline.appcache")
 				a.btn.btn-primary(href="#", data-dismiss="modal") Close
 		
 
+		div.modal.hide#team_modal
+			div.modal-header
+				button.close(type="button", data-dismiss="modal") ×
+				p Why should I clutter my mind with general information when I have men around me who can supply any knowledge I need?
+				i.pull-right Henry Ford
+				br
+			div.modal-body
+				input#team_input(type='text', value='', placeholder='Epic Super Awesome Team').extra-large
+			div.modal-footer
+				a.btn(href="#", data-dismiss="modal") Cancel
+				button.btn.btn-primary#make_button Make the Team!
+
+		
+
 		div.container
 			div.row
 				div.span9

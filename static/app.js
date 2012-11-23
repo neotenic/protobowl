@@ -1,4 +1,4 @@
-protobowl_build = 'Thu Nov 22 2012 12:18:13 GMT-0500 (EST)';
+protobowl_build = 'Fri Nov 23 2012 01:24:40 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -2301,7 +2301,11 @@ $('.difficulties').change(function() {
 
 $('.teams').change(function() {
   if ($('.teams').val() === 'create') {
-    return me.set_team(prompt('Enter Team Name') || '');
+    $("#team_modal").modal("show");
+    return $("#make_button").click(function() {
+      me.set_team($("#team_input").val());
+      return $("#team_modal").modal("hide");
+    });
   } else {
     return me.set_team($('.teams').val());
   }
