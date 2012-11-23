@@ -41,11 +41,8 @@ log_config = { host: 'localhost', port: 18228 }
 
 
 if app.settings.env is 'development'
-	app.use require('less-middleware')({
-		src: "static/less",
-		dest: "static",
-		compress: true
-	})
+	less = require 'less'
+	
 	Snockets = require 'snockets'
 	CoffeeScript = require 'coffee-script'
 	Snockets.compilers.coffee = 
@@ -54,44 +51,93 @@ if app.settings.env is 'development'
 			CoffeeScript.compile source, {filename: sourcePath, bare: true}
 
 	snockets = new Snockets()
-	app.use (req, res, next) ->
-		if req.url is '/app.js'
-			snockets.getConcatenation 'client/app.coffee', (err, js) ->
-				fs.writeFile 'static/app.js', "protobowl_build = '#{new Date}';\n#{err || js}", 'utf8', ->
-					next()
-		else if req.url is '/offline.js'
-			snockets.getConcatenation 'client/offline.coffee', (err, js) ->
-				fs.writeFile 'static/offline.js', err || js, 'utf8', ->
-					next()
-		# else if req.url is '/protobowl.css'
-		# 	parser = new(less.Parser)({
-		# 		paths: ['static/less'],
-		# 		filename: 'protobowl.less'
-		# 	})
-		# 	parser.parse
-		else
-			next()
 
 	scheduledUpdate = null
-	updateCache = ->
-		fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
-			throw err if err
-			data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
-			fs.writeFile 'static/offline.appcache', data, (err) ->
-				throw err if err
-				setTimeout ->
-					io.sockets.emit 'force_application_update', +new Date
-				, 2000
-				scheduledUpdate = null
+	path = require 'path'
 
+	updateCache = ->
+		source_list = []
+		compile_date = new Date;
+
+		compileLess = ->
+			console.log 'compiling less'
+			lessPath = 'static/less/protobowl.less'
+			fs.readFile lessPath, 'utf8', (err, data) ->
+				throw err if err
+
+				parser = new(less.Parser)({
+					paths: [path.dirname(lessPath)],
+					filename: lessPath
+				})
+
+				parser.parse data, (err, tree) ->
+					css = tree?.toCSS {
+						compress: false
+					}
+
+					source_list.push {
+						code: "/* protobowl_css_build_date: #{compile_date} */\n#{css}",
+						err: err,
+						file: "static/protobowl.css"
+					}
+					compileCoffee()
+
+
+		file_list = ['app', 'offline', 'auth']
+		
+		compileCoffee = ->
+			file = file_list.shift()
+			return saveFiles() if !file
+			console.log 'compiling coffee', file
+			
+			snockets.getConcatenation "client/#{file}.coffee", (err, js) ->
+				source_list.push {
+					code: "protobowl_#{file}_build = '#{compile_date}';\n#{js}", 
+					err: err, 
+					file: "static/#{file}.js"
+				}
+				compileCoffee()
+
+		saveFiles = ->
+			console.log 'saving files'
+			error_message = ''
+			for i in source_list
+				error_message += "File: #{i.file}\n#{i.err}\n\n" if i.err
+			if error_message
+				io.sockets.emit 'debug', error_message
+				console.log error_message
+				scheduledUpdate = null
+			else
+				saved_count = 0
+				for i in source_list
+					fs.writeFile i.file, i.code, 'utf8', ->
+						saved_count++
+						if saved_count is source_list.length
+							writeManifest()
+
+		writeManifest = ->
+			console.log 'saving manifest'
+			fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
+				throw err if err
+				data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
+				fs.writeFile 'static/offline.appcache', data, (err) ->
+					throw err if err
+					io.sockets.emit 'force_application_update', +new Date
+					scheduledUpdate = null
+
+
+		compileLess()
 	watcher = (event, filename) ->
 		return if filename in ["offline.appcache", "protobowl.css", "app.js"]
-		console.log "changed file", filename
+		
 		unless scheduledUpdate
+			console.log "changed file", filename
 			scheduledUpdate = setTimeout updateCache, 500
 
 	fs.watch "shared", watcher
 	fs.watch "client", watcher
+	fs.watch "static/less", watcher
+	fs.watch "server/room.jade", watcher
 
 
 try 

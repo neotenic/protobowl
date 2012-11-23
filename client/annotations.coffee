@@ -338,9 +338,10 @@ verbAnnotation = ({user, verb, time}) ->
 		addAnnotation line
 
 logAnnotation = (text) ->
-	line = $('<p>').addClass 'log'
+	line = $('<pre>')
 	line.append text
-	addAnnotation line
+	$("#history").prepend line.hide().slideDown()
+	# addAnnotation line
 
 
 notifyTrolls = ->

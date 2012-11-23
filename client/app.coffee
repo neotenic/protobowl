@@ -9,9 +9,10 @@
 #= require ../shared/room.coffee
 
 do ->
-	t = new Date protobowl_build
-	# todo: add padding to minute so it looks less weird
-	$('#version').text "#{t.getMonth()+1}/#{t.getDate()}/#{t.getFullYear() % 100} #{t.getHours()}:#{(t.getMinutes()/100).toFixed(2).slice(2)}"
+	try
+		t = new Date protobowl_app_build
+		# todo: add padding to minute so it looks less weird
+		$('#version').text "#{t.getMonth()+1}/#{t.getDate()}/#{t.getFullYear() % 100} #{t.getHours()}:#{(t.getMinutes()/100).toFixed(2).slice(2)}"
 
 
 # asynchronously load the other code which doesn't need to be there on startup necessarily
@@ -187,6 +188,7 @@ listen 'redirect', (url) -> window.location = url
 listen 'alert', (text) -> window.alert text
 listen 'chat', (data) -> chatAnnotation data
 listen 'log', (data) -> verbAnnotation data
+listen 'debug', (data) -> logAnnotation data
 listen 'sync', (data) -> synchronize data
 
 listen 'joined', (data) ->
@@ -348,7 +350,7 @@ cache_event = ->
 			if localStorage.auto_reload is "yay" or $('#update').data('force') is true
 				setTimeout ->
 					location.reload()
-				, 500 + Math.random() * 2000
+				, 200 + Math.random() * 1000
 			applicationCache.swapCache()
 		when applicationCache.UNCACHED
 			$('#cachestatus').text 'Uncached'
