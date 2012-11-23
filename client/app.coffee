@@ -196,12 +196,13 @@ listen 'joined', (data) ->
 
 	me.name = data.name
 
-	if localStorage.username
-		if !data.existing
-			me.name = localStorage.username
-			me.set_name me.name
-	else
-		localStorage.username = data.name
+	if me.id[0] != '_'
+		if localStorage.username
+			if !data.existing
+				me.name = localStorage.username
+				me.set_name me.name
+		else
+			localStorage.username = data.name
 
 	$('#slow').slideUp()
 

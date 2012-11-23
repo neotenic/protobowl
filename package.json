@@ -1,6 +1,6 @@
 {
   "name": "protobowl",
-  "version": "0.4.0-47",
+  "version": "0.4.0-48",
   "dependencies": {
     "express": "3.0.x",
     "socket.io": "0.9.x",

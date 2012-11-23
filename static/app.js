@@ -1,4 +1,4 @@
-protobowl_build = 'Thu Nov 22 2012 16:07:21 GMT-0500 (EST)';
+protobowl_build = 'Fri Nov 23 2012 10:28:00 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -4842,13 +4842,15 @@ listen('joined', function(data) {
   me.id = data.id;
   room.users[me.id] = me;
   me.name = data.name;
-  if (localStorage.username) {
-    if (!data.existing) {
-      me.name = localStorage.username;
-      me.set_name(me.name);
+  if (me.id[0] !== '_') {
+    if (localStorage.username) {
+      if (!data.existing) {
+        me.name = localStorage.username;
+        me.set_name(me.name);
+      }
+    } else {
+      localStorage.username = data.name;
     }
-  } else {
-    localStorage.username = data.name;
   }
   $('#slow').slideUp();
   $('.actionbar button').disable(false);
