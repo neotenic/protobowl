@@ -368,11 +368,34 @@ $('.categories').change ->
 
 $('.difficulties').change -> me.set_difficulty $('.difficulties').val()
 
+# Why should I clutter my mind with general information 
+# when I have men around me who can supply any knowledge I need?
 
+$("#make_button").click ->
+	if $("#team_input").val() is '__create'
+		$("#team_input").val('Boxxy')
+		notifyTrolls()
+
+	me.set_team $("#team_input").val()
+	$("#team_modal").data('set_team', true).modal("hide")
+	$("#team_input").blur()
+
+$("#team_modal").on 'hidden', ->
+	unless $("#team_modal").data('set_team')
+		me.set_team me.team
+
+$('#team_modal').on 'shown', ->
+	$("#team_input").focus()
+
+$("#team_modal form").submit (e) ->
+	e.preventDefault()
+	$("#make_button").click()
 
 $('.teams').change ->
-	if $('.teams').val() is 'create'
-		me.set_team prompt('Enter Team Name') || ''
+	if $('.teams').val() is '__create'
+		$("#team_modal").modal("show").data('set_team', false)
+			.find('input').val(me.team)
+		
 	else
 		me.set_team $('.teams').val()
 
@@ -430,12 +453,6 @@ $('.show_image').live 'click', (e) ->
 	$(this).parent().find('.chat_image').slideToggle()
 
 $(".leaderboard tbody tr").live 'click', (e) ->
-	# console.log this
-	# tmp = $('.popover')
-	# allow time delay so that things can be faded out before you kill them
-	# setTimeout ->
-	# 	tmp.remove()
-	# , 1000
 	user = $(this).data('entity')
 	enabled = $(this).data('popover')?.enabled
 	# console.log $('.leaderboard tbody tr').not(this).popover 'toggle'

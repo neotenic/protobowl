@@ -1,4 +1,4 @@
-protobowl_build = 'Fri Nov 23 2012 10:28:00 GMT-0500 (EST)';
+protobowl_build = 'Fri Nov 23 2012 11:21:12 GMT-0500 (EST)';
 /* Modernizr 2.6.1 (Custom Build) | MIT & BSD
  * Build: http://modernizr.com/download/#-touch-teststyles-prefixes
  */
@@ -1468,7 +1468,7 @@ setTimeout(function() {
   return $(window).resize();
 }, 6022);
 
-var addAnnotation, addImportant, banButton, boxxyAnnotation, chatAnnotation, createAlert, guessAnnotation, logAnnotation, userSpan, verbAnnotation,
+var addAnnotation, addImportant, banButton, boxxyAnnotation, chatAnnotation, createAlert, guessAnnotation, logAnnotation, notifyTrolls, userSpan, verbAnnotation,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 createAlert = function(bundle, title, message) {
@@ -1802,6 +1802,10 @@ logAnnotation = function(text) {
   line = $('<p>').addClass('log');
   line.append(text);
   return addAnnotation(line);
+};
+
+notifyTrolls = function() {
+  return addAnnotation($('<iframe width="420" height="315" src="http://www.youtube.com/embed/6bMLrA_0O5I?rel=0" frameborder="0" allowfullscreen></iframe>'));
 };
 
 boxxyAnnotation = function(_arg) {
@@ -2306,9 +2310,34 @@ $('.difficulties').change(function() {
   return me.set_difficulty($('.difficulties').val());
 });
 
+$("#make_button").click(function() {
+  if ($("#team_input").val() === '__create') {
+    $("#team_input").val('Boxxy');
+    notifyTrolls();
+  }
+  me.set_team($("#team_input").val());
+  $("#team_modal").data('set_team', true).modal("hide");
+  return $("#team_input").blur();
+});
+
+$("#team_modal").on('hidden', function() {
+  if (!$("#team_modal").data('set_team')) {
+    return me.set_team(me.team);
+  }
+});
+
+$('#team_modal').on('shown', function() {
+  return $("#team_input").focus();
+});
+
+$("#team_modal form").submit(function(e) {
+  e.preventDefault();
+  return $("#make_button").click();
+});
+
 $('.teams').change(function() {
-  if ($('.teams').val() === 'create') {
-    return me.set_team(prompt('Enter Team Name') || '');
+  if ($('.teams').val() === '__create') {
+    return $("#team_modal").modal("show").data('set_team', false).find('input').val(me.team);
   } else {
     return me.set_team($('.teams').val());
   }
@@ -2764,7 +2793,7 @@ get_score = function(user) {
 };
 
 renderUsers = function() {
-  var active_count, attrs, badge, entities, get_weight, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, num, ranking, row, sorted, team, team_count, team_hash, teams, user, user_count, user_index, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+  var active_count, attrs, badge, entities, get_weight, id, idle_count, ids, list, lock_electorate, lock_votes, member, members, name, name_map, needed, negs, num, ranking, row, sorted, team, team_count, team_hash, teams, u, user, user_count, user_index, _i, _j, _k, _l, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
   if (!room.users) {
     return;
   }
@@ -2854,7 +2883,7 @@ renderUsers = function() {
       team = team.slice(2);
       $('.teams')[0].options.add(new Option("" + team + " (" + members.length + ")", team));
     }
-    $('.teams')[0].options.add(new Option('Create Team', 'create'));
+    $('.teams')[0].options.add(new Option('Create Team', '__create'));
     if (me.id in room.users) {
       $('.teams').val(room.users[me.id].team);
     }
@@ -2893,6 +2922,16 @@ renderUsers = function() {
           }
           return _results1;
         })();
+        attrs.interrupts = Sum((function() {
+          var _j, _len, _ref4, _results1;
+          _ref4 = attrs.members;
+          _results1 = [];
+          for (_j = 0, _len = _ref4.length; _j < _len; _j++) {
+            u = _ref4[_j];
+            _results1.push(u.interrupts);
+          }
+          return _results1;
+        })());
         attrs.name = team;
         _results.push(attrs);
       }
@@ -2976,7 +3015,8 @@ renderUsers = function() {
         $('<td>').css("border", 0).append(badge).appendTo(row);
         name = $('<td>').append(userSpan(user.id));
         name.appendTo(row);
-        $('<td>').text(user.interrupts).appendTo(row);
+        negs = user.interrupts;
+        $('<td>').text(negs).appendTo(row);
       }
     }
   }

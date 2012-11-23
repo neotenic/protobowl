@@ -342,6 +342,10 @@ logAnnotation = (text) ->
 	line.append text
 	addAnnotation line
 
+
+notifyTrolls = ->
+	addAnnotation($('<iframe width="420" height="315" src="http://www.youtube.com/embed/6bMLrA_0O5I?rel=0" frameborder="0" allowfullscreen></iframe>'))
+
 # Ummmm ahh such as like, like the one where I'm like mmm and it says, 
 # "I saw watchoo did there!" 
 # And like and and then like you peoples were all like, 
