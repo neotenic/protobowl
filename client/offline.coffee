@@ -1,4 +1,5 @@
 #= require html5slider.js
+#= require sha1.js
 #= require ../shared/names.coffee
 #= require ../shared/removeDiacritics.js
 #= require ../shared/levenshtein.js

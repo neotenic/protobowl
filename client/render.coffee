@@ -154,7 +154,8 @@ renderPartial = ->
 		if $('.start-page').length isnt 0
 			$('.start-page').slideUp 'normal', -> $(this).remove()
 
-		if $('#history .bundle[name="question-' + sha1(room.generated_time + room.question) + '"]').length is 0
+		info = $('#history .bundle:first').data('info')
+		if info?.generated_time != room?.generated_time or room?.question != info?.question
 			changeQuestion()
 	
 	updateTextPosition()
@@ -571,6 +572,22 @@ createTeamStatSheet = (team, full) ->
 	# row "Last Seen", formatRelativeTime(team.last_action) if full
 	return table
 
+createBundle = ->
+	create_bundle {
+		year: room.info.year, 
+		difficulty: room.info.difficulty, 
+		category: room.info.category, 
+		tournament: room.info.tournament,
+		round: room.info.round,
+		num: room.info.num,
+		qid: room.qid,
+		question: room.question,
+		generated_time: room.generated_time,
+		answer: room.answer
+	}
+
+
+
 changeQuestion = ->
 	return unless room.question and room.generated_time
 	cutoff = 15
@@ -701,8 +718,8 @@ create_report_form = (info) ->
 create_bundle = (info) ->
 	bundle = $('<div>').addClass('bundle')
 		.addClass("qid-#{info.qid}")
-		.attr('name', 'question-' + sha1(room.generated_time + info.question))
-		.addClass('room-'+room.name?.replace(/[^a-z0-9]/g, ''))
+
+	bundle.data 'info', info
 
 	breadcrumb = $('<ul>')
 	star = $('<a>', {
@@ -767,19 +784,6 @@ create_bundle = (info) ->
 		.append($('<div>').addClass('sticky'))
 		.append($('<div>').addClass('annotations'))
 
-
-createBundle = ->
-	create_bundle {
-		year: room.info.year, 
-		difficulty: room.info.difficulty, 
-		category: room.info.category, 
-		tournament: room.info.tournament,
-		round: room.info.round,
-		num: room.info.num,
-		qid: room.qid,
-		question: room.question,
-		answer: room.answer
-	}
 
 
 reader_children = null

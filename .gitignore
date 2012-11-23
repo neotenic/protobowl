@@ -2,3 +2,6 @@ remote.js
 remote.coffee
 node_modules
 protobowl.sublime_workspace
+app.js
+offline.js
+auth.js
