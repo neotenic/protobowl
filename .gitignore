@@ -1,7 +1,7 @@
 remote.js
 remote.coffee
 node_modules
-protobowl.sublime_workspace
+protobowl.sublime-workspace
 app.js
 offline.js
 auth.js
