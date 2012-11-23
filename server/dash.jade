@@ -135,6 +135,17 @@ script
 		addLine(room, line)
 		console.log('chat', e)
 	})
+	sock.on('next', function(e){
+		var room = e[0];
+		var answer = e[1];
+		
+		var line = document.createElement('p');
+		line.className = 'status';
+		line.appendChild(document.createTextNode('new question: '))
+		line.appendChild(document.createTextNode(answer))
+		addLine(room, line)
+		console.log('next', e)
+	})
 	sock.on('verb', function(e){
 		var room = e[0];
 		var user = e[1];

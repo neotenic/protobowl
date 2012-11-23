@@ -438,12 +438,12 @@ renderUsers = ->
 		row = $('<tr>').data('entity', user).appendTo list
 		row.click -> 1
 		badge = $('<span>').addClass('badge pull-right').text get_score(user)
-		if me.id in (user.members || [user.id])
+		if me in (user.members || [user])
 			badge.addClass('badge-info').attr('title', 'You')
 		else
 			idle_count = 0
 			active_count = 0
-			for member in (user.members || [user.id])
+			for member in (user.members || [user])
 				if member.online()
 					if member.active()
 						active_count++

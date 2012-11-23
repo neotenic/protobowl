@@ -58,7 +58,7 @@ html(lang="en")
 					if user.users || user.rooms
 						li
 							| users: #{user.users} rooms: #{user.rooms}
-					if new Date - user.banned < 10 * 60 * 1000
+					if Date.now() < user.banned
 						li
 							| BANNED
 		- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].sockets.length > 0})}

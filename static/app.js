@@ -3540,6 +3540,7 @@ QuizPlayer = (function() {
     this.last_action = this.room.serverTime();
     this.last_session = this.room.serverTime();
     this.created = this.room.serverTime();
+    this.idle = false;
     this.times_buzzed = 0;
     this.show_typing = true;
     this.team = '';
@@ -3554,6 +3555,7 @@ QuizPlayer = (function() {
 
   QuizPlayer.prototype.touch = function(no_add_time) {
     var current_time, elapsed;
+    this.idle = false;
     current_time = this.room.serverTime();
     if (!no_add_time) {
       elapsed = current_time - this.last_action;
@@ -3565,7 +3567,7 @@ QuizPlayer = (function() {
   };
 
   QuizPlayer.prototype.active = function() {
-    return this.online() && (this.room.serverTime() - this.last_action) < 1000 * 60 * 10;
+    return this.online() && (this.room.serverTime() - this.last_action) < 1000 * 60 * 10 && !this.idle;
   };
 
   QuizPlayer.prototype.online = function() {
@@ -3841,6 +3843,10 @@ QuizPlayer = (function() {
       this.room.unfreeze();
     }
     return this.room.sync();
+  };
+
+  QuizPlayer.prototype.set_idle = function(val) {
+    return this.idle = !!val;
   };
 
   QuizPlayer.prototype.set_lock = function(val) {
@@ -5058,7 +5064,25 @@ cache_event = function() {
 };
 
 (function() {
-  var name, _i, _len, _ref, _results;
+  var event, hidden, name, _i, _len, _ref, _results;
+  if (document.hidden != null) {
+    hidden = 'hidden';
+    event = 'visibilitychange';
+  } else if (document.mozHidden != null) {
+    hidden = 'mozHidden';
+    event = 'mozvisibilitychange';
+  } else if (document.msHidden != null) {
+    hidden = 'msHidden';
+    event = 'msvisibilitychange';
+  } else if (document.webkitHidden != null) {
+    hidden = 'webkitHidden';
+    event = 'webkitvisibilitychange';
+  }
+  if (hidden) {
+    document.addEventListener(event, function() {
+      return me.set_idle(document[hidden]);
+    }, false);
+  }
   if (window.applicationCache) {
     _ref = ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready'];
     _results = [];

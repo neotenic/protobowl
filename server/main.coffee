@@ -176,7 +176,10 @@ class SocketQuizRoom extends QuizRoom
 
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
 
-	get_question: (cb) ->
+	get_question: (callback) ->
+		cb = (question) =>
+			log 'next', [@name, question.answer]
+			callback(question)
 		if @next_id and @show_bonus
 			remote.get_by_id @next_id, cb
 		else
@@ -584,6 +587,13 @@ app.post '/stalkermode/reports/remove_report/:id', (req, res) ->
 	remote.Report.remove {_id: mongoose.Types.ObjectId(req.params.id)}, (err, docs) ->
 		res.end 'REMOVED IT' + req.params.id
 
+
+app.post '/stalkermode/reports/remove_question/:id', (req, res) ->
+	mongoose = require 'mongoose'
+	remote.Question.remove {_id: mongoose.Types.ObjectId(req.params.id)}, (err, docs) ->
+		res.end 'REMOVED IT' + req.params.id
+
+
 app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 	mongoose = require 'mongoose'
 	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
@@ -592,6 +602,9 @@ app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 		doc.save()
 		res.end('gots it')
 
+app.get '/stalkermode/reports/all', (req, res) ->
+	remote.Report.find {}, (err, docs) ->
+		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/stalkermode/reports/:type', (req, res) ->
 	remote.Report.find {describe: req.params.type}, (err, docs) ->

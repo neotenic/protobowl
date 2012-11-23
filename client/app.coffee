@@ -362,6 +362,18 @@ cache_event = ->
 			$('#cachestatus').text 'Checking'
 
 do -> # isolate variables from globals
+	if document.hidden? then hidden = 'hidden'; event = 'visibilitychange'
+	else if document.mozHidden? then hidden = 'mozHidden'; event = 'mozvisibilitychange'
+	else if document.msHidden? then hidden = 'msHidden'; event = 'msvisibilitychange'
+	else if document.webkitHidden? then hidden = 'webkitHidden'; event = 'webkitvisibilitychange'
+	
+	if hidden
+		document.addEventListener event, ->
+			me.set_idle document[hidden]
+		, false
+
+
+	# document.addEventListener listener
 	if window.applicationCache
 		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
 			applicationCache.addEventListener name, cache_event
