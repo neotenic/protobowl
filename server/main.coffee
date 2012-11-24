@@ -676,6 +676,7 @@ app.get '/stalkermode', (req, res) ->
 		start: uptime_begin,
 		reaped,
 		gammasave,
+		cookie: req.protocookie,
 		queue: Object.keys(journal_queue).length,
 		rooms
 	}

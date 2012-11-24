@@ -91,7 +91,7 @@ html(lang="en")
 
 			ul.nav.nav-pills
 				li
-					a(href="/stalkermode/users") User View
+					a(href="/stalkermode/users") Users
 
 				li
 					a(href="/stalkermode/patriot") Wiretap
@@ -100,9 +100,14 @@ html(lang="en")
 					a(href="/stalkermode/reports/all") Reports
 
 				li
-					a(href="/stalkermode/logout") Logout 
-				li
-					a(href="/stalkermode/cook") Cook
+					a(href="/stalkermode/archived") Archived 
+
+				if cookie
+					li
+						a(href="/stalkermode/logout") Logout 
+				else
+					li
+						a(href="/stalkermode/cook") Cook
 
 
 			p #{mem}
