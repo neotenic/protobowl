@@ -200,8 +200,8 @@ listen 'joined', (data) ->
 	if me.id[0] != '_'
 		if localStorage.username
 			if !data.existing
-				me.name = localStorage.username
 				setTimeout ->
+					me.name = localStorage.username
 					me.set_name me.name
 				, 137 # for some reason there's this odd bug where
 				# if i dont have a timeout, this doesn't update the
