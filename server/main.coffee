@@ -605,17 +605,6 @@ app.post '/stalkermode/algore', (req, res) ->
 	remote.initialize_remote (time, layers) ->
 		res.end("counted all cats in #{time}ms: #{util.inspect(layers)}")
 
-app.get '/stalkermode/full', (req, res) ->
-	res.render 'admin.jade', {
-		env: app.settings.env,
-		mem: util.inspect(process.memoryUsage()),
-		start: uptime_begin,
-		reaped: reaped,
-		full_room: true,
-		queue: Object.keys(journal_queue).length,
-		rooms: rooms
-	}
-
 app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
 
 app.get '/stalkermode/cook', (req, res) ->
@@ -652,7 +641,6 @@ app.get '/stalkermode', (req, res) ->
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,
 		reaped: reaped,
-		full_room: false,
 		queue: Object.keys(journal_queue).length,
 		rooms: rooms
 	}

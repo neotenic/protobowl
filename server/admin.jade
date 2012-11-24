@@ -79,12 +79,6 @@ html(lang="en")
 					each user, id in room.users
 						if user.active()
 							mixin display_user(user)
-
-							//- li
-							//- 	form(action="/stalkermode/ban", method="post")
-							//- 		input(type="hidden", name="room", value="#{room.name}")
-							//- 		input(type="hidden", name="user", value="#{id}")
-							//- 		input(type="submit", value="Ban #{user.name} from #{room.name}")
 				ul.idle
 					each user, id in room.users
 						if user.online() && !user.active()
@@ -95,15 +89,6 @@ html(lang="en")
 							mixin display_user(user)
 
 		h1 STALKERMODE ENGAGED
-		
-		if full_room
-			h4 FULL VIEW
-			a(href="/stalkermode") Summary Stalkermode View 
-		else
-			h4 SUMMARY VIEW
-			a(href="/stalkermode/full") Full Stalkermode View 
-
-		| - 
 
 		a(href="/stalkermode/users") User View
 
@@ -162,8 +147,7 @@ html(lang="en")
 			- var sorted_names = Object.keys(rooms).sort(function(b,a){return weight_room(rooms[a]) - weight_room(rooms[b])})
 			each room_name in sorted_names
 				- var room = rooms[room_name]
-				if full_room || count_online(room) > 0
-					mixin display_room(room, room_name)
+				mixin display_room(room, room_name)
 
 
 		hr
