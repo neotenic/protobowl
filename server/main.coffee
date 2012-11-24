@@ -236,7 +236,9 @@ class SocketQuizRoom extends QuizRoom
 
 	count_questions: (type, difficulty, category, cb) -> remote.count_questions(type, difficulty, category, cb) 
 
-	journal: -> journal_queue[@name] = +new Date
+	journal: -> 
+		unless @name of journal_queue
+			journal_queue[@name] = +new Date
 
 	end_buzz: (session) ->
 		if @attempt?.user
@@ -422,54 +424,78 @@ io.sockets.on 'connection', (sock) ->
 			sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
 			sock.emit 'application_update', +new Date # check for updates in case it was an update
 
+refresh_stale = ->
+	STALE_TIME = 1000 * 60 * 5 # five minutes?
+	for name, room of rooms
+		if !room.archived or Date.now() - room.archived > STALE_TIME
+			# the room hasn't been archived in a few minutes
+			remote.archiveRoom room
+			delete journal_queue[name]
+			return
+
+setInterval refresh_stale, 1000 * 20 # check 3x every minute
 
 journal_queue = {}
 
-process_journal_queue = ->
-	room_names = Object.keys(journal_queue).sort (a, b) -> journal_queue[a] - journal_queue[b]
-	return if room_names.length is 0
-	first = room_names[0]
-	delete journal_queue[first]
-	if first of rooms
-		partial_journal first
+process_queue = ->
+	return unless gammasave
+	min_time = Date.now()
+	min_room = null
+	for name, time of journal_queue
+		if time < min_time	
+			min_time = time
+			min_room = name
+	if min_room
+		room = rooms[min_room]
+		if !room.archived or Date.now() - room.archived > 1000 * 10
+			remote.archiveRoom room
+			delete journal_queue[min_room]
 
-setInterval process_journal_queue, 1000
+setInterval process_queue, 1000	
 
-last_full_sync = 0
-partial_journal = (name) ->
-	journal_config.path = '/journal'
-	journal_config.method = 'POST'
-	req = http.request journal_config, (res) ->
-		res.setEncoding 'utf8'
-		# console.log "committed journal for", name
-		res.on 'data', (chunk) ->
-			if chunk == 'do_full_sync'
-				if last_full_sync < new Date - 1000 * 60 * 2
-					log 'log', 'got trigger to do full sync'
-					last_full_sync = +new Date
-					journal_queue = {} # full syncs clear queue
-					full_journal_sync()
-	req.on 'error', (e) ->
-		log 'error', 'journal error ' + e.message
-		# console.log "journal error"
-	req.write(JSON.stringify(rooms[name].serialize()))
-	req.end()
 
-full_journal_sync = ->
-	backup = (room.serialize() for name, room of rooms)
-	journal_config.path = '/full_sync'
-	journal_config.method = 'POST'
-	req = http.request journal_config, (res) ->
-		# console.log "done full sync"
-		log 'log', 'completed full sync'
-	req.on 'error', (e) ->
-		log 'error', 'full sync error ' + e.message
-	req.write(JSON.stringify(backup))
-	req.end()
 
-rooms = {}
+# process_journal_queue = ->
+# 	room_names = Object.keys(journal_queue).sort (a, b) -> journal_queue[a] - journal_queue[b]
+# 	return if room_names.length is 0
+# 	first = room_names[0]
+# 	delete journal_queue[first]
+# 	if first of rooms
+# 		partial_journal first
 
-# this is actually really quite hacky
+# setInterval process_journal_queue, 1000
+
+# last_full_sync = 0
+# partial_journal = (name) ->
+# 	journal_config.path = '/journal'
+# 	journal_config.method = 'POST'
+# 	req = http.request journal_config, (res) ->
+# 		res.setEncoding 'utf8'
+# 		# console.log "committed journal for", name
+# 		res.on 'data', (chunk) ->
+# 			if chunk == 'do_full_sync'
+# 				if last_full_sync < new Date - 1000 * 60 * 2
+# 					log 'log', 'got trigger to do full sync'
+# 					last_full_sync = +new Date
+# 					journal_queue = {} # full syncs clear queue
+# 					full_journal_sync()
+# 	req.on 'error', (e) ->
+# 		log 'error', 'journal error ' + e.message
+# 		# console.log "journal error"
+# 	req.write(JSON.stringify(rooms[name].serialize()))
+# 	req.end()
+
+# full_journal_sync = ->
+# 	backup = (room.serialize() for name, room of rooms)
+# 	journal_config.path = '/full_sync'
+# 	journal_config.method = 'POST'
+# 	req = http.request journal_config, (res) ->
+# 		# console.log "done full sync"
+# 		log 'log', 'completed full sync'
+# 	req.on 'error', (e) ->
+# 		log 'error', 'full sync error ' + e.message
+# 	req.write(JSON.stringify(backup))
+# 	req.end()
 
 restore_journal = (callback) ->
 	journal_config.path = '/retrieve'
@@ -482,9 +508,6 @@ restore_journal = (callback) ->
 		res.on 'end', ->
 			console.log "Restoring Journal Contents #{packet.length} bytes"
 			json = JSON.parse(packet)
-
-			# a new question's gonna be pickt, so just restore settings 
-			# fields = ["type", "difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz", "no_skip", "admins"]
 			for name, data of json when !(name of rooms)
 				room = new SocketQuizRoom(name) 
 				rooms[name] = room
@@ -492,7 +515,7 @@ restore_journal = (callback) ->
 			console.log 'restored journal'
 			callback() if callback
 	req.on 'error', ->
-		console.log "Journal not accessible. Starting with defaults."
+		console.log "Journal inaccessible."
 		callback() if callback
 	req.end()
 
@@ -547,6 +570,7 @@ clearInactive = ->
 			# console.log 'removing empty room', name
 			log 'reap_room', name
 			delete rooms[name]
+			remote.removeRoom?(name)
 			reaped.rooms++
 
 
@@ -634,15 +658,26 @@ app.post '/stalkermode/disco/:room/:user', (req, res) ->
 	io.sockets.socket(sock).disconnect() for sock in u.sockets
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
+gammasave = false
+
+app.get '/stalkermode/gamma-off', (req, res) ->
+	gammasave = false
+	res.redirect '/stalkermode'
+
+app.get '/stalkermode/hulk-smash', (req, res) ->
+	gammasave = Date.now()
+	res.redirect '/stalkermode'
+
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
 	res.render 'admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,
-		reaped: reaped,
+		reaped,
+		gammasave,
 		queue: Object.keys(journal_queue).length,
-		rooms: rooms
+		rooms
 	}
 
 app.post '/stalkermode/reports/remove_report/:id', (req, res) ->

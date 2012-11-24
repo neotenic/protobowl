@@ -102,6 +102,17 @@ html(lang="en")
 		a(href="/stalkermode/reports/category") Category Reports
 
 		p #{mem}
+
+		if gammasave
+			a(href="/stalkermode/gamma-off") Disable High Frequency Saving
+
+			h3 WARNING! HIGH FREQUENCY SAVE ENABLED 
+				mixin time(gammasave)
+		else
+			a(href="/stalkermode/hulk-smash") Enable High Frequency Saving
+
+
+
 		- var online = 0, active_users = 0, points = 0, room_num = 0, active_rooms = 0, time_spent = 0, total_users = 0
 		each room, room_name in rooms
 			- room_num++
