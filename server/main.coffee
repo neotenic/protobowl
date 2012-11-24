@@ -518,8 +518,8 @@ clearInactive = ->
 				if overcrowded_room and username is oldest_user
 					evict_user = true
 				if evict_user or
-				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or
-				(big_room and user.correct < 2 and user.last_action < new Date - 1000 * 60 * 10)
+				(user.last_action < new Date - 1000 * 60 * 15 and user.guesses is 0) or
+				(big_room and user.correct < 2 and user.last_action < new Date - 1000 * 60 * 5)
 					log 'reap_user', {
 						seen: user.seen, 
 						guesses: user.guesses, 
@@ -574,7 +574,7 @@ swapInactive = ->
 		continue if online.length > 0
 		events = (room.serverTime() - user.last_action for username, user of room.users)
 		shortest_lapse = Math.min.apply @, events
-		continue if shortest_lapse < 1000 * 60 * 10 # things are stale after 10 minutes? 10 secs for dev
+		continue if shortest_lapse < 1000 * 60 * 20 # things are stale after a few minutes
 		# ripe for swapping
 		remote.archiveRoom room, (name) ->
 			delete rooms[name]
