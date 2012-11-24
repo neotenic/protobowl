@@ -1,0 +1,13 @@
+link(rel="stylesheet", href="/protobowl.css")
+
+div.container
+	h3 #{list.length} rooms archived
+	p
+		a(href="/stalkermode") &larr; Stalkermode View 
+	ul
+		each room in list
+			li
+				| #{room} 
+				if rooms[room]
+					| <b>active</b>
+				a(href="/#{room}?ninja") &rarr;
