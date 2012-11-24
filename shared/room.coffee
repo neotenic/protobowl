@@ -52,7 +52,7 @@ class QuizRoom
 		@cumulative = []
 
 		@rate = 1000 * 60 / 5 / 200
-		@__timeout = -1
+		@__timeout = {}
 		@distribution = default_distribution
 
 		@freeze()
@@ -63,7 +63,6 @@ class QuizRoom
 		@max_buzz = null
 		@no_skip = false
 		@show_bonus = false
-
 
 	log: (message) -> @emit 'log', { verb: message }
 
@@ -174,7 +173,8 @@ class QuizRoom
 				user.seen++ if user.active()
 				user.history.push user.score()
 				user.history = user.history.slice(-30)
-
+			
+			@journal()
 			@sync(2)
 
 
@@ -413,21 +413,30 @@ class QuizRoom
 	
 	journal: -> 0 # unimplemented
 
-	journal_export: ->
-		# this is like a simplified sync
+	# journal_export: ->
+	# 	# this is like a simplified sync
+	# 	data = {}
+	# 	# user data!
+	# 	user_blacklist = ["sockets", "room"]
+	# 	data.users = for id of @users
+	# 		user = {}
+	# 		for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function'] and attr[0] != '_'
+	# 			user[attr] = @users[id][attr]
+	# 		user
+	# 	# global room settings
+	# 	settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus", "admins"]
+	# 	for field in settings
+	# 		data[field] = @[field]
+	# 	# actually save stuff
+	# 	return data
+
+	serialize: ->
 		data = {}
-		# user data!
-		user_blacklist = ["sockets", "room"]
-		data.users = for id of @users
-			user = {}
-			for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function'] and attr[0] != '_'
-				user[attr] = @users[id][attr]
-			user
-		# global room settings
-		settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus", "admins"]
-		for field in settings
-			data[field] = @[field]
-		# actually save stuff
+		blacklist = ['users']
+		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[0] != '_'
+			data[attr] = this[attr]
+		data.users = (user.serialize() for id, user of @users)
 		return data
+
 
 exports.QuizRoom = QuizRoom if exports?

@@ -42,7 +42,7 @@ html(lang="en")
 			li #{user.team || ''}
 				if user.room && user.room.admins && user.room.admins.indexOf(user.id) != -1
 					i *ADMIN* 
-				b #{user.name}
+				b #{user.name} 
 				if !('users' in user)
 					a(href="/stalkermode/user/#{user.room.name}/#{user.id}") &rarr; 
 				| (last seen 
@@ -61,8 +61,8 @@ html(lang="en")
 					if Date.now() < user.banned
 						li
 							| BANNED
-		- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].sockets.length > 0})}
-		- function get_active(room){return get_online(room).filter(function(e){return room.users[e].last_action > new Date - 1000 * 60 * 10})}
+		- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].online()})}
+		- function get_active(room){return get_online(room).filter(function(e){return room.users[e].active()})}
 		- function count_online(room) {return get_online(room).length}
 		- function count_active(room) {return get_active(room).length}
 		- function weight_room(room) {return count_online(room) * 0.1 + count_active(room)}
@@ -77,7 +77,7 @@ html(lang="en")
 				ul Difficulty/Subject: #{room.difficulty || "All"} #{room.category || "Pot"}
 				ul
 					each user, id in room.users
-						if user.sockets.length > 0 && new Date - user.last_action < 1000 * 60 * 10
+						if user.active()
 							mixin display_user(user)
 
 							//- li
@@ -87,11 +87,11 @@ html(lang="en")
 							//- 		input(type="submit", value="Ban #{user.name} from #{room.name}")
 				ul.idle
 					each user, id in room.users
-						if user.sockets.length > 0 && new Date - user.last_action > 1000 * 60 * 10
+						if user.online() && !user.active()
 							mixin display_user(user)
 				ul.offline
 					each user, id in room.users
-						if user.sockets.length == 0
+						if !user.online()
 							mixin display_user(user)
 
 		h1 STALKERMODE ENGAGED

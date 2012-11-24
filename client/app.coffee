@@ -201,7 +201,13 @@ listen 'joined', (data) ->
 		if localStorage.username
 			if !data.existing
 				me.name = localStorage.username
-				me.set_name me.name
+				setTimeout ->
+					me.set_name me.name
+				, 137 # for some reason there's this odd bug where
+				# if i dont have a timeout, this doesn't update the
+				# stuff at all, so I really don't understand why
+				# and moreover, I think the fine structure constant
+				# is an appropriate metaphor for that non-understanding
 		else
 			localStorage.username = data.name
 

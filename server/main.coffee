@@ -244,6 +244,15 @@ class SocketQuizRoom extends QuizRoom
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, ruling]
 		super(session)
 
+	deserialize: (data) ->
+		blacklist = ['users']
+		for attr, val of data when attr not in blacklist
+			@[attr] = val
+		for user in data.users
+			u = new SocketQuizPlayer(@, user.id)
+			@users[user.id] = u
+			u.deserialize(user)
+
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
 		super(room, id)
@@ -330,6 +339,23 @@ user_count_log = (message, room_name) ->
 			active_count++ if user.active()
 	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name}
 
+
+load_room = (name, callback) ->
+	if rooms[name] # its really nice and simple if you have it cached
+		return callback rooms[name], false
+	room = new SocketQuizRoom(name) 
+	rooms[name] = room
+	if remote.loadRoom
+		remote.loadRoom name, (data) ->		
+			if data and data.users
+				room.deserialize data
+				callback room, false
+			else
+				callback room, true
+	else
+		callback room, true
+
+
 io.sockets.on 'connection', (sock) ->
 	headers = sock.handshake.headers
 	return sock.disconnect() unless headers.referer and headers.cookie
@@ -354,47 +380,47 @@ io.sockets.on 'connection', (sock) ->
 	# configger the things which are derived from said parsed stuff
 	room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
 	question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
-	publicID = sha1(cookie.protocookie + room_name)
 
-	publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" if is_ninja
-	publicID += "_god" if is_god
-	
 	# get the room
-	unless rooms[room_name]
-		rooms[room_name] = new SocketQuizRoom(room_name) 
-		rooms[room_name].type = question_type
+	load_room room_name, (room, is_new) ->
+		if is_new
+			room.type = question_type
 
-	room = rooms[room_name]
+		publicID = sha1(cookie.protocookie + room_name)
 
-	# get the user's identity
-	existing_user = (publicID of room.users)
-	unless room.users[publicID]
-		room.users[publicID] = new SocketQuizPlayer(room, publicID) 
-		if room_name in public_room_list
-			room.users[publicID].lock = (Math.random() < 0.6) # set defaults on big public rooms to lock
+		publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" if is_ninja
+		publicID += "_god" if is_god
+		
 
-	user = room.users[publicID]
-	if room.serverTime() < user.banned
-		sock.emit 'redirect', "/#{room_name}-banned"
-		sock.disconnect()
-		return
-	user.name = 'secret ninja' if is_ninja
-	
-	sock.join room_name
-	
-	user.add_socket sock
-	if is_god
-		sock.join name for name of rooms
+		# get the user's identity
+		existing_user = (publicID of room.users)
+		unless room.users[publicID]
+			room.users[publicID] = new SocketQuizPlayer(room, publicID) 
+			if room_name in public_room_list
+				room.users[publicID].lock = (Math.random() < 0.6) # set defaults on big public rooms to lock
 
-	sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
-	
-	# tell that there's a new person at the partaay
-	room.sync(3)
+		user = room.users[publicID]
+		if room.serverTime() < user.banned
+			sock.emit 'redirect', "/#{room_name}-banned"
+			sock.disconnect()
+			return
+		user.name = 'secret ninja' if is_ninja
+		
+		sock.join room_name
+		
+		user.add_socket sock
+		if is_god
+			sock.join name for name of rooms
 
-	# # detect if the server had been recently restarted
-	if new Date - uptime_begin < 1000 * 60 and existing_user
-		sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental and not necessarily reliable). The journal does not record the current question, chat messages, or current attempts, so you may need to manually advance a question. This may have been part of a server or client software update, or the result of an unexpected server crash. We apologize for any inconvienience this may have caused.'}
-		sock.emit 'application_update', +new Date # check for updates in case it was an update
+		sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
+		
+		# tell that there's a new person at the partaay
+		room.sync(3)
+
+		# # detect if the server had been recently restarted
+		if new Date - uptime_begin < 1000 * 60 and existing_user
+			sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
+			sock.emit 'application_update', +new Date # check for updates in case it was an update
 
 
 journal_queue = {}
@@ -426,12 +452,11 @@ partial_journal = (name) ->
 	req.on 'error', (e) ->
 		log 'error', 'journal error ' + e.message
 		# console.log "journal error"
-	req.write(JSON.stringify(rooms[name].journal_export()))
+	req.write(JSON.stringify(rooms[name].serialize()))
 	req.end()
 
 full_journal_sync = ->
-	backup = for name, room of rooms
-		room.journal_export()
+	backup = (room.serialize() for name, room of rooms)
 	journal_config.path = '/full_sync'
 	journal_config.method = 'POST'
 	req = http.request journal_config, (res) ->
@@ -450,31 +475,20 @@ restore_journal = (callback) ->
 	journal_config.path = '/retrieve'
 	journal_config.method = 'GET'
 	req = http.request journal_config, (res) ->
-		console.log 'GOT JOURNAL RESPONSE'
 		res.setEncoding 'utf8'
 		packet = ''
 		res.on 'data', (chunk) ->
 			packet += chunk
 		res.on 'end', ->
-			console.log "GOT DATA"
+			console.log "Restoring Journal Contents #{packet.length} bytes"
 			json = JSON.parse(packet)
 
 			# a new question's gonna be pickt, so just restore settings 
-			fields = ["type", "difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz", "no_skip", "admins"]
-			for name, data of json
-				# console.log data
-				unless name of rooms
-					log 'log', 'restoring ' + name
-					rooms[name] = new SocketQuizRoom(name)
-					room = rooms[name]
-					for user in data.users
-						id = user.id
-						room.users[id] = new SocketQuizPlayer(room, id)
-						for a, b of user
-							room.users[id][a] = b
-
-					for field in fields
-						room[field] = data[field] if field of data
+			# fields = ["type", "difficulty", "distribution", "category", "rate", "answer_duration", "max_buzz", "no_skip", "admins"]
+			for name, data of json when !(name of rooms)
+				room = new SocketQuizRoom(name) 
+				rooms[name] = room
+				room.deserialize data
 			console.log 'restored journal'
 			callback() if callback
 	req.on 'error', ->
@@ -483,32 +497,13 @@ restore_journal = (callback) ->
 	req.end()
 
 
-setInterval ->
-	clearInactive 1000 * 60 * 60 * 48 
-, 1000 * 10 # every ten seconds
-
-
-reaped = {
-	name: "__reaped",
-	users: 0,
-	rooms: 0,
-	seen: 0,
-	correct: 0,
-	guesses: 0,
-	interrupts: 0,
-	time_spent: 0,
-	early: 0,
-	last_action: +new Date
-}
-
-
-clearInactive = (threshold) ->
+clearInactive = ->
 	# garbazhe collectour
 	for name, room of rooms
 		len = 0
 		offline_pool = (username for username, user of room.users when user.sockets.length is 0)
-		overcrowded_room = offline_pool.length > 10
-		big_room = Object.keys(room.users).length > 10
+		overcrowded_room = offline_pool.length > 12
+		big_room = Object.keys(room.users).length > 12
 		
 		oldest_user = ''
 		if overcrowded_room
@@ -522,7 +517,7 @@ clearInactive = (threshold) ->
 				evict_user = false
 				if overcrowded_room and username is oldest_user
 					evict_user = true
-				if (user.last_action < new Date - threshold) or evict_user or
+				if evict_user or
 				(user.last_action < new Date - 1000 * 60 * 30 and user.guesses is 0) or
 				(big_room and user.correct < 2 and user.last_action < new Date - 1000 * 60 * 10)
 					log 'reap_user', {
@@ -553,6 +548,40 @@ clearInactive = (threshold) ->
 			log 'reap_room', name
 			delete rooms[name]
 			reaped.rooms++
+
+
+
+setInterval clearInactive, 1000 * 10 # every ten seconds
+
+
+reaped = {
+	name: "__reaped",
+	users: 0,
+	rooms: 0,
+	seen: 0,
+	correct: 0,
+	guesses: 0,
+	interrupts: 0,
+	time_spent: 0,
+	early: 0,
+	last_action: +new Date
+}
+
+# think of it like a filesystem swap; slow access external memory that is used to save ram
+swapInactive = ->
+	for name, room of rooms
+		online = (user for username, user of room.users when user.online())
+		continue if online.length > 0
+		events = (room.serverTime() - user.last_action for username, user of room.users)
+		shortest_lapse = Math.min.apply @, events
+		continue if shortest_lapse < 1000 * 60 * 10 # things are stale after 10 minutes? 10 secs for dev
+		# ripe for swapping
+		remote.archiveRoom room, (name) ->
+			delete rooms[name]
+
+if remote.archiveRoom
+	# do it every ten seconds like a bonobo
+	setInterval swapInactive, 1000 * 10 
 
 
 util = require('util')

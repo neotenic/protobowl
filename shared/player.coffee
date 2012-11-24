@@ -399,7 +399,14 @@ class QuizPlayer
 			@room.admins = (id for id in @room.admins when id isnt @id)
 			@room.sync(1) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 
+	serialize: ->
+		data = {}
+		blacklist = ['sockets', 'room']
+		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[0] != '_'
+			data[attr] = this[attr]
+		return data
 
-
+	deserialize: (obj) ->
+		this[attr] = val for attr, val of obj when attr[0] != '_'
 
 exports.QuizPlayer = QuizPlayer if exports?
