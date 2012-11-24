@@ -710,6 +710,10 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 
 app.get '/stalkermode/patriot', (req, res) -> res.render 'dash.jade'
 
+app.get '/stalkermode/archived', (req, res) -> 
+	remote.listArchived (list) ->
+		res.render 'archived.jade', { list, rooms }
+
 app.get '/stalkermode/:other', (req, res) -> res.redirect '/stalkermode'
 
 app.get '/401', (req, res) -> res.render 'auth.jade', {}

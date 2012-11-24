@@ -38,14 +38,16 @@ style
 	span.reveal, .status { font-style: italic; }
 	h1 { font-size: 120%; margin: 0 }
 
-.room.thumbnail
-	div
+.room.thumbnail(style="min-width: 100px")
+	p
+		a(href="/stalkermode") &larr; Stalkermode View 
+	p
 		h1 <span id="active">?</span> Active Users 
 		| peak: <span id="peakactive">?</span> min: <span id="minactive">?</span> 
 		h1 <span id="online">?</span> Online Users 
 		| peak: <span id="peakonline">?</span> min: <span id="minonline">?</span> 
 	hr
-	div
+	p
 		button.btn#roomsort Sort Rooms
 
 script
