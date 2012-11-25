@@ -429,7 +429,7 @@ refresh_stale = ->
 	for name, room of rooms
 		if !room.archived or Date.now() - room.archived > STALE_TIME
 			# the room hasn't been archived in a few minutes
-			remote.archiveRoom room
+			remote.archiveRoom? room
 			delete journal_queue[name]
 			return
 
@@ -448,7 +448,7 @@ process_queue = ->
 	if min_room
 		room = rooms[min_room]
 		if !room.archived or Date.now() - room.archived > 1000 * 10
-			remote.archiveRoom room
+			remote.archiveRoom? room
 			delete journal_queue[min_room]
 
 setInterval process_queue, 1000	
@@ -600,7 +600,7 @@ swapInactive = ->
 		shortest_lapse = Math.min.apply @, events
 		continue if shortest_lapse < 1000 * 60 * 20 # things are stale after a few minutes
 		# ripe for swapping
-		remote.archiveRoom room, (name) ->
+		remote.archiveRoom? room, (name) ->
 			delete rooms[name]
 
 if remote.archiveRoom
