@@ -191,6 +191,18 @@ listen 'log', (data) -> verbAnnotation data
 listen 'debug', (data) -> logAnnotation data
 listen 'sync', (data) -> synchronize data
 
+listen 'rename_user', ({old_id, new_id}) ->
+	if me.id is old_id
+		me.id = new_id
+		room.users[me.id] = me
+	$(".user-#{old_id}").removeClass("user-#{old_id}").addClass("user-#{new_id}")
+	delete room.users[old_id]
+
+listen 'delete_user', (id) ->
+	console.log 'deleting user', id
+	delete room.users[id]
+	renderUsers()
+
 listen 'joined', (data) ->
 	me.id = data.id
 	room.users[me.id] = me
@@ -203,6 +215,7 @@ listen 'joined', (data) ->
 				setTimeout ->
 					me.name = localStorage.username
 					me.set_name me.name
+					$('#username').val me.name
 				, 137 # for some reason there's this odd bug where
 				# if i dont have a timeout, this doesn't update the
 				# stuff at all, so I really don't understand why

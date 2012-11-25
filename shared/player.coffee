@@ -409,4 +409,8 @@ class QuizPlayer
 	deserialize: (obj) ->
 		this[attr] = val for attr, val of obj when attr[0] != '_'
 
+	testing_delete_me_later: (new_id) ->
+		@room.merge_user(@id, new_id)
+		
+
 exports.QuizPlayer = QuizPlayer if exports?

@@ -250,6 +250,24 @@ class SocketQuizRoom extends QuizRoom
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, ruling]
 		super(session)
 
+	merge_user: (id, new_id) ->
+		return false if !@users[id]
+		if @users[new_id]
+			# merge current user into this one
+			sum_terms = ['guesses', 'interrupts', 'early', 'seen', 'correct', 'time_spent']
+			for term in sum_terms
+				@users[new_id][term] += @users[id][term]
+			delete @users[id]
+		else
+			# rename the current user into this new one
+			@users[new_id] = @users[id]
+			@users[new_id].id = new_id
+			delete @users[id]
+			
+		@emit 'rename_user', {old_id: id, new_id: new_id}
+		@sync(1)
+		
+
 	deserialize: (data) ->
 		blacklist = ['users']
 		for attr, val of data when attr not in blacklist

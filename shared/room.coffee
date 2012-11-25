@@ -413,22 +413,6 @@ class QuizRoom
 	
 	journal: -> 0 # unimplemented
 
-	# journal_export: ->
-	# 	# this is like a simplified sync
-	# 	data = {}
-	# 	# user data!
-	# 	user_blacklist = ["sockets", "room"]
-	# 	data.users = for id of @users
-	# 		user = {}
-	# 		for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function'] and attr[0] != '_'
-	# 			user[attr] = @users[id][attr]
-	# 		user
-	# 	# global room settings
-	# 	settings = ["type", "name", "difficulty", "category", "rate", "answer_duration", "max_buzz", "distribution", "no_skip", "show_bonus", "admins"]
-	# 	for field in settings
-	# 		data[field] = @[field]
-	# 	# actually save stuff
-	# 	return data
 
 	serialize: ->
 		data = {}
