@@ -134,10 +134,14 @@ if app.settings.env is 'development'
 			console.log "changed file", filename
 			scheduledUpdate = setTimeout updateCache, 500
 
+	updateCache()
+	
 	fs.watch "shared", watcher
 	fs.watch "client", watcher
 	fs.watch "static/less", watcher
 	fs.watch "server/room.jade", watcher
+
+
 
 
 try 
