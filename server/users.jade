@@ -2,23 +2,9 @@ doctype 5
 html(lang="en")
 	head
 		title STALKERMODE
+		link(rel="stylesheet", href="/protobowl.css")
 		script(src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js")
-		style
-			* {
-				font-family: sans-serif;
-			}
-			table.sortable thead {
-				background-color:#eee;
-				color:#666666;
-				font-weight: bold;
-				cursor: default;
-			}
-			table {
-				width: 100%;
-			}
-			tr:nth-child(even) {
-				background-color: whiteSmoke;
-			}
+		
 	body
 		mixin duration(millisecs)
 			- var secs = millisecs / 1000
@@ -36,47 +22,47 @@ html(lang="en")
 				| #{Math.floor(secs / 60) % 60} minutes 
 			| #{Math.floor(secs % 60)} seconds
 			| ago
+		div.container
+			h1 STALKERMODE ENGAGED
+			h4 USER VIEW
+			p
+				a(href="/stalkermode") &larr; Stalkermode
+			
+			table.sortable.table.table-striped(style="width: 100%")
+				thead
+					tr
+						th room
+						th name
+						th score
+						th guesses
+						th correct
+						th interrupts
+						th early
+						th seen
+						th precision
+						th recall
+						th f
+						th time spent
+						th last action
 
-		h1 STALKERMODE ENGAGED
-		h4 USER VIEW
-		a(href="/stalkermode") Summary Stalkermode
-		hr
-		
-		table.sortable
-			thead
-				tr
-					th room
-					th name
-					th score
-					th guesses
-					th correct
-					th interrupts
-					th early
-					th seen
-					th precision
-					th recall
-					th f-score
-					th time spent
-					th last action
-
-			tbody
-				each room, room_name in rooms
-					each user, id in room.users
-						- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001))
-						tr
-							td= room_name
-							td= user.name
-							td= user.score()
-							td= user.guesses
-							td= user.correct
-							td= user.interrupts
-							td= user.early
-							td= user.seen
-							td= precision.toFixed(3)
-							td= recall.toFixed(3)
-							td= (2 * (precision * recall) / (precision + recall + 0.001)).toFixed(3)
-							td(sorttable_customkey="#{user.time_spent}")
-								mixin duration(user.time_spent)
-							td(sorttable_customkey="#{user.last_action}")
-								mixin time(user.last_action)
+				tbody
+					each room, room_name in rooms
+						each user, id in room.users
+							- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001))
+							tr
+								td= room_name
+								td= user.name
+								td= user.score()
+								td= user.guesses
+								td= user.correct
+								td= user.interrupts
+								td= user.early
+								td= user.seen
+								td= precision.toFixed(3)
+								td= recall.toFixed(3)
+								td= (2 * (precision * recall) / (precision + recall + 0.001)).toFixed(3)
+								td(sorttable_customkey="#{user.time_spent}")
+									mixin duration(user.time_spent)
+								td(sorttable_customkey="#{user.last_action}")
+									mixin time(user.last_action)
 

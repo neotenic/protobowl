@@ -280,6 +280,7 @@ class SocketQuizPlayer extends QuizPlayer
 	verb: (action, no_rate_limit) -> 
 		super(action, no_rate_limit)
 		log 'verb', [@room.name, @id + '-' + @name, action]
+		@room.journal()
 
 	online: -> @sockets.length > 0
 
@@ -456,72 +457,6 @@ process_queue = ->
 			delete journal_queue[min_room]
 
 setInterval process_queue, 1000	
-
-
-
-# process_journal_queue = ->
-# 	room_names = Object.keys(journal_queue).sort (a, b) -> journal_queue[a] - journal_queue[b]
-# 	return if room_names.length is 0
-# 	first = room_names[0]
-# 	delete journal_queue[first]
-# 	if first of rooms
-# 		partial_journal first
-
-# setInterval process_journal_queue, 1000
-
-# last_full_sync = 0
-# partial_journal = (name) ->
-# 	journal_config.path = '/journal'
-# 	journal_config.method = 'POST'
-# 	req = http.request journal_config, (res) ->
-# 		res.setEncoding 'utf8'
-# 		# console.log "committed journal for", name
-# 		res.on 'data', (chunk) ->
-# 			if chunk == 'do_full_sync'
-# 				if last_full_sync < new Date - 1000 * 60 * 2
-# 					log 'log', 'got trigger to do full sync'
-# 					last_full_sync = +new Date
-# 					journal_queue = {} # full syncs clear queue
-# 					full_journal_sync()
-# 	req.on 'error', (e) ->
-# 		log 'error', 'journal error ' + e.message
-# 		# console.log "journal error"
-# 	req.write(JSON.stringify(rooms[name].serialize()))
-# 	req.end()
-
-# full_journal_sync = ->
-# 	backup = (room.serialize() for name, room of rooms)
-# 	journal_config.path = '/full_sync'
-# 	journal_config.method = 'POST'
-# 	req = http.request journal_config, (res) ->
-# 		# console.log "done full sync"
-# 		log 'log', 'completed full sync'
-# 	req.on 'error', (e) ->
-# 		log 'error', 'full sync error ' + e.message
-# 	req.write(JSON.stringify(backup))
-# 	req.end()
-
-restore_journal = (callback) ->
-	journal_config.path = '/retrieve'
-	journal_config.method = 'GET'
-	req = http.request journal_config, (res) ->
-		res.setEncoding 'utf8'
-		packet = ''
-		res.on 'data', (chunk) ->
-			packet += chunk
-		res.on 'end', ->
-			console.log "Restoring Journal Contents #{packet.length} bytes"
-			json = JSON.parse(packet)
-			for name, data of json when !(name of rooms)
-				room = new SocketQuizRoom(name) 
-				rooms[name] = room
-				room.deserialize data
-			console.log 'restored journal'
-			callback() if callback
-	req.on 'error', ->
-		console.log "Journal inaccessible."
-		callback() if callback
-	req.end()
 
 
 clearInactive = ->
@@ -743,6 +678,6 @@ app.get '/:type/:channel', (req, res) ->
 
 remote.initialize_remote()
 port = process.env.PORT || 5555
-restore_journal ->
-	server.listen port, ->
-		console.log "listening on port", port
+# restore_journal ->
+server.listen port, ->
+	console.log "listening on port", port
