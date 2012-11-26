@@ -49,6 +49,7 @@ class QuizPlayer
 			if elapsed < 1000 * 60 * 10
 				@time_spent += elapsed
 		@last_action = current_time
+		@room.check_timeout()
 
 	active: -> @online() and (@room.serverTime() - @last_action) < 1000 * 60 * 10 and !@idle
 
@@ -188,10 +189,13 @@ class QuizPlayer
 		# TODO: get rid of 'yay' conditional, it's only here for
 		# backwards compibility, in case lag is so great that 
 		# it doesnt recieve until the next question
+		@touch()
 		if (@room.qid is data or data is 'yay') and @room.buzz @id, fn
 			@rate_limit()
 
-	guess: (data) -> @room.guess @id, data
+	guess: (data) -> 
+		@touch()
+		@room.guess @id, data
 
 	chat: ({text, done, session}) ->
 		@touch()
@@ -319,7 +323,7 @@ class QuizPlayer
 		@room.sync()
 
 	set_speed: (speed) ->
-		return unless speed
+		return if speed <= 0
 		@touch()
 		@room.set_speed speed
 		@room.sync()
@@ -333,6 +337,7 @@ class QuizPlayer
 		@room.sync(1)
 
 	set_type: (name) ->
+		@touch()
 		if name
 			@room.type = name
 			@room.category = ''

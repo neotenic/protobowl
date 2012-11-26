@@ -228,7 +228,7 @@ class SocketQuizRoom extends QuizRoom
 
 	get_question: (callback) ->
 		cb = (question) =>
-			log 'next', [@name, question.answer]
+			log 'next', [@name, question?.answer]
 			callback(question)
 		if @next_id and @show_bonus
 			remote.get_by_id @next_id, cb
@@ -269,7 +269,7 @@ class SocketQuizRoom extends QuizRoom
 		
 
 	deserialize: (data) ->
-		blacklist = ['users']
+		blacklist = ['users', 'attempt']
 		for attr, val of data when attr not in blacklist
 			@[attr] = val
 		for user in data.users
@@ -599,7 +599,34 @@ app.get '/stalkermode/logout', (req, res) ->
 
 app.get '/stalkermode/user/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]
-	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u)}
+	u2 = {}
+	u2[k] = v for k, v of u when k not in ['room'] and typeof v isnt 'function'
+	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2)}
+
+
+app.get '/stalkermode/room/:room', (req, res) ->
+	u = rooms?[req.params.room]
+	u2 = {}
+	u2[k] = v for k, v of u when k not in ['users', 'timing', 'cumulative'] and typeof v isnt 'function'
+	res.render 'control.jade', { room: u, name: req.params.room, text: util.inspect(u2)}
+
+
+app.post '/stalkermode/delete_room/:room', (req, res) ->
+	if rooms?[req.params.room]?.users
+		for id, u of rooms[req.params.room].users
+			for sock in u.sockets
+				io.sockets.socket(sock).disconnect()
+	rooms[req.params.room] = new SocketQuizRoom(req.params.room)
+	res.redirect "/stalkermode/room/#{req.params.room}"
+
+
+app.post '/stalkermode/disco_room/:room', (req, res) ->
+	if rooms?[req.params.room]?.users
+		for id, u of rooms[req.params.room].users
+			for sock in u.sockets
+				io.sockets.socket(sock).disconnect()
+	res.redirect "/stalkermode/room/#{req.params.room}"
+
 
 app.post '/stalkermode/emit/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]

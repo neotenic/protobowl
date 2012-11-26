@@ -61,6 +61,7 @@ class QuizRoom
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null
+		@attempt = null
 		@no_skip = false
 		@show_bonus = false
 
@@ -118,6 +119,13 @@ class QuizRoom
 
 	clear_timeout: -> clearTimeout @__timeout
 
+	check_timeout: ->
+		if @attempt
+			if @serverTime() > @attempt.realTime + @attempt.duration
+				@clear_timeout()
+				@end_buzz @attempt.session
+
+
 	new_question: ->
 		# question = questions[Math.floor(questions.length * Math.random())]
 		@generating_question = true
@@ -164,7 +172,9 @@ class QuizRoom
 			else
 				syllables = require('./syllable').syllables
 
-			@timing = (syllables(word) + 1 for word in @question.split(" "))
+			# in case syllables gives anything really weird (which has happened before)
+			@timing = ((+syllables(word) || 0) + 1 for word in @question.split(" "))
+
 			@set_speed @rate #do the math with speeds
 			# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
 			for id, user of @users
@@ -258,8 +268,6 @@ class QuizRoom
 				@attempt.text = ''
 				@attempt.duration = 10 * 1000
 
-				# @emit 'log', {user: @attempt.user, verb: "won the lottery, hooray! 1% of buzzes which would otherwise be deemed wrong are randomly selected to be prompted, that's because the user interface for prompts has been developed (and thus needs to be tested), but the answer checker algorithm isn't smart enough to actually give prompts."}
-				
 				@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @attempt.duration, =>
 					@end_buzz session
 			@sync()
@@ -311,14 +319,14 @@ class QuizRoom
             
 		if @max_buzz and @users[user].times_buzzed >= @max_buzz
 			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
-			if @attempt is null
+			if !@attempt
 				@emit 'log', {user: user, verb: 'has already buzzed'}
 
 		else if @max_buzz and team_buzzed >= @max_buzz
 			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
 			@emit 'log', {user: user, verb: 'is in a team which has already buzzed'}
 
-		else if @attempt is null and @time() <= @end_time
+		else if !@attempt and @time() <= @end_time
 			fn 'http://www.whosawesome.com/' if fn
 			session = Math.random().toString(36).slice(2)
 			early_index = @question.replace(/[^ \*]/g, '').indexOf('*')
@@ -416,7 +424,7 @@ class QuizRoom
 
 	serialize: ->
 		data = {}
-		blacklist = ['users']
+		blacklist = ['users', 'attempt']
 		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[0] != '_'
 			data[attr] = this[attr]
 		data.users = (user.serialize() for id, user of @users)

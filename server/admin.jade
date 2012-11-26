@@ -38,7 +38,7 @@ html(lang="en")
 				| #{Math.floor(secs % 60)} seconds
 
 			mixin display_user(user)
-				li #{user.team || ''}
+				li #{user.team || ''} 
 					if user.room && user.room.admins && user.room.admins.indexOf(user.id) != -1
 						i *ADMIN* 
 					b #{user.name} 

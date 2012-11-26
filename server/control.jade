@@ -1,0 +1,35 @@
+doctype 5
+html(lang="en")
+	head
+		title ROOM MANAGER
+		link(rel="stylesheet", href="/protobowl.css")
+	body
+		div.container
+			h1 STALKERMODE ROOM CONTROL
+			h3= name
+
+			ul.nav.nav-pills
+				li
+					a(href="/stalkermode") &larr; Stalkermode 
+			
+			pre= text
+
+			p
+				code= JSON.stringify(room.timing, null, ' ')
+			p
+				code= JSON.stringify(room.cumulative, null, ' ')
+
+
+			hr
+			form(action="/stalkermode/disco_room/#{name}", method="post")
+				button(type="submit") Disconnect Room
+				| Disconnect everyone in a room
+
+			
+
+			hr
+			form(action="/stalkermode/delete_room/#{name}", method="post")
+				button(type="submit") Delete Room
+				| If nothing else works, who do you call? Room busters!
+
+			

@@ -5,7 +5,9 @@ SyllableCounter = (word) ->
         forever: 3,
         shoreline: 2
     }
-    return problemWords[word] if word of problemWords
+    # this line of code actually caused the terrifying crash of 25 Nov 2012
+    # return problemWords[word] if word of problemWords
+    return problemWords[word] if problemWords.hasOwnProperty(word)
 
     prefixSuffix = [
         /^un/,
