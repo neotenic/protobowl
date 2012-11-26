@@ -269,7 +269,7 @@ class SocketQuizRoom extends QuizRoom
 		
 
 	deserialize: (data) ->
-		blacklist = ['users', 'attempt']
+		blacklist = ['users', 'attempt', 'generating_question']
 		for attr, val of data when attr not in blacklist
 			@[attr] = val
 		for user in data.users
@@ -448,15 +448,15 @@ io.sockets.on 'connection', (sock) ->
 			sock.emit 'application_update', +new Date # check for updates in case it was an update
 
 refresh_stale = ->
-	STALE_TIME = 1000 * 60 * 5 # five minutes?
+	STALE_TIME = 1000 * 60 * 4 # four minutes?
 	for name, room of rooms
-		if !room.archived or Date.now() - room.archived > STALE_TIME
+		if !room?.archived or Date.now() - room?.archived > STALE_TIME
 			# the room hasn't been archived in a few minutes
 			remote.archiveRoom? room
 			delete journal_queue[name]
 			return
 
-setInterval refresh_stale, 1000 * 20 # check 3x every minute
+setInterval refresh_stale, 1000 * 10 # check 3x every minute
 
 journal_queue = {}
 
@@ -470,7 +470,7 @@ process_queue = ->
 			min_room = name
 	if min_room
 		room = rooms[min_room]
-		if !room.archived or Date.now() - room.archived > 1000 * 10
+		if !room?.archived or Date.now() - room?.archived > 1000 * 10
 			remote.archiveRoom? room
 			delete journal_queue[min_room]
 

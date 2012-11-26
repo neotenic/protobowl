@@ -127,8 +127,7 @@ class QuizRoom
 
 
 	new_question: ->
-		# question = questions[Math.floor(questions.length * Math.random())]
-		@generating_question = true
+		@generating_question = @serverTime()
 		@get_question (question) =>
 			if !question or !question.question or !question.answer
 				question = error_question
@@ -226,7 +225,11 @@ class QuizRoom
 	finish: -> @set_time @end_time
 
 	next: ->
-		if @time() >= @end_time and !@generating_question and !@attempt
+		if @generating_question and @serverTime() - @generating_question < 1000
+			delete @generating_question
+			return
+
+		if @time() >= @end_time and !@attempt
 			@unfreeze()
 			@new_question()
 			
@@ -386,7 +389,7 @@ class QuizRoom
 		data = {
 			real_time: @serverTime()
 		}
-		blacklist = ["question", "answer", "generated_time", "timing", "voting", "info", "cumulative", "users", "generating_question", "distribution", "sync_offset"]
+		blacklist = ["question", "answer", "generated_time", "timing", "voting", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question"]
 		user_blacklist = ["sockets", "room"]
 		for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
 			data[attr] = this[attr]
