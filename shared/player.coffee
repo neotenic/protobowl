@@ -127,7 +127,7 @@ class QuizPlayer
 				@room.sync(1)
 			, 1000 * 60
 
-			@tribunal = { votes: [], against: [], time: current_time, witnesses }
+			@tribunal = { votes: [], against: [], time: current_time, witnesses, term: 0 }
 			
 			@room.sync(1)
 
@@ -146,34 +146,44 @@ class QuizPlayer
 
 	vote_election: ({user, position}) ->
 		elect = @room.users[user]?.elect
-		if elect
+		if elect and !elect.term
 			{votes, against, witnesses} = elect
 			return unless @id in witnesses
  			return if @id in votes or @id in against
 			if position is 'elect'
 				votes.push @id
-				@verb 'voted to ban !@' + user
+				@verb 'voted to elect !@' + user
 			else if position is 'impeach'
 				against.push @id
-				@verb 'voted to free !@' + user
+				@verb 'voted to impeach !@' + user
 			else
 				@verb 'voted with a hanging chad'
 			if votes.length > (witnesses.length - 1) / 2 + against.length
 				@room.users[user].verb 'gots the blanc haus', true
 				clearTimeout @room.users[user].__elect_timeout
-				@room.users[user].elect = null
-				# @room.users[user].verb "was banned from #{@room.name}", true
-				# @room.users[user].ban()
+				term_length = 1000 * 60
+				@room.users[user].elect.term = @room.serverTime() + term_length
 
 			undecided = (witnesses.length - against.length - votes.length - 1)
 			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
-				@room.users[user].verb 'was impeached bya  bill clinton', true
+				@room.users[user].verb 'was impeached by a bill clinton', true
 				@room.users[user].elect = null
-				clearTimeout @room.users[user].__tribunal_timeout
+				clearTimeout @room.users[user].__elect_timeout
 
 
 			@room.sync(1)
 
+	inaugurate: ->
+		return if !@elect?.term # this should be enough
+
+		# must be quasi-protected method because we dont want to defeat the purpose
+		# of having a convoluted system of bureaucracy!
+
+		@__elect_timeout = setTimeout =>
+			@verb 'is no longer commander in chief', true
+			@elect = null
+			@room.sync(1)
+		, @elect.term - @room.serverTime()
 
 
 	vote_tribunal: ({user, position}) ->
