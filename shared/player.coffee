@@ -164,14 +164,23 @@ class QuizPlayer
 				term_length = 1000 * 60
 				@room.users[user].elect.term = @room.serverTime() + term_length
 
+				# let's
+				@room.users[user].inaugurate()
+
 			undecided = (witnesses.length - against.length - votes.length - 1)
 			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
 				@room.users[user].verb 'was impeached by a bill clinton', true
 				@room.users[user].elect = null
 				clearTimeout @room.users[user].__elect_timeout
 
-
 			@room.sync(1)
+
+	# Come on Jessica, come on Tori,
+	# Let's go to the mall, you won't be sorry
+	# Put on your jelly bracelets
+	# And your cool graffiti coat
+	# At the mall, having fun is what it's all about
+
 
 	inaugurate: ->
 		return if !@elect?.term # this should be enough
@@ -185,6 +194,9 @@ class QuizPlayer
 			@room.sync(1)
 		, @elect.term - @room.serverTime()
 
+
+	# also, that reference *did* actually make sense
+	# As in, inaugurations take place on the national mall.
 
 	vote_tribunal: ({user, position}) ->
 		
