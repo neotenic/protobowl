@@ -465,9 +465,15 @@ process_queue = ->
 	min_time = Date.now()
 	min_room = null
 	for name, time of journal_queue
+		if !rooms[name]
+			delete journal_queue[name]
+			continue
+			
 		if time < min_time	
 			min_time = time
 			min_room = name
+		
+
 	if min_room
 		room = rooms[min_room]
 		if !room?.archived or Date.now() - room?.archived > 1000 * 10

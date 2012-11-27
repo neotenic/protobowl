@@ -18,6 +18,9 @@ clone_shallow = (obj) ->
 	new_obj[attr] = obj[attr] for attr of obj
 	return new_obj
 
+RegExp.quote = (str) ->
+    return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
+
 jQuery.fn.disable = (value) ->
 	$(this).each ->
 		current = $(this).attr('disabled') is 'disabled'

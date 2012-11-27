@@ -36,7 +36,9 @@ class QuizPlayer
 
 		# rate limiting and banning
 		@tribunal = null
-		@__timeout = null
+		@elect = null
+		# @__tribunal_timeout = null
+		# @__elect_timeout = null
 		@__recent_actions = []
 
 	# keep track of how long someone's been online
@@ -89,6 +91,20 @@ class QuizPlayer
 			if mean_elapsed < window_size * action_delay / 2
 				@create_tribunal()
 
+	nominate: ->
+		if !@elect
+			current_time = @room.serverTime()
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+			@__elect_timeout = setTimeout =>
+				@verb 'got romneyed', true
+				@elect = null
+				@room.sync 1
+
+			@elect = { votes: [], against: [], time: current_time, witnesses }
+			@room.sync 1
+
+
+
 	create_tribunal: ->
 		if !@tribunal
 			current_time = @room.serverTime()
@@ -100,7 +116,7 @@ class QuizPlayer
 			# "YOU IS TROLLIN!" and I was like 
 			# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
 			
-			@__timeout = setTimeout =>
+			@__tribunal_timeout = setTimeout =>
 				@verb 'survived the tribunal', true
 				@tribunal = null
 				@room.sync(1)
@@ -122,6 +138,38 @@ class QuizPlayer
 		if is_admin
 			@verb 'banned !@' + user + ' from /' + @room.name
 			@room.users[user]?.ban(1000 * 60 * 5)
+
+	vote_election: ({user, position}) ->
+		elect = @room.users[user]?.elect
+		if elect
+			{votes, against, witnesses} = elect
+			return unless @id in witnesses
+ 			return if @id in votes or @id in against
+			if position is 'elect'
+				votes.push @id
+				@verb 'voted to ban !@' + user
+			else if position is 'impeach'
+				against.push @id
+				@verb 'voted to free !@' + user
+			else
+				@verb 'voted with a hanging chad'
+			if votes.length > (witnesses.length - 1) / 2 + against.length
+				@room.users[user].verb 'got voted off the island', true
+				clearTimeout @room.users[user].__elect_timeout
+				@room.users[user].elect = null
+				# @room.users[user].verb "was banned from #{@room.name}", true
+				@room.users[user].ban()
+
+			undecided = (witnesses.length - against.length - votes.length - 1)
+			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
+				@room.users[user].verb 'was freed because of a hung jury', true
+				@room.users[user].elect = null
+				clearTimeout @room.users[user].__tribunal_timeout
+
+
+			@room.sync(1)
+
+
 
 	vote_tribunal: ({user, position}) ->
 		
@@ -148,7 +196,7 @@ class QuizPlayer
 				@verb 'voted with a hanging chad'
 			if votes.length > (witnesses.length - 1) / 2 + against.length
 				@room.users[user].verb 'got voted off the island', true
-				clearTimeout @room.users[user].__timeout
+				clearTimeout @room.users[user].__tribunal_timeout
 				@room.users[user].tribunal = null
 				# @room.users[user].verb "was banned from #{@room.name}", true
 				@room.users[user].ban()
@@ -157,7 +205,7 @@ class QuizPlayer
 			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
 				@room.users[user].verb 'was freed because of a hung jury', true
 				@room.users[user].tribunal = null
-				clearTimeout @room.users[user].__timeout
+				clearTimeout @room.users[user].__tribunal_timeout
 
 
 			@room.sync(1)
@@ -412,7 +460,8 @@ class QuizPlayer
 		return data
 
 	deserialize: (obj) ->
-		this[attr] = val for attr, val of obj when attr[0] != '_'
+		blacklist = ['tribunal', 'elect']
+		this[attr] = val for attr, val of obj when attr[0] != '_' and attr not in blacklist
 
 	testing_delete_me_later: (new_id) ->
 		@room.merge_user(@id, new_id)
