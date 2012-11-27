@@ -415,7 +415,7 @@ io.sockets.on 'connection', (sock) ->
 		if is_ninja
 			publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
 			if 'id' of config.query
-				publicID = ("0000000000000000000000000000000000000000" + config.query.id).slice(-40)
+				publicID = (config.query.id + "0000000000000000000000000000000000000000").slice(0, 40)
 				is_ninja = false
 		
 
