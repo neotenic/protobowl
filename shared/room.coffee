@@ -46,6 +46,7 @@ class QuizRoom
 		@start_offset = 0 # to compensate for latency, etc.
 		
 		@end_time = 0
+		@begin_time = 0
 		@question = ''
 		@answer = ''
 		@timing = []
@@ -220,6 +221,10 @@ class QuizRoom
 		@begin_time = now - new_duration * done - remainder
 		# set the ending time
 		@end_time = @begin_time + new_duration + @answer_duration
+
+		# test
+		@begin_time = 0 if isNaN(@begin_time)
+		@end_time = 0 if isNaN(@end_time)
 
 
 	finish: -> @set_time @end_time
