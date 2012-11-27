@@ -134,7 +134,7 @@ if app.settings.env is 'development'
 			console.log "changed file", filename
 			scheduledUpdate = setTimeout updateCache, 500
 
-	updateCache()
+	# updateCache()
 	
 	fs.watch "shared", watcher
 	fs.watch "client", watcher

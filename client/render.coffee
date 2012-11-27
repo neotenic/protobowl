@@ -311,6 +311,55 @@ get_score = (user) ->
 			# nice and simple; use the actual scores
 			user.score()
 
+
+render_lock = ->
+
+	lock_votes = 0
+	lock_electorate = 0
+	is_locked = false
+	for id, user of room.users when user.active()
+		if user.active()
+			lock_electorate++
+			if user.lock
+				lock_votes++
+	if lock_electorate <= 2
+		$('.lockvote').slideUp()
+		is_locked = false
+
+		
+	else
+		$('.lockvote').slideDown()
+		needed = Math.floor(lock_electorate / 2 + 1)
+		if lock_votes < needed
+			$('.lockvote .electorate').text "#{needed-lock_votes} needed"
+		else
+			$('.lockvote .electorate').text "#{lock_votes}/#{lock_electorate} votes"
+		$('.lockvote .status_icon').removeClass('icon-lock icon-unlock')
+		if lock_votes >= needed
+			is_locked = true
+		
+	if is_locked
+		if me.authorized()
+			# woo ima adminiman
+			$('.lockvote .status_icon').addClass('icon-flag')
+			$('.globalsettings').removeClass('locked')	
+			$('.globalsettings .checkbox, .globalsettings .expando')
+				.find('select, input')
+				.disable(false)
+					
+		else	
+			$('.lockvote .status_icon').addClass('icon-lock')
+			$('.globalsettings').addClass('locked')
+			$('.globalsettings .checkbox, .globalsettings .expando')
+				.find('select, input')
+				.disable(true)
+	else
+		$('.lockvote .status_icon').addClass('icon-unlock')
+		$('.globalsettings').removeClass('locked')
+		$('.globalsettings .checkbox, .globalsettings .expando')
+			.find('select, input')
+			.disable(false)
+
 renderUsers = ->
 	# render the user list and that stuff
 	return unless room.users
@@ -352,40 +401,7 @@ renderUsers = ->
 				$('.elect-'+user.id).slideUp 'normal', ->
 					$(this).remove()
 
-	lock_votes = 0
-	lock_electorate = 0
-	for id, user of room.users when user.active()
-		if user.active()
-			lock_electorate++
-			if user.lock
-				lock_votes++
-	if lock_electorate <= 2
-		$('.lockvote').slideUp()
-		$('.globalsettings').removeClass('locked')
-		$('.globalsettings .checkbox, .globalsettings .expando')
-				.find('select, input')
-				.disable(false)
-	else
-		$('.lockvote').slideDown()
-		needed = Math.floor(lock_electorate / 2 + 1)
-		if lock_votes < needed
-			$('.lockvote .electorate').text "#{needed-lock_votes} needed"
-		else
-			$('.lockvote .electorate').text "#{lock_votes}/#{lock_electorate} votes"
-		$('.lockvote .status_icon').removeClass('icon-lock icon-unlock')
-		if lock_votes >= needed
-			$('.lockvote .status_icon').addClass('icon-lock')
-			$('.globalsettings').addClass('locked')
-			$('.globalsettings .checkbox, .globalsettings .expando')
-				.find('select, input')
-				.disable(true)
-		else
-			$('.lockvote .status_icon').addClass('icon-unlock')
-			$('.globalsettings').removeClass('locked')
-			
-			$('.globalsettings .checkbox, .globalsettings .expando')
-				.find('select, input')
-				.disable(false)
+	render_lock()
 
 	if $('.teams').data('teamhash') isnt team_hash
 		$('.teams').data('teamhash', team_hash)

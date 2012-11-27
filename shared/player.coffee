@@ -57,6 +57,10 @@ class QuizPlayer
 
 	online: -> true
 
+	authorized: ->
+		return @id[0] == '_' or @id in @room.admins or @elect?.term > @room.serverTime()
+
+
 	score: ->
 		CORRECT = 10
 		EARLY = 15
@@ -164,7 +168,7 @@ class QuizPlayer
 				term_length = 1000 * 60
 				@room.users[user].elect.term = @room.serverTime() + term_length
 
-				# let's
+				# let's go to the mall!
 				@room.users[user].inaugurate()
 
 			undecided = (witnesses.length - against.length - votes.length - 1)
@@ -181,7 +185,6 @@ class QuizPlayer
 	# And your cool graffiti coat
 	# At the mall, having fun is what it's all about
 
-
 	inaugurate: ->
 		return if !@elect?.term # this should be enough
 
@@ -197,6 +200,12 @@ class QuizPlayer
 
 	# also, that reference *did* actually make sense
 	# As in, inaugurations take place on the national mall.
+
+	finish_term: ->
+		return if !@elect?.term # this should be enough		
+		@verb 'has finished tenure in office', true
+		@elect = null
+		@room.sync(1)
 
 	vote_tribunal: ({user, position}) ->
 		
@@ -347,6 +356,7 @@ class QuizPlayer
 
 	set_distribution: (data) ->
 		@touch()
+		return unless @authorized()
 		return unless data
 		enabled = []
 		disabled = []
@@ -367,6 +377,7 @@ class QuizPlayer
 
 	set_difficulty: (data) ->
 		@touch()
+		return unless @authorized()
 		# @verb 'is doing something with difficulty'
 		@room.difficulty = data
 		@room.sync()
@@ -375,6 +386,7 @@ class QuizPlayer
 
 	set_category: (data) ->
 		@touch()
+		return unless @authorized()
 		# @verb 'changed the category to something which needs to be changed'
 		@room.category = data
 		@room.reset_distribution() unless data # reset to the default question distribution 
@@ -386,6 +398,8 @@ class QuizPlayer
 				@verb "set category to #{data.toLowerCase() || 'potpourri'} (#{size} questions)"
 		
 	set_max_buzz: (data) ->
+		@touch()
+		return unless @authorized()
 		if @room.max_buzz isnt data
 			if !data
 				@verb 'allowed players to buzz multiple times'
@@ -394,12 +408,12 @@ class QuizPlayer
 			else if data > 1
 				@verb "restricted players and teams to #{data} buzzes per question"
 		@room.max_buzz = data
-		@touch()
 		@room.sync()
 
 	set_speed: (speed) ->
-		return if speed <= 0
 		@touch()
+		return unless @authorized()
+		return if speed <= 0
 		@room.set_speed speed
 		@room.sync()
 
@@ -412,6 +426,7 @@ class QuizPlayer
 		@room.sync(1)
 
 	set_type: (name) ->
+		return unless @authorized()
 		@touch()
 		if name
 			@room.type = name
@@ -437,6 +452,7 @@ class QuizPlayer
 		@room.sync(1)
 
 	set_skip: (data) ->
+		return unless @authorized()
 		@room.no_skip = !data
 		@room.sync(1)
 		if @room.no_skip
@@ -445,6 +461,7 @@ class QuizPlayer
 			@verb 'enabled question skipping'
 
 	set_bonus: (data) ->
+		return unless @authorized()
 		@room.show_bonus = data
 		if @room.show_bonus
 			@verb 'enabled showing bonus questions'
@@ -490,8 +507,5 @@ class QuizPlayer
 		blacklist = ['tribunal', 'elect']
 		this[attr] = val for attr, val of obj when attr[0] != '_' and attr not in blacklist
 
-	testing_delete_me_later: (new_id) ->
-		@room.merge_user(@id, new_id)
-		
 
 exports.QuizPlayer = QuizPlayer if exports?
