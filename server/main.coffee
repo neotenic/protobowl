@@ -384,7 +384,7 @@ load_room = (name, callback) ->
 io.sockets.on 'connection', (sock) ->
 	headers = sock.handshake.headers
 	return sock.disconnect() unless headers.referer and headers.cookie
-	config = url.parse(headers.referer)
+	config = url.parse(headers.referer, true)
 	
 	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
 		config.host = 'protobowl.com'
@@ -401,7 +401,7 @@ io.sockets.on 'connection', (sock) ->
 	return sock.disconnect() unless cookie.protocookie and config.pathname
 	# set the config stuff
 	
-	is_ninja = /ninja/.test config.search
+	is_ninja = 'ninja' of config.query
 	# configger the things which are derived from said parsed stuff
 	room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
 	question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
@@ -412,8 +412,11 @@ io.sockets.on 'connection', (sock) ->
 			room.type = question_type
 
 		publicID = sha1(cookie.protocookie + room_name)
-
-		publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" if is_ninja
+		if is_ninja
+			publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
+			if 'id' of config.query
+				publicID = ("0000000000000000000000000000000000000000" + config.query.id).slice(-40)
+				is_ninja = false
 		
 
 		# get the user's identity

@@ -22,14 +22,16 @@ html(lang="en")
 
 			hr
 			form(action="/stalkermode/disco_room/#{name}", method="post")
-				button(type="submit") Disconnect Room
+				button.btn(type="submit") Disconnect Room
+				| 
 				| Disconnect everyone in a room
 
 			
 
 			hr
 			form(action="/stalkermode/delete_room/#{name}", method="post")
-				button(type="submit") Delete Room
+				button.btn(type="submit") Delete Room
+				| 
 				| If nothing else works, who do you call? Room busters!
 
 			

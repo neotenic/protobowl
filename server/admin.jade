@@ -168,20 +168,21 @@ html(lang="en")
 
 			hr
 			form(action="/stalkermode/announce", method="post")
-				label(for="name") Name (no spaces!) 
+				label(for="name") Name
 				input#name(name="name", type="text", value="protobowl_announcement", style="width: 200px")
 				br
 				label(for="message") Message 
 				input#message(type="text", name="message", style="width:500px")
-				button(type="submit") Announce
+				| 
+				button.btn(type="submit") Announce
 			
 			hr
 
 			form(action="/stalkermode/algore", method="post")
-				button(type="submit") Reinitialize Resource Counts
+				button.btn(type="submit") Reinitialize Resource Counts
 
 			form(action="/stalkermode/fullsync", method="post")
-				button(type="submit") Rewrite the Journal
+				button.btn(type="submit") Rewrite the Journal
 
 			//- form(action="/stalkermode/kickoffline", method="post")
 			//- 	button(type="submit") Kick Offline Users
