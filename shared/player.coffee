@@ -65,7 +65,10 @@ class QuizPlayer
 
 	ban: (duration = 1000 * 60 * 10) ->
 		@banned = @room.serverTime() + duration
-		@emit 'redirect', "/#{@room.name}-banned"
+		if @room.name is 'lobby'
+			@emit 'redirect', "/b"
+		else	
+			@emit 'redirect', "/#{@room.name}-banned"
 
 	emit: (name, data) ->
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
@@ -93,12 +96,14 @@ class QuizPlayer
 
 	nominate: ->
 		if !@elect
+			@verb "TERMPOEWJROSIJWER THIS PERSON IS A NARCONARC"
 			current_time = @room.serverTime()
 			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
 			@__elect_timeout = setTimeout =>
 				@verb 'got romneyed', true
 				@elect = null
 				@room.sync 1
+			, 1000 * 60
 
 			@elect = { votes: [], against: [], time: current_time, witnesses }
 			@room.sync 1
@@ -154,15 +159,15 @@ class QuizPlayer
 			else
 				@verb 'voted with a hanging chad'
 			if votes.length > (witnesses.length - 1) / 2 + against.length
-				@room.users[user].verb 'got voted off the island', true
+				@room.users[user].verb 'gots the blanc haus', true
 				clearTimeout @room.users[user].__elect_timeout
 				@room.users[user].elect = null
 				# @room.users[user].verb "was banned from #{@room.name}", true
-				@room.users[user].ban()
+				# @room.users[user].ban()
 
 			undecided = (witnesses.length - against.length - votes.length - 1)
 			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
-				@room.users[user].verb 'was freed because of a hung jury', true
+				@room.users[user].verb 'was impeached bya  bill clinton', true
 				@room.users[user].elect = null
 				clearTimeout @room.users[user].__tribunal_timeout
 

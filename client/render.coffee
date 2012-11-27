@@ -346,6 +346,11 @@ renderUsers = ->
 		else
 			$('.troll-'+user.id).slideUp 'normal', ->
 				$(this).remove()
+			if user.elect
+				congressionalAnnotation user
+			else
+				$('.elect-'+user.id).slideUp 'normal', ->
+					$(this).remove()
 
 	lock_votes = 0
 	lock_electorate = 0
@@ -356,9 +361,8 @@ renderUsers = ->
 				lock_votes++
 	if lock_electorate <= 2
 		$('.lockvote').slideUp()
-
+		$('.globalsettings').removeClass('locked')
 		$('.globalsettings .checkbox, .globalsettings .expando')
-				.css('opacity', '1')
 				.find('select, input')
 				.disable(false)
 	else
@@ -371,15 +375,15 @@ renderUsers = ->
 		$('.lockvote .status_icon').removeClass('icon-lock icon-unlock')
 		if lock_votes >= needed
 			$('.lockvote .status_icon').addClass('icon-lock')
+			$('.globalsettings').addClass('locked')
 			$('.globalsettings .checkbox, .globalsettings .expando')
-				.css('opacity', '0.5')
 				.find('select, input')
 				.disable(true)
 		else
 			$('.lockvote .status_icon').addClass('icon-unlock')
-
+			$('.globalsettings').removeClass('locked')
+			
 			$('.globalsettings .checkbox, .globalsettings .expando')
-				.css('opacity', '1')
 				.find('select, input')
 				.disable(false)
 

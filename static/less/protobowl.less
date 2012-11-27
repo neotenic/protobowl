@@ -191,6 +191,36 @@ input[type=range] {
 		margin-top: 7px;
 		margin-bottom: 7px;
 	}
+	.request-access {
+		display: none;
+		opacity: 0;
+	}
+	.request-access, .checkbox, .expando {
+		transition: opacity 0.5s;
+		-webkit-transition: opacity 0.5s;
+		-moz-transition: opacity 0.5s;
+		-o-transition: opacity 0.5s;
+	}
+	.globalsettings.locked {
+		.request-access {
+			height: 0;
+			top: -100px;
+			position: relative;
+			display: block;
+		}
+		.checkbox, .expando {
+			opacity: 0.5;
+			pointer-events: none;
+		}
+	}
+	.globalsettings.locked:hover {
+		.request-access {
+			opacity: 1;
+		}
+		.checkbox, .expando {
+			opacity: 0.2;
+		}
+	}
 }
 
 .banhammer {

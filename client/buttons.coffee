@@ -409,6 +409,8 @@ $('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
 
 $('.lock').change -> me.set_lock $('.lock')[0].checked
 
+$('.request-access').click -> me.nominate()
+
 $('.movingwindow').change -> 
 	if $('.movingwindow')[0].checked
 		me.set_movingwindow 20

@@ -397,41 +397,43 @@ boxxyAnnotation = ({id, tribunal}) ->
 			addImportant line
 
 
-electAnnotation = ({id, election}) ->
-	{votes, time, witnesses, against} = election
-	return if me.id not in witnesses and me.id[0] != '_' # people who havent witnessed the crime do not constitute a jury of peers
+congressionalAnnotation = ({id, elect}) ->
+	{votes, time, witnesses, against} = elect
+	console.log id, elect
 	# majority + opposers - votes
 	votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
 
-	line = $('<div>').addClass('alert').addClass('troll-' + id)
+	line = $('<div>').addClass('alert alert-info').addClass('elect-' + id)
 	if id is me.id # who would vote for their own banning?
-		line.text('Protobowl has detected high rates of activity coming from your account.\n')
-		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room for 10 minutes)."
+		line.html("You are a contestant in Protobowl's <i>Who Wants to be an Admin (for 60 seconds)</i>.\n")
+		line.append " <strong>#{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to pass your referendum)"
 	else
-		line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
-		line.append 'Protobowl has detected high rates of activity coming from the user '
+		line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trustworthy? ')
+		# line.append 'Protobowl has detected high rates of activity coming from the user '
+		
+		line.append "A user has requested power to change settings. If you believe that the user is trustworthy, "
 		line.append userSpan(id)
-		line.append '. If a majority of other active players vote to ban this user, the user will be sent to '
-		line.append "<a href='#{room.name}-banned'>/#{room.name}-banned</a> and banned from this room for 10 minutes. This message will be automatically dismissed in a minute. <br> "
-		guilty = $('<button>').addClass('btn btn-small').text('Ban this user')
-		line.append guilty
+
+		line.append "will be granted one minute of control over the settings. You have one minute to cast your vote. <br> "
+		worthy = $('<button>').addClass('btn btn-small').text('Grant access')
+		line.append worthy
 		line.append ' '
-		not_guilty = $('<button>').addClass('btn btn-small').text("Don't ban")
-		line.append not_guilty
-		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban "
+		not_worthy = $('<button>').addClass('btn btn-small').text("Deny")
+		line.append not_worthy
+		line.append " <strong> #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to grant access."
 		line.append userSpan(id)
 		line.append ")"
-		guilty.click ->
-			me.vote_tribunal {user: id, position: 'ban'}
-		not_guilty.click ->
-			me.vote_tribunal {user: id, position: 'free'}
+		worthy.click ->
+			me.vote_election {user: id, position: 'elect'}
+		not_worthy.click ->
+			me.vote_election {user: id, position: 'impeach'}
 		
-		guilty.add(not_guilty).disable((me.id in votes) or (me.id in against))
+		worthy.add(not_worthy).disable((me.id in votes) or (me.id in against))
 	
-	if $('.troll-'+id).length > 0 and $('.troll-'+id).parents('.active').length > 0
-		$('.troll-'+id).replaceWith line
+	if $('.elect-'+id).length > 0 and $('.elect-'+id).parents('.active').length > 0
+		$('.elect-'+id).replaceWith line
 	else
-		$('.troll-'+id).slideUp 'normal', ->
+		$('.elect-'+id).slideUp 'normal', ->
 			$(this).remove()
-		if id isnt me.id or votes.length > 1
-			addImportant line
+		
+		addImportant line
