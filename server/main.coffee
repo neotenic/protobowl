@@ -400,7 +400,7 @@ io.sockets.on 'connection', (sock) ->
 	cookie = parseCookie(headers.cookie)
 	return sock.disconnect() unless cookie.protocookie and config.pathname
 	# set the config stuff
-	is_god = /god/.test config.search
+	
 	is_ninja = /ninja/.test config.search
 	# configger the things which are derived from said parsed stuff
 	room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
@@ -414,7 +414,6 @@ io.sockets.on 'connection', (sock) ->
 		publicID = sha1(cookie.protocookie + room_name)
 
 		publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" if is_ninja
-		publicID += "_god" if is_god
 		
 
 		# get the user's identity
@@ -434,8 +433,6 @@ io.sockets.on 'connection', (sock) ->
 		sock.join room_name
 		
 		user.add_socket sock
-		if is_god
-			sock.join name for name of rooms
 
 		sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
 		
