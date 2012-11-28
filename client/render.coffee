@@ -322,6 +322,8 @@ render_lock = ->
 			lock_electorate++
 			if user.lock
 				lock_votes++
+	needed = Math.floor(lock_electorate / 2 + 1)
+
 	if lock_electorate <= 2
 		$('.lockvote').slideUp()
 		is_locked = false
@@ -329,16 +331,20 @@ render_lock = ->
 		
 	else
 		$('.lockvote').slideDown()
-		needed = Math.floor(lock_electorate / 2 + 1)
+		
 		if lock_votes < needed
 			$('.lockvote .electorate').text "#{needed-lock_votes} needed"
 		else
 			$('.lockvote .electorate').text "#{lock_votes}/#{lock_electorate} votes"
-		$('.lockvote .status_icon').removeClass('icon-lock icon-unlock')
+		
 		if lock_votes >= needed
 			is_locked = true
-		
-	if is_locked
+	
+	$('.lockvote .status_icon').removeClass('icon-lock icon-unlock icon-flag')
+	
+	$('.request-access button').disable !!me.elect
+
+	if room.locked()
 		if me.authorized()
 			# woo ima adminiman
 			$('.lockvote .status_icon').addClass('icon-flag')

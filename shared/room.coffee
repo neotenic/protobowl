@@ -68,6 +68,28 @@ class QuizRoom
 
 	log: (message) -> @emit 'log', { verb: message }
 
+	# is this the only room.coffee function which gets called from
+	# the client side? that's rather odd design wise
+	locked: ->
+		lock_electorate = 0
+		lock_votes = 0
+
+		for id, user of @users when user.active()
+			if user.active()
+				lock_electorate++
+				lock_votes++ if user.lock
+		needed = Math.floor(lock_electorate / 2 + 1)
+		if lock_electorate <= 2
+			return false
+		if lock_votes >= needed
+			return true
+		return false
+
+	active_count: ->
+		active_count = 0
+		active_count++ for id, user of @users when user.active()
+		return active_count
+
 	get_parameters: (type, difficulty, cb) -> # cb(difficulties, categories)
 		#  async version of get_difficulties and get_categories
 		@emit 'log', {verb: 'NOT IMPLEMENTED (async get params)'}

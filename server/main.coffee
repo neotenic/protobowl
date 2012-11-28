@@ -423,8 +423,20 @@ io.sockets.on 'connection', (sock) ->
 		existing_user = (publicID of room.users)
 		unless room.users[publicID]
 			room.users[publicID] = new SocketQuizPlayer(room, publicID) 
+			user = room.users[publicID]
+
 			if room_name in public_room_list
-				room.users[publicID].lock = (Math.random() < 0.6) # set defaults on big public rooms to lock
+				# public rooms default to locked, like cars in the city
+				user.lock = true
+			else
+				if room.active_count() <= 1
+					# small room, hey wai not right?
+					user.lock = true
+				else if room.locked()
+					user.lock = true
+				else
+					# probablistic systems work for lots of things
+					user.lock = (Math.random() > 0.5)
 
 		user = room.users[publicID]
 		if room.serverTime() < user.banned
