@@ -1,5 +1,10 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd()
 
+try 
+	remote = require './remote'
+catch err
+	remote = require './local'
+
 express = require 'express'
 fs = require 'fs'
 http = require 'http'
@@ -144,10 +149,6 @@ if app.settings.env is 'development'
 
 
 
-try 
-	remote = require './remote'
-catch err
-	remote = require './local'
 
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
@@ -460,13 +461,14 @@ io.sockets.on 'connection', (sock) ->
 			sock.emit 'application_update', +new Date # check for updates in case it was an update
 
 refresh_stale = ->
-	STALE_TIME = 1000 * 60 * 4 # four minutes?
+	STALE_TIME = 1000 * 60 * 2 # four minutes?
 	for name, room of rooms
-		if !room?.archived or Date.now() - room?.archived > STALE_TIME
+		continue if !room
+		if !room.archived or Date.now() - room.archived > STALE_TIME
 			# the room hasn't been archived in a few minutes
 			remote.archiveRoom? room
 			delete journal_queue[name]
-			return
+			
 
 setInterval refresh_stale, 1000 * 10 # check 3x every minute
 
