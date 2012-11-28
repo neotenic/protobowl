@@ -58,6 +58,7 @@ class QuizPlayer
 	online: -> true
 
 	authorized: ->
+		return true unless @room.locked()
 		return @id[0] == '_' or @id in @room.admins or @elect?.term > @room.serverTime()
 
 

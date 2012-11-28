@@ -125,7 +125,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 	if $('#' + id).length > 0
 		line = $('#' + id)
 	else
-		line = $('<p>').attr('id', id)
+		line = $('<p>').attr('id', id).addClass('guess')
 		if prompt
 			prompt_el = $('<a>').addClass('label prompt label-info').text('Prompt')
 			line.append ' '
@@ -142,7 +142,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		
 
 		line.append " "
-		line.append userSpan(user).addClass('author')
+		line.append userSpan(user) #.addClass('author')
 		line.append document.createTextNode ' '
 		$('<span>')
 			.addClass('comment')

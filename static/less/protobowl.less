@@ -239,7 +239,11 @@ input[type=range] {
 .annotations {
 	word-wrap: break-word;
 	//word-break: break-all;
-	.author { font-weight: bold; }
+
+	.guess .username { 
+		font-weight: bold;
+	}
+	
 	.recipient { font-weight: bold; color: green; }
 	.typing { opacity: 0.7; }
 	.log { font-style: italic;}
@@ -269,7 +273,8 @@ input[type=range] {
 		text-shadow: none;
 	}
 	.inline-icon .label {
-		padding-top: 0;
+		padding-top: 1px;
+		text-shadow: none;
 		padding-bottom: 0;
 		padding-left: 3px;
 		padding-right: 3px;

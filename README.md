@@ -3,10 +3,6 @@
 [Try out Protobowl on a public room!](http://protobowl.com/hsquizbowl)
 
 # VERSION 3 YO
-# TODO (high priority)
-
-* Move past less-middleware
-
 
 # Todo (low priority)
 
@@ -36,6 +32,7 @@
 * support teams (mostly done)
 * make single-buzz restriction support teams
 * support ties on the leaderboard (done)
+* Move past less-middleware
 
 Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions.
 
