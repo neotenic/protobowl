@@ -343,6 +343,7 @@ class SocketQuizPlayer extends QuizPlayer
 						sock.disconnect()
 					else if @__rate_limited and @room.serverTime() < @__rate_limited
 						# console.log 'throwing away an event'
+						@rate_limit()
 					else
 						this[attr](args...)
 
@@ -663,6 +664,12 @@ app.post '/stalkermode/emit/:room/:user', (req, res) ->
 
 app.post '/stalkermode/exec/:command/:room/:user', (req, res) ->
 	rooms?[req.params.room]?.users?[req.params.user]?[req.params.command]?()
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+
+app.post '/stalkermode/negify/:room/:user/:num', (req, res) ->
+	rooms?[req.params.room]?.users?[req.params.user]?.interrupts += (parseInt(req.params.num) || 1)
+	rooms?[req.params.room]?.sync(1)
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 app.post '/stalkermode/disco/:room/:user', (req, res) ->
