@@ -610,12 +610,13 @@ app.post '/stalkermode/announce', (req, res) ->
 	}
 	res.redirect '/stalkermode'
 
-
+# i forgot why it was called al gore; possibly change
 app.post '/stalkermode/algore', (req, res) ->
-	remote.initialize_remote (time, layers) ->
-		res.end("counted all cats in #{time}ms: #{util.inspect(layers)}")
+	remote.populate_cache (layers) ->
+		res.end("counted all cats #{JSON.stringify(layers, null, '  ')}")
 
 app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
+
 
 app.get '/stalkermode/cook', (req, res) ->
 	remote.cook(req, res)
@@ -639,6 +640,7 @@ app.get '/stalkermode/room/:room', (req, res) ->
 	u2[k] = v for k, v of u when k not in ['users', 'timing', 'cumulative'] and typeof v isnt 'function'
 	res.render 'control.jade', { room: u, name: req.params.room, text: util.inspect(u2)}
 
+app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
 
 app.post '/stalkermode/delete_room/:room', (req, res) ->
 	if rooms?[req.params.room]?.users
