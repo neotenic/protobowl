@@ -193,6 +193,8 @@ listen 'chat', (data) -> chatAnnotation data
 listen 'log', (data) -> verbAnnotation data
 listen 'debug', (data) -> logAnnotation data
 listen 'sync', (data) -> synchronize data
+listen 'throttle', (data) ->
+	createAlert $('.bundle.active'), 'Throttled', "The server is ignoring you for a while because you've been doing too many things too quickly. "
 
 listen 'rename_user', ({old_id, new_id}) ->
 	if me.id is old_id

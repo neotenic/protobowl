@@ -343,7 +343,8 @@ class SocketQuizPlayer extends QuizPlayer
 						sock.disconnect()
 					else if @__rate_limited and @room.serverTime() < @__rate_limited
 						# console.log 'throwing away an event'
-						@rate_limit()
+						@throttle()
+						# sock.emit 'throttle', @__rate_limited
 					else
 						this[attr](args...)
 

@@ -87,8 +87,8 @@ class QuizPlayer
 	rate_limited: ->
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
 		action_delay = 876
-		action_delay = 700 if witnesses.length <= 2 # under this case, you can just go to a new room!
-		throttle_delay = 500
+		action_delay = 672 if witnesses.length <= 2 # under this case, you can just go to a new room!
+		throttle_delay = 404
 		window_size = 10
 		current_time = @room.serverTime()
 
@@ -100,15 +100,23 @@ class QuizPlayer
 			console.log mean_elapsed, window_size * action_delay / 2
 
 			if mean_elapsed < window_size * throttle_delay / 2
-				@verb 'was throttled for five seconds', true
-				@__rate_limited = @room.serverTime() + 1000 * 5
+				@throttle()
 
 			if mean_elapsed < window_size * action_delay / 2
 				return true
 
+	throttle: ->
+		new_time = @room.serverTime() + 1000 * 5
+		if new_time - @__rate_limited > 762
+			@emit 'throttle', @__rate_limited
+			@__recent_actions.push @room.serverTime()
+
+		@__rate_limited = new_time
+		
+
+
 	rate_limit: ->
-		current_time = @room.serverTime()
-		@__recent_actions.push current_time
+		@__recent_actions.push @room.serverTime()
 		
 		if @rate_limited()
 			@create_tribunal()
@@ -134,6 +142,8 @@ class QuizPlayer
 		if !@tribunal
 			current_time = @room.serverTime()
 			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+			return if witnesses.length <= 1
+			
 			# Ummmm ahh such as like, 
 			# like the one where I'm like mmm and it says, 
 			# "I saw watchoo did there!" 
@@ -358,6 +368,7 @@ class QuizPlayer
 		return if @room.time_freeze
 
 		if !@room.attempt and @room.time() < @room.end_time
+			@rate_limit()
 			@verb 'paused the game'
 			@room.freeze()
 			@room.sync()
