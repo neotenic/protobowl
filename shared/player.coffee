@@ -301,7 +301,7 @@ class QuizPlayer
 		# backwards compibility, in case lag is so great that 
 		# it doesnt recieve until the next question
 		@touch()
-		if (@room.qid is data or data is 'yay') and @room.buzz @id, fn
+		if @room.qid is data and @room.buzz @id, fn
 			@rate_limit()
 
 	guess: (data) -> 
