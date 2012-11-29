@@ -40,6 +40,7 @@ class QuizPlayer
 		# @__tribunal_timeout = null
 		# @__elect_timeout = null
 		@__recent_actions = []
+		@__rate_limited = 0
 
 	# keep track of how long someone's been online
 
@@ -69,7 +70,8 @@ class QuizPlayer
 		return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
 
 	ban: (duration = 1000 * 60 * 10) ->
-		@banned = @room.serverTime() + duration
+		if @room.serverTime() > @banned
+			@banned = @room.serverTime() + duration
 		if @room.name is 'lobby'
 			@emit 'redirect', "/b"
 		else	
@@ -82,22 +84,35 @@ class QuizPlayer
 
 	disco: -> 0 # skeleton method, not actually implemented
 
-	rate_limit: ->
+	rate_limited: ->
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
-		return if witnesses.length <= 2 # under this case, you can just go to a new room!
-
-		window_size = 5
 		action_delay = 876
+		action_delay = 700 if witnesses.length <= 2 # under this case, you can just go to a new room!
+		throttle_delay = 500
+		window_size = 10
 		current_time = @room.serverTime()
-		@__recent_actions.push current_time
+
 		@__recent_actions = @__recent_actions.slice(-window_size) # get the last 10
 
 		if @__recent_actions.length is window_size
 			s = 0; s += time for time in @__recent_actions;
 			mean_elapsed = current_time - s / window_size
-			# console.log mean_elapsed, window_size * action_delay / 2
+			console.log mean_elapsed, window_size * action_delay / 2
+
+			if mean_elapsed < window_size * throttle_delay / 2
+				@verb 'was throttled for five seconds', true
+				@__rate_limited = @room.serverTime() + 1000 * 5
+
 			if mean_elapsed < window_size * action_delay / 2
-				@create_tribunal()
+				return true
+
+	rate_limit: ->
+		current_time = @room.serverTime()
+		@__recent_actions.push current_time
+		
+		if @rate_limited()
+			@create_tribunal()
+
 
 	nominate: ->
 		if !@elect
@@ -297,11 +312,9 @@ class QuizPlayer
 	echo: (data, callback) -> callback @room.serverTime()
 
 	buzz: (data, fn) -> 
-		# TODO: get rid of 'yay' conditional, it's only here for
-		# backwards compibility, in case lag is so great that 
-		# it doesnt recieve until the next question
 		@touch()
-		if @room.qid is data and @room.buzz @id, fn
+
+		if @room.qid is data and @room.buzz(@id, fn)
 			@rate_limit()
 
 	guess: (data) -> 
@@ -320,6 +333,7 @@ class QuizPlayer
 
 		@room.emit 'chat', { text, session, user: id, done, time: @room.serverTime() }	
 		@rate_limit() if done
+
 	
 	skip: ->
 		@touch()

@@ -68,9 +68,9 @@ skip = ->
 	me.skip()
 
 next = ->
-	# if room.rate < 1
-	# 	return if rate_limit_check()
-	me.next()
+	# reduce dat server load
+	if room.time() >= room.end_time and !room.attempt
+		me.next()
 
 $('.skipbtn').click skip
 

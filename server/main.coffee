@@ -336,7 +336,15 @@ class SocketQuizPlayer extends QuizPlayer
 		
 		for attr of this when typeof this[attr] is 'function' and attr not in blacklist and attr[0] != '_'
 			# wow this is a pretty mesed up line
-			do (attr) => sock.on attr, (args...) => this[attr](args...)
+			do (attr) => 
+				sock.on attr, (args...) => 
+					if @banned and @room.serverTime() < @banned
+						@ban()
+						sock.disconnect()
+					else if @__rate_limited and @room.serverTime() < @__rate_limited
+						# console.log 'throwing away an event'
+					else
+						this[attr](args...)
 
 		id = sock.id
 
