@@ -339,7 +339,9 @@ class SocketQuizPlayer extends QuizPlayer
 
 		destination = order[(order.indexOf(@room.name) + 1)]
 
-		return if !destination # nothing, there is nothing
+		if !destination # nothing, there is nothing
+			@banned = 0
+			return 
 
 		@emit 'redirect', '/' + destination
 		

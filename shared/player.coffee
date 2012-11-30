@@ -80,9 +80,9 @@ class QuizPlayer
 
 	rate_limited: ->
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
-		action_delay = 876
-		action_delay = 672 if witnesses.length <= 2 # under this case, you can just go to a new room!
-		throttle_delay = 404
+		action_delay = 856
+		action_delay = 612 if witnesses.length <= 2 # under this case, you can just go to a new room!
+		throttle_delay = 316
 		window_size = 10
 		current_time = @room.serverTime()
 
