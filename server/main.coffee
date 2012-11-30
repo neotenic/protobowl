@@ -220,7 +220,6 @@ log 'server_restart', {}
 
 public_room_list = ['hsquizbowl', 'lobby']
 
-
 class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
@@ -326,33 +325,44 @@ class SocketQuizPlayer extends QuizPlayer
 					output[check_name]++ if udat.active()
 		fn output if fn
 
+	ban: (duration = 1000 * 60 * 10) ->
+		if @room.serverTime() > @banned
+			@banned = @room.serverTime() + duration
+			@room._ip_ban = {} if !@room._ip_ban
+			for sock in @sockets
+				ip = io.sockets.socket(sock)?.handshake?.address?.address
+				continue if !ip
+				@room._ip_ban[ip] = { strikes: 0, banished: 0 } if !@room._ip_ban[ip]
+				@room._ip_ban[ip].strikes++
+
+		order = ['b', 'hm', 'cgl', 'mlp']
+
+		destination = order[(order.indexOf(@room.name) + 1)]
+
+		return if !destination # nothing, there is nothing
+
+		@emit 'redirect', '/' + destination
+		
+		for sock in @sockets
+			io.sockets.socket(sock)?.disconnect()
+
+	ip_ban: (duration = 1000 * 60 * 15) ->
+		@room._ip_ban = {} if !@room._ip_ban
+		for sock in @sockets
+			ip = io.sockets.socket(sock)?.handshake?.address?.address
+			continue if !ip
+			@room._ip_ban[ip] = { strikes: 0, banished: @room.serverTime() + duration }
+		@ban(duration)
+
+
 	add_socket: (sock) ->
 		if @sockets.length is 0
 			@last_session = @room.serverTime()
 			@verb 'joined the room'
 
+
 		@sockets.push sock.id unless sock.id in @sockets
 		blacklist = ['add_socket', 'emit', 'disconnect']
-		
-		for attr of this when typeof this[attr] is 'function' and attr not in blacklist and attr[0] != '_'
-			# wow this is a pretty mesed up line
-			do (attr) => 
-				sock.on attr, (args...) => 
-					if @banned and @room.serverTime() < @banned
-						@ban()
-						sock.disconnect()
-					else if @__rate_limited and @room.serverTime() < @__rate_limited
-						# console.log 'throwing away an event'
-						@throttle()
-						# sock.emit 'throttle', @__rate_limited
-					else
-						this[attr](args...)
-
-		id = sock.id
-
-		@room.journal()
-		
-		user_count_log 'connected ' + @id + '-' + @name, @room.name
 
 		sock.on 'disconnect', =>
 			@sockets = (s for s in @sockets when s isnt id)
@@ -360,6 +370,48 @@ class SocketQuizPlayer extends QuizPlayer
 				@disconnect()
 				@room.journal()
 				user_count_log 'disconnected ' + @id + '-' + @name, @room.name
+		
+		for attr of this when typeof this[attr] is 'function' and attr not in blacklist and attr[0] != '_'
+			# wow this is a pretty mesed up line
+			do (attr) => 
+				sock.on attr, (args...) => 
+					if @banned and @room.serverTime() < @banned
+						@ban()
+						# sock.disconnect()
+					else if @__rate_limited and @room.serverTime() < @__rate_limited
+						# console.log 'throwing away an event'
+						@throttle()
+						# sock.emit 'throttle', @__rate_limited
+					else
+						this[attr](args...)
+
+		if @banned and @room.serverTime() < @banned
+			@ban()
+			sock.disconnect()
+
+		id = sock.id
+
+		@room.journal()
+		
+		ip = sock?.handshake?.address?.address
+
+		if @room._ip_ban and @room._ip_ban[ip]
+			if @room._ip_ban[ip].strikes >= 3
+				@ip_ban()
+
+			if @room.serverTime() < @room._ip_ban[ip].banished
+				@ban()
+
+
+
+		# if ip of banned_ips
+		# 	if banned_ips[ip] < @room.serverTime()
+		# 		@ban()
+		# 	else
+		# 		delete banned_ips[ip]
+
+		user_count_log 'connected ' + @id + '-' + @name + " (#{ip})", @room.name
+
 
 
 	emit: (name, data) ->
@@ -450,10 +502,7 @@ io.sockets.on 'connection', (sock) ->
 					user.lock = (Math.random() > 0.5)
 
 		user = room.users[publicID]
-		if room.serverTime() < user.banned
-			sock.emit 'redirect', "/#{room_name}-banned"
-			sock.disconnect()
-			return
+		
 		user.name = 'secret ninja' if is_ninja
 		
 		sock.join room_name
@@ -632,7 +681,10 @@ app.get '/stalkermode/user/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['room'] and typeof v isnt 'function'
-	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2)}
+	if u
+		ips = (io.sockets.socket(sock)?.handshake?.address?.address for sock in u?.sockets)
+		
+	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips }
 
 
 app.get '/stalkermode/room/:room', (req, res) ->
@@ -642,6 +694,10 @@ app.get '/stalkermode/room/:room', (req, res) ->
 	res.render 'control.jade', { room: u, name: req.params.room, text: util.inspect(u2)}
 
 app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
+
+app.post '/stalkermode/clear_bans/:room', (req, res) ->
+	delete rooms?[req.params.room]?._ip_bans
+	res.redirect "/stalkermode/room/#{req.params.room}"
 
 app.post '/stalkermode/delete_room/:room', (req, res) ->
 	if rooms?[req.params.room]?.users
@@ -667,6 +723,10 @@ app.post '/stalkermode/emit/:room/:user', (req, res) ->
 
 app.post '/stalkermode/exec/:command/:room/:user', (req, res) ->
 	rooms?[req.params.room]?.users?[req.params.user]?[req.params.command]?()
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+app.post '/stalkermode/unban/:room/:user', (req, res) ->
+	rooms?[req.params.room]?.users?[req.params.user]?.banned = 0
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 

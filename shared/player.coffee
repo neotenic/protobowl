@@ -69,13 +69,7 @@ class QuizPlayer
 		INTERRUPT = -5
 		return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
 
-	ban: (duration = 1000 * 60 * 10) ->
-		if @room.serverTime() > @banned
-			@banned = @room.serverTime() + duration
-		if @room.name is 'lobby'
-			@emit 'redirect', "/b"
-		else	
-			@emit 'redirect', "/#{@room.name}-banned"
+	ban: -> 1
 
 	emit: (name, data) ->
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
@@ -97,7 +91,6 @@ class QuizPlayer
 		if @__recent_actions.length is window_size
 			s = 0; s += time for time in @__recent_actions;
 			mean_elapsed = current_time - s / window_size
-			console.log mean_elapsed, window_size * action_delay / 2
 
 			if mean_elapsed < window_size * throttle_delay / 2
 				@throttle()
@@ -143,7 +136,7 @@ class QuizPlayer
 			current_time = @room.serverTime()
 			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
 			return if witnesses.length <= 1
-			
+
 			# Ummmm ahh such as like, 
 			# like the one where I'm like mmm and it says, 
 			# "I saw watchoo did there!" 
@@ -287,7 +280,7 @@ class QuizPlayer
 				clearTimeout @room.users[user].__tribunal_timeout
 				@room.users[user].tribunal = null
 				# @room.users[user].verb "was banned from #{@room.name}", true
-				@room.users[user].ban()
+				@room.users[user].ban(1000 * 60 * 15)
 
 			undecided = (witnesses.length - against.length - votes.length - 1)
 			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length

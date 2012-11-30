@@ -7,7 +7,7 @@ html(lang="en")
 		div.container
 			h1 STALKERMODE USER SPECIAL INFO
 			if !user
-				h2 404 USER NOT FOUND
+
 				ul.nav.nav-pills
 					li
 						a(href="/stalkermode") &larr; Stalkermode 
@@ -15,6 +15,33 @@ html(lang="en")
 						a(href="/stalkermode/room/#{room}") #{room} room panel &rarr;
 
 				h4= id
+				br
+
+				h1 There is Nothing
+				h5 404 USER NOT FOUND
+				
+				br
+
+				blockquote
+					| Nothing is certain but death and taxes
+					small Benjamin Franklin
+
+				blockquote
+					| The world owes you nothing. It was here first.
+					small Mark Twain
+
+				blockquote
+					| The only thing necessary for the triumph of evil is for good men to do nothing.
+					small Edmund Burke
+
+				blockquote
+					| The only true wisdom is in knowing you know nothing.
+					small Socrates
+
+				blockquote
+					| Nothing is so dangerous to the progress of the human mind than to assume that our views of science are ultimate, that there are no mysteries in nature, that our triumphs are complete and that there are no new worlds to conquer.
+					small Sir Humphry Davy
+
 
 
 			else
@@ -27,6 +54,10 @@ html(lang="en")
 
 				
 				h4= id
+				br
+
+				p
+					| IP Addresses: <code> #{JSON.stringify(ips)} </code>
 
 				pre= text
 
@@ -72,6 +103,22 @@ html(lang="en")
 					button.btn(type="submit") Ban
 					| 
 					| Use with discretion
+
+
+				br
+
+
+				form(action="/stalkermode/unban/#{room}/#{id}", method="post")
+					button.btn(type="submit") Unban
+					| 
+					| Help those you have wronged in the course living
+
+				br
+
+				form(action="/stalkermode/exec/ip_ban/#{room}/#{id}", method="post")
+					button.btn(type="submit") IP Ban
+					| 
+					| Use with EXTRA EXTRA discretion
 
 				br
 
