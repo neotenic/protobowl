@@ -39,8 +39,6 @@ io.configure 'development', ->
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
 
-
-
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
 
