@@ -15,7 +15,6 @@ if(!cluster.isMaster){
 	});
 }else{
 	require('./server/main');
-	cluster.fork();
 }
 
 

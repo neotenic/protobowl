@@ -1,14 +1,16 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd()
 
-console.log console.log.toString()
-util = require('util')
-console.log = ->
-	process.stdout.write(util.format.apply(this, arguments) + '$$$\n');
-
 nodetime = require('nodetime')
-nodetime.profile({debug: true})
+nodetime.profile()
 
-console.log nodetime
+nodetimeSessionId = ""
+cluster = require('cluster')
+worker = cluster.fork()
+worker.on 'message', (msg) ->
+	return unless msg?.nodetimeSessionId
+	nodetimeSessionId = msg?.nodetimeSessionId
+
+
 try 
 	remote = require './remote'
 catch err
