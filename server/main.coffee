@@ -1,5 +1,14 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd()
 
+console.log console.log.toString()
+util = require('util')
+console.log = ->
+	process.stdout.write(util.format.apply(this, arguments) + '$$$\n');
+
+nodetime = require('nodetime')
+nodetime.profile({debug: true})
+
+console.log nodetime
 try 
 	remote = require './remote'
 catch err
