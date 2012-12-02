@@ -80,7 +80,7 @@ if app.settings.env is 'development'
 
 				parser.parse data, (err, tree) ->
 					css = tree?.toCSS {
-						compress: false
+						compress: true
 					}
 
 					source_list.push {
@@ -99,7 +99,7 @@ if app.settings.env is 'development'
 			return saveFiles() if !file
 			console.log 'compiling coffee', file
 			
-			snockets.getConcatenation "client/#{file}.coffee", (err, js) ->
+			snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
 				source_list.push {
 					hash: sha1(js),
 					code: "protobowl_#{file}_build = '#{compile_date}';\n#{js}", 
