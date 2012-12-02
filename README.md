@@ -1,43 +1,16 @@
-#ProtoBowl
+# ProtoBowl
 
 [Try out Protobowl on a public room!](http://protobowl.com/hsquizbowl)
 
-# VERSION 3 YO
+## Version 3
 
-# Todo (low priority)
+The current version of Protobowl which lies before you is the "third" version. By that, I mean these version numbers don't mean much more than significant changes to the core of protobowl. Version 3 constituted more or less an entire rewrite to the codebase with specific attention paid to offline-first and abstracting away the socket layer. The result is something which is, at least architecturally, pretty cool. A rather large amount of code is shared between client and server, such that the transition between online and offlien and back is super seamless.
 
-* record the position of the question when buzzed
-* check that it's the last name which is common
-* add support for superpower [+]
-* statistical skill metrics i.e. score/interrupts
-* Add more questions, create new parser in order to do so
-* Add a computer science section
+# README & Anachronisms
 
-# In Progress
-* Support different question sets
-* less jarring start offset interface
+Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions. As you might figure out in the "Prototype Quizbowl Application" section, the core of protobowl has evolved significantly during the life of this readme, and especially because I'm so insistent on writing pseudo-literary fluff in lieu of helpful concise manuals and bullets, there's a good chance that the vast majority of the readme will be rife with anachronisms, statements that once were true, were falsified, returned to truthfulness and then fell into a stasis of untruth. 
 
-# Mostly Done
-* Fix offline
-* Trolling voting interface
-* Keep Offline mode in-sync with protocol revisions
-* Add sounds
-
-
-# Done
-* Create teams
-* support arbitrary question distributions
-* make leaderboard faster (mostly done)
-* have question reports include miscategorization
-* add times to verb annotations interface
-* support teams (mostly done)
-* make single-buzz restriction support teams
-* support ties on the leaderboard (done)
-* Move past less-middleware
-
-Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions.
-
-#Manual
+# Manual
 
 Okay, so this application probably ranks among one of the largest things I've ever done, which actually does say something as to its scope. However, it's still designed to be fast and responsive and what not.
 
@@ -59,6 +32,10 @@ However, by virtue of running off Node, there's a single language (javascript) w
 
 Offline was built with Appcache in mind, that's pretty obvious because you sort of need appcache to make things work offline. The offline code is loaded asynchronously and there isn't any fundamental difference between offline-start and disconnect behavior. So that means there isn't any fumbling between multiple copies of the code or any limitation on the functionality of the offline mode. You can disconnect from the server in the midst of the game, perhaps because of a flaky connection and you can continue without interruption. And it even tries to automatically reconnect, and picks up the state and resumes (albeit, probably losing what you've done offline).
 
+I have a sort of wordsy packrat syndrome, so I'll leave all the text above untarnished, and state plainly that none of the words above are true, not anymore at least. Version 3 was a rewrite of the entire core of protobowl: client, server, heaven and earth. And to make the architecture more clean and gody, I endeavored to share code between client and server in a pretty cool way.
+
+I don't think this is meant to be a technical exposé of the artistic symmetries in the yet-unmade UML diagram of the universe, but I'll talk about it a bit anyway, at least long enough for this document to hit the 3000 word mark. 
+
 ## Interface
 
 This is what I really think matters, how to actually use it, and the little interaction features.
@@ -69,7 +46,7 @@ The primary interface is meant to be the keyboard. In fact, early design sketche
 
 The first button is `space`, which make sense because it's the biggest button and also probably the most important. Space generally means "buzz", however there's another very small thing it does: when you open up and see that big green button saying "start the game", you can also press space to trigger that (no ambiguity since the buzz button is disabled in such circumstances).
 
-Next, or skipping, as it was referred to in earlier iterations is also a fairly commonplace operation. It can be accessed with not one, but three keys, `S`, `N` and `J`. `S` and `N` are probably pretty obvious, referring to "Skip" and "Next". J is just convienient because it's on the home row (well, so is `S`, technically) and usually refers to "down" for people who use Vi (which notably doesn't include me, but Gmail, Google Reader and Google Wave, three applications that I did, at some point in time use also follow that pattern). 
+Next, or skipping, as it was referred to in earlier iterations is also a fairly commonplace operation. It can be accessed with not one, but three keys, `S`, `N` and `J`. `S` and `N` are probably pretty obvious, referring to "Skip" and "Next". J is just convenient because it's on the home row (well, so is `S`, technically) and usually refers to "down" for people who use Vi (which notably doesn't include me, but Gmail, Google Reader and Google Wave, three applications that I did, at some point in time use also follow that pattern). 
 
 Pause and Resume can be accessed with `P` and `R`, and are both equivalent. So you can technically pause with `R`, and resume with `P`, though that would be metaphorically confusing. 
 
@@ -96,7 +73,7 @@ The breadcrumb also reveals the answer to the question whenever the question is 
 
 #### Leaderboard/Statistics
 
-In multiplayer mode, there is a leaderboard showing a ranking of all the users who have particpated in the room. In single player, it's just a single grid giving your statistics.
+In multiplayer mode, there is a leaderboard showing a ranking of all the users who have participated in the room. In single player, it's just a single grid giving your statistics.
 
 ##### Multiplayer
 
@@ -123,7 +100,7 @@ It also has shiny transitions between single player and multiplayer modes.
 
 The debugging panel is the furthest down and takes the form of what looks like a table. The first two rows sound vaguely technical (with an underscore too!), latency and sync_offset. And you'd be right, they're both just little metrics which go indicate the health of the network connection. 
 
-The titling of "Debugging" is a tad disingenous, it's mostly networking. But then again, networking is like the vast majority of what can actually fail. 
+The titling of "Debugging" is a tad disingenuous, it's mostly networking. But then again, networking is like the vast majority of what can actually fail. 
 
 The very last in the menu is a link that quite plainly says "Disconnect", and opposite is a piece of text representing the application cache's status. Disconnect is nice for when the network's flakey and you know your connection won't last long anyway. Or if you're like antisocial and need to make your own little corner to cry in. Or something like that. Sure. Okay. Next.
 
