@@ -1,14 +1,5 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd()
 
-nodetime = require('nodetime')
-nodetime.profile()
-
-nodetimeSessionId = ""
-cluster = require('cluster')
-worker = cluster.fork()
-worker.on 'message', (msg) ->
-	return unless msg?.nodetimeSessionId
-	nodetimeSessionId = msg?.nodetimeSessionId
 
 
 try 
@@ -167,9 +158,9 @@ if app.settings.env is 'production' and remote.deploy
 
 app.use express.compress()
 # app.use express.staticCache()
+app.use express.static('static')
 app.use express.cookieParser()
 app.use express.bodyParser()
-app.use express.static('static')
 app.use express.favicon('static/img/favicon.ico')
 
 crypto = require 'crypto'
@@ -338,9 +329,7 @@ class SocketQuizPlayer extends QuizPlayer
 		if @room.serverTime() > @banned
 			@banned = @room.serverTime() + duration
 			@room._ip_ban = {} if !@room._ip_ban
-			for sock in @sockets
-				ip = io.sockets.socket(sock)?.handshake?.address?.address
-				continue if !ip
+			for ip in @ip()
 				@room._ip_ban[ip] = { strikes: 0, banished: 0 } if !@room._ip_ban[ip]
 				@room._ip_ban[ip].strikes++
 
@@ -359,11 +348,19 @@ class SocketQuizPlayer extends QuizPlayer
 
 	ip_ban: (duration = 1000 * 60 * 15) ->
 		@room._ip_ban = {} if !@room._ip_ban
-		for sock in @sockets
-			ip = io.sockets.socket(sock)?.handshake?.address?.address
-			continue if !ip
+		for ip in @ip()
 			@room._ip_ban[ip] = { strikes: 0, banished: @room.serverTime() + duration }
 		@ban(duration)
+
+	ip: ->
+		ips = []
+		for sock_id in @sockets
+			sock = io.sockets.socket(sock_id)
+			real_ip = sock.handshake?.address?.address
+			forward_ip = sock.handshake?.headers?["x-forwarded-for"]
+			addr = (forward_ip || real_ip)
+			ips.push addr if sock and addr
+		return ips
 
 
 	add_socket: (sock) ->
@@ -371,12 +368,11 @@ class SocketQuizPlayer extends QuizPlayer
 			@last_session = @room.serverTime()
 			@verb 'joined the room'
 
-
 		@sockets.push sock.id unless sock.id in @sockets
 		blacklist = ['add_socket', 'emit', 'disconnect']
-
+		
 		sock.on 'disconnect', =>
-			@sockets = (s for s in @sockets when s isnt id)
+			@sockets = (s for s in @sockets when (s isnt sock.id and io.sockets.socket(s)))
 			if @sockets.length is 0
 				@disconnect()
 				@room.journal()
@@ -400,26 +396,17 @@ class SocketQuizPlayer extends QuizPlayer
 			@ban()
 			sock.disconnect()
 
-		id = sock.id
-
 		@room.journal()
 		
-		ip = sock?.handshake?.address?.address
+		for ip in @ip()
+			if @room._ip_ban and @room._ip_ban[ip]
+				if @room._ip_ban[ip].strikes >= 3
+					@ip_ban()
 
-		if @room._ip_ban and @room._ip_ban[ip]
-			if @room._ip_ban[ip].strikes >= 3
-				@ip_ban()
+				if @room.serverTime() < @room._ip_ban[ip].banished
+					@ban()
+					break
 
-			if @room.serverTime() < @room._ip_ban[ip].banished
-				@ban()
-
-
-
-		# if ip of banned_ips
-		# 	if banned_ips[ip] < @room.serverTime()
-		# 		@ban()
-		# 	else
-		# 		delete banned_ips[ip]
 
 		user_count_log 'connected ' + @id + '-' + @name + " (#{ip})", @room.name
 
@@ -692,10 +679,8 @@ app.get '/stalkermode/user/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['room'] and typeof v isnt 'function'
-	if u
-		ips = (io.sockets.socket(sock)?.handshake?.address?.address for sock in u?.sockets)
 		
-	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips }
+	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips: u?.ip() }
 
 
 app.get '/stalkermode/room/:room', (req, res) ->
