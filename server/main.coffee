@@ -179,6 +179,11 @@ sha1 = (text) ->
 	hash.update(text)
 	hash.digest('hex')
 
+# basic statistical methods for statistical purposes
+Avg = (list) -> Sum(list) / list.length
+Sum = (list) -> s = 0; s += item for item in list; s
+StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
+
 # inject the cookies into the session... yo
 app.use (req, res, next) ->
 	unless req.cookies['protocookie']
@@ -427,11 +432,14 @@ class SocketQuizPlayer extends QuizPlayer
 user_count_log = (message, room_name) ->
 	active_count = 0
 	online_count = 0
+	latencies = []
 	for name, room of rooms
 		for uid, user of room.users
 			online_count++ if user.online()
 			active_count++ if user.active()
-	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name}
+			latencies.push(user._latency[0]) if user._latency
+
+	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Avg(latencies), std_latency: StDev(latencies)}
 
 
 load_room = (name, callback) ->
@@ -581,7 +589,7 @@ clearInactive = ->
 			correct: u.correct, 
 			time_spent: u.time_spent,
 			last_action: u.last_action,
-			room: name,
+			room: u.room.name,
 			id: u.id,
 			name: u.name
 		}
@@ -738,14 +746,22 @@ app.get '/stalkermode/hulk-smash', (req, res) ->
 	gammasave = Date.now()
 	res.redirect '/stalkermode'
 
+
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
+	latencies = []
+	for name, room of rooms
+		latencies.push(user._latency[0]) for id, user of room.users when user._latency
+
+
 	res.render 'admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,
 		reaped,
 		gammasave,
+		avg_latency: Avg(latencies),
+		std_latency: StDev(latencies),
 		cookie: req.protocookie,
 		queue: Object.keys(journal_queue).length,
 		rooms

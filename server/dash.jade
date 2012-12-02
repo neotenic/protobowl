@@ -43,9 +43,11 @@ style
 		a(href="/stalkermode") &larr; Stalkermode View 
 	p
 		h1 <span id="active">?</span> Active Users 
-		| peak: <span id="peakactive">?</span> min: <span id="minactive">?</span> 
+		| <b>peak</b>: <span id="peakactive">?</span> <br> <b>min</b>: <span id="minactive">?</span> 
 		h1 <span id="online">?</span> Online Users 
-		| peak: <span id="peakonline">?</span> min: <span id="minonline">?</span> 
+		| <b>peak</b>: <span id="peakonline">?</span> <br> <b>min</b>: <span id="minonline">?</span> 
+		h1 Latency <span id="latency">?</span>
+		| <b>peak</b>: <span id="peaklatency">?</span> <br> <b>min</b>: <span id="minlatency">?</span> 
 	hr
 	p
 		button.btn#roomsort Sort Rooms
@@ -188,24 +190,42 @@ script
 		
 		addLine(room, line)
 	})
-	var peakactive = 0;
-	var minactive = 99999;
-	var peakonline = 0;
-	var minonline = 99999;
 
+	var active_data = [], online_data = [], latency_data = [];
+	function find_min(list){
+		var min = [9999999, 0];
+		for(var i = 0; i < list.length; i++){
+			if(list[i][0] < min[0]) min = list[i];
+		}
+		return min
+	}
+	function find_max(list){
+		var max = [-999999, 0];
+		for(var i = 0; i < list.length; i++){
+			if(list[i][0] > max[0]) max = list[i];
+		}
+		return max
+	}
+	function format_result(tuple){
+		return tuple[0] + " @" + tuple[1].toTimeString().replace(/.*(\d{2}:\d{2}:\d{2}).*/, "$1")
+	}
 	sock.on('user_count', function(e){
+		active_data.push([e.active, new Date]);
+		online_data.push([e.online, new Date]);
+		latency_data.push([Math.round(e.avg_latency * 100) / 100, new Date])
+
 		console.log('user_count', e)
 		document.getElementById('active').innerText = e.active;
-		peakactive = Math.max(e.active, peakactive);
-		minactive = Math.min(e.active, minactive);
-		document.getElementById('peakactive').innerText = peakactive;
-		document.getElementById('minactive').innerText = minactive;
+		document.getElementById('latency').innerText = e.avg_latency.toFixed(2) + 'ms ±' + e.std_latency.toFixed(2)
 
 		document.getElementById('online').innerText = e.online;
-		peakonline = Math.max(e.online, peakonline);
-		minonline = Math.min(e.online, minonline);
-		document.getElementById('peakonline').innerText = peakonline;
-		document.getElementById('minonline').innerText = minonline;
+		document.getElementById('peaklatency').innerText = format_result(find_max(latency_data));
+		document.getElementById('minlatency').innerText = format_result(find_min(latency_data));
+
+		document.getElementById('peakactive').innerText = format_result(find_max(active_data));
+		document.getElementById('minactive').innerText = format_result(find_min(active_data));
+		document.getElementById('peakonline').innerText = format_result(find_max(online_data));
+		document.getElementById('minonline').innerText = format_result(find_min(online_data));
 
 		var line = document.createElement('p');
 		line.className = 'status';
