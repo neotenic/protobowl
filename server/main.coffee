@@ -143,7 +143,7 @@ if app.settings.env is 'development'
 	
 	fs.watch "shared", watcher
 	fs.watch "client", watcher
-	fs.watch "static/less", watcher
+	fs.watch "client/less", watcher
 	fs.watch "server/room.jade", watcher
 
 
