@@ -57,12 +57,15 @@ if app.settings.env is 'development'
 
 	snockets = new Snockets()
 
+
 	scheduledUpdate = null
 	path = require 'path'
 
 	updateCache = ->
 		source_list = []
-		compile_date = new Date;
+		compile_date = new Date
+		timehash = ''
+		cache_text = ''
 
 		compileLess = ->
 			console.log 'compiling less'
@@ -81,6 +84,7 @@ if app.settings.env is 'development'
 					}
 
 					source_list.push {
+						hash: sha1(css),
 						code: "/* protobowl_css_build_date: #{compile_date} */\n#{css}",
 						err: err,
 						file: "static/protobowl.css"
@@ -97,6 +101,7 @@ if app.settings.env is 'development'
 			
 			snockets.getConcatenation "client/#{file}.coffee", (err, js) ->
 				source_list.push {
+					hash: sha1(js),
 					code: "protobowl_#{file}_build = '#{compile_date}';\n#{js}", 
 					err: err, 
 					file: "static/#{file}.js"
@@ -104,8 +109,14 @@ if app.settings.env is 'development'
 				compileCoffee()
 
 		saveFiles = ->
-			console.log 'saving files'
+			
+			unihash = sha1((i.hash for i in source_list).join(''))
+			if unihash is timehash
+				console.log 'files not modified; aborting'
+				return
 			error_message = ''
+				
+			console.log 'saving files'
 			for i in source_list
 				error_message += "File: #{i.file}\n#{i.err}\n\n" if i.err
 			if error_message
@@ -118,28 +129,31 @@ if app.settings.env is 'development'
 					fs.writeFile i.file, i.code, 'utf8', ->
 						saved_count++
 						if saved_count is source_list.length
-							writeManifest()
+							writeManifest(unihash)
 
-		writeManifest = ->
+		writeManifest = (hash) ->
 			console.log 'saving manifest'
-			fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
+		
+			data = cache_text.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")
+			fs.writeFile 'static/offline.appcache', data, (err) ->
 				throw err if err
-				data = data.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + "\n")
-				fs.writeFile 'static/offline.appcache', data, (err) ->
-					throw err if err
-					io.sockets.emit 'force_application_update', +new Date
-					scheduledUpdate = null
+				io.sockets.emit 'force_application_update', +new Date
+				scheduledUpdate = null
 
+		fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
+			cache_text = data
+			timehash = cache_text.match(/INSERT_DATE (.*?)\n/)?[1]?.split(" # ")?[1]
+			compileLess()
+			
 
-		compileLess()
 	watcher = (event, filename) ->
 		return if filename in ["offline.appcache", "protobowl.css", "app.js"]
-		
+			
 		unless scheduledUpdate
 			console.log "changed file", filename
 			scheduledUpdate = setTimeout updateCache, 500
 
-	# updateCache()
+	updateCache()
 	
 	fs.watch "shared", watcher
 	fs.watch "client", watcher
