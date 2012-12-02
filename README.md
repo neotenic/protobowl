@@ -11,6 +11,7 @@
 * add support for superpower [+]
 * statistical skill metrics i.e. score/interrupts
 * Add more questions, create new parser in order to do so
+* Add a computer science section
 
 # In Progress
 * Support different question sets
