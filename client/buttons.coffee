@@ -199,17 +199,21 @@ chat = (text, done) ->
 		protobot_engaged = true
 		protobot_last = $('.chat_input').data('input_session')
 		protobot_write "I'm lonely too. Plz talk to meeeee"
-	else if protobot_engaged and omeglebot_replies? and protobot_last isnt $('.chat_input').data('input_session')
+	else if protobot_engaged
 		pick = (list) -> list[Math.floor(list.length * Math.random())]
-
-		if text.replace(/[^a-z]/g, '') of omeglebot_replies and Math.random() > 0.1 # probablistic everything
-			protobot_write pick(omeglebot_replies[text.replace(/[^a-z]/g, '')])
-			protobot_last = $('.chat_input').data('input_session')
-		else if done
-			reply = pick Object.keys(omeglebot_replies)
-			reply = pick omeglebot_replies[reply]
-			protobot_write reply
-			# doesnt matter to set protobot last because you dont repeat afterwars anyway
+		if done and /stahp|stop|not lonely/i.test(text)
+			protobot_write 'Protobot disengaged. Prepare to languish in your solitude.'
+			protobot_engaged = false
+		else if omeglebot_replies? and protobot_last isnt $('.chat_input').data('input_session')
+			if text.replace(/[^a-z]/g, '') of omeglebot_replies and Math.random() > 0.3 # probablistic everything
+				protobot_write pick(omeglebot_replies[text.replace(/[^a-z]/g, '')])
+				protobot_last = $('.chat_input').data('input_session')
+			else if done
+				reply = pick Object.keys(omeglebot_replies)
+				reply = pick omeglebot_replies[reply]
+				protobot_write reply
+				# doesnt matter to set protobot last because you dont repeat afterwars anyway
+		
 
 	if text.slice(0, 1) is '@'
 		refs = findReferences(text)
