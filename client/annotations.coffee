@@ -372,7 +372,7 @@ boxxyAnnotation = ({id, tribunal}) ->
 		line.append 'Protobowl has detected high rates of activity coming from the user '
 		line.append userSpan(id)
 		line.append '. If a majority of other active players vote to ban this user, the user will be sent to '
-		line.append "<a href='#{room.name}-banned'>/#{room.name}-banned</a> and banned from this room for 10 minutes. This message will be automatically dismissed in a minute. <br> "
+		line.append "<a href='/b'>/b</a> and banned from this room for 10 minutes. This message will be automatically dismissed in a minute. <br> "
 		guilty = $('<button>').addClass('btn btn-small').text('Ban this user')
 		line.append guilty
 		line.append ' '

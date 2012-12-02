@@ -66,7 +66,6 @@ if app.settings.env is 'development'
 		cache_text = ''
 
 		compileLess = ->
-			console.log 'compiling less'
 			lessPath = 'client/less/protobowl.less'
 			fs.readFile lessPath, 'utf8', (err, data) ->
 				throw err if err
@@ -95,7 +94,6 @@ if app.settings.env is 'development'
 		compileCoffee = ->
 			file = file_list.shift()
 			return saveFiles() if !file
-			console.log 'compiling coffee', file
 			
 			snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
 				source_list.push {
@@ -130,8 +128,6 @@ if app.settings.env is 'development'
 							writeManifest(unihash)
 
 		writeManifest = (hash) ->
-			console.log 'saving manifest'
-		
 			data = cache_text.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")
 			fs.writeFile 'static/offline.appcache', data, (err) ->
 				throw err if err
@@ -490,7 +486,6 @@ io.sockets.on 'connection', (sock) ->
 			if 'id' of config.query
 				publicID = (config.query.id + "0000000000000000000000000000000000000000").slice(0, 40)
 				is_ninja = false
-		
 
 		# get the user's identity
 		existing_user = (publicID of room.users)
@@ -512,17 +507,11 @@ io.sockets.on 'connection', (sock) ->
 					user.lock = (Math.random() > 0.5)
 
 		user = room.users[publicID]
-		
 		user.name = 'secret ninja' if is_ninja
-		
 		sock.join room_name
-		
 		user.add_socket sock
-
 		sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
-		
-		# tell that there's a new person at the partaay
-		room.sync(3)
+		room.sync(3) # tell errybody that there's a new person at the partaay
 
 		# # detect if the server had been recently restarted
 		if new Date - uptime_begin < 1000 * 60 and existing_user
@@ -545,83 +534,19 @@ journal_queue = {}
 
 process_queue = ->
 	return unless gammasave
-	min_time = Date.now()
-	min_room = null
+	[min_time, min_room] = [Date.now(), null]
 	for name, time of journal_queue
 		if !rooms[name]
 			delete journal_queue[name]
-			continue
-			
-		if time < min_time	
-			min_time = time
-			min_room = name
-		
-
-	if min_room
-		room = rooms[min_room]
-		if !room?.archived or Date.now() - room?.archived > 1000 * 10
-			remote.archiveRoom? room
-			delete journal_queue[min_room]
+			continue			
+		[min_time, min_room] = [time, name] if time < min_time
+	return unless min_room
+	room = rooms[min_room]
+	if !room?.archived or Date.now() - room?.archived > 1000 * 10
+		remote.archiveRoom? room
+		delete journal_queue[min_room]
 
 setInterval process_queue, 1000	
-
-
-clearInactive = ->
-	# garbazhe collectour
-	for name, room of rooms
-		len = 0
-		offline_pool = (username for username, user of room.users when user.sockets.length is 0)
-		overcrowded_room = offline_pool.length > 12
-		big_room = Object.keys(room.users).length > 12
-		
-		oldest_user = ''
-		if overcrowded_room
-			oldest = offline_pool.sort (a, b) -> 
-				return room.users[a].last_action - room.users[b].last_action
-			oldest_user = oldest[0]
-
-		for username, user of room.users
-			len++
-			if !user.online() and user.id not in user.room.admins
-				evict_user = false
-				if overcrowded_room and username is oldest_user
-					evict_user = true
-				if evict_user or
-				(user.last_action < new Date - 1000 * 60 * 15 and user.guesses is 0) or
-				(big_room and user.correct < 2 and user.last_action < new Date - 1000 * 60 * 5)
-					log 'reap_user', {
-						seen: user.seen, 
-						guesses: user.guesses, 
-						early: user.early, 
-						interrupts: user.interrupts, 
-						correct: user.correct, 
-						time_spent: user.time_spent,
-						last_action: user.last_action,
-						room: name,
-						id: user.id,
-						name: user.name
-					}
-					reaped.users++
-					reaped.seen += user.seen
-					reaped.guesses += user.guesses
-					reaped.early += user.early
-					reaped.interrupts += user.interrupts
-					reaped.correct += user.correct
-					reaped.time_spent += user.time_spent
-					reaped.last_action = +new Date
-					len--
-					delete room.users[username]
-					overcrowded_room = false
-		if len is 0
-			# console.log 'removing empty room', name
-			log 'reap_room', name
-			delete rooms[name]
-			remote.removeRoom?(name)
-			reaped.rooms++
-
-
-
-setInterval clearInactive, 1000 * 10 # every ten seconds
 
 
 reaped = {
@@ -636,6 +561,61 @@ reaped = {
 	early: 0,
 	last_action: +new Date
 }
+
+clearInactive = ->
+	# the maximum size a room can be
+	MAX_SIZE = 15
+
+	rank_user = (u) -> if u.correct > 2 then u.last_action else u.time_spent
+	reap_room = (name) ->
+		log 'reap_room', name
+		delete rooms[name]
+		remote.removeRoom?(name)
+		reaped.rooms++
+	reap_user = (u) ->
+		log 'reap_user', {
+			seen: u.seen, 
+			guesses: u.guesses, 
+			early: u.early, 
+			interrupts: u.interrupts, 
+			correct: u.correct, 
+			time_spent: u.time_spent,
+			last_action: u.last_action,
+			room: name,
+			id: u.id,
+			name: u.name
+		}
+		reaped.us++
+		reaped.seen += u.seen
+		reaped.guesses += u.guesses
+		reaped.early += u.early
+		reaped.interrupts += u.interrupts
+		reaped.correct += u.correct
+		reaped.time_spent += u.time_spent
+		reaped.last_action = +new Date
+		delete room.users[u.id]
+
+	for room_name, room of rooms
+		user_pool = (user for id, user of room.users)
+		if user_pool.length is 0
+			reap_room room_name
+			continue
+
+		offline_pool = (user for user in user_pool when !user.online())
+		
+		for user in offline_pool when user.correct < 2 and user.last_action < Date.now() - 1000 * 60 * 5
+			reap_user user
+			continue
+
+		offline_pool.sort (a, b) -> rank_user(a) - rank_user(b)
+		if offline_pool.length > 0 and user_pool.length > MAX_SIZE
+			reap_user offline_pool[0]
+			continue # no point here but it makes the code more poetic
+
+
+setInterval clearInactive, 1000 * 10 # every ten seconds
+
+
 
 # think of it like a filesystem swap; slow access external memory that is used to save ram
 swapInactive = ->

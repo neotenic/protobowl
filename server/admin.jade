@@ -53,8 +53,8 @@ html(lang="en")
 						li score: 
 							mixin score(user)
 							- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001)), f_score = 2 * (precision * recall) / (precision + recall + 0.001);
-							- var latency = '?'; if(user._latency){ latency = user._latency[0].toFixed(1) + 'ms ' + user._latency[1].toFixed(1) + 'ms (' + user._latency[2] + ')' }
-							|  (correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early} precision: #{precision.toFixed(2)} recall: #{recall.toFixed(2)} f1: #{f_score.toFixed(2)} latency: #{latency}) 
+							- var latency = '?'; if(user._latency){ latency = user._latency[0].toFixed(1) + 'ms ±' + user._latency[1].toFixed(1) + ' (' + user._latency[2] + ')' }
+							|  correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early} precision: #{precision.toFixed(2)} recall: #{recall.toFixed(2)} f1: #{f_score.toFixed(2)} latency: #{latency}
 						if user.users || user.rooms
 							li
 								| users: #{user.users} rooms: #{user.rooms}
