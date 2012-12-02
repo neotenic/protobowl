@@ -6,17 +6,7 @@
 
 require('coffee-script');
 process.chdir(__dirname);
-
-var cluster = require('cluster');
-if(!cluster.isMaster){
-	process.on('message', function(msg){
-		if(!msg || !msg.nodetimeSessionId) return;
-		process.send(msg);
-	});
-}else{
-	require('./server/main');
-}
-
+require('./server/main');
 
 // This is probably the first file you're going to
 // look at. Probably because it's the only piece of

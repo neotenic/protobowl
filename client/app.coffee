@@ -336,19 +336,20 @@ test_latency = ->
 	initialTime = +new Date
 	sock.emit 'echo', {}, (firstServerTime) ->
 		recieveTime = +new Date
-		sock.emit 'echo', {}, (secondServerTime) ->
+		
+		CSC1 = recieveTime - initialTime
+		latency_log.push CSC1
+		sync_offsets.push recieveTime - firstServerTime
+
+		sock.emit 'echo', { avg: Avg(latency_log), std: StDev(latency_log) }, (secondServerTime) ->
 			secondTime = +new Date
-			CSC1 = recieveTime - initialTime
 			CSC2 = secondTime - recieveTime
 			SCS1 = secondServerTime - firstServerTime
 
-			sync_offsets.push recieveTime - firstServerTime
 			sync_offsets.push secondTime - secondServerTime
 
-			latency_log.push CSC1
 			latency_log.push SCS1
 			latency_log.push CSC2
-			# console.log CSC1, SCS1, CSC2
 
 			compute_sync_offset()
 
