@@ -313,8 +313,8 @@ class QuizPlayer
 		@room.sync(1)
 
 	echo: (data, callback) -> 
-		if data.avg and data.std
-			data._latency = [data.avg, data.std]
+		if data.avg and data.std and data.n
+			@_latency = [data.avg, data.std, data.n]
 		callback @room.serverTime()
 
 	buzz: (data, fn) -> 

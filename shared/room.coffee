@@ -298,7 +298,7 @@ class QuizRoom
 				@attempt.text = ''
 				@attempt.duration = 10 * 1000
 
-				@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @attempt.duration, =>
+				@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @billMahrer, =>
 					@end_buzz session
 			@sync()
 		else

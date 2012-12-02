@@ -1,7 +1,5 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd()
 
-
-
 try 
 	remote = require './remote'
 catch err
@@ -109,7 +107,7 @@ if app.settings.env is 'development'
 				compileCoffee()
 
 		saveFiles = ->
-			
+			# its something like a unitard
 			unihash = sha1((i.hash for i in source_list).join(''))
 			if unihash is timehash
 				console.log 'files not modified; aborting'
