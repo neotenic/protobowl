@@ -252,7 +252,7 @@ class QuizRoom
 	finish: -> @set_time @end_time
 
 	next: ->
-		if @generating_question and @serverTime() - @generating_question < 1000
+		if @generating_question and @serverTime() - @generating_question > 2000
 			delete @generating_question
 			return
 
