@@ -159,6 +159,7 @@ class QuizRoom
 			@generated_time = @serverTime() # like begin_time but doesnt change when speed is altered
 			
 			@attempt = null
+			@clear_timeout()
 			
 			@next_id = question.next || null # might be null
 
@@ -192,7 +193,7 @@ class QuizRoom
 			@timing = ((+syllables(word) || 0) + 1 for word in @question.split(" "))
 
 			@set_speed @rate #do the math with speeds
-			
+
 			for id, user of @users
 				user.times_buzzed = 0
 				user.seen++ if user.active()
@@ -245,13 +246,16 @@ class QuizRoom
 	finish: -> @set_time @end_time
 
 	next: ->
+		return if @attempt or @time() <= @end_time
+		
 		if @generating_question and @serverTime() - @generating_question > 2000
 			delete @generating_question
 			return
 
-		if @time() >= @end_time and !@attempt
-			@unfreeze()
-			@new_question()
+		return if @generating_question
+		
+		@unfreeze()
+		@new_question()
 			
 
 	check_answer: (attempt, answer, question) ->
