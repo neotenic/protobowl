@@ -403,7 +403,12 @@ class SocketQuizPlayer extends QuizPlayer
 						@throttle()
 						# sock.emit 'throttle', @__rate_limited
 					else
-						this[attr](args...)
+						try
+							this[attr](args...)
+						catch err
+							console.error "Error while running QuizPlayer::#{attr} for #{@room.name}/#{@id} with args: ", args
+							console.error err.stack
+							@room.emit 'debug', "Error while running QuizPlayer::#{attr} for #{@room.name}/#{@id}.\nPlease email info@protobowl.com with the contents of this error.\n\n#{err.stack}"
 
 		if @banned and @room.serverTime() < @banned
 			@ban()

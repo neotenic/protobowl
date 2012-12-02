@@ -42,6 +42,7 @@ offline_startup = ->
 	, 30 * 1000
 
 sock = null
+has_connected = false
 
 online_startup = ->
 	# if !url and location.hostname is 'protobowl.com'
@@ -53,6 +54,7 @@ online_startup = ->
 	}
 
 	sock.on 'connect', ->
+		has_connected = true
 		$('.disconnect-notice').slideUp()
 		# allow the user to reload/disconnect/reconnect
 		$('#reload, #disconnect, #reconnect').hide()
@@ -80,7 +82,7 @@ if io?
 	online_startup()
 
 	setTimeout ->
-		$('#slow').slideDown() if !sock.socket.connected
+		$('#slow').slideDown() if !has_connected
 	, 1000 * 3
 
 	setTimeout initialize_offline, 1000

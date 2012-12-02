@@ -402,9 +402,9 @@ class QuizPlayer
 		# for i, u of @room.users
 		# 	return if name is u.name
 
+		@touch()
 		if name.trim().length > 0
 			@name = name.trim().slice(0, 140)
-			@touch()
 			@room.sync(1)
 
 	set_distribution: (data) ->
@@ -466,11 +466,13 @@ class QuizPlayer
 	set_speed: (speed) ->
 		@touch()
 		return unless @authorized()
+		return if isNaN(speed)
 		return if speed <= 0
 		@room.set_speed speed
 		@room.sync()
 
 	set_team: (name) ->
+		@touch()
 		if name
 			@verb "switched to team #{name}"
 		else
@@ -479,8 +481,9 @@ class QuizPlayer
 		@room.sync(1)
 
 	set_type: (name) ->
-		return unless @authorized()
 		@touch()
+		return unless @authorized()
+		
 		if name
 			@room.type = name
 			@room.category = ''
@@ -490,21 +493,25 @@ class QuizPlayer
 				@verb "changed the question type to #{name} (#{size} questions)"
 
 	set_show_typing: (data) ->
-		@show_typing = data
+		@touch()
+		@show_typing = !!data
 		@room.sync(1)
 
 	set_sounds: (data) ->
-		@sounds = data
+		@touch()
+		@sounds = !!data
 		@room.sync(1)
 
 	set_movingwindow: (num) ->
-		if num
+		@touch()
+		if num and !isNaN(num)
 			@movingwindow = num
 		else
 			@movingwindow = false
 		@room.sync(1)
 
 	set_skip: (data) ->
+		@touch()
 		return unless @authorized()
 		@room.no_skip = !data
 		@room.sync(1)
@@ -514,8 +521,9 @@ class QuizPlayer
 			@verb 'enabled question skipping'
 
 	set_bonus: (data) ->
+		@touch()
 		return unless @authorized()
-		@room.show_bonus = data
+		@room.show_bonus = !!data
 		if @room.show_bonus
 			@verb 'enabled showing bonus questions'
 		else
