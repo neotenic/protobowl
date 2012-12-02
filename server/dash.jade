@@ -133,7 +133,7 @@ script
 		var line = document.createElement('p');
 		line.appendChild(userSpan(user, room))
 		line.appendChild(document.createTextNode(' '))
-		line.appendChild(document.createTextNode(message))
+		line.appendChild(document.createTextNode(message.replace(/\!\@\w+/g, '')))
 		addLine(room, line)
 		console.log('chat', e)
 	})
