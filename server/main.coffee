@@ -66,7 +66,7 @@ if app.settings.env is 'development'
 
 		compileLess = ->
 			console.log 'compiling less'
-			lessPath = 'static/less/protobowl.less'
+			lessPath = 'client/less/protobowl.less'
 			fs.readFile lessPath, 'utf8', (err, data) ->
 				throw err if err
 
