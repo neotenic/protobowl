@@ -179,14 +179,8 @@ class QuizRoom
 				.replace(/\<\w\w\>/g, '')
 				.replace(/\[\w\w\]/g, '')
 
-			# console.log @info
-			# @qid = question.question
 			@qid = question?._id?.toString() || 'question_id'
 			
-			# @info.tournament.replace(/[^a-z0-9]+/ig, '-') + "---" +
-			# @answer.replace(/[^a-z0-9]+/ig, '-').slice(0, 20)
-			# console.log @qid
-
 			@begin_time = @time() + @start_offset
 
 			if SyllableCounter?
@@ -198,10 +192,9 @@ class QuizRoom
 			@timing = ((+syllables(word) || 0) + 1 for word in @question.split(" "))
 
 			@set_speed @rate #do the math with speeds
-			# @end_time = @begin_time + @cumulative[@cumulative.length - 1] + @answer_duration
+			
 			for id, user of @users
 				user.times_buzzed = 0
-				# if user.sockets.length > 0 and new Date - user.last_action < 1000 * 60 * 10
 				user.seen++ if user.active()
 				user.history.push user.score()
 				user.history = user.history.slice(-30)
@@ -268,8 +261,6 @@ class QuizRoom
 
 	end_buzz: (session) -> #killit, killitwithfire
 		return unless @attempt?.session is session
-		# touch the user in weird places
-		# @touch @attempt.user
 		unless @attempt.prompt
 			@clear_timeout()
 			@attempt.done = true
@@ -280,10 +271,6 @@ class QuizRoom
 				do_prompt = true
 				@attempt.correct = false
 			
-			# if Math.random() > 0.99 and @attempt.correct is false
-			# 	do_prompt = true
-
-			# log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, @attempt.correct]
 			# conditionally set this based on stuff
 			if do_prompt is true
 				@attempt.correct = "prompt" # quasi hack i know
@@ -335,14 +322,12 @@ class QuizRoom
 					if buzzed >= pool 
 						@finish() # if everyone's buzzed and nobody can buzz, then why continue reading
 
-			# journal @name
 			@journal()
 			@attempt = null #g'bye
 			@sync(1) #two syncs in one request!
 
 
 	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
-		# @touch user
 		team_buzzed = 0
 		for id, member of @users when (member.team || id) is (@users[user].team || user)
             team_buzzed += member.times_buzzed

@@ -300,6 +300,7 @@ class QuizPlayer
 
 	
 	disconnect: ->
+		@touch()
 		if @sockets.length is 0
 			seconds = (@room.serverTime() - @last_session) / 1000
 			if seconds > 90
@@ -309,7 +310,6 @@ class QuizPlayer
 			else
 				@verb "left the room"
 				
-		@touch()
 		@room.sync(1)
 
 	echo: (data, callback) -> 
@@ -398,12 +398,8 @@ class QuizPlayer
 		@room.sync(1)
 
 	set_name: (name) ->
-		# ensure no naming conflicts
-		# for i, u of @room.users
-		# 	return if name is u.name
-
 		@touch()
-		if name.trim().length > 0
+		if name.toString().trim().length > 0
 			@name = name.trim().slice(0, 140)
 			@room.sync(1)
 

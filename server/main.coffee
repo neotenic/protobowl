@@ -5,6 +5,8 @@ try
 catch err
 	remote = require './local'
 
+remote.initialize_remote()
+
 express = require 'express'
 fs = require 'fs'
 http = require 'http'
@@ -155,9 +157,6 @@ if app.settings.env is 'development'
 	fs.watch "server/room.jade", watcher
 
 
-
-
-
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
@@ -260,7 +259,7 @@ class SocketQuizRoom extends QuizRoom
 	end_buzz: (session) ->
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
-			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user].name, @attempt.text, @answer, ruling]
+			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling]
 		super(session)
 
 	merge_user: (id, new_id) ->
@@ -397,11 +396,8 @@ class SocketQuizPlayer extends QuizPlayer
 				sock.on attr, (args...) => 
 					if @banned and @room.serverTime() < @banned
 						@ban()
-						# sock.disconnect()
 					else if @__rate_limited and @room.serverTime() < @__rate_limited
-						# console.log 'throwing away an event'
 						@throttle()
-						# sock.emit 'throttle', @__rate_limited
 					else
 						try
 							this[attr](args...)
@@ -598,7 +594,7 @@ clearInactive = ->
 			id: u.id,
 			name: u.name
 		}
-		reaped.us++
+		reaped.users++
 		reaped.seen += u.seen
 		reaped.guesses += u.guesses
 		reaped.early += u.early
@@ -606,7 +602,7 @@ clearInactive = ->
 		reaped.correct += u.correct
 		reaped.time_spent += u.time_spent
 		reaped.last_action = +new Date
-		delete room.users[u.id]
+		delete u.room.users[u.id]
 
 	for room_name, room of rooms
 		user_pool = (user for id, user of room.users)
@@ -758,7 +754,6 @@ app.get '/stalkermode', (req, res) ->
 	for name, room of rooms
 		latencies.push(user._latency[0]) for id, user of room.users when user._latency
 
-
 	res.render 'admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
@@ -786,8 +781,9 @@ app.post '/stalkermode/reports/remove_question/:id', (req, res) ->
 
 app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 	mongoose = require 'mongoose'
+	blacklist = ['inc_random', 'seen']
 	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
-		for key, val of req.body
+		for key, val of req.body when key not in blacklist
 			doc[key] = val
 		doc.save()
 		res.end('gots it')
@@ -827,9 +823,6 @@ app.get '/:type/:channel', (req, res) ->
 	name = req.params.channel
 	res.render 'room.jade', { name }
 
-
-remote.initialize_remote()
 port = process.env.PORT || 5555
-# restore_journal ->
 server.listen port, ->
 	console.log "listening on port", port
