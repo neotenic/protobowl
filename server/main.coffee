@@ -296,9 +296,9 @@ class SocketQuizPlayer extends QuizPlayer
 		@name = names.generateName()
 
 	disco: (data) ->
-		if data.old_socket and io.sockets.socket(data.old_socket)
-			io.sockets.socket(data.old_socket).disconnect()
-		if !data.version or data.version < 5
+		if data?.old_socket and io.sockets.socket(data?.old_socket)
+			io.sockets.socket(data?.old_socket)?.disconnect()
+		if !data?.version or data?.version < 5
 			io.sockets.emit 'force_application_update', +new Date
 			io.sockets.emit 'application_update', +new Date
 			io.sockets.socket(sock).disconnect() for sock in @sockets
@@ -464,6 +464,7 @@ io.sockets.on 'connection', (sock) ->
 	return sock.disconnect() unless headers.referer and headers.cookie
 	config = url.parse(headers.referer, true)
 	
+
 	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
 		config.host = 'protobowl.com'
 		sock.emit 'application_update', +new Date
@@ -483,13 +484,19 @@ io.sockets.on 'connection', (sock) ->
 	# configger the things which are derived from said parsed stuff
 	room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
 	question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
+	
+	publicID = sha1(cookie.protocookie + room_name)
+
+	if is_ninja and config.pathname is '/scalar.html'
+		room_name = "room-#{Math.floor(Math.random() * 42)}"
+		publicID = ("#{Math.floor(Math.random() * 20)}0000000000000000000000000000000000000000").slice(0, 40)
+		is_ninja = false
 
 	# get the room
 	load_room room_name, (room, is_new) ->
 		if is_new
 			room.type = question_type
 
-		publicID = sha1(cookie.protocookie + room_name)
 		if is_ninja
 			publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
 			if 'id' of config.query
