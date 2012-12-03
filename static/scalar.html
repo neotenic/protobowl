@@ -1,0 +1,87 @@
+<link rel="stylesheet", href="/protobowl.css"></link>
+<div class="container">
+<h1>ProtoScalar</h1>
+<p>
+	This is a pretty simple app to test out how well Protobowl scales by pretending to be lots and lots of users in lots of rooms doing lots of things.
+</p>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socks = [];
+var things = 'hello world my name is twilight sparkle pony or something,dwarg,uhh,sorry im late guys,omg the noob arrives,andrew u set settings,put lots of lit for kevin,was gonna guess urban,wheres the effing mtho,lol close enough,three,darn,oops stoopid,hi jonah,HI UJWAL,thx,nice,you youtube yourself playing protobowl?,imam ruin it,no i am watching something idiot,oh,ahhhh,buzz danny,too late,that wouldnt be fair georgie,yes it would,wow,fool of a took,HOLY SHIT,lols nice davies,im lonely,my bad,lol,thats a lie,not really revered,nah i wanna hit 100k'.split(',');
+
+function pick(list){
+	return list[Math.floor(list.length * Math.random())]
+}
+function add_sock(){
+	var sock = io.connect(location.hostname, {
+		'force new connection': true,
+		'reconnect': false
+	});
+	socks.push(sock);
+	sock.on('connect', function(){
+		console.log('socket connected')
+	});
+	sock.on('sync', function(e){
+		// console.log(e);
+		sock.answer = e.answer
+		sock.emit('next')
+	})
+	sock.on('joined', function(e){
+		sock.emit('next');
+		doSomething();
+	});
+	function doSomething(){
+		if(Math.random() < 0.2){
+			sock.emit('next')
+		}else if(Math.random() < 0.1){
+			if(Math.random() > 0.5){
+				sock.emit('pause')
+			}else{
+				sock.emit('unpause')
+			}
+			
+		}else if(Math.random() < 0.1){
+			protobot_write(sock, pick(things))
+		}else if(Math.random() < 0.1){
+			
+		}
+		setTimeout(doSomething, 2000 * Math.random())
+	};
+}
+
+
+function protobot_guess(sock, message){
+	var count = 0, session = Math.random().toString(36).slice(2)
+	function writeLetter(){
+		if(++count <= message.length){
+			sock.emit('chat', {
+				text: message.slice(0, count),
+				session: session,
+				user: '__protobot',
+				done: count == message.length
+			})
+			setTimeout(writeLetter, 1000 * 60 / 6 / (80 + Math.random() * 50))
+		}
+	}
+	writeLetter()
+
+}
+
+function protobot_write(sock, message){
+	var count = 0, session = Math.random().toString(36).slice(2)
+	function writeLetter(){
+		if(++count <= message.length){
+			sock.emit('chat', {
+				text: message.slice(0, count),
+				session: session,
+				user: '__protobot',
+				done: count == message.length
+			})
+			setTimeout(writeLetter, 1000 * 60 / 6 / (80 + Math.random() * 50))
+		}
+	}
+	writeLetter()
+
+}
+</script>
+</div>
