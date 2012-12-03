@@ -399,7 +399,7 @@ class QuizPlayer
 
 	set_name: (name) ->
 		@touch()
-		if name.toString().trim().length > 0
+		if (name + '').trim().length > 0
 			@name = name.trim().slice(0, 140)
 			@room.sync(1)
 

@@ -212,16 +212,19 @@ script
 	sock.on('user_count', function(e){
 		active_data.push([e.active, new Date]);
 		online_data.push([e.online, new Date]);
-		latency_data.push([Math.round(e.avg_latency * 100) / 100, new Date])
+		if(e.avg_latency && !isNaN(e.avg_latency)) latency_data.push([Math.round(e.avg_latency * 100) / 100, new Date]);
 
 		console.log('user_count', e)
 		document.getElementById('active').innerText = e.active;
-		document.getElementById('latency').innerText = e.avg_latency.toFixed(2) + 'ms ±' + e.std_latency.toFixed(2)
-
 		document.getElementById('online').innerText = e.online;
-		document.getElementById('peaklatency').innerText = format_result(find_max(latency_data));
-		document.getElementById('minlatency').innerText = format_result(find_min(latency_data));
+		if(latency_data.length > 0){
+			document.getElementById('latency').innerText = e.avg_latency.toFixed(2) + 'ms ±' + e.std_latency.toFixed(2)
 
+			document.getElementById('peaklatency').innerText = format_result(find_max(latency_data));
+			document.getElementById('minlatency').innerText = format_result(find_min(latency_data));
+	
+		}
+		
 		document.getElementById('peakactive').innerText = format_result(find_max(active_data));
 		document.getElementById('minactive').innerText = format_result(find_min(active_data));
 		document.getElementById('peakonline').innerText = format_result(find_max(online_data));
