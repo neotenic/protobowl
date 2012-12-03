@@ -1,5 +1,6 @@
 <link rel="stylesheet", href="/protobowl.css"></link>
 <div class="container">
+<title>ProtoScalar</title>
 <h1>ProtoScalar</h1>
 <p>
 	This is a pretty simple app to test out how well Protobowl scales by pretending to be lots and lots of users in lots of rooms doing lots of things.
@@ -7,10 +8,17 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 var socks = [];
-var things = 'hello world my name is twilight sparkle pony or something,dwarg,uhh,sorry im late guys,omg the noob arrives,andrew u set settings,put lots of lit for kevin,was gonna guess urban,wheres the effing mtho,lol close enough,three,darn,oops stoopid,hi jonah,HI UJWAL,thx,nice,you youtube yourself playing protobowl?,imam ruin it,no i am watching something idiot,oh,ahhhh,buzz danny,too late,that wouldnt be fair georgie,yes it would,wow,fool of a took,HOLY SHIT,lols nice davies,im lonely,my bad,lol,thats a lie,not really revered,nah i wanna hit 100k'.split(',');
+var things = 'hello world my name is twilight sparkle pony or something,dwarg,uhh,sorry im late guys,omg the noob arrives,andrew u set settings,put lots of lit for kevin,was gonna guess urban,wheres the effing mtho,lol close enough,three,darn,oops stoopid,hi jonah,HI UJWAL,thx,nice,you youtube yourself playing protobowl?,imam ruin it,no i am watching something idiot,oh,ahhhh,buzz danny,too late,that wouldnt be fair georgie,yes it would,wow,fool of a took,HOLY SHIT,lols nice davies,im lonely,my bad,lol,thats a lie,not really revered,nah i wanna hit 100k,thanks,asdfoajsdfklajsdfoasdf,that was gay,ik,HEY WAT DA HELL,LOL,LOLOLOLOL,shit,lolol,UGGGHHH why you time out so quick,oh lol,nicenice,yes,what i am no pancake,how can you read what i say before i say it,go away protobot,thats creepy,me,wtf,im confused,baking soda,oh poopy,no protobot,hello?,yo anyone there?,hey,yesh,bryant said a few minutes,mariah is in the shower,wanna wait?,gabe said he was coming too,damn forgot,oh lols,dammit,:(,wat in the world'.split(',');
+
+var wrong = '1864,trafaalgar,bosworth fiedl,18647,mahdi,hundred years war,0.1,dantes inferno,halide,ether,max weber,to kill a mockingburd,wallace,the great gatsby,prometheus,orphus,kronos,keppler,elt,frankenstein,budda,lysosome,endoplsic reticlum,fuck jesus,relativity,o brien,anna karenina,requiem,gauls,shanghai,tension,surface tension,the machinist,manganese,santana,lenin,athens,brown vs board of educat,meiji restorio,federalists,santa anna,cape horn,korea,indonesia,revolt,ireland,fusion,mead,silent,tone,rocardp,friedman,hindhi,the overcoat,never mind,corruption laws,civil service,clay,twain,binary,easter weekend,melville,coriolos,proton,natural exponentiation,oxidation state,glycolysis,search,monet,viola,chromatic,madrigal,sopranao,michaelangelo,oboe,clarenet,sadsad,adsfweef,spanish revolution,mishima,benedict,the chrystanthemum and the sw,subjunctive,marx,cities,demand,jung,galbraith,wealth of nations,adam smith,durkheim,night hawks,mariah buzz,malinowski,boas,mediteranean sea,camus,miller,lious the xiv,louis,henry,iran contra affair,nicon,kush,prising,upton cinclair,brasilia,insulin,cat on a hot tin roof,treaty of versailles,ts eliot,rupbert brooke,amristar massacre,delta force,1001 nights,koran,automatic,doppler effect,hajj,my little pony'.split(',')
 
 function pick(list){
 	return list[Math.floor(list.length * Math.random())]
+}
+function add_socks(num){
+	for(var i = 0; i < num; i++){
+		setTimeout(add_sock, Math.random() * 10 * 1000)
+	}
 }
 function add_sock(){
 	var sock = io.connect(location.hostname, {
@@ -24,17 +32,23 @@ function add_sock(){
 	sock.on('sync', function(e){
 		// console.log(e);
 		sock.answer = e.answer
-		sock.emit('next')
+		sock.qid = e.qid;
+		sock.buzzing = !!e.attempt;
+		if(Math.random() > 0.5){
+			sock.emit('next');	
+		}
 	})
 	sock.on('joined', function(e){
-		sock.emit('next');
+		if(Math.random() > 0.5){
+			sock.emit('next');
+		}
 		doSomething();
 	});
 	function doSomething(){
 		if(Math.random() < 0.2){
 			sock.emit('next')
 		}else if(Math.random() < 0.1){
-			if(Math.random() > 0.5){
+			if(Math.random() > 0.9){
 				sock.emit('pause')
 			}else{
 				sock.emit('unpause')
@@ -42,8 +56,18 @@ function add_sock(){
 			
 		}else if(Math.random() < 0.1){
 			protobot_write(sock, pick(things))
-		}else if(Math.random() < 0.1){
-			
+		}else if(Math.random() < 0.2 && sock.answer && !sock.buzzing){
+			sock.buzzing = true
+			sock.emit('buzz', sock.qid, function(e){
+				if(e == 'http://www.whosawesome.com/'){
+					if(Math.random() > 0.5){
+						protobot_guess(sock, pick(wrong))	
+					}else{
+						protobot_guess(sock, sock.answer)
+					}
+					
+				}
+			})
 		}
 		setTimeout(doSomething, 2000 * Math.random())
 	};
@@ -54,13 +78,13 @@ function protobot_guess(sock, message){
 	var count = 0, session = Math.random().toString(36).slice(2)
 	function writeLetter(){
 		if(++count <= message.length){
-			sock.emit('chat', {
+			sock.emit('guess', {
 				text: message.slice(0, count),
 				session: session,
 				user: '__protobot',
-				done: count == message.length
+				done: count == message.length && Math.random() > 0.6
 			})
-			setTimeout(writeLetter, 1000 * 60 / 6 / (80 + Math.random() * 50))
+			setTimeout(writeLetter, 1000 * 60 / 6 / (20 + Math.random() * 160))
 		}
 	}
 	writeLetter()
