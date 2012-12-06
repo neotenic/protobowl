@@ -343,7 +343,7 @@ test_latency = ->
 		latency_log.push CSC1
 		sync_offsets.push recieveTime - firstServerTime
 
-		sock.emit 'echo', { avg: Avg(latency_log), std: StDev(latency_log), n: latency_log.length }, (secondServerTime) ->
+		sock.emit 'echo', { avg: Avg(latency_log.slice(-10)), std: StDev(latency_log.slice(-10)), n: latency_log.length }, (secondServerTime) ->
 			secondTime = +new Date
 			CSC2 = secondTime - recieveTime
 			SCS1 = secondServerTime - firstServerTime

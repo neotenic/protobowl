@@ -436,9 +436,10 @@ user_count_log = (message, room_name) ->
 	latencies = []
 	for name, room of rooms
 		for uid, user of room.users
-			online_count++ if user.online()
-			active_count++ if user.active()
-			latencies.push(user._latency[0]) if user._latency
+			if user.online()
+				online_count++ 
+				active_count++ if user.active()
+				latencies.push(user._latency[0]) if user._latency
 
 	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Avg(latencies), std_latency: StDev(latencies)}
 
@@ -759,7 +760,7 @@ app.get '/stalkermode', (req, res) ->
 	util = require('util')
 	latencies = []
 	for name, room of rooms
-		latencies.push(user._latency[0]) for id, user of room.users when user._latency
+		latencies.push(user._latency[0]) for id, user of room.users when user._latency and user.online()
 
 	res.render 'admin.jade', {
 		env: app.settings.env,
