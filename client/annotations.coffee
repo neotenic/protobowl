@@ -19,9 +19,6 @@ createAlert = (bundle, title, message) ->
 
 userSpan = (user, global) ->
 	prefix = ''
-
-	if /superstalkers/.test room.name
-		prefix = (room.users[user]?.room?.name || 'unknown') + '/'
 	text = ''
 
 	if user.slice(0, 2) == "__"
@@ -55,12 +52,12 @@ userSpan = (user, global) ->
 
 	if user.slice(0, 2) == "__"
 		if /ninja/.test user
-			scope.prepend "<i class='icon-magic' style='padding-right: 5px'></i>"	
+			scope.prepend "<i class='icon-magic user-prefix'></i>"	
 		else
-			scope.prepend "<i class='icon-bullhorn' style='padding-right: 5px'></i>"
+			scope.prepend "<i class='icon-bullhorn user-prefix'></i>"
 	
 	else if room.admins and user in room.admins
-		scope.prepend "<i class='icon-star-empty' style='padding-right: 5px'></i>"	
+		scope.prepend "<i class='icon-star-empty user-prefix'></i>"	
 	scope
 		
 addAnnotation = (el, name = sync?.name) ->
