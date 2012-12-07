@@ -331,7 +331,7 @@ class QuizPlayer
 		@touch()
 		# at this moment private messages are enforced on the end of the recipient
 		# which is not a good thing because technically anyone can see the messages
-		# and they aren't actually private, but that's problby okay for now
+		# and they aren't actually private, but that's probably okay for now
 
 
 		id = @id # ninjas should be able to choose their names
