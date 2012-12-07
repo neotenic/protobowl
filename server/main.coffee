@@ -35,14 +35,15 @@ io.configure 'production', ->
 	io.set "log level", 0
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
-	io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling']
+	# io.set 'flash policy port', 1025
+	# io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
 
 io.configure 'development', ->
 	io.set "log level", 2
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
-	io.set 'flash policy port', 1025
-	io.set 'transports', ['flashsocket']
+	# io.set 'flash policy port', 1025
+	# io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
 
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
@@ -761,10 +762,21 @@ app.get '/stalkermode/hulk-smash', (req, res) ->
 
 app.get '/stalkermode', (req, res) ->
 	util = require('util')
+	os = require 'os'
 	latencies = []
 	for name, room of rooms
 		latencies.push(user._latency[0]) for id, user of room.users when user._latency and user.online()
-
+	os_info = {
+		hostname: os.hostname(),
+		type: os.type(),
+		platform: os.platform(),
+		arch: os.arch(),
+		release: os.release(),
+		loadavg: os.loadavg(),
+		uptime: os.uptime(),
+		totalmem: os.totalmem(),
+		freemem: os.freemem()
+	}
 	res.render 'admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
@@ -775,6 +787,8 @@ app.get '/stalkermode', (req, res) ->
 		std_latency: StDev(latencies),
 		cookie: req.protocookie,
 		queue: Object.keys(journal_queue).length,
+		os: os_info,
+		os_text: util.inspect(os_info),
 		rooms
 	}
 
