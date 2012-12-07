@@ -353,10 +353,11 @@ class QuizPlayer
 
 	finish: ->
 		@touch()
-		if !@room.attempt and !@room.no_skip
-			@verb 'skipped to the end of a question'
-			@room.finish()
-			@room.sync(1)
+		return if @attempt or @room.no_skip or @room.time() >= @room.end_time
+	
+		@verb 'skipped to the end of a question'
+		@room.finish()
+		@room.sync(1)
 
 	pause: ->
 		@touch()

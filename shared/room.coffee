@@ -265,6 +265,14 @@ class QuizRoom
 
 	end_buzz: (session) -> #killit, killitwithfire
 		return unless @attempt?.session is session
+
+		# maybe the user just died...?
+		if !@attempt or !@users[@attempt?.user]
+			@attempt = null
+			@sync(1)
+			return
+
+		# prompts are weird
 		unless @attempt.prompt
 			@clear_timeout()
 			@attempt.done = true

@@ -35,11 +35,14 @@ io.configure 'production', ->
 	io.set "log level", 0
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
+	io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling']
 
 io.configure 'development', ->
 	io.set "log level", 2
-	io.set "browser client minification", true
-	io.set "browser client gzip", true
+	io.set "browser client minification", false
+	io.set "browser client gzip", false
+	io.set 'flash policy port', 1025
+	io.set 'transports', ['flashsocket']
 
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
