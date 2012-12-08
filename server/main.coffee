@@ -87,7 +87,7 @@ if app.settings.env is 'development'
 					}
 
 					source_list.push {
-						hash: sha1(css),
+						hash: sha1(css + ''),
 						code: "/* protobowl_css_build_date: #{compile_date} */\n#{css}",
 						err: err,
 						file: "static/protobowl.css"
@@ -103,7 +103,7 @@ if app.settings.env is 'development'
 			
 			snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
 				source_list.push {
-					hash: sha1(js),
+					hash: sha1(js + ''),
 					code: "protobowl_#{file}_build = '#{compile_date}';\n#{js}", 
 					err: err, 
 					file: "static/#{file}.js"

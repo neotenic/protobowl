@@ -1,12 +1,13 @@
-#= require modernizr.js
-#= require bootstrap.js
+#= require ./lib/modernizr.js
+#= require ./lib/bootstrap.js
+#= require ./lib/time.coffee
+
 #= require plugins.coffee
 #= require annotations.coffee
-#= require buttons.coffee
 #= require render.coffee
-#= require time.coffee
 #= require ../shared/player.coffee
 #= require ../shared/room.coffee
+#= require buttons.coffee
 
 do ->
 	try

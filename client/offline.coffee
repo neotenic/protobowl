@@ -1,5 +1,7 @@
-#= require html5slider.js
-#= require sha1.js
+#= require ./lib/html5slider.js
+#= require ./lib/sha1.js
+#= require ./lib/chatbot.js
+
 #= require ../shared/names.coffee
 #= require ../shared/removeDiacritics.js
 #= require ../shared/levenshtein.js
@@ -7,7 +9,7 @@
 #= require ../shared/syllable.js
 #= require ../shared/checker.coffee
 #= require ../shared/sample.coffee
-#= require chatbot.js
+
 
 offline_questions = []
 count_cache = null
