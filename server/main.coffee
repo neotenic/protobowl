@@ -186,10 +186,14 @@ sha1 = (text) ->
 	hash.digest('hex')
 
 # basic statistical methods for statistical purposes
-Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s
 StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
+
+# so i hears that robust statistics are bettrawr, so uh, heres it is
+Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
+IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
+MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
 # inject the cookies into the session... yo
 app.use (req, res, next) ->
@@ -441,7 +445,7 @@ user_count_log = (message, room_name) ->
 				active_count++ if user.active()
 				latencies.push(user._latency[0]) if user._latency
 
-	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: StDev(latencies)}
+	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: IQR(latencies)}
 
 
 load_room = (name, callback) ->
@@ -781,7 +785,7 @@ app.get '/stalkermode', (req, res) ->
 		reaped,
 		gammasave,
 		avg_latency: Med(latencies),
-		std_latency: StDev(latencies),
+		std_latency: IQR(latencies),
 		cookie: req.protocookie,
 		queue: Object.keys(journal_queue).length,
 		os: os_info,

@@ -331,11 +331,8 @@ synchronize = (data) ->
 					room.users[user.id][attr] = val
 
 	renderParameters() if 'difficulties' of data
-
 	renderUpdate()
-
 	renderPartial()
-
 	
 	if last_freeze isnt room.time_freeze
 		last_freeze = room.time_freeze
@@ -352,11 +349,15 @@ synchronize = (data) ->
 
 	renderUsers() if 'users' of data
 	
-Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
+# basic statistical methods for statistical purposes
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s
 StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
 
+# so i hears that robust statistics are bettrawr, so uh, heres it is
+Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
+IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
+MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
 compute_sync_offset = ->
 	#here is the rather complicated code to calculate
