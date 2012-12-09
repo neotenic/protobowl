@@ -377,11 +377,47 @@ input[type=range] {
 	}
 }
 
+.show-sidebar {
+	float: left;
+	display: none;
+	padding: 12.5px 20px 12.5px;
+	margin-left: -15px;
+	font-size: 20px;
+	font-weight: 200;
+	color: #555555 !important;
+	text-shadow: 0 1px 0 #fcfcfc;
+	text-decoration: none !important;
+}
+
+
+
 @media (max-width: 767px) {
 	// Padding to set content in a bit
 	body {
 		padding-left: 10px;
 		padding-right: 10px;
+	}
+
+	.show-sidebar {
+		display: block;
+	}
+
+	body {
+		padding-left: 0;
+		padding-right: 0;
+	}
+	.sidebar {
+		position: absolute;
+		z-index: 1;
+		width: 70%;
+		margin-left: -70%;
+	}
+	.mainview {
+		position: absolute;
+		width: 100%;
+	}
+	.timer-widget {
+		display: none;
 	}
 	.well {
 		padding: 10px;

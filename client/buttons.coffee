@@ -487,3 +487,19 @@ if Modernizr.touch
 else
 	$('.show-keyboard').show()
 	$('.show-touch').hide()
+
+$('.show-sidebar').click (e) ->
+	$('.sidebar').animate {
+		marginLeft: '0%'
+	}
+	e.preventDefault()
+
+$('body').live 'swiperight', ->
+	$('.sidebar').animate {
+		marginLeft: '0%'
+	}
+
+$('body').live 'swipeleft', ->
+	$('.sidebar').animate {
+		marginLeft: '-75%'
+	}

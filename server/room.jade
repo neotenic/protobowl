@@ -13,6 +13,8 @@ html(lang="en", manifest="/offline.appcache")
 		div.navbar.navbar-top
 			div.navbar-inner
 				div.container
+					a.show-sidebar
+						i.icon-circle-arrow-right
 					a.brand(href="/")
 						strong Proto
 						| Bowl 
@@ -62,7 +64,7 @@ html(lang="en", manifest="/offline.appcache")
 
 		div.container
 			div.row
-				div.span9
+				div.span9.mainview
 					div.row(style="margin-bottom: 10px")
 						div.span9
 							div.form-horizontal
@@ -135,8 +137,8 @@ html(lang="en", manifest="/offline.appcache")
 						| Javascript engine. This application uses Javascript and WebSockets to keep the client and the 
 						| server synchronized in order to attain a better experience. 
 
-				div.span3
-					div.span3.thumbnail
+				div.span3.sidebar
+					div.span3.thumbnail.timer-widget
 						h5 
 							i.icon-time
 							| Timer 

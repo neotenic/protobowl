@@ -1,6 +1,7 @@
 #= require ./lib/modernizr.js
 #= require ./lib/bootstrap.js
 #= require ./lib/time.coffee
+#= require ./lib/jquery.mobile.custom.js
 
 #= require plugins.coffee
 #= require annotations.coffee

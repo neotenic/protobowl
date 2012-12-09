@@ -117,6 +117,7 @@ if app.settings.env is 'development'
 			unihash = sha1((i.hash for i in source_list).join(''))
 			if unihash is timehash
 				console.log 'files not modified; aborting'
+				scheduledUpdate = null
 				return
 			error_message = ''
 				
@@ -134,6 +135,7 @@ if app.settings.env is 'development'
 						saved_count++
 						if saved_count is source_list.length
 							writeManifest(unihash)
+
 
 		writeManifest = (hash) ->
 			data = cache_text.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")
