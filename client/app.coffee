@@ -42,42 +42,78 @@ offline_startup = ->
 		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
 	, 30 * 1000
 
+
+disconnect_notice = ->
+	$('#reload, #disconnect, #reconnect').hide()
+	$('#reconnect').show()
+	room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
+	line = $('<div>').addClass 'alert alert-error'
+	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
+			" from the server for some reason. ", $('<em>').text(new Date))
+	line.append $('<p>').append("This may be due to a drop in the network 
+			connectivity or a malfunction in the server. The client will automatically 
+			attempt to reconnect to the server and in the mean time, the app has automatically transitioned
+			into <b>offline mode</b>. You can continue playing alone with a limited offline set
+			of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
+	addImportant $('<div>').addClass('log disconnect-notice').append(line)
+
 sock = null
 has_connected = false
 
 online_startup = ->
-	# if !url and location.hostname is 'protobowl.com'
-	# 	url = 'https://protobowl.jitsu.com:443/'
-	# 	# try the secure one when on nodejitsu to evade school proxies
+	select_socket = (socket) ->
+		sock = socket
+		for name, fn of room.__listeners
+			sock.on name, fn
+		
+		room_name = location.pathname.replace(/^\/*/g, '').toLowerCase()
+		question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
+		cookie = jQuery.cookie('protocookie')
 
-	sock = io.connect location.hostname, {
-		"connect timeout": 4000
-	}
-
-	sock.on 'connect', ->
+		sock.emit 'join', {
+			cookie,
+			question_type,
+			room_name,
+			old_socket: localStorage.old_socket,
+			version: 6
+		}
 		has_connected = true
+		$('#slow').slideUp()
+		# jQuery.cookie('protocookie')
 		$('.disconnect-notice').slideUp()
 		# allow the user to reload/disconnect/reconnect
 		$('#reload, #disconnect, #reconnect').hide()
 		$('#disconnect').show()
 
 		load_bookmarked_questions()
+		sock.on 'disconnect', disconnect_notice
+		localStorage.old_socket = sock.socket.sessionid
+	
+	# so some firewalls block unsecure websockets but allow secure stuff
+	# so try to connect to both!
+	insecure_socket = io.connect location.hostname, {
+		"connect timeout": 3000, 
+		"force new connection": true
+	}
 
-		me.disco { old_socket: localStorage.old_socket, version: 5 } # tell the server the client version to allow the server to disconnect
+	if location.protocol is 'http:' and location.hostname isnt 'localhost'
+		secure_socket = io.connect 'https://protobowl.jitsu.com/', {
+			"port": 443,
+			"connect timeout": 5000,
+			"force new connection": true
+		}
+		secure_socket.on 'connect', ->
+			if sock
+				secure_socket.disconnect()
+			else
+				select_socket secure_socket
 
-	sock.on 'disconnect', ->
-		$('#reload, #disconnect, #reconnect').hide()
-		$('#reconnect').show()
-		room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
-		line = $('<div>').addClass 'alert alert-error'
-		line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
-				" from the server for some reason. ", $('<em>').text(new Date))
-		line.append $('<p>').append("This may be due to a drop in the network 
-				connectivity or a malfunction in the server. The client will automatically 
-				attempt to reconnect to the server and in the mean time, the app has automatically transitioned
-				into <b>offline mode</b>. You can continue playing alone with a limited offline set
-				of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
-		addImportant $('<div>').addClass('log disconnect-notice').append(line)
+	insecure_socket.on 'connect', ->
+		if sock
+			insecure_socket.disconnect()
+		else
+			select_socket insecure_socket
+
 
 if io?
 	online_startup()
@@ -182,7 +218,7 @@ me = new QuizPlayerSlave(room, 'temporary')
 
 # look at all these one liner events!
 listen = (name, fn) ->
-	sock.on name, fn if sock?
+	# sock.on name, fn if sock?
 	room.__listeners[name] = fn
 
 # probably should figure out some more elegant way to do things, but then again
@@ -232,7 +268,6 @@ listen 'joined', (data) ->
 		else
 			localStorage.username = data.name
 
-	$('#slow').slideUp()
 
 	$('.actionbar button').disable false
 
@@ -302,7 +337,7 @@ synchronize = (data) ->
 
 	renderUsers() if 'users' of data
 	
-
+Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)]
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s
 StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)

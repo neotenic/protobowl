@@ -347,7 +347,7 @@ $('body').keydown (e) ->
 		# console.log e.keyCode, 'local'
 		if e.keyCode in [68] # D
 			me.buzz(room.qid)
-			me.guess { text: room.answer, done: true }
+			me.guess { text: room.answer.replace(/(\(|\[).*/, ''), done: true }
 		else if e.keyCode in [69] # E
 			me.buzz(room.qid)
 			me.guess { text: '', done: true }

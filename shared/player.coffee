@@ -353,7 +353,7 @@ class QuizPlayer
 
 	finish: ->
 		@touch()
-		return if @attempt or @room.no_skip or @room.time() >= @room.end_time
+		return if @attempt or @room.no_skip or @room.time() >= @room.end_time or @room.time_freeze
 	
 		@verb 'skipped to the end of a question'
 		@room.finish()

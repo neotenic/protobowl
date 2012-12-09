@@ -35,15 +35,17 @@ io.configure 'production', ->
 	io.set "log level", 0
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
-	# io.set 'flash policy port', 1025
-	# io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	io.set 'flash policy port', 0 # nodejitsu does like not other ports
+	io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	
 
 io.configure 'development', ->
 	io.set "log level", 2
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
-	# io.set 'flash policy port', 1025
-	# io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	io.set 'flash policy port', 0
+	io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	
 
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
@@ -158,6 +160,7 @@ if app.settings.env is 'development'
 	fs.watch "shared", watcher
 	fs.watch "client", watcher
 	fs.watch "client/less", watcher
+	fs.watch "client/lib", watcher
 	fs.watch "server/room.jade", watcher
 
 
@@ -183,6 +186,7 @@ sha1 = (text) ->
 	hash.digest('hex')
 
 # basic statistical methods for statistical purposes
+Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)]
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s
 StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
@@ -298,14 +302,6 @@ class SocketQuizPlayer extends QuizPlayer
 		super(room, id)
 		@sockets = []
 		@name = names.generateName()
-
-	disco: (data) ->
-		if data?.old_socket and io.sockets.socket(data?.old_socket)
-			io.sockets.socket(data?.old_socket)?.disconnect()
-		if !data?.version or data?.version < 5
-			io.sockets.emit 'force_application_update', +new Date
-			io.sockets.emit 'application_update', +new Date
-			io.sockets.socket(sock).disconnect() for sock in @sockets
 	
 	chat: (data) ->
 		super(data)
@@ -445,7 +441,7 @@ user_count_log = (message, room_name) ->
 				active_count++ if user.active()
 				latencies.push(user._latency[0]) if user._latency
 
-	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Avg(latencies), std_latency: StDev(latencies)}
+	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: StDev(latencies)}
 
 
 load_room = (name, callback) ->
@@ -469,6 +465,7 @@ io.sockets.on 'connection', (sock) ->
 	return sock.disconnect() unless headers.referer and headers.cookie
 	config = url.parse(headers.referer, true)
 	
+	is_ninja = 'ninja' of config.query	
 
 	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
 		config.host = 'protobowl.com'
@@ -481,63 +478,73 @@ io.sockets.on 'connection', (sock) ->
 		sock.join 'stalkermode-dash'
 		return
 
-	cookie = parseCookie(headers.cookie)
-	return sock.disconnect() unless cookie.protocookie and config.pathname
+
+	# cookie = parseCookie(headers.cookie)
+	# return sock.disconnect() unless cookie.protocookie and config.pathname
 	# set the config stuff
 	
-	is_ninja = 'ninja' of config.query
-	# configger the things which are derived from said parsed stuff
-	room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
-	question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
+
+	# # configger the things which are derived from said parsed stuff
+	# room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
+	# question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
 	
-	publicID = sha1(cookie.protocookie + room_name)
+	# publicID = sha1(cookie.protocookie + room_name)
 
-	if is_ninja and config.pathname is '/scalar.html'
-		room_name = "room-#{Math.floor(Math.random() * 42)}"
-		publicID = ("#{Math.floor(Math.random() * 20)}0000000000000000000000000000000000000000").slice(0, 40)
-		is_ninja = false
+	# if is_ninja and config.pathname is '/scalar.html'
+	# 	room_name = "room-#{Math.floor(Math.random() * 42)}"
+	# 	publicID = ("#{Math.floor(Math.random() * 20)}0000000000000000000000000000000000000000").slice(0, 40)
+	# 	is_ninja = false
 
-	# get the room
-	load_room room_name, (room, is_new) ->
-		if is_new
-			room.type = question_type
+	sock.on 'disco', (data) ->
+		sock.emit 'force_application_update', Date.now()
+		sock.disconnect()
 
-		if is_ninja
-			publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
-			if 'id' of config.query
-				publicID = (config.query.id + "0000000000000000000000000000000000000000").slice(0, 40)
-				is_ninja = false
+	sock.on 'join', ({cookie, room_name, question_type, old_socket, version}) ->
+		if !version or version < 6
+			sock.emit 'force_application_update', Date.now()
+			sock.disconnect()
+		io.sockets.socket(old_socket)?.disconnect() if old_socket
+		publicID = sha1(cookie + room_name)
+		# get the room
+		load_room room_name, (room, is_new) ->
+			room.type = question_type if is_new
 
-		# get the user's identity
-		existing_user = (publicID of room.users)
-		unless room.users[publicID]
-			room.users[publicID] = new SocketQuizPlayer(room, publicID) 
-			user = room.users[publicID]
+			# if is_ninja
+			# 	publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
+			# 	if 'id' of config.query
+			# 		publicID = (config.query.id + "0000000000000000000000000000000000000000").slice(0, 40)
+			# 		is_ninja = false
 
-			if room_name in public_room_list
-				# public rooms default to locked, like cars in the city
-				user.lock = true
-			else
-				if room.active_count() <= 1
-					# small room, hey wai not right?
-					user.lock = true
-				else if room.locked()
+			# get the user's identity
+			existing_user = (publicID of room.users)
+			unless room.users[publicID]
+				room.users[publicID] = new SocketQuizPlayer(room, publicID) 
+				user = room.users[publicID]
+
+				if room_name in public_room_list
+					# public rooms default to locked, like cars in the city
 					user.lock = true
 				else
-					# probablistic systems work for lots of things
-					user.lock = (Math.random() > 0.5)
+					if room.active_count() <= 1
+						# small room, hey wai not right?
+						user.lock = true
+					else if room.locked()
+						user.lock = true
+					else
+						# probablistic systems work for lots of things
+						user.lock = (Math.random() > 0.5)
 
-		user = room.users[publicID]
-		user.name = 'secret ninja' if is_ninja
-		sock.join room_name
-		user.add_socket sock
-		sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
-		room.sync(3) # tell errybody that there's a new person at the partaay
+			user = room.users[publicID]
+			user.name = 'secret ninja' if is_ninja
+			sock.join room_name
+			user.add_socket sock
+			sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
+			room.sync(3) # tell errybody that there's a new person at the partaay
 
-		# # detect if the server had been recently restarted
-		if new Date - uptime_begin < 1000 * 60 and existing_user
-			sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
-			sock.emit 'application_update', +new Date # check for updates in case it was an update
+			# # detect if the server had been recently restarted
+			if new Date - uptime_begin < 1000 * 60 and existing_user
+				sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
+				sock.emit 'application_update', +new Date # check for updates in case it was an update
 
 refresh_stale = ->
 	STALE_TIME = 1000 * 60 * 2 # four minutes?
@@ -783,7 +790,7 @@ app.get '/stalkermode', (req, res) ->
 		start: uptime_begin,
 		reaped,
 		gammasave,
-		avg_latency: Avg(latencies),
+		avg_latency: Med(latencies),
 		std_latency: StDev(latencies),
 		cookie: req.protocookie,
 		queue: Object.keys(journal_queue).length,
