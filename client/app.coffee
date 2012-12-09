@@ -38,12 +38,17 @@ offline_startup = ->
 
 		load_bookmarked_questions()
 
-	setTimeout ->
+		initialize_fallback() if initialize_fallback?
+
+setTimeout ->
+	if room.active_count() <= 1
 		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
-	, 30 * 1000
+, 30 * 1000
 
 
 disconnect_notice = ->
+	initialize_fallback() if initialize_fallback?
+
 	$('#reload, #disconnect, #reconnect').hide()
 	$('#reconnect').show()
 	room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
@@ -73,14 +78,12 @@ online_startup = ->
 		for name, fn of room.__listeners
 			sock.on name, fn
 		
-		room_name = location.pathname.replace(/^\/*/g, '').toLowerCase()
-		question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
 		cookie = jQuery.cookie('protocookie')
 
 		sock.emit 'join', {
 			cookie,
-			question_type,
-			room_name,
+			question_type: room.type,
+			room_name: room.name,
 			old_socket: localStorage.old_socket,
 			version: 6
 		}
@@ -158,16 +161,17 @@ class QuizPlayerClient extends QuizPlayer
 	online: -> @online_state
 
 class QuizPlayerSlave extends QuizPlayerClient
-	
 	# encapsulate is such a boring word, well actually, it's pretty cool
 	# but you should be allowed to envelop actions like captain kirk 
 	# does to a mountain.
 
 	envelop_action: (name) ->
-		master_action = this[name]
+		# master_action = this[name]
 		this[name] = (data, callback) ->
 			if connected()
 				sock.emit(name, data, callback)
+			else if fallback_connection? and fallback_connection()
+				fallback_emit name, data, callback
 			else
 				# It matters not how strait the gate,
 				# How charged with punishments the scroll.
@@ -175,10 +179,12 @@ class QuizPlayerSlave extends QuizPlayerClient
 				# I am the captain of my soul. 
 
 				# TODO: possibly delay this call until certain offline component is loaded
-				master_action.call(this, data, callback)
+				# master_action.call(this, data, callback)
+				room.users[me.id][name](data, callback)
 
 	constructor: (room, id) ->
 		super(room, id)
+
 		# the difference between local-exec and remote-exec code is a little weird
 		# i don't exactly like the concept of needing to maintain an exception list
 		# and it would have been probably a good idea if it was instead something like
@@ -194,7 +200,10 @@ class QuizPlayerSlave extends QuizPlayerClient
 class QuizRoomSlave extends QuizRoom
 	# dont know what to change
 	emit: (name, data) ->
-		@__listeners[name](data)
+		if fallback_connection? and fallback_connection()
+			fallback_broadcast(name, data)
+		else
+			@__listeners[name](data)
 
 	constructor: (name) ->
 		super(name)
@@ -226,6 +235,8 @@ class QuizRoomSlave extends QuizRoom
 
 
 room = new QuizRoomSlave()
+room.name = location.pathname.replace(/^\/*/g, '').toLowerCase()
+room.type = (if room.name.split('/').length is 2 then room.name.split('/')[0] else 'qb')
 me = new QuizPlayerSlave(room, 'temporary')
 
 # look at all these one liner events!
@@ -250,7 +261,8 @@ listen 'throttle', (data) ->
 listen 'rename_user', ({old_id, new_id}) ->
 	if me.id is old_id
 		me.id = new_id
-		room.users[me.id] = me
+		room.users[me.id] = room.users[old_id]
+
 	$(".user-#{old_id}").removeClass("user-#{old_id}").addClass("user-#{new_id}")
 	delete room.users[old_id]
 
@@ -264,7 +276,8 @@ listen 'joined', (data) ->
 	$('#slow').slideUp()
 
 	me.id = data.id
-	room.users[me.id] = me
+	
+	room.users[me.id] = new QuizPlayerClient(room, me.id)
 
 	me.name = data.name
 
@@ -288,8 +301,6 @@ listen 'joined', (data) ->
 
 	$('#username').val me.name
 	$('#username').disable false
-
-
 
 
 sync_offsets = []
@@ -320,15 +331,18 @@ synchronize = (data) ->
 
 			user_blacklist = ['id']
 			for user in data.users
-				if user.id is me.id
-					# console.log "it's me, mario!"
-					room.users[user.id] = me
-				else
-					unless user.id of room.users
+				unless user.id of room.users
 						room.users[user.id] = new QuizPlayerClient(room, user.id)
 
 				for attr, val of user when attr not in user_blacklist
 					room.users[user.id][attr] = val
+			
+			# me != users[me.id] 
+			# that's a fairly big change that is being implemented
+
+			if me.id of data.users
+				for attr, val of data.users[me.id] when attr not in user_blacklist
+					me[attr] = val
 
 	renderParameters() if 'difficulties' of data
 	renderUpdate()
@@ -358,6 +372,8 @@ StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for it
 Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
 MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
+
+
 
 compute_sync_offset = ->
 	#here is the rather complicated code to calculate
@@ -443,6 +459,8 @@ cache_event = ->
 			$('#cachestatus').text 'Checking'
 
 do -> # isolate variables from globals
+
+	# listen for hiddens
 	if document.hidden? then hidden = 'hidden'; event = 'visibilitychange'
 	else if document.mozHidden? then hidden = 'mozHidden'; event = 'mozvisibilitychange'
 	else if document.msHidden? then hidden = 'msHidden'; event = 'msvisibilitychange'
@@ -453,8 +471,6 @@ do -> # isolate variables from globals
 			me.set_idle document[hidden]
 		, false
 
-
-	# document.addEventListener listener
 	if window.applicationCache
 		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
 			applicationCache.addEventListener name, cache_event

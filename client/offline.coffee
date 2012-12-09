@@ -11,6 +11,110 @@
 #= require ../shared/sample.coffee
 
 
+fallback_notice = ->
+	line = $('<div>').addClass 'alert alert-success'
+	line.append $('<p>').append("You are connected to the <span class='label label-success'>semi-decentralized fallback</span> protocol. ")
+	line.append $('<p>').append("Users will be theoretically able to access a subset of questions and interact with other users in spite of being disconnected from the central server. However, as the primary server is likely offline, users who have never been to Protobowl probably can not join.")
+	addImportant $('<div>').addClass('log disconnect-notice').append(line)
+
+
+fallback_connection = ->
+	return PUBNUB? and PUBNUB.is_connected and navigator.onLine
+
+fallback_emit = (name, data, callback) ->
+	throw 'conection broken' if !fallback_connection()
+	PUBNUB.publish {
+		channel: room.name,
+		message: { action: 'event', event: name, data, uid: me.id, target: room.__target }
+	}
+
+initialize_fallback = ->
+	return false
+	initializePubNub() if navigator.onLine
+
+fallback_broadcast = (name, data) ->
+	json = JSON.stringify(data)
+	chunksize = 500
+	session = Math.random().toString(36).substr(3)
+	chunks = Math.ceil(json.length / chunksize)
+	for i in [0...chunks]
+		PUBNUB.publish {
+			channel: room.name,
+			message: { 
+				action: 'broadcast', 
+				event: name,
+				session, 
+				chunk: i,
+				num: chunks,
+				data: json.substr(i * chunksize, chunksize)
+			}
+		}
+
+assembly_buffer = {}
+
+fallback_message = (message) ->
+	if message.action is 'init'
+		PUBNUB.publish {
+			channel: room.name,
+			message: { action: 'config', target: room.__target || me.id }
+		}
+	else if message.action is 'config'
+		room.__target = message.target
+	else if message.action is 'event' and message.target is me.id
+		room.users[me.id][message.event](message.data)
+	else if message.action is 'broadcast'
+		assembly_buffer[message.session] ||= {}
+		buf = assembly_buffer[message.session]
+		buf[message.chunk] = message.data
+		has_count = (1 for i of buf).length
+		if has_count is message.num
+			parts = (buf[i] for i in [0...message.num]).join('')
+			room.__listeners[message.event](JSON.parse(parts))
+
+initializePubNub = ->
+	return if PUBNUB?
+	$("<div>", {
+		id: "pubnub",
+		origin: "pubsub.pubnub.com",
+		ssl: 'off',
+		'sub-key': "sub-eea09594-4223-11e2-8b92-c913f60b8598",
+		'pub-key': "pub-5c3fbace-08c5-4ea5-b038-18391d9d3e3c"
+	}).hide().appendTo('body')
+
+	$.ajax {
+		url: 'http://cdn.pubnub.com/pubnub-3.3.min.js',
+		cache: true,
+		dataType: 'script',
+		success: ->
+			console.log 'loaded pubnub'
+			PUBNUB.ready()
+			PUBNUB.subscribe {
+				channel: room.name,
+				restore: false,
+				connect: ->
+					console.log 'connected to pubnub'
+					PUBNUB.is_connected = true
+					PUBNUB.publish {
+						channel: room.name,
+						message: { action: 'init' }
+					}
+					fallback_notice()
+				disconnect: ->
+					console.log 'disconnected from pubnub'
+					PUBNUB.is_connected = false
+				reconnect: ->
+					console.log 'reconnected to pubnub'
+					PUBNUB.is_connected = true
+				
+				presence: (details) ->
+					console.log details
+				callback: (message) ->
+					fallback_message message
+				error: (e) ->
+					console.log e
+			}
+	}
+
 offline_questions = []
 count_cache = null
 
