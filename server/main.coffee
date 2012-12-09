@@ -35,8 +35,8 @@ io.configure 'production', ->
 	io.set "log level", 0
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
-	io.set 'flash policy port', 0 # nodejitsu does like not other ports
-	io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	# io.set 'flash policy port', 0 # nodejitsu does like not other ports
+	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
 	
 
 io.configure 'development', ->
@@ -186,7 +186,7 @@ sha1 = (text) ->
 	hash.digest('hex')
 
 # basic statistical methods for statistical purposes
-Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)]
+Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s
 StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
@@ -478,17 +478,7 @@ io.sockets.on 'connection', (sock) ->
 		sock.join 'stalkermode-dash'
 		return
 
-
-	# cookie = parseCookie(headers.cookie)
-	# return sock.disconnect() unless cookie.protocookie and config.pathname
-	# set the config stuff
-	
-
 	# # configger the things which are derived from said parsed stuff
-	# room_name = config.pathname.replace(/^\/*/g, '').toLowerCase()
-	# question_type = (if room_name.split('/').length is 2 then room_name.split('/')[0] else 'qb')
-	
-	# publicID = sha1(cookie.protocookie + room_name)
 
 	# if is_ninja and config.pathname is '/scalar.html'
 	# 	room_name = "room-#{Math.floor(Math.random() * 42)}"
@@ -509,11 +499,11 @@ io.sockets.on 'connection', (sock) ->
 		load_room room_name, (room, is_new) ->
 			room.type = question_type if is_new
 
-			# if is_ninja
-			# 	publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
-			# 	if 'id' of config.query
-			# 		publicID = (config.query.id + "0000000000000000000000000000000000000000").slice(0, 40)
-			# 		is_ninja = false
+			if is_ninja
+				publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
+				if 'id' of config.query
+					publicID = (config.query.id + "0000000000000000000000000000000000000000").slice(0, 40)
+					is_ninja = false
 
 			# get the user's identity
 			existing_user = (publicID of room.users)

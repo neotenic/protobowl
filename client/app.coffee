@@ -61,6 +61,13 @@ sock = null
 has_connected = false
 
 online_startup = ->
+	reconnect = ->
+		$('.disconnect-notice').slideUp()
+		# allow the user to reload/disconnect/reconnect
+		$('#reload, #disconnect, #reconnect').hide()
+		$('#disconnect').show()
+
+
 	select_socket = (socket) ->
 		sock = socket
 		for name, fn of room.__listeners
@@ -77,17 +84,14 @@ online_startup = ->
 			old_socket: localStorage.old_socket,
 			version: 6
 		}
-		has_connected = true
-		$('#slow').slideUp()
-		# jQuery.cookie('protocookie')
-		$('.disconnect-notice').slideUp()
-		# allow the user to reload/disconnect/reconnect
-		$('#reload, #disconnect, #reconnect').hide()
-		$('#disconnect').show()
+		
+		sock.on 'disconnect', disconnect_notice
+
+		reconnect()
+
+		localStorage.old_socket = sock.socket.sessionid
 
 		load_bookmarked_questions()
-		sock.on 'disconnect', disconnect_notice
-		localStorage.old_socket = sock.socket.sessionid
 	
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
@@ -104,13 +108,21 @@ online_startup = ->
 		}
 		secure_socket.on 'connect', ->
 			if sock
-				secure_socket.disconnect()
+				if sock is secure_socket
+					reconnect()
+				else
+					secure_socket.disconnect()
+					secure_socket.removeAllListeners()
 			else
 				select_socket secure_socket
 
 	insecure_socket.on 'connect', ->
 		if sock
-			insecure_socket.disconnect()
+			if sock is insecure_socket
+				reconnect()
+			else
+				insecure_socket.disconnect()
+				insecure_socket.removeAllListeners()
 		else
 			select_socket insecure_socket
 
@@ -120,7 +132,7 @@ if io?
 
 	setTimeout ->
 		$('#slow').slideDown() if !has_connected
-	, 1000 * 3
+	, 1000 * 2
 
 	setTimeout initialize_offline, 1000
 else
@@ -248,6 +260,9 @@ listen 'delete_user', (id) ->
 	renderUsers()
 
 listen 'joined', (data) ->
+	has_connected = true
+	$('#slow').slideUp()
+
 	me.id = data.id
 	room.users[me.id] = me
 
@@ -337,7 +352,7 @@ synchronize = (data) ->
 
 	renderUsers() if 'users' of data
 	
-Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)]
+Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s
 StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
