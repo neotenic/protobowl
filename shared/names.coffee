@@ -13,9 +13,9 @@ generatePage = ->
 		n = list.split(',')
 		n[Math.floor(n.length * Math.random())]
 
-	people = 'mayhaps,actor,actress,alien,astronaut,astronaut,astronomer,batman,ben,cats,celebrity,cherenkov,chicken,colbert,copernicus,dali,dirac,einstein,entomologist,erdos,etymologist,fermi,feynman,huxley,irving,kepler,kirk,kitten,lemon,mold,oppenheimer,panda,picard,pinkman,plague,police,robot,sagan,sailor,scatologist,schrodinger,scientist,shakespeare,sherlock,stallman,superhero,traitor,whale,'
+	people = 'mayhaps,actor,actress,alien,astronaut,astronaut,astronomer,batman,ben,cats,celebrity,cherenkov,chicken,colbert,copernicus,dali,dirac,einstein,entomologist,erdos,etymologist,fermi,feynman,huxley,irving,kepler,kirk,kitten,lemon,mold,oppenheimer,panda,picard,pinkman,plague,police,robot,sagan,sailor,scatologist,schrodinger,scientist,shakespeare,sherlock,stallman,superhero,traitor,whale'
 	verb = 'afflicting,around,arousing,arresting,cloning,dating,defrauding,destroying,discarding,drinking,eating,eloping,enveloping,evoking,faking,feeding,feeling,feigning,flaunting,in,jumping,kicking,licking,near,observing,on,painting,petting,pronouncing,protecting,protesting,rappelling,scrambling,searching,sleeping,stalking,stroking,studying,tasting,throwing,touching,vomiting,voting'
-	noun = 'airplane,allergies,asylum,beard,book,brick,canteen,chicken,cloud,cow,drugs,earth,earwax,egg,electorate,elevator,endorphins,facade,feather,friend,helicopter,house,jupiter,lamp,mars,meat,mercury,moon,mountain,neptune,pants,paper,paris,pebble,planet,plant,pluto,pony,printer,rhinoceros,rock,saturn,scandal,school,skeleton,staple,sunscreen,toilet,trampoline,tree,turd,uranus,venus,water,wikipedia,'
+	noun = 'airplane,allergies,asylum,beard,book,brick,canteen,chicken,cloud,cow,drugs,earth,earwax,egg,electorate,elevator,endorphins,facade,feather,friend,helicopter,house,jupiter,lamp,mars,meat,mercury,moon,mountain,neptune,pants,paper,paris,pebble,planet,plant,pluto,pony,printer,rhinoceros,rock,saturn,scandal,school,skeleton,staple,sunscreen,toilet,trampoline,tree,turd,uranus,venus,water,wikipedia'
 	pick(people) + "-" + pick(verb) + "-" + pick(noun)
 
 exports.generatePage = generatePage if exports?
