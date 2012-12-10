@@ -105,7 +105,7 @@ online_startup = ->
 	}
 
 	if location.protocol is 'http:' and location.hostname isnt 'localhost'
-		secure_socket = io.connect 'https://protobowl.jitsu.com/', {
+		secure_socket = io.connect 'https://protobowl.nodejitsu.com/', {
 			"port": 443,
 			"connect timeout": 5000,
 			"force new connection": true

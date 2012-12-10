@@ -36,7 +36,7 @@ io.configure 'production', ->
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
 	# io.set 'flash policy port', 0 # nodejitsu does like not other ports
-	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
 io.configure 'development', ->

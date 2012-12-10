@@ -489,17 +489,17 @@ else
 	$('.show-touch').hide()
 
 $('.show-sidebar').click (e) ->
-	$('.sidebar').animate {
-		marginLeft: '0%'
-	}
+	$('.sidebar').toggleClass('shown')
+	if $('.sidebar').hasClass('shown')
+		$('.show-sidebar i').removeClass('icon-circle-arrow-right')
+		$('.show-sidebar i').addClass('icon-circle-arrow-left')
+	else
+		$('.show-sidebar i').removeClass('icon-circle-arrow-left')
+		$('.show-sidebar i').addClass('icon-circle-arrow-right')
 	e.preventDefault()
 
 $('body').live 'swiperight', ->
-	$('.sidebar').animate {
-		marginLeft: '0%'
-	}
+	$('.sidebar').addClass('shown')
 
 $('body').live 'swipeleft', ->
-	$('.sidebar').animate {
-		marginLeft: '-75%'
-	}
+	$('.sidebar').removeClass('shown')

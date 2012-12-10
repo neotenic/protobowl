@@ -411,6 +411,14 @@ input[type=range] {
 		z-index: 1;
 		width: 70%;
 		margin-left: -70%;
+
+		transition: margin-left 0.5s;
+		-webkit-transition: margin-left 0.5s;
+		-moz-transition: margin-left 0.5s;
+		-o-transition: margin-left 0.5s;
+	}
+	.sidebar.shown {
+		margin-left: 0%;
 	}
 	.mainview {
 		position: absolute;
