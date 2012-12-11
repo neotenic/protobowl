@@ -49,6 +49,8 @@ class QuizRoom
 		@begin_time = 0
 		@question = ''
 		@answer = ''
+		@info = {}
+		@qid = null
 		@timing = []
 		@cumulative = []
 
@@ -57,7 +59,7 @@ class QuizRoom
 		@distribution = default_distribution
 
 		@freeze()
-		@users = {} 
+		@users = {}
 		@admins = []
 		@difficulty = ''
 		@category = ''
