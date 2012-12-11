@@ -193,8 +193,16 @@ html(lang="en")
 			//- form(action="/stalkermode/forceupdate", method="post")
 			//- 	button(type="submit") Force Application Update
 
+			hr
+
+			form(action="/stalkermode/the-scene-is-safe", method="post")
+				button.btn.btn-danger(type="submit") Safe Server Restart Procedure
+
+			hr
+
 			form(action="/stalkermode/stahp", method="post")
-				button.btn(type="submit") Stop Server
+				button.btn.btn-link(type="submit") Emergency Server Termination
+				span.label.label-warning This may lead to the loss of session state
 
 
 			//- I see a beautiful city and a brilliant people 

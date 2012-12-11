@@ -68,6 +68,16 @@ has_connected = false
 
 online_startup = ->
 	reconnect = ->
+		cookie = jQuery.cookie('protocookie')
+
+		sock.emit 'join', {
+			cookie,
+			question_type: room.type,
+			room_name: room.name,
+			old_socket: localStorage.old_socket,
+			version: 6
+		}
+
 		$('.disconnect-notice').slideUp()
 		# allow the user to reload/disconnect/reconnect
 		$('#reload, #disconnect, #reconnect').hide()
@@ -78,16 +88,7 @@ online_startup = ->
 		sock = socket
 		for name, fn of room.__listeners
 			sock.on name, fn
-		
-		cookie = jQuery.cookie('protocookie')
 
-		sock.emit 'join', {
-			cookie,
-			question_type: room.type,
-			room_name: room.name,
-			old_socket: localStorage.old_socket,
-			version: 6
-		}
 		
 		sock.on 'disconnect', disconnect_notice
 

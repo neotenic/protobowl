@@ -484,12 +484,7 @@ io.sockets.on 'connection', (sock) ->
 		sock.join 'stalkermode-dash'
 		return
 
-	# # configger the things which are derived from said parsed stuff
-
-	# if is_ninja and config.pathname is '/scalar.html'
-	# 	room_name = "room-#{Math.floor(Math.random() * 42)}"
-	# 	publicID = ("#{Math.floor(Math.random() * 20)}0000000000000000000000000000000000000000").slice(0, 40)
-	# 	is_ninja = false
+	# configger the things which are derived from said parsed stuff
 
 	sock.on 'disco', (data) ->
 		sock.emit 'force_application_update', Date.now()
@@ -549,6 +544,7 @@ refresh_stale = ->
 		if !room.archived or Date.now() - room.archived > STALE_TIME
 			# the room hasn't been archived in a few minutes
 			remote.archiveRoom? room
+			journal_queue[name] = null
 			delete journal_queue[name]
 			
 
@@ -561,6 +557,7 @@ process_queue = ->
 	[min_time, min_room] = [Date.now(), null]
 	for name, time of journal_queue
 		if !rooms[name]
+			journal_queue[name] = null
 			delete journal_queue[name]
 			continue			
 		[min_time, min_room] = [time, name] if time < min_time
@@ -568,6 +565,7 @@ process_queue = ->
 	room = rooms[min_room]
 	if !room?.archived or Date.now() - room?.archived > 1000 * 10
 		remote.archiveRoom? room
+		journal_queue[min_room] = null
 		delete journal_queue[min_room]
 
 setInterval process_queue, 1000	
@@ -593,6 +591,7 @@ clearInactive = ->
 	rank_user = (u) -> if u.correct > 2 then u.last_action else u.time_spent
 	reap_room = (name) ->
 		log 'reap_room', name
+		rooms[name] = null
 		delete rooms[name]
 		remote.removeRoom?(name)
 		reaped.rooms++
@@ -617,6 +616,8 @@ clearInactive = ->
 		reaped.correct += u.correct
 		reaped.time_spent += u.time_spent
 		reaped.last_action = +new Date
+
+		u.room.users[u.id] = null
 		delete u.room.users[u.id]
 
 	for room_name, room of rooms
@@ -651,6 +652,7 @@ swapInactive = ->
 		continue if shortest_lapse < 1000 * 60 * 20 # things are stale after a few minutes
 		# ripe for swapping
 		remote.archiveRoom? room, (name) ->
+			rooms[name] = null
 			delete rooms[name]
 
 if remote.archiveRoom
@@ -706,6 +708,28 @@ app.get '/stalkermode/room/:room', (req, res) ->
 	res.render 'control.jade', { room: u, name: req.params.room, text: util.inspect(u2)}
 
 app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
+
+app.post '/stalkermode/the-scene-is-safe', (req, res) -> 
+	names = (name for name, time of journal_queue)
+	restart_server = ->
+		console.log 'Server shutdown has been manually triggered'
+		setTimeout ->
+			process.exit(0)
+		, 250
+	if names.length is 0
+		res.end 'Nothing to save; Server restarted.' 
+		restart_server()
+		return
+	start_time = Date.now()
+	saved = 0
+	increment_and_check = ->
+		saved++
+		if saved is names.length
+			res.end "Saved #{names.length} rooms (#{names.join(', ')}) in #{Date.now() - start_time}ms; Server restarted."
+			restart_server()
+	for name in names
+		remote.archiveRoom? rooms[name], increment_and_check
+
 
 app.post '/stalkermode/clear_bans/:room', (req, res) ->
 	delete rooms?[req.params.room]?._ip_bans
