@@ -486,11 +486,6 @@ io.sockets.on 'connection', (sock) ->
 		return
 
 	# configger the things which are derived from said parsed stuff
-
-	sock.on 'disco', (data) ->
-		sock.emit 'force_application_update', Date.now()
-		sock.emit 'application_update', Date.now()
-		sock.disconnect()
 	
 	user = null
 
@@ -502,8 +497,9 @@ io.sockets.on 'connection', (sock) ->
 			sock.emit 'force_application_update', Date.now()
 			sock.emit 'application_update', Date.now()
 			sock.disconnect()
+			console.log 'VERSION MISMATCH DISCONNECT'
 			return
-		io.sockets.socket(old_socket)?.disconnect() if old_socket
+		# io.sockets.socket(old_socket)?.disconnect() if old_socket
 		publicID = sha1(cookie + room_name + '')
 		# get the room
 		load_room room_name, (room, is_new) ->

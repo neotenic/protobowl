@@ -76,8 +76,6 @@ class QuizPlayer
 
 	bookmark: ({ value, id }) -> 0 # not implemented
 
-	disco: -> 0 # skeleton method, not actually implemented
-
 	rate_limited: ->
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
 		action_delay = 856

@@ -46,6 +46,11 @@ setTimeout ->
 		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
 , 30 * 1000
 
+setTimeout ->
+	if navigator.onLine
+		notifyLike()
+, 1000 * 60 * 10
+
 
 disconnect_notice = ->
 	initialize_fallback() if initialize_fallback?
@@ -63,6 +68,16 @@ disconnect_notice = ->
 			of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
 	addImportant $('<div>').addClass('log disconnect-notice').append(line)
 
+	$.getJSON 'https://api.github.com/gists/4272390?callback=?', ({data, meta}) ->
+		if data?.files?['protobowl-status.html']?.content not in ['Nothing', null]
+			message = $('<div>').addClass 'emergency-message'
+			message.append $('<div>').addClass('alert alert-info').html(data.files['protobowl-status.html'].content)
+			$('.emergency-message').remove()
+			$('#history').before message
+
+
+
+
 # this is the slightly overcomplicated system 
 sock = null
 has_connected = false
@@ -78,7 +93,7 @@ online_startup = ->
 			cookie,
 			question_type: room.type,
 			room_name: room.name,
-			old_socket: localStorage.old_socket,
+			# old_socket: localStorage.old_socket,
 			version: 6
 		}
 
@@ -89,15 +104,26 @@ online_startup = ->
 
 
 	select_socket = (socket) ->
-		if sock
+		if sock and sock isnt socket
+			console.log 'disconnecting from select'
 			sock.disconnect()
-			sock.removeAllListeners()
 
+		if sock
+			sock.removeAllListeners()
+		
 		sock = socket
+		if sock is secure_socket
+			verbAnnotation {verb: "established a connection to the secure server"}
+		else
+			verbAnnotation {verb: "established a connection to the server"}
+	
+		sock.on 'disconnect', disconnect_notice
+
 		for name, fn of room.__listeners
 			sock.on name, fn
+
 		reconnect()
-		localStorage.old_socket = sock.socket.sessionid
+		# localStorage.old_socket = sock.socket.sessionid
 		load_bookmarked_questions()
 	
 	check_connection = (socket) ->
@@ -111,7 +137,7 @@ online_startup = ->
 						socket.removeAllListeners()
 					else
 						select_socket socket
-				, 1337
+				, 2718
 		else
 			select_socket socket
 
@@ -121,30 +147,31 @@ online_startup = ->
 		"connect timeout": 5000, 
 		"force new connection": true
 	}
-
-	if location.protocol is 'http:' and location.hostname isnt 'localhost'
-		secure_socket = io.connect 'https://protobowl.jitsu.com/', {
-			"port": 443,
-			"connect timeout": 5000,
-			"force new connection": true,
-			"secure": true
-		}
-		secure_socket.on 'connect', -> check_connection(secure_socket)
 	insecure_socket.on 'connect', -> check_connection(insecure_socket)
+	if location.protocol is 'http:'
+		if location.hostname is 'localhost'
+			secure_socket = io.connect 'localhost', {
+				"port": 1337,
+				"connect timeout": 5000,
+				"force new connection": true
+			}
+		else
+			secure_socket = io.connect 'https://protobowl.nodejitsu.com/', {
+				"port": 443,
+				"connect timeout": 5000,
+				"force new connection": true,
+				"secure": true
+			}
+		secure_socket.on 'connect', -> check_connection(secure_socket)
 
 
-if io?
-	online_startup()
 
-	setTimeout ->
-		$('#slow').slideDown() if !has_connected
-	, 1000 * 2
 
-	setTimeout initialize_offline, 1000
-else
-	offline_startup()
-
+bookmarks_loaded = false
 load_bookmarked_questions = ->
+	return if bookmarks_loaded
+	bookmarks_loaded = true
+
 	bookmarks = []
 	try
 		bookmarks = JSON.parse(localStorage.bookmarks)
@@ -275,10 +302,6 @@ listen 'delete_user', (id) ->
 	renderUsers()
 
 listen 'joined', (data) ->
-	
-	if sock
-		sock.on 'disconnect', disconnect_notice
-
 	has_connected = true
 	$('#slow').slideUp()
 	$('.disconnect-notice').slideUp()
@@ -486,3 +509,14 @@ do -> # isolate variables from globals
 		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
 			applicationCache.addEventListener name, cache_event, false
 
+
+if io?
+	online_startup()
+
+	setTimeout ->
+		$('#slow').slideDown() if !has_connected
+	, 1000 * 3
+
+	setTimeout initialize_offline, 1000
+else
+	offline_startup()

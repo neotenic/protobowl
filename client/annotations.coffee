@@ -344,6 +344,14 @@ logAnnotation = (text) ->
 notifyTrolls = ->
 	addAnnotation($('<iframe width="420" height="315" src="http://www.youtube.com/embed/6bMLrA_0O5I?rel=0" frameborder="0" allowfullscreen></iframe>'))
 
+notifyLike = ->
+	message = $("<span>").html('<b>Like Protobowl?</b> Consider liking us on <a href="https://www.facebook.com/protobowl">Facebook</a>. ')
+	likebtn = $('<iframe src="//www.facebook.com/plugins/like.php?href=https%3A%2F%2Fwww.facebook.com%2Fprotobowl&amp;send=false&amp;layout=button_count&amp;width=450&amp;show_faces=false&amp;font&amp;colorscheme=light&amp;action=like&amp;height=21&amp;appId=111694105666039" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:21px;" allowTransparency="true"></iframe>')
+	$('body').append(likebtn.css('vertical-align', 'bottom').hide())
+	setTimeout ->
+		addAnnotation $('<p>').append(message).append(likebtn.show())
+	, 1000
+
 # Ummmm ahh such as like, like the one where I'm like mmm and it says, 
 # "I saw watchoo did there!" 
 # And like and and then like you peoples were all like, 
