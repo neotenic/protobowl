@@ -29,7 +29,7 @@ app.set 'view options', layout: false
 app.set 'trust proxy', true
 
 
-io = require('socket.io').listen(server)
+io = require('socket.io').listen(server, {'origins': '*:*'})
 
 io.configure 'production', ->
 	io.set "log level", 0
