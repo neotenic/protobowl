@@ -145,7 +145,7 @@ load_bookmarked_questions = ->
 	bookmarks = []
 	try
 		bookmarks = JSON.parse(localStorage.bookmarks)
-	for question in bookmarks
+	for question in bookmarks || []
 		bundle = create_bundle(question)
 		bundle.find('.readout').hide()
 		$('#history').prepend bundle
