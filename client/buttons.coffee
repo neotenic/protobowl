@@ -215,10 +215,13 @@ chat = (text, done) ->
 				protobot_write pick(omeglebot_replies[text.replace(/[^a-z]/g, '')])
 				protobot_last = $('.chat_input').data('input_session')
 			else if done
-				reply = pick Object.keys(omeglebot_replies)
-				reply = pick omeglebot_replies[reply]
-				protobot_write reply
-				# doesnt matter to set protobot last because you dont repeat afterwars anyway
+				if Math.random() < 0.1 and room.active_count() > 1
+					protobot_write 'Looks like some other people exist. Just say "stahp" if you want me to die in a hole, or if you want to stop sounding schizophrenic.'
+				else
+					reply = pick Object.keys(omeglebot_replies)
+					reply = pick omeglebot_replies[reply]
+					protobot_write reply
+					# doesnt matter to set protobot last because you dont repeat afterwars anyway
 		
 
 	if text.slice(0, 1) is '@'
