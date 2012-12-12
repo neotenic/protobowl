@@ -42,7 +42,7 @@ offline_startup = ->
 		initialize_fallback() if initialize_fallback?
 
 setTimeout ->
-	if room.active_count() <= 1
+	if room.active_count() <= 1 and Math.random() < 0.1
 		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
 , 30 * 1000
 
@@ -63,12 +63,14 @@ disconnect_notice = ->
 			of questions without interruption. However, you might want to try <a href=''>reloading</a>.")
 	addImportant $('<div>').addClass('log disconnect-notice').append(line)
 
+# this is the slightly overcomplicated system 
 sock = null
 has_connected = false
 secure_socket = null
 insecure_socket = null
 
 online_startup = ->
+
 	reconnect = ->
 		cookie = jQuery.cookie('protocookie')
 
@@ -87,15 +89,32 @@ online_startup = ->
 
 
 	select_socket = (socket) ->
+		if sock
+			sock.disconnect()
+			sock.removeAllListeners()
+
 		sock = socket
 		for name, fn of room.__listeners
 			sock.on name, fn
-		
-		sock.on 'disconnect', disconnect_notice
 		reconnect()
 		localStorage.old_socket = sock.socket.sessionid
 		load_bookmarked_questions()
 	
+	check_connection = (socket) ->
+		if sock
+			if sock is socket
+				reconnect()
+			else
+				setTimeout ->
+					if sock.socket.connected is true
+						socket.disconnect()
+						socket.removeAllListeners()
+					else
+						select_socket socket
+				, 1337
+		else
+			select_socket socket
+
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
 	insecure_socket = io.connect location.hostname, {
@@ -109,25 +128,8 @@ online_startup = ->
 			"connect timeout": 5000,
 			"force new connection": true
 		}
-		secure_socket.on 'connect', ->
-			if sock
-				if sock is secure_socket
-					reconnect()
-				else
-					secure_socket.disconnect()
-					secure_socket.removeAllListeners()
-			else
-				select_socket secure_socket
-
-	insecure_socket.on 'connect', ->
-		if sock
-			if sock is insecure_socket
-				reconnect()
-			else
-				insecure_socket.disconnect()
-				insecure_socket.removeAllListeners()
-		else
-			select_socket insecure_socket
+		secure_socket.on 'connect', -> check_connection(secure_socket)
+	insecure_socket.on 'connect', -> check_connection(insecure_socket)
 
 
 if io?
@@ -272,6 +274,10 @@ listen 'delete_user', (id) ->
 	renderUsers()
 
 listen 'joined', (data) ->
+	
+	if sock
+		sock.on 'disconnect', disconnect_notice
+
 	has_connected = true
 	$('#slow').slideUp()
 	$('.disconnect-notice').slideUp()

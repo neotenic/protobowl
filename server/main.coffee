@@ -473,13 +473,13 @@ io.sockets.on 'connection', (sock) ->
 	
 	is_ninja = 'ninja' of config.query	
 
-	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
-		config.host = 'protobowl.com'
-		sock.emit 'application_update', Date.now()
-		sock.emit 'force_application_update', Date.now()
-		sock.emit 'redirect', url.format(config)
-		sock.disconnect()
-		return
+	# if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
+	# 	config.host = 'protobowl.com'
+	# 	sock.emit 'application_update', Date.now()
+	# 	sock.emit 'force_application_update', Date.now()
+	# 	sock.emit 'redirect', url.format(config)
+	# 	sock.disconnect()
+	# 	return
 
 	if config.pathname is '/stalkermode/patriot'
 		sock.join 'stalkermode-dash'

@@ -359,7 +359,7 @@ $('body').keydown (e) ->
 		$('.bundle.active .bookmark').click()
 
 	# debugging shortcuts	
-	if location.hostname is 'localhost'
+	if location.hostname is 'localhost' or me.id?[0] is '_'
 		# console.log e.keyCode, 'local'
 		if e.keyCode in [68] # D
 			me.buzz(room.qid)
