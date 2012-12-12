@@ -167,7 +167,7 @@ do ->
 
 		log "RAW LEVENSHTEIN", diff, minlen, accuracy
 
-		if minlen >= 4 and accuracy >= 0.70
+		if minlen >= 4 and accuracy >= 0.65
 			return "prompt" # turns out raw levenshtein is working out worse than it really helps
 
 		return false
@@ -175,8 +175,8 @@ do ->
 
 	checkAnswer = (compare, answer, question = '') ->
 		log '---------------------------'
-		compare = compare.replace(/\{\}/g, '')
-		answer = answer.replace(/\{\}/g, '')
+		compare = compare.replace(/\{|\}/g, '')
+		answer = answer.replace(/\{|\}/g, '')
 
 		question = removeDiacritics(question).trim()
 		answer = removeDiacritics(answer).trim()
@@ -188,6 +188,7 @@ do ->
 		[pos, neg] = parseAnswer(answer.trim())
 
 		log "ACCEPT", pos, "REJECT", neg
+		responses = []
 		for p in pos
 			# checking years because theyre numbers
 			if compare.replace(/[^0-9]/g, '').length == 4
@@ -196,12 +197,16 @@ do ->
 				compyr = p.replace(/[^0-9]/g, '')
 				log "YEAR COMPARE", year, compyr
 				if year == compyr
-					return true
+					responses.push true
 			else
-				if advancedCompare(inputText, p, questionWords)
-					return true
-				return rawCompare compare, p
-					
+				responses.push advancedCompare(inputText, p, questionWords)
+				responses.push rawCompare compare, p
+		
+		for r in responses
+			return true if r is true
+
+		for r in responses
+			return "prompt" if r is "prompt"
 
 		return false
 
