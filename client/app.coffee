@@ -99,7 +99,7 @@ online_startup = ->
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
 	insecure_socket = io.connect location.hostname, {
-		"connect timeout": 3000, 
+		"connect timeout": 5000, 
 		"force new connection": true
 	}
 
@@ -107,7 +107,8 @@ online_startup = ->
 		secure_socket = io.connect 'https://protobowl.jitsu.com/', {
 			"port": 443,
 			"connect timeout": 5000,
-			"force new connection": true
+			"force new connection": true,
+			"secure": true
 		}
 		secure_socket.on 'connect', ->
 			if sock
