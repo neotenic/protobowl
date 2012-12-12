@@ -104,7 +104,7 @@ online_startup = ->
 	}
 
 	if location.protocol is 'http:' and location.hostname isnt 'localhost'
-		secure_socket = io.connect 'https://protobowl.nodejitsu.com/', {
+		secure_socket = io.connect 'https://protobowl.jitsu.com/', {
 			"port": 443,
 			"connect timeout": 5000,
 			"force new connection": true
@@ -180,7 +180,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 
 				# TODO: possibly delay this call until certain offline component is loaded
 				# master_action.call(this, data, callback)
-				room.users[me.id][name](data, callback)
+				room.users[me.id]?[name]?(data, callback)
 
 	constructor: (room, id) ->
 		super(room, id)
