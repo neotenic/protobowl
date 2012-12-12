@@ -184,7 +184,7 @@ crypto = require 'crypto'
 # simple helper function that hashes things
 sha1 = (text) ->
 	hash = crypto.createHash('sha1')
-	hash.update(text)
+	hash.update(text + '')
 	hash.digest('hex')
 
 # basic statistical methods for statistical purposes
@@ -204,7 +204,7 @@ app.use (req, res, next) ->
 		expire_date = new Date()
 		expire_date.setFullYear expire_date.getFullYear() + 2
 
-		res.cookie 'protocookie', sha1(seed), {
+		res.cookie 'protocookie', sha1(seed + ''), {
 			expires: expire_date,
 			httpOnly: false,
 			signed: false,
@@ -504,7 +504,7 @@ io.sockets.on 'connection', (sock) ->
 			sock.disconnect()
 			return
 		io.sockets.socket(old_socket)?.disconnect() if old_socket
-		publicID = sha1(cookie + room_name)
+		publicID = sha1(cookie + room_name + '')
 		# get the room
 		load_room room_name, (room, is_new) ->
 			room.type = question_type if is_new
