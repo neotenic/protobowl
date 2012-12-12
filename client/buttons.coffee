@@ -62,7 +62,7 @@ rate_limit_check = ->
 		createAlert $('.bundle.active'), 'Rate Limited', "You been rate limited for doing too many things in the past five seconds. "
 	return rate_limited
 
-# last_skip = 0
+
 skip = ->
 	return if rate_limit_check()
 	me.skip()
@@ -302,6 +302,11 @@ $('.prompt_form').submit (e) ->
 	e.preventDefault()
 	
 
+key_can_skip = true
+
+$('body').keyup (e) ->
+	if e.keyCode in [83] # S
+		key_can_skip = true
 
 $('body').keydown (e) ->
 	if actionMode is 'chat'
@@ -323,7 +328,9 @@ $('body').keydown (e) ->
 		else
 			$('.buzzbtn').click()
 	else if e.keyCode in [83] # S
-		skip()
+		if key_can_skip
+			key_can_skip = false
+			skip()
 	else if e.keyCode in [78, 74] # N, J
 		next()
 	else if e.keyCode in [75]
@@ -353,7 +360,7 @@ $('body').keydown (e) ->
 		# console.log e.keyCode, 'local'
 		if e.keyCode in [68] # D
 			me.buzz(room.qid)
-			me.guess { text: room.answer.replace(/(\(|\[).*/, ''), done: true }
+			me.guess { text: room.answer.replace(/(\(|\[).*/, '').replace(/\{\}/g, ''), done: true }
 		else if e.keyCode in [69] # E
 			me.buzz(room.qid)
 			me.guess { text: '', done: true }
