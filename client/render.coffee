@@ -251,9 +251,6 @@ renderTimer = ->
 			$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
 			$('.bundle.active').addClass('revealed')
-			# .find('.answer')
-			# .css('display', 'inline')
-			# .css('visibility', 'visible')
 			ruling = $('.bundle.active').find('.ruling')
 
 			unless ruling.data('shown_tooltip')
@@ -625,7 +622,6 @@ changeQuestion = ->
 	$('.bundle:not(.bookmarked)').slice(cutoff).slideUp 'normal', -> 
 			$(this).remove()
 	old = $('#history .bundle').first()
-	# old.find('.answer').css('visibility', 'visible')
 	
 	$('.bundle').removeClass 'active'
 
@@ -799,8 +795,15 @@ create_bundle = (info) ->
 			create_report_form(info).insertBefore(bundle.find(".annotations")).hide().slideDown()
 		e.stopPropagation()
 		e.preventDefault()
+	
+	answer = $('<li>').addClass('pull-right answer')
+	
+	if (info.answer + '').indexOf('{') == -1
+		answer.text(info.answer).css('font-weight', 'bold')
+	else
+		answer.html(info.answer.replace(/\{/g, '<span class="bold">').replace(/\}/g, '</span>'))
 
-	breadcrumb.append $('<li>').addClass('pull-right answer').text(info.answer)
+	breadcrumb.append answer
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
 	well.append $('<span>').addClass('unread').text(info.question)

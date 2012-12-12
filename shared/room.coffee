@@ -205,6 +205,13 @@ class QuizRoom
 			@journal()
 			@sync(2)
 
+	# So I think this vaguely deserves to be documented because its actually
+	# a little weird. This thing lets you change the speed while the question 
+	# is still being read out, and that means all the state and whatever 
+	# variables need to be altered such that it works. In order to preserve
+	# the read state when something's changed, it alters the beginning time
+	# retroactively such that the read speed alters and the question readout
+	# is at the same point.
 
 	set_speed: (rate) ->
 		return unless rate # prevent weird instances where you set_speed to null

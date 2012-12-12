@@ -65,6 +65,8 @@ disconnect_notice = ->
 
 sock = null
 has_connected = false
+secure_socket = null
+insecure_socket = null
 
 online_startup = ->
 	reconnect = ->
@@ -88,14 +90,10 @@ online_startup = ->
 		sock = socket
 		for name, fn of room.__listeners
 			sock.on name, fn
-
 		
 		sock.on 'disconnect', disconnect_notice
-
 		reconnect()
-
 		localStorage.old_socket = sock.socket.sessionid
-
 		load_bookmarked_questions()
 	
 	# so some firewalls block unsecure websockets but allow secure stuff
@@ -276,6 +274,7 @@ listen 'delete_user', (id) ->
 listen 'joined', (data) ->
 	has_connected = true
 	$('#slow').slideUp()
+	$('.disconnect-notice').slideUp()
 
 	me.id = data.id
 	
@@ -334,17 +333,20 @@ synchronize = (data) ->
 			user_blacklist = ['id']
 			for user in data.users
 				unless user.id of room.users
-						room.users[user.id] = new QuizPlayerClient(room, user.id)
+					room.users[user.id] = new QuizPlayerClient(room, user.id)
 
 				for attr, val of user when attr not in user_blacklist
 					room.users[user.id][attr] = val
+				
+				# me != users[me.id] 
+				# that's a fairly big change that is being implemented
+				
+				if user.id is me.id
+					for attr, val of user when attr not in user_blacklist
+						me[attr] = val
 			
-			# me != users[me.id] 
-			# that's a fairly big change that is being implemented
-
-			if me.id of data.users
-				for attr, val of data.users[me.id] when attr not in user_blacklist
-					me[attr] = val
+			
+			
 
 	renderParameters() if 'difficulties' of data
 	renderUpdate()

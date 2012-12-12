@@ -85,7 +85,7 @@ if app.settings.env is 'development'
 
 				parser.parse data, (err, tree) ->
 					css = tree?.toCSS {
-						compress: true
+						compress: false
 					}
 
 					source_list.push {
@@ -103,7 +103,7 @@ if app.settings.env is 'development'
 			file = file_list.shift()
 			return saveFiles() if !file
 			
-			snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
+			snockets.getConcatenation "client/#{file}.coffee", minify: false, (err, js) ->
 				source_list.push {
 					hash: sha1(js + ''),
 					code: "protobowl_#{file}_build = '#{compile_date}';\n#{js}", 
@@ -475,7 +475,8 @@ io.sockets.on 'connection', (sock) ->
 
 	if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
 		config.host = 'protobowl.com'
-		sock.emit 'application_update', +new Date
+		sock.emit 'application_update', Date.now()
+		sock.emit 'force_application_update', Date.now()
 		sock.emit 'redirect', url.format(config)
 		sock.disconnect()
 		return
@@ -488,12 +489,20 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'disco', (data) ->
 		sock.emit 'force_application_update', Date.now()
+		sock.emit 'application_update', Date.now()
 		sock.disconnect()
+	
+	user = null
 
-	sock.on 'join', ({cookie, room_name, question_type, old_socket, version}) ->
+	sock.on 'join', ({cookie, room_name, question_type, old_socket, version, custom_id}) ->
+		if user
+			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
+			return
 		if !version or version < 6
 			sock.emit 'force_application_update', Date.now()
+			sock.emit 'application_update', Date.now()
 			sock.disconnect()
+			return
 		io.sockets.socket(old_socket)?.disconnect() if old_socket
 		publicID = sha1(cookie + room_name)
 		# get the room
@@ -502,8 +511,8 @@ io.sockets.on 'connection', (sock) ->
 
 			if is_ninja
 				publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
-				if 'id' of config.query
-					publicID = (config.query.id + "0000000000000000000000000000000000000000").slice(0, 40)
+				if custom_id
+					publicID = (custom_id + "0000000000000000000000000000000000000000").slice(0, 40)
 					is_ninja = false
 
 			# get the user's identity

@@ -29,11 +29,15 @@ function add_sock(){
 	sock.on('connect', function(){
 		console.log('socket connected')
 		sock.emit('join', {
-			cookie: Math.floor(Math.random() * 42),
+			cookie: Math.floor(Math.random() * 9999),
 			room_name: "room-"+Math.floor(Math.random() * 42),
-			question_type: "qb"
-
+			question_type: "qb",
+			custom_id: Math.floor(Math.random() * 10),
+			version: 6
 		})
+	});
+	sock.on('disconnect', function(){
+		console.log('socket disconnected')
 	});
 	sock.on('sync', function(e){
 		// console.log(e);
@@ -74,6 +78,10 @@ function add_sock(){
 					
 				}
 			})
+		}else if(Math.random() < 0.01){
+			sock.disconnect();
+			add_socks(1);
+			return;
 		}
 		setTimeout(doSomething, 2000 * Math.random())
 	};

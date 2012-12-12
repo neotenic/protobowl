@@ -175,6 +175,8 @@ do ->
 
 	checkAnswer = (compare, answer, question = '') ->
 		log '---------------------------'
+		compare = compare.replace(/\{\}/g, '')
+		answer = answer.replace(/\{\}/g, '')
 
 		question = removeDiacritics(question).trim()
 		answer = removeDiacritics(answer).trim()
@@ -198,8 +200,8 @@ do ->
 			else
 				if advancedCompare(inputText, p, questionWords)
 					return true
-				if rawCompare compare, p
-					return true
+				return rawCompare compare, p
+					
 
 		return false
 
