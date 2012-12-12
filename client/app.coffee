@@ -477,5 +477,5 @@ do -> # isolate variables from globals
 
 	if window.applicationCache
 		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
-			applicationCache.addEventListener name, cache_event
+			applicationCache.addEventListener name, cache_event, false
 
