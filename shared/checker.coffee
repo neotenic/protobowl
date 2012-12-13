@@ -156,8 +156,9 @@ do ->
 
 	rawCompare = (compare, p) ->
 		# lowercase and remove spaces and stuff
-		compare = compare.toLowerCase().replace(/[^\w]/g, '')
-		p = p.toLowerCase().replace(/[^\w]/g, '')
+
+		compare = compare.toLowerCase().replace(/[^\w]/g, '').replace('accept', '')
+		p = p.toLowerCase().replace(/[^\w]/g, '').replace('accept', '')
 
 		# calculate the length of the shortest one
 		minlen = Math.min(compare.length, p.length)
@@ -165,8 +166,10 @@ do ->
 		diff = levens compare.slice(0, minlen), p.slice(0, minlen)
 		accuracy = 1 - (diff / minlen)
 
-		log "RAW LEVENSHTEIN", diff, minlen, accuracy
-
+		log compare.slice(0, minlen), p.slice(0, minlen), "RAW LEVENSHTEIN", diff, minlen, accuracy
+		if minlen >= 7 and accuracy >= 0.75
+			return true
+			
 		if minlen >= 4 and accuracy >= 0.65
 			return "prompt" # turns out raw levenshtein is working out worse than it really helps
 

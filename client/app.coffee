@@ -264,8 +264,7 @@ class QuizRoomSlave extends QuizRoom
 				cb(question || error_question)
 
 
-room = new QuizRoomSlave()
-room.name = location.pathname.replace(/^\/*/g, '').toLowerCase()
+room = new QuizRoomSlave(location.pathname.replace(/^\/*/g, '').toLowerCase() || 'temporary')
 room.type = (if room.name.split('/').length is 2 then room.name.split('/')[0] else 'qb')
 me = new QuizPlayerSlave(room, 'temporary')
 

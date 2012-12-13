@@ -493,11 +493,10 @@ io.sockets.on 'connection', (sock) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
 			return
-		if !version or version < 6
+		if !version or version < 6 or !room_name
 			sock.emit 'force_application_update', Date.now()
 			sock.emit 'application_update', Date.now()
 			sock.disconnect()
-			console.log 'VERSION MISMATCH DISCONNECT'
 			return
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
 		publicID = sha1(cookie + room_name + '')

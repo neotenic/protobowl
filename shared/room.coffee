@@ -37,7 +37,7 @@ default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Tr
 # Could frame thy fearful symmetry? 
 
 class QuizRoom
-	constructor: (name) ->
+	constructor: (name = "temporary") ->
 		@name = name
 		@type = "qb"
 		@answer_duration = 1000 * 5
