@@ -467,26 +467,16 @@ load_room = (name, callback) ->
 
 
 io.sockets.on 'connection', (sock) ->
-	headers = sock.handshake.headers
-	return sock.disconnect() unless headers.referer and headers.cookie
-	config = url.parse(headers.referer, true)
-	
-	is_ninja = 'ninja' of config.query	
+	headers = sock?.handshake?.headers
+	if headers?.referer
+		config = url.parse(headers.referer, true)
+		is_ninja = 'ninja' of config.query	
+		# configger the things which are derived from said parsed stuff
 
-	# if config.host isnt 'protobowl.com' and app.settings.env isnt 'development' and config.protocol is 'http:'
-	# 	config.host = 'protobowl.com'
-	# 	sock.emit 'application_update', Date.now()
-	# 	sock.emit 'force_application_update', Date.now()
-	# 	sock.emit 'redirect', url.format(config)
-	# 	sock.disconnect()
-	# 	return
-
-	if config.pathname is '/stalkermode/patriot'
-		sock.join 'stalkermode-dash'
-		return
-
-	# configger the things which are derived from said parsed stuff
-	
+		if config.pathname is '/stalkermode/patriot'
+			sock.join 'stalkermode-dash'
+			return
+			
 	user = null
 
 	sock.on 'join', ({cookie, room_name, question_type, old_socket, version, custom_id}) ->
