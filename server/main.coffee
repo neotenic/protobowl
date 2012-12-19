@@ -1,13 +1,16 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd(), process.memoryUsage()
 
+# console.log process.memoryUsage().heapUsed / 1e6
 
-memwatch = require 'memwatch'
+# memwatch = require 'memwatch'
 
-memwatch.on 'leak', (info) ->
-	console.log info
+# memwatch.on 'leak', (info) ->
+# 	console.log process.memoryUsage().heapUsed / 1e6
 
-memwatch.on 'stats', (stats) ->
-	console.log stats
+# 	console.log info
+
+# memwatch.on 'stats', (stats) ->
+# 	console.log stats
 	
 
 try 
@@ -412,7 +415,7 @@ class SocketQuizPlayer extends QuizPlayer
 				sock.on attr, (args...) => 
 					if @banned and @room.serverTime() < @banned
 						@ban()
-					else if @__rate_limited and @room.serverTime() < @__rate_limited
+					else if @__rate_limited and @room.serverTime() < @__rate_limited and @id[0] != '_' and app.settings.env isnt 'development'
 						@throttle()
 					else
 						try
@@ -839,10 +842,27 @@ app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 	mongoose = require 'mongoose'
 	blacklist = ['inc_random', 'seen']
 	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
+		criterion = {
+			difficulty: req.body.difficulty || doc.difficulty, 
+			category: req.body.category || doc.category, 
+			type: req.body.type || doc.type
+		}
+		remote.Question.collection.findOne criterion, null, { sort: { inc_random: 1 } }, (err, existing) ->
+			for key, val of req.body when key not in blacklist
+				doc[key] = val
+			doc.inc_random = existing.inc_random - 0.1 # show it now
+			doc.save()
+			res.end('gots it')
+
+app.post '/stalkermode/reports/simple_change/:id', (req, res) ->
+	mongoose = require 'mongoose'
+	blacklist = ['inc_random', 'seen']
+	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
 		for key, val of req.body when key not in blacklist
 			doc[key] = val
 		doc.save()
 		res.end('gots it')
+
 
 app.get '/stalkermode/reports/all', (req, res) ->
 	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
@@ -855,6 +875,10 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
+
+app.get '/stalkermode/audacity', (req, res) ->
+	res.render 'audacity.jade', { }
+
 
 app.get '/stalkermode/patriot', (req, res) -> res.render 'dash.jade'
 

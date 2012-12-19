@@ -42,6 +42,8 @@ $('.chatbtn').click ->
 recent_actions = [0]
 rate_limit_ceiling = 0
 rate_limit_check = ->
+	return false if location.hostname is 'localhost' or me.id[0] is '_'
+
 	return false if !connected()
 	rate_threshold = 7
 	current_time = +new Date
