@@ -11,7 +11,7 @@ memwatch.on 'stats', (stats) ->
 	
 
 try 
-	remote = require './remoter'
+	remote = require './remote'
 catch err
 	remote = require './local'
 
@@ -54,7 +54,7 @@ io.configure 'development', ->
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
 	io.set 'flash policy port', 0
-	io.set 'transports', ['websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
 	
 
 journal_config = { host: 'localhost', port: 15865 }
@@ -689,7 +689,7 @@ app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: ro
 
 
 app.get '/stalkermode/cook', (req, res) ->
-	remote.cook(req, res)
+	remote.cook?(req, res)
 	res.redirect '/stalkermode'
 
 app.get '/stalkermode/logout', (req, res) ->
@@ -845,16 +845,21 @@ app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 		res.end('gots it')
 
 app.get '/stalkermode/reports/all', (req, res) ->
+	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
+
 	remote.Report.find {}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/stalkermode/reports/:type', (req, res) ->
+	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
+
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/stalkermode/patriot', (req, res) -> res.render 'dash.jade'
 
 app.get '/stalkermode/archived', (req, res) -> 
+	return res.render 'archived.jade', { list: [], rooms } unless remote.listArchived
 	remote.listArchived (list) ->
 		res.render 'archived.jade', { list, rooms }
 

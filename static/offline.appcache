@@ -17,6 +17,7 @@ CACHE:
 NETWORK:
 /socket.io
 //www.google-analytics.com/
+/stalkermode
 *
 
 
