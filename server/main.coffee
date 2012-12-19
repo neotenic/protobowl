@@ -1,7 +1,17 @@
-console.log 'hello from protobowl v3', __dirname, process.cwd()
+console.log 'hello from protobowl v3', __dirname, process.cwd(), process.memoryUsage()
+
+
+memwatch = require 'memwatch'
+
+memwatch.on 'leak', (info) ->
+	console.log info
+
+memwatch.on 'stats', (stats) ->
+	console.log stats
+	
 
 try 
-	remote = require './remote'
+	remote = require './remoter'
 catch err
 	remote = require './local'
 
@@ -12,13 +22,13 @@ fs = require 'fs'
 http = require 'http'
 url = require 'url'
 
-parseCookie = require('express/node_modules/cookie').parse
+# parseCookie = require('express/node_modules/cookie').parse
 rooms = {}
 {QuizRoom} = require '../shared/room'
 {QuizPlayer} = require '../shared/player'
 {checkAnswer} = require '../shared/checker'
 
-names = require '../shared/names'
+namer = require '../shared/names'
 uptime_begin = +new Date
 
 app = express()
@@ -307,7 +317,7 @@ class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
 		super(room, id)
 		@sockets = []
-		@name = names.generateName()
+		@name = namer.generateName()
 	
 	chat: (data) ->
 		super(data)
@@ -704,13 +714,13 @@ app.get '/stalkermode/room/:room', (req, res) ->
 app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
 
 app.post '/stalkermode/the-scene-is-safe', (req, res) -> 
-	names = (name for name, time of journal_queue)
+	user_names = (name for name, time of journal_queue)
 	restart_server = ->
 		console.log 'Server shutdown has been manually triggered'
 		setTimeout ->
 			process.exit(0)
 		, 250
-	if names.length is 0
+	if user_names.length is 0
 		res.end 'Nothing to save; Server restarted.' 
 		restart_server()
 		return
@@ -718,10 +728,10 @@ app.post '/stalkermode/the-scene-is-safe', (req, res) ->
 	saved = 0
 	increment_and_check = ->
 		saved++
-		if saved is names.length
-			res.end "Saved #{names.length} rooms (#{names.join(', ')}) in #{Date.now() - start_time}ms; Server restarted."
+		if saved is user_names.length
+			res.end "Saved #{user_names.length} rooms (#{user_names.join(', ')}) in #{Date.now() - start_time}ms; Server restarted."
 			restart_server()
-	for name in names
+	for name in user_names
 		remote.archiveRoom? rooms[name], increment_and_check
 
 
@@ -854,7 +864,7 @@ app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
 app.post '/401', (req, res) -> remote.authenticate(req, res)
 
-app.get '/new', (req, res) -> res.redirect '/' + names.generatePage()
+app.get '/new', (req, res) -> res.redirect '/' + namer.generatePage()
 
 app.get '/', (req, res) -> res.redirect '/lobby'
 
