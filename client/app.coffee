@@ -180,6 +180,8 @@ load_bookmarked_questions = ->
 		bundle.find('.readout').hide()
 		$('#history').prepend bundle
 
+	update_visibility()
+
 # stress test da servs
 # setTimeout ->
 # 	location.href = "/#{Math.random().toString().slice(3)}"

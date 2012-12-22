@@ -864,6 +864,13 @@ app.post '/stalkermode/reports/simple_change/:id', (req, res) ->
 		res.end('gots it')
 
 
+app.get '/stalkermode/to_boldly_go', (req, res) ->
+	remote.Question.findOne { fixed: null }, (err, doc) ->
+		res.end JSON.stringify doc
+
+
+app.get '/stalkermode/reports/all', (req, res) ->
+
 app.get '/stalkermode/reports/all', (req, res) ->
 	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
 

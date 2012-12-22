@@ -251,6 +251,8 @@ renderTimer = ->
 			$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
 			$('.bundle.active').addClass('revealed')
+			update_visibility()
+
 			ruling = $('.bundle.active').find('.ruling')
 
 			unless ruling.data('shown_tooltip')
@@ -638,6 +640,7 @@ changeQuestion = ->
 	bundle.slideDown("normal").queue ->
 		bundle.width('auto')
 		$(this).dequeue()
+
 	if old.find('.readout').length > 0
 		nested = old.find('.readout .well>span')
 		old.find('.readout .well').append nested.contents()
@@ -649,6 +652,7 @@ changeQuestion = ->
 			old.find('.readout').slideUp("normal")
 			$(this).dequeue()
 
+	update_visibility()
 
 
 toggle_bookmark = (info, state) ->
@@ -736,6 +740,7 @@ create_report_form = (info) ->
 		return false
 	return div
 
+# word_archive = 'a,at,one,this,ideas,method,divided,thirteen,developed,government,mercenaries,observations,phenomenology,counterexample,epistemological'.split(',')
 
 create_bundle = (info) ->
 	bundle = $('<div>').addClass('bundle')
@@ -797,13 +802,17 @@ create_bundle = (info) ->
 		e.preventDefault()
 	
 	answer = $('<li>').addClass('pull-right answer')
-	
+	# text = info.answer.replace /[a-z]+/gi, (e) ->
+	# 	next = word_archive[e.length - 1]
+	# 	word_archive[e.length - 1] = e if Math.random() > 0.5
+	# 	return next || e
 	if (info.answer + '').indexOf('{') == -1
 		answer.text(info.answer).css('font-weight', 'bold')
 	else
 		answer.html(info.answer.replace(/\{/g, '<span class="bold">').replace(/\}/g, '</span>'))
 
-	breadcrumb.append answer
+	fake_answer = $('<li>').addClass('pull-right answer').data('actual_answer', answer)
+	breadcrumb.append fake_answer
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
 	well.append $('<span>').addClass('unread').text(info.question)
@@ -813,6 +822,38 @@ create_bundle = (info) ->
 		.append($('<div>').addClass('sticky'))
 		.append($('<div>').addClass('annotations'))
 
+# $('.bundle').not('.active').add('.bundle.revealed').find('.answer').not('.done').replaceWith(function(){return $(this).data('actual_answer').addClass('done')})
+
+update_visibility = ->
+	$('.bundle').not('.active').add('.bundle.revealed').find('.answer').not('.done').replaceWith -> 
+		$(this).data('actual_answer').addClass('done')
+
+# complicated reciprocal cipher for sake of being a complicated reciprocal cipher
+alphanum_xor = (input) ->
+	alpha = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	throw 'non-even count' if alpha.length % 2 != 0
+
+	num_cycle = [141,592,653,589,793,238,462,643,383,279,502,884,197,169,399,375,105,820,974,944,592]
+	counter = 0
+	num = input.length
+
+	permutation_cycle = (index) -> 
+		narwhal = [alpha[0]]
+		for i in [1...alpha.length]
+			j = (index % (i + 1))
+			narwhal[i] = narwhal[j]
+			narwhal[j] = alpha[i]
+		return narwhal
+
+	mod = for letter in input.split('')
+		counter++
+		num += num_cycle[counter % num_cycle.length]
+		if alpha.indexOf(letter) == -1
+			letter
+		else
+			tmp_dict = permutation_cycle(num).join('')
+			tmp_dict[(tmp_dict.indexOf(letter) + tmp_dict.length * 1.5) % tmp_dict.length]
+	return mod.join('')
 
 
 reader_children = null

@@ -167,10 +167,10 @@ do ->
 		accuracy = 1 - (diff / minlen)
 
 		log compare.slice(0, minlen), p.slice(0, minlen), "RAW LEVENSHTEIN", diff, minlen, accuracy
-		if minlen >= 7 and accuracy >= 0.75
+		if minlen >= 4 and accuracy >= 0.65
 			return true
 			
-		if minlen >= 4 and accuracy >= 0.65
+		if minlen >= 4 and accuracy >= 0.60
 			return "prompt" # turns out raw levenshtein is working out worse than it really helps
 
 		return false
