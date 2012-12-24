@@ -10,6 +10,8 @@
 #= require ../shared/room.coffee
 #= require buttons.coffee
 
+
+
 do ->
 	try
 		t = new Date protobowl_app_build

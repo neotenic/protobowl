@@ -3,10 +3,11 @@
 // to launch the main server code which is in
 // coffeescript
 
+require('./tools/node_modules/coffee-script');
+var protobowl_main = require('./server/main');
+var protocompile = require('./tools/watcher');
+protocompile.watch(protobowl_main.new_update);
 
-require('coffee-script');
-process.chdir(__dirname);
-require('./server/main');
 
 // This is probably the first file you're going to
 // look at. Probably because it's the only piece of
