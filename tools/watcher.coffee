@@ -36,8 +36,6 @@ recursive_build = (src, dest, cb) ->
 						filename = files.shift()
 						return cb() if filename is null or typeof filename is 'undefined'
 						
-						# blacklist = ['README.md', 'build', 'node_modules', 'dev.js']
-
 						file = src + '/' + filename
 						destfile = dest + '/' + filename
 
@@ -45,9 +43,8 @@ recursive_build = (src, dest, cb) ->
 							if filestat.isDirectory()
 								recursive_build file, destfile, copyFiles
 							else # no need to handle symbolic links
-								fs.readFile file, 'utf-8', (err, data) ->
+								fs.readFile file, (err, data) ->
 									build_file filename, data, (outfile, output) ->
-										console.log dest + '/' + outfile
 										fs.writeFile dest + '/' + outfile, output, copyFiles
 					copyFiles()
 
@@ -56,17 +53,15 @@ build_file = (filename, data, callback) ->
 	prefix = path.basename(filename, path.extname(filename))
 
 	if path.extname(filename) is '.coffee'
-		callback prefix + '.js', CoffeeScript.compile data, {filename: filename, bare: true}
+		callback prefix + '.js', CoffeeScript.compile data.toString(), {filename: filename, bare: true}
 	else
 		callback filename, data
 
 compile_server = ->
 	recursive_build 'server', 'build/server', ->
-		console.log 'done copying server'
-	recursive_build 'shared', 'build/shared', ->
-		console.log 'done copying shared'
-	recursive_build 'static', 'build/static', ->
-		console.log 'done copying static'
+		recursive_build 'shared', 'build/shared', ->
+			recursive_build 'static', 'build/static', ->
+				console.log 'done building server components'
 
 
 # simple helper function that hashes things
@@ -131,6 +126,7 @@ updateCache = ->
 		unihash = sha1((i.hash for i in source_list).join(''))
 		if unihash is timehash
 			console.log 'files not modified; aborting'
+			compile_server()
 			scheduledUpdate = null
 			return
 		error_message = ''

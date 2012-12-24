@@ -170,8 +170,8 @@ do ->
 		if minlen >= 4 and accuracy >= 0.65
 			return true
 			
-		if minlen >= 4 and accuracy >= 0.60
-			return "prompt" # turns out raw levenshtein is working out worse than it really helps
+		# if minlen >= 4 and accuracy >= 0.60
+		# 	return "prompt" # turns out raw levenshtein is working out worse than it really helps
 
 		return false
 

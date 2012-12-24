@@ -3,7 +3,91 @@ html(lang="en")
 	head
 		title EMBOLDENATOR
 		link(rel="stylesheet", href="/protobowl.css")
+		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
+
+			
+		style
+			#magic {
+				text-align: center;
+			}
+			.bold {
+				font-weight: bold;
+			}
+			#magic li a {
+				padding: 20px;
+				float: left;
+				font-size: 200%;
+
+			}
+			#magic li a:hover {
+				background: whiteSmoke;
+			}
 	body
 		div.container
-			h1 EMBOLDENATOR-9000
-			p This isnt done yet
+			h1 to boldly go
+			div#container(style="display:none")
+				div.well#textmain
+				p
+					ul.nav.nav-pills#magic
+				button.btn.pull-right#submitline Submit New Answer Line
+
+
+		script
+			parse_bolds = function(text){
+				if(text.split('{').length != text.split('}').length){
+					alert('CORRUPT WALP')
+				}
+				var segments = text.replace(/([\{\}])/g, ' $1 ').split(' ');
+				var cur_mode = 0;
+				var parsed = [];
+				for(var i = 0; i < segments.length; i++){
+					if(segments[i] == '{'){
+						cur_mode = true;
+					}else if(segments[i] == '}'){
+						cur_mode = false;
+					}else if(segments[i]){
+						parsed.push([cur_mode, segments[i]])
+					}
+				}
+				$('#magic li').remove()
+				for(var i = 0; i < parsed.length; i++){
+					var btn = $('<a>').text(parsed[i][1]).attr('href', '#');	
+					btn.click(function(){
+						$(this).toggleClass('bold');
+						return false;
+					})
+					if(parsed[i][0]) btn.addClass('bold');
+					$('#magic').append($('<li>').append(btn))
+				}
+				console.log(parsed)
+			}
+			load_next = function(){
+				$('#container').fadeOut('normal', function(){
+					$.getJSON('/stalkermode/to_boldly_go', function(e){
+						$('#container').data('info', e);
+						$("#textmain").text(e.question.replace(/[^a-z0-9]+$/i, '').split('.').reverse()[0])
+						parse_bolds(e.answer)
+						$('#container').fadeIn()
+					})
+				})
+			}
+			extract_answerline = function(){
+				return $('#magic li a').map(function(){
+					if($(this).hasClass('bold')){
+						return '{'+$(this).text()+'}';
+					}else{
+						return $(this).text();
+					}})
+				.toArray().join(' ').replace(/\} \{/g, ' ')
+			}
+			$('#submitline').click(function(){
+				$('#container').fadeOut('normal');
+				var parsed = $('#container').data('info')
+				$.post('/stalkermode/reports/simple_change/' + parsed._id, {answer: extract_answerline(), fixed: 1}, function(data, status){
+					console.log(data, status)
+					load_next();
+				})
+			})
+			$(document).ready(function(){
+				load_next()
+			})

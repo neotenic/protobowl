@@ -24,6 +24,8 @@ express = require 'express'
 fs = require 'fs'
 http = require 'http'
 url = require 'url'
+os = require 'os'
+util = require 'util'
 
 # parseCookie = require('express/node_modules/cookie').parse
 rooms = {}
@@ -63,9 +65,6 @@ io.configure 'development', ->
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
 
-
-if app.settings.env is 'development'
-	console.log 'devmode'
 
 exports.new_update = ->
 	io.sockets.emit 'force_application_update', +new Date
@@ -351,7 +350,7 @@ user_count_log = (message, room_name) ->
 				active_count++ if user.active()
 				latencies.push(user._latency[0]) if user._latency
 
-	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: IQR(latencies)}
+	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: IQR(latencies), free_memory: os.freemem()}
 
 
 load_room = (name, callback) ->
@@ -558,7 +557,6 @@ if remote.archiveRoom
 	setInterval swapInactive, 1000 * 10 
 
 
-util = require('util')
 
 app.post '/stalkermode/kickoffline', (req, res) ->
 	clearInactive 1000 * 5 # five seconds
@@ -686,8 +684,6 @@ app.get '/stalkermode/hulk-smash', (req, res) ->
 
 
 app.get '/stalkermode', (req, res) ->
-	util = require('util')
-	os = require 'os'
 	latencies = []
 	for name, room of rooms
 		latencies.push(user._latency[0]) for id, user of room.users when user._latency and user.online()
@@ -747,10 +743,12 @@ app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 
 app.post '/stalkermode/reports/simple_change/:id', (req, res) ->
 	mongoose = require 'mongoose'
-	blacklist = ['inc_random', 'seen']
+	blacklist = ['inc_random', 'seen', 'category', 'difficulty']
 	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
+
 		for key, val of req.body when key not in blacklist
 			doc[key] = val
+		# console.log doc
 		doc.save()
 		res.end('gots it')
 

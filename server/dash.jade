@@ -1,7 +1,7 @@
 script(src="/socket.io/socket.io.js")
 script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
 link(rel="stylesheet", href="/protobowl.css")
-title PATRIOT ACT SïgnälTap
+title USA PATRIOT Act SïgnälTap
 style
 	body { 
 		font-family: sans-serif; 
@@ -38,7 +38,7 @@ style
 	span.reveal, .status { font-style: italic; }
 	h1 { font-size: 120%; margin: 0 }
 
-.room.thumbnail(style="min-width: 100px")
+.room.thumbnail(style="min-width: 100px; line-height: 1.3em")
 	p
 		a(href="/stalkermode") &larr; Stalkermode View 
 	p
@@ -48,6 +48,7 @@ style
 		| <b>peak</b>: <span id="peakonline">?</span> <br> <b>min</b>: <span id="minonline">?</span> 
 		h1 Latency <span id="latency">?</span>
 		| <b>peak</b>: <span id="peaklatency">?</span> <br> <b>min</b>: <span id="minlatency">?</span> 
+		| <br> <b>free: </b><span id="mem">?</span> 
 	hr
 	p
 		button.btn#roomsort Sort Rooms
@@ -229,6 +230,8 @@ script
 		document.getElementById('minactive').innerText = format_result(find_min(active_data));
 		document.getElementById('peakonline').innerText = format_result(find_max(online_data));
 		document.getElementById('minonline').innerText = format_result(find_min(online_data));
+
+		document.getElementById('mem').innerText = Math.round(e.free_memory / 1e6) + 'MB';
 
 		var line = document.createElement('p');
 		line.className = 'status';

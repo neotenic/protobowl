@@ -143,3 +143,20 @@ setTimeout ->
 setTimeout ->
 	$(window).resize()
 , 6022 # avogadro
+
+
+do ->
+	# new years woot
+	new_year = new Date()
+	new_year.setFullYear(new_year.getFullYear() + 1)
+	new_year.setHours(0)
+	new_year.setMonth(0)
+	new_year.setMinutes(0)
+	new_year.setSeconds(0)
+	new_year.setDate(1)
+	setTimeout new_year - Date.now(), ->
+		$('body').fireworks(15)
+
+	now = new Date()
+	if now.getDate() in [24, 25] and now.getMonth() is 11
+		$('body').addClass 'christmas'
