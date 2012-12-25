@@ -426,7 +426,6 @@ compute_sync_offset = ->
 
 	
 	sync_offsets = sync_offsets.slice(-20)
-
 	thresh = Avg sync_offsets
 	below = (item for item in sync_offsets when item <= thresh)
 	sync_offset = Avg(below)
@@ -436,7 +435,7 @@ compute_sync_offset = ->
 	room.sync_offset = Avg(below)
 
 	# console.log 'sec iter', below
-	$('#sync_offset').text(room.sync_offset.toFixed(1) + '/' + StDev(below).toFixed(1) + ' (' + StDev(sync_offsets).toFixed(1) + ')')
+	$('#sync_offset').text(room.sync_offset.toFixed(1) + '±' + StDev(below).toFixed(1) + ' (' + sync_offsets.length + ')')
 
 test_latency = ->
 	return unless connected()
@@ -461,7 +460,7 @@ test_latency = ->
 			compute_sync_offset()
 
 			if latency_log.length > 0
-				$('#latency').text(Avg(latency_log).toFixed(1) + "/" + StDev(latency_log).toFixed(1) + " (#{latency_log.length})")
+				$('#latency').text(Avg(latency_log).toFixed(1) + "±" + StDev(latency_log).toFixed(1) + " (#{latency_log.length})")
 
 
 setTimeout ->

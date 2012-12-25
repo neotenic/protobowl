@@ -804,17 +804,23 @@ create_bundle = (info) ->
 		e.preventDefault()
 	
 	answer = $('<li>').addClass('pull-right answer')
+	pad_answer = $('<li>').addClass('pull-right answer')
+	padding_text = info.answer.replace /\w/g, 'x'
 	# text = info.answer.replace /[a-z]+/gi, (e) ->
 	# 	next = word_archive[e.length - 1]
 	# 	word_archive[e.length - 1] = e if Math.random() > 0.5
 	# 	return next || e
 	if (info.answer + '').indexOf('{') == -1
 		answer.text(info.answer).css('font-weight', 'bold')
+		pad_answer.text(padding_text).css('font-weight', 'bold')
 	else
 		answer.html(info.answer.replace(/\{/g, '<span class="bold">').replace(/\}/g, '</span>'))
+		pad_answer.html(padding_text.replace(/\{/g, '<span class="bold">').replace(/\}/g, '</span>'))
 
-	fake_answer = $('<li>').addClass('pull-right answer').data('actual_answer', answer)
-	breadcrumb.append fake_answer
+	
+	pad_answer.data('actual_answer', answer)
+	
+	breadcrumb.append pad_answer
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
 	well.append $('<span>').addClass('unread').text(info.question)
