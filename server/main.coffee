@@ -147,7 +147,7 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-public_room_list = ['hsquizbowl', 'lobby']
+public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl']
 
 class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
@@ -757,12 +757,8 @@ app.get '/stalkermode/to_boldly_go', (req, res) ->
 	remote.Question.findOne { fixed: null }, (err, doc) ->
 		res.end JSON.stringify doc
 
-
-app.get '/stalkermode/reports/all', (req, res) ->
-
 app.get '/stalkermode/reports/all', (req, res) ->
 	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
-
 	remote.Report.find {}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 

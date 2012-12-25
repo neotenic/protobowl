@@ -65,7 +65,7 @@ html(lang="en")
 				$('#container').fadeOut('normal', function(){
 					$.getJSON('/stalkermode/to_boldly_go', function(e){
 						$('#container').data('info', e);
-						$("#textmain").text(e.question.replace(/[^a-z0-9]+$/i, '').split('.').reverse()[0])
+						$("#textmain").text(e.question.replace(/[^a-z0-9]+$/i, '').split('.').reverse()[0] + '.')
 						parse_bolds(e.answer)
 						$('#container').fadeIn()
 					})

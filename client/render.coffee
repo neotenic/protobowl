@@ -312,7 +312,6 @@ get_score = (user) ->
 
 
 render_lock = ->
-
 	lock_votes = 0
 	lock_electorate = 0
 	is_locked = false
@@ -451,7 +450,10 @@ renderUsers = ->
 		# make the user's age a tiny factor, so that the ordering is
 		# at least consistent for all users, regardless of whether or
 		# not they actually have the same score
-		return get_score(user) + (room.serverTime() - user.created) / 1e15 
+		if user.created
+			return get_score(user) + (room.serverTime() - user.created) / 1e15 
+		else
+			return get_score(user)
 
 	for user, user_index in entities.sort((a, b) -> get_weight(b) - get_weight(a))
 		# if the score is worse, increment ranks

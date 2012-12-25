@@ -76,7 +76,7 @@ sha1 = (text) ->
 scheduledUpdate = null
 path = require 'path'
 
-updateCache = ->
+updateCache = (force_update = false) ->
 	source_list = []
 	compile_date = new Date
 	timehash = ''
@@ -124,7 +124,7 @@ updateCache = ->
 	saveFiles = ->
 		# its something like a unitard
 		unihash = sha1((i.hash for i in source_list).join(''))
-		if unihash is timehash
+		if unihash is timehash and force_update is false
 			console.log 'files not modified; aborting'
 			compile_server()
 			scheduledUpdate = null
@@ -161,12 +161,16 @@ updateCache = ->
 		compileLess()
 		
 
+do_update = (force) ->
+	unless scheduledUpdate
+		scheduledUpdate = setTimeout ->
+			updateCache(force)
+		, 100	
+
 watcher = (event, filename) ->
 	return if filename in ["offline.appcache", "protobowl.css", "app.js"]
-		
-	unless scheduledUpdate
-		console.log "changed file", filename
-		scheduledUpdate = setTimeout updateCache, 500
+	console.log "changed file", filename
+	do_update(false)
 
 
 updateCache()
@@ -175,4 +179,9 @@ fs.watch "shared", watcher
 fs.watch "client", watcher
 fs.watch "client/less", watcher
 fs.watch "client/lib", watcher
-fs.watch "server/room.jade", watcher
+# fs.watch "server/room.jade", watcher
+
+fs.watch "server/room.jade", ->
+	console.log 'forcing update'
+	do_update(true)
+
