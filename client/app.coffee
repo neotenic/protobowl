@@ -129,6 +129,7 @@ online_startup = ->
 		load_bookmarked_questions()
 	
 	check_connection = (socket) ->
+		$("#load_error").remove()
 		if sock
 			if sock is socket
 				reconnect()
@@ -514,7 +515,6 @@ do -> # isolate variables from globals
 
 if io?
 	online_startup()
-
 	setTimeout ->
 		$('#slow').slideDown() if !has_connected
 	, 1000 * 3
@@ -522,3 +522,5 @@ if io?
 	setTimeout initialize_offline, 1000
 else
 	offline_startup()
+
+$("#load_error").remove() # no problems, mam, everything's a-ok

@@ -461,7 +461,7 @@ renderUsers = ->
 		row = $('<tr>').data('entity', user).appendTo list
 		row.click -> 1
 		badge = $('<span>').addClass('badge pull-right').text get_score(user)
-		if me in (user.members || [user])
+		if room.users[me.id] in (user.members || [user])
 			badge.addClass('badge-info').attr('title', 'You')
 		else
 			idle_count = 0

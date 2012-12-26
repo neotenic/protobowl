@@ -136,6 +136,21 @@ html(lang="en", manifest="/offline.appcache")
 						| Javascript engine. This application uses Javascript and WebSockets to keep the client and the 
 						| server synchronized in order to attain a better experience. 
 
+					div#load_error(style="display:none")
+						p.well
+							| It seems like something unexpected has happened, that is, there might be some error in the 
+							| protobowl code that is preventing it from running.
+							| You can try reloading this page a few times (at least 3), going to different rooms, and 
+							| trying on different browsers.
+							| Below you will find the error messages
+							| associated with this error. Please contact <a href="mailto:info@protobowl.com">info@protobowl.com</a>
+							| with a screenshot of this page, and we'll fix it as soon as possible. 
+						
+						p
+							code#user_agent
+
+						pre#error_log
+
 				div.span3.sidebar
 					div.span3.thumbnail.timer-widget
 						h5 
@@ -308,7 +323,18 @@ html(lang="en", manifest="/offline.appcache")
 			var _gaq = _gaq || [];
 			_gaq.push(['_setAccount', 'UA-34434821-1']);
 			_gaq.push(['_trackPageview']);
-
+		script
+			setTimeout(function(){
+				if(document.getElementById('load_error')){
+					document.getElementById('user_agent').innerHTML = navigator.userAgent;
+					document.getElementById('load_error').style.display = '';	
+				}
+			}, 1000)
+			window.onerror = function(e){
+				if(document.getElementById('load_error')){
+					document.getElementById('error_log').innerHTML += e.toString()
+				}
+			}
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
 		

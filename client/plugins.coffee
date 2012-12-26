@@ -154,11 +154,13 @@ do ->
 	new_year.setMinutes(0)
 	new_year.setSeconds(0)
 	new_year.setDate(1)
-	setTimeout new_year - Date.now(), ->
+	setTimeout ->
 		$('body').fireworks(15)
+	, new_year - Date.now()
 
 
 do ->
 	now = new Date()
 	if now.getDate() in [24, 25] and now.getMonth() is 11
 		$('body').addClass 'christmas'
+
