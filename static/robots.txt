@@ -1,0 +1,4 @@
+# Exclude Files From All Robots:
+
+User-agent: *
+Disallow: /new
