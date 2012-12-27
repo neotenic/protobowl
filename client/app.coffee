@@ -524,7 +524,7 @@ do -> # isolate variables from globals
 	
 	if hidden
 		document.addEventListener event, ->
-			me.set_idle document[hidden]
+			me.set_idle document[hidden] unless me.muwave
 		, false
 
 	if window.applicationCache

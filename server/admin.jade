@@ -39,8 +39,10 @@ html(lang="en")
 
 			mixin display_user(user)
 				li #{user.team || ''} 
+					if user.muwave
+						span.badge.badge-important MICROWAVE
 					if user.room && user.room.admins && user.room.admins.indexOf(user.id) != -1
-						i *ADMIN* 
+						span.badge ADMIN
 					b #{user.name} 
 					if !('users' in user)
 						a(href="/stalkermode/user/#{user.room.name}/#{user.id}") &rarr; 
@@ -131,13 +133,17 @@ html(lang="en")
 
 
 
-			- var online = 0, active_users = 0, points = 0, room_num = 0, online_rooms = 0, active_rooms = 0, time_spent = 0, total_users = 0
+			- var online = 0, active_users = 0, points = 0, room_num = 0, online_rooms = 0, active_rooms = 0, time_spent = 0, total_users = 0, muwave_online = 0, muwave_users = 0
 			each room, room_name in rooms
 				- room_num++
 				- var active = false, room_online = false;
 				each user, id in room.users
 					- total_users++
+					if user.muwave
+						- muwave_users++
 					if user.sockets.length > 0
+						if user.muwave
+							- muwave_online++
 						- online++
 						- room_online = true
 						if user.active()
@@ -157,7 +163,8 @@ html(lang="en")
 				| Total Rooms: #{room_num}, 
 				| Online Rooms: #{online_rooms}, 
 				| Active Rooms: #{active_rooms}, 
-				| Avg Latency: #{avg_latency.toFixed(2)}ms ±#{std_latency.toFixed(2)},
+				| Latency: #{avg_latency.toFixed(2)}ms ±#{std_latency.toFixed(2)},
+				| &mu;wave: #{muwave_online} (#{(100 * muwave_users / (online + 0.1)).toFixed(1)}%), 
 				| Time Spent: 
 				mixin duration(time_spent), 
 				| Journal Queue: #{queue}

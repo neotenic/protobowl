@@ -334,15 +334,17 @@ class SocketQuizPlayer extends QuizPlayer
 user_count_log = (message, room_name) ->
 	active_count = 0
 	online_count = 0
+	muwave_count = 0
 	latencies = []
 	for name, room of rooms
 		for uid, user of room.users
 			if user.online()
 				online_count++ 
 				active_count++ if user.active()
+				muwave_count++ if user.muwave
 				latencies.push(user._latency[0]) if user._latency
 
-	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: IQR(latencies), free_memory: os.freemem()}
+	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: IQR(latencies), free_memory: os.freemem(), muwave: muwave_count}
 
 
 load_room = (name, callback) ->

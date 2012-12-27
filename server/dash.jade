@@ -46,9 +46,10 @@ style
 		| <b>peak</b>: <span id="peakactive">?</span> <br> <b>min</b>: <span id="minactive">?</span> 
 		h1 <span id="online">?</span> Online Users 
 		| <b>peak</b>: <span id="peakonline">?</span> <br> <b>min</b>: <span id="minonline">?</span> 
+		| <br> <b>&mu;wave: </b><span id="muwave">?</span> 
 		h1 Latency <span id="latency">?</span>
 		| <b>peak</b>: <span id="peaklatency">?</span> <br> <b>min</b>: <span id="minlatency">?</span> 
-		| <br> <b>free: </b><span id="mem">?</span> 
+		| <br> <b>free: </b><span id="mem">?</span>
 	hr
 	p
 		button.btn#roomsort Sort Rooms
@@ -232,6 +233,8 @@ script
 		document.getElementById('minonline').innerText = format_result(find_min(online_data));
 
 		document.getElementById('mem').innerText = Math.round(e.free_memory / 1e6) + 'MB';
+
+		document.getElementById('muwave').innerText = Math.round(e.muwave);
 
 		var line = document.createElement('p');
 		line.className = 'status';
