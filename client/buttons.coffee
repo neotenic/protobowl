@@ -241,33 +241,17 @@ chat = (text, done) ->
 
 $('.chat_input').keyup (e) ->
 	return if e.keyCode is 13
-
-	if $('.livechat')[0].checked and $('.chat_input').val().slice(0, 1) != '@'
+	if $('.livechat')[0].checked and !me.muwave and $('.chat_input').val().slice(0, 1) != '@'
 		$('.chat_input').data('sent_typing', '')
 		chat $('.chat_input').val(), false
-		# me.chat {
-		# 	text: $('.chat_input').val(), 
-		# 	session: $('.chat_input').data('input_session'), 
-		# 	done: false
-		# }
 	else if $('.chat_input').data('sent_typing') isnt $('.chat_input').data('input_session')
 		chat '(typing)', false
-		# me.chat {
-		# 	text: '(typing)', 
-		# 	session: $('.chat_input').data('input_session'), 
-		# 	done: false
-		# }
 		$('.chat_input').data 'sent_typing', $('.chat_input').data('input_session')
 
 
 $('.chat_form').submit (e) ->
 	setActionMode ''
 	chat $('.chat_input').val(), true
-	# me.chat {
-	# 	text: $('.chat_input').val(), 
-	# 	session: $('.chat_input').data('input_session'), 
-	# 	done: true
-	# }
 	e.preventDefault()
 	
 	time_delta = new Date - $('.chat_input').data('begin_time')

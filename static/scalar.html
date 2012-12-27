@@ -98,7 +98,7 @@ function protobot_guess(sock, message){
 				user: '__protobot',
 				done: count == message.length && Math.random() > 0.6
 			})
-			setTimeout(writeLetter, 1000 * 60 / 6 / (20 + Math.random() * 160))
+			setTimeout(writeLetter, 1000 * 60 / 6 / (60 + Math.random() * 160))
 		}
 	}
 	writeLetter()
@@ -115,7 +115,7 @@ function protobot_write(sock, message){
 				user: '__protobot',
 				done: count == message.length
 			})
-			setTimeout(writeLetter, 1000 * 60 / 6 / (80 + Math.random() * 50))
+			setTimeout(writeLetter, 1000 * 60 / 6 / (80 + Math.random() * 150))
 		}
 	}
 	writeLetter()

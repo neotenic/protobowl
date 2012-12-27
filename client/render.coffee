@@ -87,6 +87,8 @@ renderUpdate = ->
 		$('.lock').attr 'checked', room.users[me.id].lock
 		$('.teams').val room.users[me.id].team
 
+		$('.microwave').toggle !room.users[me.id].muwave
+
 		if me.guesses > 0
 			$('.reset-score').slideDown()
 		else
@@ -529,6 +531,8 @@ renderUsers = ->
 
 check_alone = ->
 	return unless connected()
+	return if me.muwave
+	
 	active_count = 0
 	for id, user of room.users
 		if user.online() and room.serverTime() - user.last_action < 1000 * 60 * 10

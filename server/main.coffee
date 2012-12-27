@@ -1,18 +1,5 @@
 console.log 'hello from protobowl v3', __dirname, process.cwd(), process.memoryUsage()
 
-# console.log process.memoryUsage().heapUsed / 1e6
-
-# memwatch = require 'memwatch'
-
-# memwatch.on 'leak', (info) ->
-# 	console.log process.memoryUsage().heapUsed / 1e6
-
-# 	console.log info
-
-# memwatch.on 'stats', (stats) ->
-# 	console.log stats
-	
-
 try 
 	remote = require './remote'
 catch err
@@ -37,14 +24,14 @@ namer = require '../shared/names'
 uptime_begin = +new Date
 
 app = express()
-server = http.createServer(app)
+server = http.Server(app)
 
 app.set 'views', "server" # directory where the jade files are
 app.set 'view options', layout: false
 app.set 'trust proxy', true
 
 
-io = require('socket.io').listen(server, {'origins': '*:*'})
+io = require('socket.io').listen(server)
 
 io.configure 'production', ->
 	io.set "log level", 0
@@ -59,15 +46,19 @@ io.configure 'development', ->
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
 	io.set 'flash policy port', 0
-	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling']
+	
+	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
 
 
-exports.new_update = ->
-	io.sockets.emit 'force_application_update', +new Date
+exports.new_update = (err) ->
+	if err
+		io.sockets.emit 'debug', err
+	else
+		io.sockets.emit 'force_application_update', +new Date
 
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
@@ -118,7 +109,8 @@ app.use (req, res, next) ->
 	next()
 
 app.use (req, res, next) ->
-	if req.headers.host isnt "protobowl.com" and app.settings.env isnt 'development' and req.protocol is 'http'
+	if req.headers.host not in ["protobowl.com"] and app.settings.env isnt 'development' and req.protocol is 'http'
+		console.log 'redirecting', req.headers.host
 		options = url.parse(req.url)
 		options.host = 'protobowl.com'
 		res.writeHead 301, {Location: url.format(options)}
@@ -424,15 +416,21 @@ io.sockets.on 'connection', (sock) ->
 
 			user = room.users[publicID]
 			user.name = 'secret ninja' if is_ninja
+			
+			user.muwave = (sock.transport in ['xhr-polling', 'jsonp-polling', 'htmlfile'])
+
 			sock.join room_name
 			user.add_socket sock
-			sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user }
-			room.sync(3) # tell errybody that there's a new person at the partaay
+
+
+			sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user, muwave: user.muwave }
+			room.sync(4) # tell errybody that there's a new person at the partaay
 
 			# # detect if the server had been recently restarted
-			if new Date - uptime_begin < 1000 * 60 and existing_user
-				sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
-				sock.emit 'application_update', +new Date # check for updates in case it was an update
+			if new Date - uptime_begin < 1000 * 60
+				if existing_user
+					sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
+				sock.emit 'application_update', Date.now() # check for updates in case it was an update
 
 refresh_stale = ->
 	STALE_TIME = 1000 * 60 * 2 # four minutes?

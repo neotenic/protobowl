@@ -117,7 +117,10 @@ online_startup = ->
 		if sock is secure_socket
 			verbAnnotation {verb: "established a connection to the secure server"}
 		else
-			verbAnnotation {verb: "established a connection to the server"}
+			if sock.socket.options.secure
+				verbAnnotation {verb: "established a connection to the server (secure)"}
+			else
+				verbAnnotation {verb: "established a connection to the server"}
 	
 		sock.on 'disconnect', disconnect_notice
 
@@ -144,6 +147,11 @@ online_startup = ->
 		else
 			select_socket socket
 
+	check_exhaust = (socket) ->
+		if !socket.socket.transport
+			console.log 'ran out of options sir'
+		console.log 'connect fail', socket
+
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
 	insecure_socket = io.connect location.hostname, {
@@ -151,6 +159,8 @@ online_startup = ->
 		"force new connection": true
 	}
 	insecure_socket.on 'connect', -> check_connection(insecure_socket)
+	insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
+
 	if location.protocol is 'http:'
 		if location.hostname is 'localhost'
 			secure_socket = io.connect 'localhost', {
@@ -166,6 +176,7 @@ online_startup = ->
 				"secure": true
 			}
 		secure_socket.on 'connect', -> check_connection(secure_socket)
+		secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
 
 
 
@@ -317,19 +328,25 @@ listen 'joined', (data) ->
 	me.name = data.name
 
 	if me.id[0] != '_'
-		if localStorage.username
-			if !data.existing
-				setTimeout ->
-					me.name = localStorage.username
-					me.set_name me.name
-					$('#username').val me.name
-				, 137 # for some reason there's this odd bug where
-				# if i dont have a timeout, this doesn't update the
-				# stuff at all, so I really don't understand why
-				# and moreover, I think the fine structure constant
-				# is an appropriate metaphor for that non-understanding
-		else
-			localStorage.username = data.name
+		try
+			if localStorage.username
+				if !data.existing
+					setTimeout ->
+						me.name = localStorage.username
+						me.set_name me.name
+						$('#username').val me.name
+					, 137 # for some reason there's this odd bug where
+					# if i dont have a timeout, this doesn't update the
+					# stuff at all, so I really don't understand why
+					# and moreover, I think the fine structure constant
+					# is an appropriate metaphor for that non-understanding
+			else
+				localStorage.username = data.name
+
+	if data.muwave
+		unless window.WebSocket
+			$(".no-websocket").show()
+		$("#polling").slideDown()
 
 
 	$('.actionbar button').disable false
@@ -465,10 +482,12 @@ test_latency = ->
 
 
 setTimeout ->
-	test_latency()
-	setInterval -> 
+	recurring_test = ->
 		test_latency()
-	, 30 * 1000
+		delay = 30 * 1000
+		delay = 3 * 60 * 1000 if me.muwave # longer delay when you dont like server reqs
+		setTimeout recurring_test, delay
+	recurring_test()
 , 2000
 
 

@@ -34,6 +34,9 @@ class QuizPlayer
 		@lock = false
 		@movingwindow = false
 
+		# sort of half a setting but not really
+		@muwave = false
+
 		# rate limiting and banning
 		@tribunal = null
 		@elect = null
@@ -121,11 +124,11 @@ class QuizPlayer
 			@__elect_timeout = setTimeout =>
 				@verb 'got romneyed', true
 				@elect = null
-				@room.sync 1
+				@room.sync(2)
 			, 1000 * 60
 
 			@elect = { votes: [], against: [], time: current_time, witnesses }
-			@room.sync 1
+			@room.sync(2)
 
 
 
@@ -145,12 +148,12 @@ class QuizPlayer
 			@__tribunal_timeout = setTimeout =>
 				@verb 'survived the tribunal', true
 				@tribunal = null
-				@room.sync(1)
+				@room.sync(2)
 			, 1000 * 60
 
 			@tribunal = { votes: [], against: [], time: current_time, witnesses, term: 0 }
 			
-			@room.sync(1)
+			@room.sync(2)
 
 
 	trigger_tribunal: (user) ->
@@ -201,7 +204,7 @@ class QuizPlayer
 				@room.users[user].verb 'was not elected', true
 				@room.users[user].impeach()
 
-			@room.sync(1)
+			@room.sync(2)
 		else if elect.term > @room.serverTime()
 			{impeach, witnesses} = elect
 			return unless @id in witnesses
@@ -214,7 +217,7 @@ class QuizPlayer
 					@room.users[user].verb 'was impeached from office', true
 					@room.users[user].impeach()
 				else
-					@room.sync 1
+					@room.sync(2)
 
 	# Come on Jessica, come on Tori,
 	# Let's go to the mall, you won't be sorry
@@ -239,7 +242,7 @@ class QuizPlayer
 	impeach: ->
 		@elect = null
 		clearTimeout @__elect_timeout
-		@room.sync(1)
+		@room.sync(2)
 
 	# also, that reference *did* actually make sense
 	# As in, inaugurations take place on the national mall.
@@ -248,7 +251,7 @@ class QuizPlayer
 		return if !@elect?.term # this should be enough		
 		@verb 'has finished tenure in office', true
 		@elect = null
-		@room.sync(1)
+		@room.sync(2)
 
 	vote_tribunal: ({user, position}) ->
 		
@@ -286,8 +289,7 @@ class QuizPlayer
 				@room.users[user].tribunal = null
 				clearTimeout @room.users[user].__tribunal_timeout
 
-
-			@room.sync(1)
+			@room.sync(2)
 
 
 	verb: (action, no_rate_limit) -> 
@@ -308,7 +310,7 @@ class QuizPlayer
 			else
 				@verb "left the room"
 				
-		@room.sync(1)
+		@room.sync(2)
 
 	echo: (data, callback) -> 
 		if data.avg and data.std and data.n
@@ -334,9 +336,15 @@ class QuizPlayer
 
 		id = @id # ninjas should be able to choose their names
 		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
+		
+		packet = { text, session, user: id, done, time: @room.serverTime() }
 
-		@room.emit 'chat', { text, session, user: id, done, time: @room.serverTime() }	
-		@rate_limit() if done
+		if done or text is '(typing)'
+			@rate_limit()
+			@room.emit 'chat', packet
+		else
+			for id, user of @room.users when user.show_typing and !user.muwave
+				user.emit 'chat', packet
 
 	
 	skip: ->
@@ -355,7 +363,7 @@ class QuizPlayer
 	
 		@verb 'skipped to the end of a question'
 		@room.finish()
-		@room.sync(1)
+		@room.sync()
 
 	pause: ->
 		@touch()
@@ -385,22 +393,20 @@ class QuizPlayer
 		@room.sync()
 
 	set_idle: (val) ->  
-		# old_lock = @room.locked()
+		# idle state doesn't matter and it's really a waste of packets
+		# so dont send it until its convenient, that is, the next update
 		@idle = !!val
-		# lets update people if it affects their interests
-		# if @room.locked() != old_lock
-		# 	@room.sync 1
 
 	set_lock: (val) ->
 		@lock = !!val
 		@touch()
-		@room.sync(1)
+		@room.sync(2)
 
 	set_name: (name) ->
 		@touch()
 		if (name + '').trim().length > 0
 			@name = name.trim().slice(0, 140)
-			@room.sync(1)
+			@room.sync(2)
 
 	set_distribution: (data) ->
 		@touch()
@@ -413,7 +419,7 @@ class QuizPlayer
 			disabled.push cat if @room.distribution[cat] > 0 and count == 0
 
 		@room.distribution = data
-		@room.sync(3)
+		@room.sync(4)
 
 		@room.get_size (size) =>
 			if enabled.length > 0
@@ -428,7 +434,7 @@ class QuizPlayer
 		return unless @authorized()
 		# @verb 'is doing something with difficulty'
 		@room.difficulty = data
-		@room.sync()
+		@room.sync(1)
 		@room.get_size (size) =>
 			@verb "set difficulty to #{data || 'everything'} (#{size} questions)"
 
@@ -438,7 +444,7 @@ class QuizPlayer
 		# @verb 'changed the category to something which needs to be changed'
 		@room.category = data
 		@room.reset_distribution() unless data # reset to the default question distribution 
-		@room.sync()
+		@room.sync(1)
 		@room.get_size (size) =>
 			if data is 'custom'
 				@verb "enabled a custom category distribution (#{size} questions)"
@@ -456,7 +462,7 @@ class QuizPlayer
 			else if data > 1
 				@verb "restricted players and teams to #{data} buzzes per question"
 		@room.max_buzz = data
-		@room.sync()
+		@room.sync(1)
 
 	set_speed: (speed) ->
 		@touch()
@@ -464,7 +470,7 @@ class QuizPlayer
 		return if isNaN(speed)
 		return if speed <= 0
 		@room.set_speed speed
-		@room.sync()
+		@room.sync(1)
 
 	set_team: (name) ->
 		@touch()
@@ -473,7 +479,7 @@ class QuizPlayer
 		else
 			@verb "is playing as an individual"
 		@team = name
-		@room.sync(1)
+		@room.sync(2)
 
 	set_type: (name) ->
 		@touch()
@@ -483,19 +489,20 @@ class QuizPlayer
 			@room.type = name
 			@room.category = ''
 			@room.difficulty = ''
-			@room.sync(3)
+			@room.sync(4)
 			@room.get_size (size) =>
 				@verb "changed the question type to #{name} (#{size} questions)"
 
 	set_show_typing: (data) ->
 		@touch()
-		@show_typing = !!data
-		@room.sync(1)
+		unless @muwave
+			@show_typing = !!data
+			@room.sync(2)
 
 	set_sounds: (data) ->
 		@touch()
 		@sounds = !!data
-		@room.sync(1)
+		@room.sync(2)
 
 	set_movingwindow: (num) ->
 		@touch()
@@ -503,7 +510,7 @@ class QuizPlayer
 			@movingwindow = num
 		else
 			@movingwindow = false
-		@room.sync(1)
+		@room.sync(2)
 
 	set_skip: (data) ->
 		@touch()
@@ -529,7 +536,7 @@ class QuizPlayer
 		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
 		@seen = @interrupts = @guesses = @correct = @early = 0
 		@history = []
-		@room.sync(1)
+		@room.sync(2)
 
 	report_question: ->
 		@verb "did something unimplemented (report question)"
@@ -544,13 +551,13 @@ class QuizPlayer
 		unless @id in @room.admins
 			@verb 'is now an administrator of this room'
 			@room.admins.push(@id) 
-			@room.sync(1) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 
 	cincinnatus: ->
 		if @id in @room.admins
 			@verb 'is no longer an administrator of this room'
 			@room.admins = (id for id in @room.admins when id isnt @id)
-			@room.sync(1) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 
 	serialize: ->
 		data = {}

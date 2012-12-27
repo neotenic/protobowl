@@ -165,7 +165,10 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else
 			line.find('.comment').text(text)
 	else
-		line.find('.comment').text(text)
+		if me.muwave
+			line.find('.comment').html('<em style="color:gray">(typing...)</em>')
+		else
+			line.find('.comment').text(text)
 
 
 	if done
@@ -346,7 +349,7 @@ notifyTrolls = ->
 
 notifyLike = ->
 	message = $("<span>").html('<b>Like Protobowl?</b> Consider liking us on <a href="https://www.facebook.com/protobowl">Facebook</a>. ')
-	likebtn = $('<iframe src="//www.facebook.com/plugins/like.php?href=https%3A%2F%2Fwww.facebook.com%2Fprotobowl&amp;send=false&amp;layout=button_count&amp;width=450&amp;show_faces=false&amp;font&amp;colorscheme=light&amp;action=like&amp;height=21&amp;appId=111694105666039" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:21px;" allowTransparency="true"></iframe>')
+	likebtn = $('<iframe src="https://www.facebook.com/plugins/like.php?href=https%3A%2F%2Fwww.facebook.com%2Fprotobowl&amp;send=false&amp;layout=button_count&amp;width=450&amp;show_faces=false&amp;font&amp;colorscheme=light&amp;action=like&amp;height=21&amp;appId=111694105666039" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:150px; height:21px;" allowTransparency="true"></iframe>')
 	$('body').append(likebtn.css('vertical-align', 'bottom').hide())
 	setTimeout ->
 		addAnnotation $('<p>').append(message).append(likebtn.show())

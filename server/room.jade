@@ -113,6 +113,16 @@ html(lang="en", manifest="/offline.appcache")
 							a.btn.btn-primary.pull-right(href="") Reload
 							| A <strong>new version</strong> of this application has been downloaded. Please reload the application now.
 					
+					div#polling(style="display:none")
+						div.alert
+							button.close(data-dismiss="alert", type="button") &times;
+							| <strong>Warning!</strong> Your browser is connecting to the server using a long-polling transport, 
+							| which may lead to increased latency. As a result, we've disabled some of the real time functionality for you. 
+							span.no-websocket(style="display:none")
+								| <strong>Upgrade to a newer browser</strong> like <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>,
+								| <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a>, or 
+								| <a href="http://windows.microsoft.com/en-US/internet-explorer/download-ie">Internet Explorer 10</a> to access these features.
+
 					div#history
 						div.bundle.active
 							div.sticky
@@ -231,9 +241,11 @@ html(lang="en", manifest="/offline.appcache")
 										input.movingwindow(type="checkbox")
 										| Points earned in last 20 questions
 
-									label.checkbox
-										input.livechat(type="checkbox", checked)
-										| Show chat messages while typing
+									div.microwave
+										label.checkbox
+											input.livechat(type="checkbox", checked)
+											| Show chat messages while typing
+
 									label.checkbox
 										input.sounds(type="checkbox")
 										| Play sound on successful buzz

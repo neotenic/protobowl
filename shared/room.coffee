@@ -203,7 +203,7 @@ class QuizRoom
 				user.history = user.history.slice(-30)
 			
 			@journal()
-			@sync(2)
+			@sync(3)
 
 	# So I think this vaguely deserves to be documented because its actually
 	# a little weird. This thing lets you change the speed while the question 
@@ -278,7 +278,7 @@ class QuizRoom
 		# maybe the user just died...?
 		if !@attempt or !@users[@attempt?.user]
 			@attempt = null
-			@sync(1)
+			@sync()
 			return
 
 		# prompts are weird
@@ -345,7 +345,7 @@ class QuizRoom
 
 			@journal()
 			@attempt = null #g'bye
-			@sync(1) #two syncs in one request!
+			@sync(2) #two syncs in one request!
 
 
 	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
@@ -384,7 +384,7 @@ class QuizRoom
 			@users[user].guesses++
 			
 			@freeze()
-			@sync(1) #partial sync
+			@sync(2) #partial sync
 			@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @attempt.duration, =>
 				@end_buzz session
 
@@ -411,7 +411,7 @@ class QuizRoom
 				# console.log 'omg finals clubs are so cool ~ zuck'
 				@end_buzz @attempt.session
 			else
-				@sync()
+				@sync(-1)
 
 	# 'Living backwards!' Alice repeated in great astonishment. 'I never heard of such a thing!'
 	# '--but there's one great advantage in it, that one's memory works both ways.'
@@ -422,12 +422,23 @@ class QuizRoom
 		data = {
 			real_time: @serverTime()
 		}
-		blacklist = ["question", "answer", "generated_time", "timing", "voting", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question"]
-		user_blacklist = ["sockets", "room"]
-		for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
+
+		whitelist = ["time_offset", "time_freeze", "attempt"]
+
+		# there is a very minimal sync level for the basic stuff
+		for attr in whitelist
 			data[attr] = this[attr]
 
 		if level >= 1
+			# all the additional attributes that aren't done in level 0
+			blacklist = ["question", "answer", "generated_time", "timing", "voting", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question"]
+			user_blacklist = ["sockets", "room"]
+			
+			for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
+				data[attr] = this[attr]
+
+		if level >= 2
+			# sync the user data, which is actually quite a bit of stuff
 			data.users = for id of @users when id[0] isnt '_'
 				user = {}
 				for attr of @users[id] when attr not in user_blacklist and typeof @users[id][attr] not in ['function'] and attr[0] != '_'
@@ -436,14 +447,14 @@ class QuizRoom
 				# console.log user
 				user
 
-		if level >= 2
+		if level >= 3
 			data.question = @question
 			data.answer = @answer
 			data.timing = @timing
 			data.info = @info
 			data.generated_time = @generated_time
 
-		if level >= 3
+		if level >= 4
 			data.distribution = @distribution
 			# async stuff
 			@get_parameters @type, @difficulty, (difficulties, categories) =>
@@ -453,7 +464,11 @@ class QuizRoom
 
 			@journal()
 		else
-			@emit 'sync', data
+			if level < 0
+				for id, user of @users when !user.muwave
+					user.emit 'sync', data
+			else
+				@emit 'sync', data
 	
 	journal: -> 0 # unimplemented
 

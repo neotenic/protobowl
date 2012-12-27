@@ -164,3 +164,7 @@ do ->
 	if now.getDate() in [24, 25] and now.getMonth() is 11
 		$('body').addClass 'christmas'
 
+unless console?
+	window.console = {
+		log: -> null
+	}

@@ -135,7 +135,7 @@ updateCache = (force_update = false) ->
 		for i in source_list
 			error_message += "File: #{i.file}\n#{i.err}\n\n" if i.err
 		if error_message
-			io.sockets.emit 'debug', error_message
+			send_update error_message
 			console.log error_message
 			scheduledUpdate = null
 		else
