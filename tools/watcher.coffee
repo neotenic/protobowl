@@ -149,17 +149,20 @@ updateCache = (force_update = false) ->
 
 
 	writeManifest = (hash) ->
-		data = cache_text.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")
+		data = cache_text.replace(/INSERT_DATE.*?\r?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")
 		fs.writeFile 'static/offline.appcache', data, 'utf8', (err) ->
 			throw err if err
 			send_update()
 			compile_server()
 			scheduledUpdate = null
 
-	fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
+
+	fs.readFile 'client/protobowl.appcache', 'utf8', (err, data) ->
 		cache_text = data
-		timehash = cache_text.match(/INSERT_DATE (.*?)\n/)?[1]?.split(" # ")?[1]
-		compileLess()
+
+		fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
+			timehash = data?.match(/INSERT_DATE (.*?)\n/)?[1]?.split(" # ")?[1]
+			compileLess()
 		
 
 do_update = (force) ->
@@ -180,7 +183,6 @@ fs.watch "shared", watcher
 fs.watch "client", watcher
 fs.watch "client/less", watcher
 fs.watch "client/lib", watcher
-# fs.watch "server/room.jade", watcher
 
 fs.watch "server/room.jade", ->
 	console.log 'forcing update'

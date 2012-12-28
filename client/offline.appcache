@@ -1,0 +1,25 @@
+CACHE MANIFEST
+# INSERT_DATE
+
+CACHE:
+/favicon.ico
+/protobowl.css
+/app.js
+/offline.js
+/sample.txt
+/font/fontawesome-webfont.ttf
+/font/fontawesome-webfont.svg
+/font/fontawesome-webfont.woff
+/img/btn_donate_SM.gif
+//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
+
+
+NETWORK:
+/socket.io
+//www.google-analytics.com/
+/stalkermode
+*
+
+
+FALLBACK:
+/ offline
