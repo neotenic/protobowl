@@ -30,7 +30,7 @@ function add_sock(){
 		console.log('socket connected')
 		sock.emit('join', {
 			cookie: Math.floor(Math.random() * 9999),
-			room_name: "room-"+Math.floor(Math.random() * 84),
+			room_name: "room-"+Math.floor(Math.random() * 2),
 			question_type: "qb",
 			custom_id: Math.floor(Math.random() * 1000),
 			version: 6

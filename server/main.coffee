@@ -42,7 +42,7 @@ io.configure 'production', ->
 	
 
 io.configure 'development', ->
-	io.set "log level", 2
+	io.set "log level", 3
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
 	io.set 'flash policy port', 0

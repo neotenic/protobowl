@@ -265,9 +265,8 @@ renderTimer = ->
 						trigger: "manual"
 					})
 				
-				setTimeout ->
-					el.tooltip('show')
-				, 500
+				el.tooltip('show')
+				
 	# if $('.progress .primary-bar').hasClass 'pull-right'
 	# 	$('.progress .primary-bar').width (1 - progress) * 100 + '%'
 	# else

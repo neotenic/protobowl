@@ -12,9 +12,8 @@
 
 do ->
 	if /anachron/.test location.search
-		window.WebSocket = null
-		delete window.WebSocket
-		
+		window.WebSocket = -> 0
+
 do ->
 	try
 		t = new Date protobowl_app_build
@@ -329,7 +328,7 @@ listen 'joined', (data) ->
 
 	me.name = data.name
 
-	if me.id[0] != '_'
+	if me.id[0] != '_' and me.id isnt 'temporary'
 		try
 			if localStorage.username
 				if !data.existing

@@ -290,7 +290,9 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 verbAnnotation = ({user, verb, time}) ->
 	# destroy the tooltip
-	$('.bundle .ruling').tooltip('destroy')
+	setTimeout ->
+		$('.bundle .ruling').tooltip('destroy')
+	, 100
 	
 	verbclass = "verb-#{user}-#{verb.split(' ').slice(0, 2).join('-')}"
 
