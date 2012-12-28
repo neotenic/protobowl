@@ -108,9 +108,6 @@ html(lang="en")
 				li
 					a(href="/stalkermode/reports/all") Reports
 
-				li
-					a(href="/stalkermode/archived") Archived 
-
 				if cookie
 					li
 						a(href="/stalkermode/logout") Logout 
@@ -180,6 +177,15 @@ html(lang="en")
 				each room_name in sorted_names
 					- var room = rooms[room_name]
 					mixin display_room(room, room_name)
+
+
+			hr
+
+			ul.nav.nav-pills
+				li.disabled 
+					a Other Destinations
+				li
+					a(href="/stalkermode/archived") Archived 
 
 
 			hr

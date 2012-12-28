@@ -265,7 +265,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	
 	if done
 		line.removeClass('buffer')
-		if text is '' or (text.slice(0, 1) is '@' and text.indexOf(me.id) == -1 and user isnt me.id)
+		if text is '' or (text.slice(0, 1) is '@' and text.indexOf(me.id) == -1 and (user isnt me.id and me.id[0] isnt '_'))
 			line.find('.comment').html('<em>(no message)</em>')
 			line.slideUp()
 		else
@@ -289,6 +289,9 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 
 verbAnnotation = ({user, verb, time}) ->
+	# destroy the tooltip
+	$('.bundle .ruling').tooltip('destroy')
+	
 	verbclass = "verb-#{user}-#{verb.split(' ').slice(0, 2).join('-')}"
 
 	line = $('<p>').addClass 'log'

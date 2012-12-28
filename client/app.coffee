@@ -10,8 +10,11 @@
 #= require ../shared/room.coffee
 #= require buttons.coffee
 
-
-
+do ->
+	if /anachron/.test location.search
+		window.WebSocket = null
+		delete window.WebSocket
+		
 do ->
 	try
 		t = new Date protobowl_app_build
@@ -45,12 +48,11 @@ offline_startup = ->
 
 setTimeout ->
 	if room.active_count() <= 1 and Math.random() < 0.1
-		chatAnnotation({text: 'Feeling lonely offline? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
+		chatAnnotation({text: 'Feeling lonely? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
 , 30 * 1000
 
 setTimeout ->
-	if navigator.onLine
-		notifyLike()
+	notifyLike() if navigator.onLine
 , 1000 * 60 * 10
 
 

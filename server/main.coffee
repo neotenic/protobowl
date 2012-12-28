@@ -418,7 +418,6 @@ io.sockets.on 'connection', (sock) ->
 
 			user = room.users[publicID]
 			user.name = 'secret ninja' if is_ninja
-			
 			user.muwave = (sock.transport in ['xhr-polling', 'jsonp-polling', 'htmlfile'])
 
 			sock.join room_name

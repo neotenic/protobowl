@@ -141,7 +141,8 @@ updateCache = (force_update = false) ->
 		else
 			saved_count = 0
 			for i in source_list
-				fs.writeFile i.file, i.code, 'utf8', ->
+				fs.writeFile i.file, i.code, 'utf8', (err) ->
+					throw err if err
 					saved_count++
 					if saved_count is source_list.length
 						writeManifest(unihash)
@@ -149,7 +150,7 @@ updateCache = (force_update = false) ->
 
 	writeManifest = (hash) ->
 		data = cache_text.replace(/INSERT_DATE.*?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")
-		fs.writeFile 'static/offline.appcache', data, (err) ->
+		fs.writeFile 'static/offline.appcache', data, 'utf8', (err) ->
 			throw err if err
 			send_update()
 			compile_server()

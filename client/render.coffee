@@ -259,12 +259,15 @@ renderTimer = ->
 
 			unless ruling.data('shown_tooltip')
 				ruling.data('shown_tooltip', true)
-				$('.bundle.active').find('.ruling').first()
+
+				el = $('.bundle.active').find('.ruling').first()
 					.tooltip({
 						trigger: "manual"
 					})
-					.tooltip('show')
-	
+				
+				setTimeout ->
+					el.tooltip('show')
+				, 500
 	# if $('.progress .primary-bar').hasClass 'pull-right'
 	# 	$('.progress .primary-bar').width (1 - progress) * 100 + '%'
 	# else
