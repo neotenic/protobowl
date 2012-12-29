@@ -1,0 +1,44 @@
+<link rel="stylesheet", href="/protobowl.css"></link>
+<script src="/socket.io/socket.io.js"></script>
+<div class="container">
+	<table id="tab" class="table">
+	</table>
+</div>
+<script>
+function row(){
+	var start = Date.now();
+
+	sock.emit('echo', {}, function(e){
+		var tr = document.createElement('tr');
+		var time = document.createElement('td');
+		var delay = document.createElement('td');
+		time.innerHTML = Date.now();
+		delay.innerHTML = (Date.now() - start);
+		tr.appendChild(time);
+		tr.appendChild(delay);
+		document.getElementById('tab').appendChild(tr);
+	})
+}
+
+sock = io.connect()
+
+sock.on('connect', function(){
+	console.log('connected; emitting join signal');
+
+	sock.emit('join', {
+		cookie: "lagtest", 
+		question_type: 'qb', 
+		room_name: 'lag-test', 
+		version: 6
+	})
+
+})
+
+
+sock.on('joined', function(){
+	console.log('joined with our glorious Father')
+
+	setInterval(row, 1000);
+})
+
+</script>

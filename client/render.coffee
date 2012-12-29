@@ -529,7 +529,8 @@ renderUsers = ->
 	# $(window).resize() #fix all the expandos
 	# console.timeEnd('resize')
 	check_alone() # ~ 1 msec
-	
+
+last_solitude_check = 0
 
 check_alone = ->
 	return unless connected()
@@ -541,6 +542,9 @@ check_alone = ->
 			active_count++
 	
 	if active_count is 1
+		return if Date.now() - last_solitude_check < 1000 * 60
+		last_solitude_check = Date.now()
+
 		me.check_public '', (data) ->
 			suggested_candidates = []
 			for can, count of data

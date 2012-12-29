@@ -14,7 +14,6 @@ url = require 'url'
 os = require 'os'
 util = require 'util'
 
-# parseCookie = require('express/node_modules/cookie').parse
 rooms = {}
 {QuizRoom} = require '../shared/room'
 {QuizPlayer} = require '../shared/player'
@@ -60,13 +59,17 @@ exports.new_update = (err) ->
 	else
 		io.sockets.emit 'force_application_update', Date.now()
 
-
+codename = namer.generateName()
 
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
-	remote?.notifyBen 'Server Starting', 'The server was started.'
+	remote?.notifyBen 'Server Starting ' + codename, 'The server was started. Codename: ' + codename
 	console.log 'set to deployment defaults'
+
+	setTimeout -> 
+		am_i_a_zombie()
+	, 1000 * 60
 
 
 app.use express.compress()
@@ -143,6 +146,7 @@ log 'server_restart', {}
 
 public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl']
 
+
 class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
@@ -166,6 +170,15 @@ class SocketQuizRoom extends QuizRoom
 	journal: -> 
 		unless @name of journal_queue
 			journal_queue[@name] = +new Date
+
+		STALE_TIME = 1000 * 60 * 2 # a few minutes
+		if !@archived or Date.now() - @archived > STALE_TIME
+			t_start = Date.now()
+			remote.archiveRoom? this
+			journal_queue[@name] = null
+			delete journal_queue[@name]
+			track_time t_start, "dynamic refresh_stale(#{@name})"
+		
 
 	end_buzz: (session) ->
 		if @attempt?.user
@@ -199,6 +212,12 @@ class SocketQuizRoom extends QuizRoom
 			u = new SocketQuizPlayer(@, user.id)
 			@users[user.id] = u
 			u.deserialize(user)
+
+
+track_time = (start_time, label) ->
+	duration = Date.now() - start_time
+	if (duration > 0 and gammasave) or duration >= 42
+		log 'track_time', duration + 'ms ' + label
 
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
@@ -280,6 +299,7 @@ class SocketQuizPlayer extends QuizPlayer
 	update: -> io.sockets.emit 'force_application_update', Date.now()
 
 	add_socket: (sock) ->
+		add_start = Date.now()
 		if @sockets.length is 0
 			@last_session = @room.serverTime()
 			@verb 'joined the room'
@@ -331,7 +351,7 @@ class SocketQuizPlayer extends QuizPlayer
 
 
 		user_count_log 'connected ' + @id + '-' + @name + " (#{ip})", @room.name
-
+		track_time add_start, "QuizPlayer::add_socket for #{@room.name}/#{@id}"
 
 
 	emit: (name, data) ->
@@ -350,7 +370,7 @@ status_metrics = ->
 				active_count++ if user.active()
 				muwave_count++ if user.muwave
 				latencies.push(user._latency[0]) if user._latency
-	return { 
+	metrics = { 
 		online: online_count, 
 		active: active_count, 
 		avg_latency: Med(latencies), 
@@ -358,10 +378,12 @@ status_metrics = ->
 		free_memory: os.freemem(), 
 		muwave: muwave_count
 	}
+	return metrics
 
 last_message = 0
 
 user_count_log = (message, room_name) ->
+	t_start = Date.now()
 	metrics = status_metrics()
 	metrics.room = room_name
 	metrics.message = message
@@ -371,12 +393,13 @@ user_count_log = (message, room_name) ->
 		last_message = Date.now()
 		remote?.notifyBen 'Detected Increased Latency', "THE WAG IN HERE IS TOO DAMN HIGH #{metrics.avg_latency} ± #{metrics.std_latency}\n\n#{util.inspect(metrics)}"
 
-
+	track_time t_start, "user_count_log"
 
 
 load_room = (name, callback) ->
 	if rooms[name] # its really nice and simple if you have it cached
 		return callback rooms[name], false
+	t_start = Date.now()
 	room = new SocketQuizRoom(name) 
 	rooms[name] = room
 	if remote.loadRoom
@@ -388,7 +411,7 @@ load_room = (name, callback) ->
 				callback room, true
 	else
 		callback room, true
-
+	track_time t_start, "load_room(#{name})"
 
 io.sockets.on 'connection', (sock) ->
 	headers = sock?.handshake?.headers
@@ -466,23 +489,12 @@ io.sockets.on 'connection', (sock) ->
 					sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
 				sock.emit 'application_update', Date.now() # check for updates in case it was an update
 
-refresh_stale = ->
-	STALE_TIME = 1000 * 60 * 2 # four minutes?
-	for name, room of rooms
-		continue if !room
-		if !room.archived or Date.now() - room.archived > STALE_TIME
-			# the room hasn't been archived in a few minutes
-			remote.archiveRoom? room
-			journal_queue[name] = null
-			delete journal_queue[name]
-			
-
-setInterval refresh_stale, 1000 * 10 # check 3x every minute
 
 journal_queue = {}
 
 process_queue = ->
 	return unless gammasave
+	t_start = Date.now()
 	[min_time, min_room] = [Date.now(), null]
 	for name, time of journal_queue
 		if !rooms[name]
@@ -496,6 +508,7 @@ process_queue = ->
 		remote.archiveRoom? room
 		journal_queue[min_room] = null
 		delete journal_queue[min_room]
+	track_time t_start, 'process_queue'
 
 setInterval process_queue, 1000	
 
@@ -514,6 +527,7 @@ reaped = {
 }
 
 clearInactive = ->
+	t_start = Date.now()
 	# the maximum size a room can be
 	MAX_SIZE = 15
 
@@ -566,6 +580,7 @@ clearInactive = ->
 			reap_user offline_pool[0]
 			continue # no point here but it makes the code more poetic
 
+	track_time t_start, 'clearInactive'
 
 setInterval clearInactive, 1000 * 10 # every ten seconds
 
@@ -753,6 +768,7 @@ app.get '/stalkermode', (req, res) ->
 		queue: Object.keys(journal_queue).length,
 		os: os_info,
 		os_text: util.inspect(os_info),
+		codename,
 		rooms
 	}
 
@@ -823,6 +839,25 @@ app.get '/stalkermode/archived', (req, res) ->
 		res.render 'archived.jade', { list, rooms }
 
 app.get '/stalkermode/:other', (req, res) -> res.redirect '/stalkermode'
+
+zombocom = 'anything is possible'
+app.get '/zombo-cogito-ergo-sum', (req, res) -> res.end zombocom + ''
+
+am_i_a_zombie = ->
+	zombocom = namer.generateName()
+	http.get 'http://protobowl.com/zombo-cogito-ergo-sum', (res) ->
+		body = ''
+		res.on 'data', (chunk) -> body += chunk
+		res.on 'end', ->
+			if body isnt zombocom
+				remote?.notifyBen 'Killing Zombie Server' + codename, 'I am legend. Everything has its time and everybody dies. ' + codename
+				console.log 'is a zombo; shall seppuku'
+				setTimeout ->
+					# wait a bit so ben's notified of this legendary occasion
+					process.exit(0)
+				, 1000 * 10
+			else
+				setTimeout am_i_a_zombie, 1000 * 60 * 2
 
 app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
