@@ -129,6 +129,12 @@ script
 		var rat = 0.9999;
 		rooms[room].activity = rooms[room].activity * rat + Date.now() * (1 - rat);
 	}
+	sock.on('connect', function(e){
+		sock.emit('status', null);
+	});
+	setInterval(function(){
+		sock.emit('status', null);
+	}, 15 * 1000)
 	sock.on('chat', function(e){
 		var room = e[0];
 		var user = e[1];
@@ -234,12 +240,13 @@ script
 
 		document.getElementById('mem').innerText = Math.round(e.free_memory / 1e6) + 'MB';
 
-		document.getElementById('muwave').innerText = Math.round(e.muwave);
-
-		var line = document.createElement('p');
-		line.className = 'status';
-		line.innerText = e.message.replace(/ [0-9a-z]+\-/, ' ')
-		addLine(e.room, line);
+		document.getElementById('muwave').innerText = Math.round(e.muwave) + ' (' + (100 * e.muwave / (e.online + 0.001) ).toFixed(1) + '%)' ;
+		if(e.message && e.room){
+			var line = document.createElement('p');
+			line.className = 'status';
+			line.innerText = e.message.replace(/ [0-9a-z]+\-/, ' ')
+			addLine(e.room, line);	
+		}
 	})
 
 	jQuery.fn.sortElements = function() {

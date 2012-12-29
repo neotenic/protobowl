@@ -161,7 +161,7 @@ html(lang="en")
 				| Online Rooms: #{online_rooms}, 
 				| Active Rooms: #{active_rooms}, 
 				| Latency: #{avg_latency.toFixed(2)}ms ±#{std_latency.toFixed(2)},
-				| &mu;wave: #{muwave_online} (#{(100 * muwave_users / (online + 0.1)).toFixed(1)}%), 
+				| &mu;wave: #{muwave_online} (#{(100 * muwave_online / (online + 0.1)).toFixed(1)}%) online #{muwave_users} total, 
 				| Time Spent: 
 				mixin duration(time_spent), 
 				| Journal Queue: #{queue}

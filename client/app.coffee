@@ -33,7 +33,7 @@ initialize_offline = (cb) ->
 
 offline_startup = ->
 	initialize_offline ->
-		room.__listeners.joined {
+		me.__listeners.joined {
 			id: 'offline',
 			name: 'offline user'
 		}
@@ -125,7 +125,7 @@ online_startup = ->
 	
 		sock.on 'disconnect', disconnect_notice
 
-		for name, fn of room.__listeners
+		for name, fn of me.__listeners
 			sock.on name, fn
 
 		reconnect()
@@ -156,7 +156,7 @@ online_startup = ->
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
 	insecure_socket = io.connect location.hostname, {
-		"connect timeout": 5000, 
+		"connect timeout": 7000, 
 		"force new connection": true
 	}
 	insecure_socket.on 'connect', -> check_connection(insecure_socket)
@@ -166,13 +166,13 @@ online_startup = ->
 		if location.hostname is 'localhost'
 			secure_socket = io.connect 'localhost', {
 				"port": 1337,
-				"connect timeout": 5000,
+				"connect timeout": 7000,
 				"force new connection": true
 			}
 		else
 			secure_socket = io.connect 'https://protobowl.nodejitsu.com/', {
 				"port": 443,
-				"connect timeout": 5000,
+				"connect timeout": 7000,
 				"force new connection": true,
 				"secure": true
 			}
@@ -207,10 +207,19 @@ connected = -> sock? and sock.socket.connected
 class QuizPlayerClient extends QuizPlayer
 	online: -> @online_state
 
+	emit: (args...) -> me.emit args... if @id is me.id
+
+
 class QuizPlayerSlave extends QuizPlayerClient
 	# encapsulate is such a boring word, well actually, it's pretty cool
 	# but you should be allowed to envelop actions like captain kirk 
 	# does to a mountain.
+	
+	emit: (name, data) ->
+		if fallback_connection? and fallback_connection()
+			fallback_broadcast(name, data)
+		else
+			@__listeners[name](data)
 
 	envelop_action: (name) ->
 		# master_action = this[name]
@@ -231,6 +240,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 
 	constructor: (room, id) ->
 		super(room, id)
+		@__listeners = {}
 
 		# the difference between local-exec and remote-exec code is a little weird
 		# i don't exactly like the concept of needing to maintain an exception list
@@ -238,7 +248,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 		# functions starting with get_ are treated as local-exec, but I dont feel like
 		# propagating a breaking change 
 
-		blacklist = ['envelop_action', 'score', 'online', 'active', 'authorized']
+		blacklist = ['envelop_action', 'score', 'online', 'active', 'authorized', 'emit']
 		@envelop_action name for name, method of this when typeof method is 'function' and name not in blacklist
 
 
@@ -246,15 +256,10 @@ class QuizPlayerSlave extends QuizPlayerClient
 
 class QuizRoomSlave extends QuizRoom
 	# dont know what to change
-	emit: (name, data) ->
-		if fallback_connection? and fallback_connection()
-			fallback_broadcast(name, data)
-		else
-			@__listeners[name](data)
+	emit: (args...) -> me.emit args...
 
 	constructor: (name) ->
 		super(name)
-		@__listeners = {}
 
 	load_questions: (cb) ->
 		if load_questions?
@@ -288,7 +293,7 @@ me = new QuizPlayerSlave(room, 'temporary')
 # look at all these one liner events!
 listen = (name, fn) ->
 	# sock.on name, fn if sock?
-	room.__listeners[name] = fn
+	me.__listeners[name] = fn
 
 # probably should figure out some more elegant way to do things, but then again
 # these things hardly actually need to be frequently added - it's mostly hacks

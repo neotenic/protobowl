@@ -42,7 +42,7 @@ io.configure 'production', ->
 	
 
 io.configure 'development', ->
-	io.set "log level", 3
+	io.set "log level", 2
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
 	io.set 'flash policy port', 0
@@ -58,11 +58,14 @@ exports.new_update = (err) ->
 	if err
 		io.sockets.emit 'debug', err
 	else
-		io.sockets.emit 'force_application_update', +new Date
+		io.sockets.emit 'force_application_update', Date.now()
+
+
 
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
+	remote?.notifyBen 'Server Starting', 'The server was started.'
 	console.log 'set to deployment defaults'
 
 
@@ -110,7 +113,6 @@ app.use (req, res, next) ->
 
 app.use (req, res, next) ->
 	if req.headers.host not in ["protobowl.com"] and app.settings.env isnt 'development' and req.protocol is 'http'
-		console.log 'redirecting', req.headers.host
 		options = url.parse(req.url)
 		options.host = 'protobowl.com'
 		res.writeHead 301, {Location: url.format(options)}
@@ -275,6 +277,7 @@ class SocketQuizPlayer extends QuizPlayer
 			ips.push addr if sock and addr
 		return ips
 
+	update: -> io.sockets.emit 'force_application_update', Date.now()
 
 	add_socket: (sock) ->
 		if @sockets.length is 0
@@ -295,6 +298,7 @@ class SocketQuizPlayer extends QuizPlayer
 			# wow this is a pretty mesed up line
 			do (attr) => 
 				sock.on attr, (args...) => 
+					t_start = Date.now()
 					if @banned and @room.serverTime() < @banned
 						@ban()
 					else if @__rate_limited and @room.serverTime() < @__rate_limited and @id[0] != '_' and app.settings.env isnt 'development'
@@ -306,6 +310,9 @@ class SocketQuizPlayer extends QuizPlayer
 							console.error "Error while running QuizPlayer::#{attr} for #{@room.name}/#{@id} with args: ", args
 							console.error err.stack
 							@room.emit 'debug', "Error while running QuizPlayer::#{attr} for #{@room.name}/#{@id}.\nPlease email info@protobowl.com with the contents of this error.\n\n#{err.stack}"
+							remote?.notifyBen "Error while running QuizPlayer::#{attr} for #{@room.name}/#{@id}", "#{err.stack}"
+
+					track_time t_start, "QuizPlayer::#{attr} for #{@room.name}/#{@id}"
 
 		if @banned and @room.serverTime() < @banned
 			@ban()
@@ -331,7 +338,7 @@ class SocketQuizPlayer extends QuizPlayer
 		for sock in @sockets
 			io.sockets.socket(sock).emit(name, data)
 
-user_count_log = (message, room_name) ->
+status_metrics = ->
 	active_count = 0
 	online_count = 0
 	muwave_count = 0
@@ -343,8 +350,28 @@ user_count_log = (message, room_name) ->
 				active_count++ if user.active()
 				muwave_count++ if user.muwave
 				latencies.push(user._latency[0]) if user._latency
+	return { 
+		online: online_count, 
+		active: active_count, 
+		avg_latency: Med(latencies), 
+		std_latency: IQR(latencies), 
+		free_memory: os.freemem(), 
+		muwave: muwave_count
+	}
 
-	log 'user_count', { online: online_count, active: active_count, message: message, room: room_name, avg_latency: Med(latencies), std_latency: IQR(latencies), free_memory: os.freemem(), muwave: muwave_count}
+last_message = 0
+
+user_count_log = (message, room_name) ->
+	metrics = status_metrics()
+	metrics.room = room_name
+	metrics.message = message
+	log 'user_count', metrics
+	
+	if Date.now() > last_message + 1000 * 60 * 10 and metrics.avg_latency > 250 and app.settings.env is 'production'
+		last_message = Date.now()
+		remote?.notifyBen 'Detected Increased Latency', "THE WAG IN HERE IS TOO DAMN HIGH #{metrics.avg_latency} ± #{metrics.std_latency}\n\n#{util.inspect(metrics)}"
+
+
 
 
 load_room = (name, callback) ->
@@ -354,7 +381,7 @@ load_room = (name, callback) ->
 	rooms[name] = room
 	if remote.loadRoom
 		remote.loadRoom name, (data) ->		
-			if data and data.users
+			if data and data.users and data.name
 				room.deserialize data
 				callback room, false
 			else
@@ -372,6 +399,8 @@ io.sockets.on 'connection', (sock) ->
 
 		if config.pathname is '/stalkermode/patriot'
 			sock.join 'stalkermode-dash'
+			sock.on 'status', ->
+				io.sockets.in("stalkermode-dash").emit 'user_count', status_metrics()
 			return
 			
 	user = null
@@ -419,6 +448,10 @@ io.sockets.on 'connection', (sock) ->
 			user = room.users[publicID]
 			user.name = 'secret ninja' if is_ninja
 			user.muwave = (sock.transport in ['xhr-polling', 'jsonp-polling', 'htmlfile'])
+
+			if user.muwave
+				user._transport = sock.transport
+				user._headers = sock?.handshake?.headers
 
 			sock.join room_name
 			user.add_socket sock
@@ -535,7 +568,6 @@ clearInactive = ->
 
 
 setInterval clearInactive, 1000 * 10 # every ten seconds
-
 
 
 # think of it like a filesystem swap; slow access external memory that is used to save ram
@@ -666,10 +698,17 @@ app.post '/stalkermode/negify/:room/:user/:num', (req, res) ->
 	rooms?[req.params.room]?.sync(1)
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
+app.post '/stalkermode/cheatify/:room/:user/:num', (req, res) ->
+	rooms?[req.params.room]?.users?[req.params.user]?.correct += (parseInt(req.params.num) || 1)
+	rooms?[req.params.room]?.sync(1)
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
+
 app.post '/stalkermode/disco/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]
 	io.sockets.socket(sock).disconnect() for sock in u.sockets
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
 
 gammasave = false
 
@@ -681,6 +720,11 @@ app.get '/stalkermode/hulk-smash', (req, res) ->
 	gammasave = Date.now()
 	res.redirect '/stalkermode'
 
+
+setInterval ->
+	if gammasave
+		io.sockets.emit 'application_update', Date.now()
+, 1000 * 25
 
 app.get '/stalkermode', (req, res) ->
 	latencies = []
@@ -792,12 +836,17 @@ app.get '/:channel', (req, res) ->
 	name = req.params.channel
 	if name in remote.get_types()
 		res.redirect "/#{name}/lobby"
+	else if /\s/.test(name)
+		res.redirect "/#{name.replace(/\s/g, '-')}"
 	else
 		res.render 'room.jade', { name }
 
 app.get '/:type/:channel', (req, res) ->
 	name = req.params.channel
-	res.render 'room.jade', { name }
+	if /\s/.test name
+		res.redirect "/#{req.params.type}/#{name.replace(/\s/g, '-')}"
+	else
+		res.render 'room.jade', { name }
 
 port = process.env.PORT || 5555
 server.listen port, ->

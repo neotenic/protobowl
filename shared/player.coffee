@@ -570,5 +570,6 @@ class QuizPlayer
 		blacklist = ['tribunal', 'elect']
 		this[attr] = val for attr, val of obj when attr[0] != '_' and attr not in blacklist
 
+	update: -> 1
 
 exports.QuizPlayer = QuizPlayer if exports?

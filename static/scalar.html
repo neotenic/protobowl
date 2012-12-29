@@ -30,7 +30,7 @@ function add_sock(){
 		console.log('socket connected')
 		sock.emit('join', {
 			cookie: Math.floor(Math.random() * 9999),
-			room_name: "room-"+Math.floor(Math.random() * 2),
+			room_name: "room-"+Math.floor(Math.random() * 182),
 			question_type: "qb",
 			custom_id: Math.floor(Math.random() * 1000),
 			version: 6
@@ -57,7 +57,7 @@ function add_sock(){
 	function doSomething(){
 		if(Math.random() < 0.2){
 			sock.emit('next')
-		}else if(Math.random() < 0.1){
+		}else if(Math.random() < 0.01){
 			if(Math.random() > 0.9){
 				sock.emit('pause')
 			}else{
@@ -66,11 +66,11 @@ function add_sock(){
 			
 		}else if(Math.random() < 0.1){
 			protobot_write(sock, pick(things))
-		}else if(Math.random() < 0.2 && sock.answer && !sock.buzzing){
+		}else if(Math.random() < 0.1 && sock.answer && !sock.buzzing){
 			sock.buzzing = true
 			sock.emit('buzz', sock.qid, function(e){
 				if(e == 'http://www.whosawesome.com/'){
-					if(Math.random() > 0.5){
+					if(Math.random() > 0.2){
 						protobot_guess(sock, pick(wrong))	
 					}else{
 						protobot_guess(sock, sock.answer)
@@ -90,15 +90,17 @@ function add_sock(){
 
 function protobot_guess(sock, message){
 	var count = 0, session = Math.random().toString(36).slice(2)
+	message = message.replace(/\{|\}/g, '');
+
 	function writeLetter(){
 		if(++count <= message.length){
 			sock.emit('guess', {
 				text: message.slice(0, count),
 				session: session,
 				user: '__protobot',
-				done: count == message.length && Math.random() > 0.6
+				done: count == message.length
 			})
-			setTimeout(writeLetter, 1000 * 60 / 6 / (60 + Math.random() * 160))
+			setTimeout(writeLetter, 1000 * 60 / 6 / (90 + Math.random() * 160))
 		}
 	}
 	writeLetter()
