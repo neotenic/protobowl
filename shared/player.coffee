@@ -157,8 +157,19 @@ class QuizPlayer
 
 
 	trigger_tribunal: (user) ->
+		@touch()
+		return unless user and @room?.users[user]
+		if user is @id
+			@verb 'is somewhat of a masochist'
+			return
+
 		is_admin = @id in @room.admins or @id[0] is '_'
-		if is_admin or @score() > 50
+
+		if is_admin or @score() >= 0
+
+			if user in @room.admins or user[0] is '_'
+				@verb 'cannot fell a god with a mortal sword'
+				return
 			@verb 'created a ban tribunal for !@' + user
 			@room.users[user]?.create_tribunal()
 

@@ -82,10 +82,8 @@ disconnect_notice = ->
 
 
 # this is the slightly overcomplicated system 
-sock = null
 has_connected = false
-secure_socket = null
-insecure_socket = null
+sock = null
 
 online_startup = ->
 
@@ -549,3 +547,13 @@ else
 	offline_startup()
 
 $("#load_error").remove() # no problems, mam, everything's a-ok
+
+
+$("#disconnect").click (e) ->
+	sock.disconnect()
+	e.preventDefault()
+
+$("#reconnect").click (e) ->
+	sock.socket.reconnect()
+	e.preventDefault()
+	

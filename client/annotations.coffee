@@ -83,13 +83,13 @@ addImportant = (el) ->
 	return el
 
 
-banButton = (id, line) ->
-	return if id is me.id # stop hitting yourself
+banButton = (id, line, degree = 4) ->
+	# return if id is me.id # stop hitting yourself
 
 	usercount = (1 for i, u of room.users when u.active()).length
 	is_admin = me.id[0] is '_' or me.id in room.admins
 	
-	if is_admin or (me.score() > 50 and usercount > 2)
+	if is_admin or (me.score() > 50 and usercount > 2) or degree <= 2
 		line.append $('<a>')
 			.attr('href', '#')
 			.attr('title', 'Initiate ban tribunal for this user')
@@ -273,8 +273,8 @@ chatAnnotation = ({session, text, user, done, time}) ->
 				line.prepend '<i class="icon-user"></i> '
 			line.find('.comment').html html
 
-			if user of room.users and text.length > 70 or (dirty_regex? and dirty_regex.exec(" #{text} "))
-				banButton user, line
+			if user of room.users and text.length > 70 or (dirty_regex? and dirty_regex.exec(text.replace(/[^a-z]/ig, '')))
+				banButton user, line, 2
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
 			line.addClass('buffer')

@@ -6,7 +6,11 @@ html(lang="en", manifest="/offline.appcache")
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		meta(name="keywords", content="protobowl,quizbowl,application,reader,academic,multiplayer,practice")
 		meta(name="description", "A real time multiplayer quizbowl application")
-		link(rel='stylesheet', href='/protobowl.css')
+		
+		if development
+			link(rel='stylesheet', href='/protobowl.dev.css')
+		else
+			link(rel='stylesheet', href='/protobowl.css')
 
 	body
 		div.navbar.navbar-top
@@ -323,8 +327,8 @@ html(lang="en", manifest="/offline.appcache")
 									td#version ?
 								tr
 									td
-										a#disconnect(href="#", onclick="sock.disconnect();return false", style="display: none") Disconnect
-										a#reconnect(href="#", onclick="sock.socket.reconnect();return false", style="display: none") Reconnect
+										a#disconnect(href="#disconnect", style="display: none") Disconnect
+										a#reconnect(href="#reconnect", style="display: none") Reconnect
 										a#reload(href="") Reload
 									td#cachestatus 
 		
@@ -349,8 +353,10 @@ html(lang="en", manifest="/offline.appcache")
 			}
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
-		
-		script(src="/app.js")
+		if development
+			script(src="/app.dev.js")
+		else
+			script(src="/app.js")
 
 		script(type="text/javascript")
 			(function() {

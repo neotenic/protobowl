@@ -121,7 +121,7 @@ app.use (req, res, next) ->
 		res.writeHead 301, {Location: url.format(options)}
 		res.end()
 	else
-		if remote.authorized and (/stalkermode/.test(req.path) or 'ninja' of req.query)
+		if remote.authorized and (/stalkermode/.test(req.path) or 'ninja' of req.query or 'dev' of req.query)
 			remote.authorized req, (allow) ->
 				if allow
 					next()
@@ -874,14 +874,14 @@ app.get '/:channel', (req, res) ->
 	else if /\s/.test(name)
 		res.redirect "/#{name.replace(/\s/g, '-')}"
 	else
-		res.render 'room.jade', { name }
+		res.render 'room.jade', { name, development: ('dev' of req.query) }
 
 app.get '/:type/:channel', (req, res) ->
 	name = req.params.channel
 	if /\s/.test name
 		res.redirect "/#{req.params.type}/#{name.replace(/\s/g, '-')}"
 	else
-		res.render 'room.jade', { name }
+		res.render 'room.jade', { name, development: ('dev' of req.query) }
 
 port = process.env.PORT || 5555
 server.listen port, ->

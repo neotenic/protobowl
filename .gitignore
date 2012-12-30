@@ -6,5 +6,7 @@ app.js
 offline.js
 auth.js
 protobowl.css
+protobowl.dev.css
+app.dev.js
 offline.appcache
 build/*

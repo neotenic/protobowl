@@ -93,16 +93,24 @@ updateCache = (force_update = false) ->
 			})
 
 			parser.parse data, (err, tree) ->
-				css = tree?.toCSS {
-					compress: false
-				}
+				css = tree?.toCSS { compress: false }
 
 				source_list.push {
 					hash: sha1(css + ''),
-					code: "/* protobowl_css_build_date: #{compile_date} */\n#{css}",
+					code: "/* protobowl_css_build_date: #{compile_date} (dev) */\n#{css}",
+					err: err,
+					file: "static/protobowl.dev.css"
+				}
+
+				css = tree?.toCSS { compress: true }
+
+				source_list.push {
+					hash: sha1(css + ''),
+					code: "/* protobowl_css_build_date: #{compile_date}*/\n#{css}",
 					err: err,
 					file: "static/protobowl.css"
 				}
+
 				compileCoffee()
 
 
@@ -112,14 +120,30 @@ updateCache = (force_update = false) ->
 		file = file_list.shift()
 		return saveFiles() if !file
 		
+
 		snockets.getConcatenation "client/#{file}.coffee", minify: false, (err, js) ->
+			outfile = "static/#{file}.js"
+			if file is 'app'
+				outfile = "static/#{file}.dev.js" 
+
 			source_list.push {
 				hash: sha1(js + ''),
-				code: "protobowl_#{file}_build = '#{compile_date}';\n#{js}", 
+				code: "protobowl_#{file}_build = '#{compile_date}'; //dev\n\n#{js}\n", 
 				err: err, 
-				file: "static/#{file}.js"
+				file: outfile
 			}
-			compileCoffee()
+
+			if file isnt 'app'
+				compileCoffee()
+			else
+				snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
+					source_list.push {
+						hash: sha1(js + ''),
+						code: "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n", 
+						err: err, 
+						file: "static/#{file}.js"
+					}		
+					compileCoffee()			
 
 	saveFiles = ->
 		# its something like a unitard

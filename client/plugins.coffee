@@ -13,7 +13,7 @@ window.requestAnimationFrame ||=
 unless String::trim
 	String::trim = -> @replace(/^\s+/, '').replace(/\s+$/, '')
 
-clone_shallow = (obj) ->
+window.clone_shallow = (obj) ->
 	new_obj = {}
 	new_obj[attr] = obj[attr] for attr of obj
 	return new_obj
