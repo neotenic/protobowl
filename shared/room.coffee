@@ -219,7 +219,7 @@ class QuizRoom
 		cumsum = (list, rate) ->
 			sum = 0 #start nonzero, allow pause before rendering
 			for num in [5].concat(list).slice(0, -1)
-				sum += Math.round(num) * rate #always round!
+				sum += Math.round(num * rate) #always round!
 
 		now = @time() # take a snapshot of time to do math with
 		#first thing's first, recalculate the cumulative array
@@ -243,9 +243,9 @@ class QuizRoom
 		@cumulative = cumsum @timing, @rate
 		new_duration = @cumulative[@cumulative.length - 1]
 		#how much time has elapsed in the new timescale
-		@begin_time = now - new_duration * done - remainder
+		@begin_time = Math.round(now - new_duration * done - remainder)
 		# set the ending time
-		@end_time = @begin_time + new_duration + @answer_duration
+		@end_time = Math.round(@begin_time + new_duration + @answer_duration)
 
 		# test
 		@begin_time = 0 if isNaN(@begin_time)

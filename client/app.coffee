@@ -376,7 +376,7 @@ synchronize = (data) ->
 			cumsum = (list, rate) ->
 				sum = 0 #start nonzero, allow pause before rendering
 				for num in [5].concat(list).slice(0, -1)
-					sum += Math.round(num) * rate #always round!
+					sum += Math.round(num * rate) #always round!
 			room.cumulative = cumsum room.timing, room.rate
 			room.__last_rate = room.rate
 

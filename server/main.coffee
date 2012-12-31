@@ -64,19 +64,67 @@ codename = namer.generateName()
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
-	remote?.notifyBen 'Server Starting ' + codename, 'The server was started. Codename: ' + codename
+	remote?.notifyBen 'Server Starting ' + codename, 'The server was started. \n Codename: ' + codename + '\n\n' + util.inspect({
+		hostname: os.hostname(),
+		type: os.type(),
+		platform: os.platform(),
+		arch: os.arch(),
+		release: os.release(),
+		loadavg: os.loadavg(),
+		uptime: os.uptime(),
+		totalmem: os.totalmem(),
+		freemem: os.freemem()
+	})
 	console.log 'set to deployment defaults'
 
 	setTimeout -> 
 		am_i_a_zombie()
 	, 1000 * 60
 
+app.configure 'development', ->
+	app.use express.logger()
 
 app.use express.compress()
 # app.use express.staticCache()
-app.use express.static('static')
 app.use express.cookieParser()
 app.use express.bodyParser()
+
+# inject the cookies into the session... yo
+app.use (req, res, next) ->
+	unless req.cookies['protocookie']
+		seed = "proto" + Math.random() + "bowl" + Math.random() + "client" + req.headers['user-agent']
+		expire_date = new Date()
+		expire_date.setFullYear expire_date.getFullYear() + 2
+
+		res.cookie 'protocookie', sha1(seed + ''), {
+			expires: expire_date,
+			httpOnly: false,
+			signed: false,
+			secure: false,
+			path: '/'
+		}
+
+	next()
+
+# authorization and redirects
+app.use (req, res, next) ->
+	if req.headers.host not in ["protobowl.com"] and app.settings.env isnt 'development' and req.protocol is 'http'
+		options = url.parse(req.url)
+		options.host = 'protobowl.com'
+		res.writeHead 301, {Location: url.format(options)}
+		res.end()
+	else
+		if remote.authorized and (/stalkermode/.test(req.path) or 'ninja' of req.query or 'dev' of req.query or req.path in ['/protobowl.dev.css', '/app.dev.js'])
+			remote.authorized req, (allow) ->
+				if allow
+					next()
+				else
+					res.redirect "/401"
+		else
+			next()
+
+
+app.use express.static('static')
 app.use express.favicon('static/img/favicon.ico')
 
 crypto = require 'crypto'
@@ -97,40 +145,12 @@ Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
 MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
-# inject the cookies into the session... yo
-app.use (req, res, next) ->
-	unless req.cookies['protocookie']
-		seed = "proto" + Math.random() + "bowl" + Math.random() + "client" + req.headers['user-agent']
-		expire_date = new Date()
-		expire_date.setFullYear expire_date.getFullYear() + 2
 
-		res.cookie 'protocookie', sha1(seed + ''), {
-			expires: expire_date,
-			httpOnly: false,
-			signed: false,
-			secure: false,
-			path: '/'
-		}
 
-	next()
-
-app.use (req, res, next) ->
-	if req.headers.host not in ["protobowl.com"] and app.settings.env isnt 'development' and req.protocol is 'http'
-		options = url.parse(req.url)
-		options.host = 'protobowl.com'
-		res.writeHead 301, {Location: url.format(options)}
-		res.end()
-	else
-		if remote.authorized and (/stalkermode/.test(req.path) or 'ninja' of req.query or 'dev' of req.query)
-			remote.authorized req, (allow) ->
-				if allow
-					next()
-				else
-					res.redirect "/401"
-		else
-			next()
-
-	
+track_time = (start_time, label) ->
+	duration = Date.now() - start_time
+	if (duration > 0 and gammasave) or duration >= 42
+		log 'track_time', duration + 'ms ' + label
 
 log = (action, obj) ->
 	req = http.request log_config, ->
@@ -155,7 +175,7 @@ class SocketQuizRoom extends QuizRoom
 
 	get_question: (callback) ->
 		cb = (question) =>
-			log 'next', [@name, question?.answer]
+			log 'next', [@name, question?.answer, @qid]
 			callback(question)
 		if @next_id and @show_bonus
 			remote.get_by_id @next_id, cb
@@ -183,7 +203,7 @@ class SocketQuizRoom extends QuizRoom
 	end_buzz: (session) ->
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
-			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling]
+			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
 		super(session)
 
 	merge_user: (id, new_id) ->
@@ -213,11 +233,6 @@ class SocketQuizRoom extends QuizRoom
 			@users[user.id] = u
 			u.deserialize(user)
 
-
-track_time = (start_time, label) ->
-	duration = Date.now() - start_time
-	if (duration > 0 and gammasave) or duration >= 42
-		log 'track_time', duration + 'ms ' + label
 
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
@@ -470,11 +485,13 @@ io.sockets.on 'connection', (sock) ->
 
 			user = room.users[publicID]
 			user.name = 'secret ninja' if is_ninja
-			user.muwave = (sock.transport in ['xhr-polling', 'jsonp-polling', 'htmlfile'])
-
-			if user.muwave
-				user._transport = sock.transport
-				user._headers = sock?.handshake?.headers
+			try
+				user.muwave = (sock.transport in ['xhr-polling', 'jsonp-polling', 'htmlfile'])
+				if user.muwave
+					user._transport = sock.transport
+					user._headers = sock?.handshake?.headers
+			catch err
+				remote?.notifyBen 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
 
 			sock.join room_name
 			user.add_socket sock
@@ -845,7 +862,7 @@ app.get '/zombo-cogito-ergo-sum', (req, res) -> res.end zombocom + ''
 
 am_i_a_zombie = ->
 	zombocom = namer.generateName()
-	http.get 'http://protobowl.com/zombo-cogito-ergo-sum', (res) ->
+	req = http.get 'http://protobowl.com/zombo-cogito-ergo-sum', (res) ->
 		body = ''
 		res.on 'data', (chunk) -> body += chunk
 		res.on 'end', ->
@@ -858,6 +875,8 @@ am_i_a_zombie = ->
 				, 1000 * 10
 			else
 				setTimeout am_i_a_zombie, 1000 * 60 * 2
+	req.on 'error', (err) ->
+		console.log 'zombie checking error', err
 
 app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
