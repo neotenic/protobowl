@@ -273,7 +273,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 				line.prepend '<i class="icon-user"></i> '
 			line.find('.comment').html html
 
-			if user of room.users and text.length > 70 or (dirty_regex? and dirty_regex.exec(text.replace(/[^a-z]/ig, '')))
+			if user of room.users and text.length > 70 or (dirty_regex? and dirty_regex.exec(text.replace(/[^a-z ]/ig, '')))
 				banButton user, line, 2
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
