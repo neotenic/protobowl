@@ -45,7 +45,7 @@ html(lang="en")
 						span.badge ADMIN
 					b #{user.name} 
 					if !('users' in user)
-						a(href="/stalkermode/user/#{user.room.name}/#{user.id}") &rarr; 
+						a(href="/stalkermode/user/#{user.room.name.replace(/\//g, '~')}/#{user.id}") &rarr; 
 					| (last seen 
 					mixin time(user.last_action)
 					| )

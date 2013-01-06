@@ -50,7 +50,7 @@ html(lang="en")
 					li
 						a(href="/stalkermode") &larr; Stalkermode 
 					li
-						a(href="/stalkermode/room/#{room}") #{room} room panel &rarr;
+						a(href="/stalkermode/room/#{room.replace(/\//g, '~')}") #{room} room panel &rarr;
 
 				
 				h4= id
@@ -85,24 +85,24 @@ html(lang="en")
 						small The Joker, The Dark Knight
 
 				p
-					form(action="/stalkermode/negify/#{room}/#{id}/1", method="post", style="display: inline")
+					form(action="/stalkermode/negify/#{room.replace(/\//g, '~')}/#{id}/1", method="post", style="display: inline")
 						button.btn(type="submit") One Neg
 					| 
-					form(action="/stalkermode/negify/#{room}/#{id}/100", method="post" , style="display: inline")
+					form(action="/stalkermode/negify/#{room.replace(/\//g, '~')}/#{id}/100", method="post" , style="display: inline")
 						button.btn(type="submit") One Hundred Negs
 					| 
-					form(action="/stalkermode/negify/#{room}/#{id}/99999", method="post", style="display: inline")
+					form(action="/stalkermode/negify/#{room.replace(/\//g, '~')}/#{id}/99999", method="post", style="display: inline")
 						button.btn(type="submit") A Couple of Negs
 					| 
 					| When your score is ashes, you have my permission to die.
 				p
-					form(action="/stalkermode/cheatify/#{room}/#{id}/1", method="post", style="display: inline")
+					form(action="/stalkermode/cheatify/#{room.replace(/\//g, '~')}/#{id}/1", method="post", style="display: inline")
 						button.btn(type="submit") One Question
 					| 
-					form(action="/stalkermode/cheatify/#{room}/#{id}/100", method="post" , style="display: inline")
+					form(action="/stalkermode/cheatify/#{room.replace(/\//g, '~')}/#{id}/100", method="post" , style="display: inline")
 						button.btn(type="submit") One Hundred Questions
 					| 
-					form(action="/stalkermode/cheatify/#{room}/#{id}/99999", method="post", style="display: inline")
+					form(action="/stalkermode/cheatify/#{room.replace(/\//g, '~')}/#{id}/99999", method="post", style="display: inline")
 						button.btn(type="submit") Quite a few questions
 					|  
 
@@ -111,28 +111,28 @@ html(lang="en")
 				hr
 
 				form
-					a.btn(href="/#{room}?ninja&id=#{user.id}") Schizo Mode
+					a.btn(href="/#{room.replace(/\//g, '~')}?ninja&id=#{user.id}") Schizo Mode
 					| 
 					| Masquerade as the user by logging in under that user ID
 				
 
 				br 
 				
-				form(action="/stalkermode/exec/create_tribunal/#{room}/#{id}", method="post")
+				form(action="/stalkermode/exec/create_tribunal/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Create Tribunal
 					| 
 					| Preferred system for banning users, allow people in the room to vote to decide upon the innocence of this user
 
 				br
 
-				form(action="/stalkermode/disco/#{room}/#{id}", method="post")
+				form(action="/stalkermode/disco/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Disconnect
 					| 
 					| Disconnect the user from Protobowl, something like a very short term ban
 
 				br
 
-				form(action="/stalkermode/exec/ban/#{room}/#{id}", method="post")
+				form(action="/stalkermode/exec/ban/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Ban
 					| 
 					| Wield this Mjölnir, the glorious banhammer with firm and guarded discretion.
@@ -140,42 +140,42 @@ html(lang="en")
 
 				br
 
-				form(action="/stalkermode/unban/#{room}/#{id}", method="post")
+				form(action="/stalkermode/unban/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Unban
 					| 
 					| Help those you have wronged in the course living
 
 				br
 
-				form(action="/stalkermode/exec/ip_ban/#{room}/#{id}", method="post")
+				form(action="/stalkermode/exec/ip_ban/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") IP Ban
 					| 
 					| Use with EXTRA EXTRA discretion. This could entail banning an entire house, neighborhood, school or institution, and at worst, an entire country.
 
 				br
 
-				form(action="/stalkermode/exec/reset_score/#{room}/#{id}", method="post")
+				form(action="/stalkermode/exec/reset_score/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Reset Score
 					| 
 					| Set the user's score to zero
 
 				hr
 
-				form(action="/stalkermode/exec/_apotheify/#{room}/#{id}", method="post")
+				form(action="/stalkermode/exec/_apotheify/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Apotheify
 					| 
 					| Make into an administrator for the room
 
 				br 
 				
-				form(action="/stalkermode/exec/cincinnatus/#{room}/#{id}", method="post")
+				form(action="/stalkermode/exec/cincinnatus/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Discharge
 					| 
 					| Unhonorably discharge this user from the managerial staff
 
 				hr
 
-				form.well(action="/stalkermode/emit/#{room}/#{id}", method="post")
+				form.well(action="/stalkermode/emit/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					label(for="action") Event Name
 					input#action(name="action", type="text", value="redirect", style="width: 100px")
 					br

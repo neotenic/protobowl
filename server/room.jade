@@ -18,14 +18,17 @@ html(lang="en", manifest="/offline.appcache")
 				div.container
 					a.show-sidebar(href="#")
 						i.icon-circle-arrow-right
-					a.brand(href="/")
+					a.brand(href="/#{type}")
 						strong Proto
 						| Bowl 
 						em.motto.hidden-phone(style="font-size: small")
 							| doing one thing and doing it acceptably well
 						
 					div.pull-right
-						a.btn.btn-primary.new-room(href="/new") New Room
+						if type
+							a.btn.btn-primary.new-room(href="/new/#{type}") New Room
+						else
+							a.btn.btn-primary.new-room(href="/new") New Room
 						
 					ul.nav.pull-right.hidden-phone
 						li

@@ -275,6 +275,13 @@ class SocketQuizPlayer extends QuizPlayer
 			if rooms[check_name]?.users
 				for uid, udat of rooms[check_name].users
 					output[check_name]++ if udat.active()
+
+		for name in remote.get_types()
+			check_name = name + '/lobby'
+			if rooms[check_name]?.users
+				output[check_name] = 0
+				for uid, udat of rooms[check_name].users
+					output[check_name]++ if udat.active()
 		fn output if fn
 
 	ban: (duration = 1000 * 60 * 10) ->
@@ -460,6 +467,8 @@ io.sockets.on 'connection', (sock) ->
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
 		publicID = sha1(cookie + room_name + '')
 		# get the room
+		room_name = room_name.replace(/\//g, '~')
+
 		load_room room_name, (room, is_new) ->
 			room.type = question_type if is_new
 
@@ -705,53 +714,53 @@ app.post '/stalkermode/the-scene-is-safe', (req, res) ->
 
 
 app.post '/stalkermode/clear_bans/:room', (req, res) ->
-	delete rooms?[req.params.room]?._ip_bans
+	delete rooms?[req.params.room.replace(/~/g, '/')]?._ip_bans
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
 app.post '/stalkermode/delete_room/:room', (req, res) ->
-	if rooms?[req.params.room]?.users
-		for id, u of rooms[req.params.room].users
+	if rooms?[req.params.room.replace(/~/g, '/')]?.users
+		for id, u of rooms[req.params.room.replace(/~/g, '/')].users
 			for sock in u.sockets
 				io.sockets.socket(sock).disconnect()
-	rooms[req.params.room] = new SocketQuizRoom(req.params.room)
+	rooms[req.params.room.replace(/~/g, '/')] = new SocketQuizRoom(req.params.room.replace(/~/g, '/'))
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
 
 app.post '/stalkermode/disco_room/:room', (req, res) ->
-	if rooms?[req.params.room]?.users
-		for id, u of rooms[req.params.room].users
+	if rooms?[req.params.room.replace(/~/g, '/')]?.users
+		for id, u of rooms[req.params.room.replace(/~/g, '/')].users
 			for sock in u.sockets
 				io.sockets.socket(sock).disconnect()
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
 
 app.post '/stalkermode/emit/:room/:user', (req, res) ->
-	u = rooms?[req.params.room]?.users?[req.params.user]
+	u = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
 	u.emit req.body.action, req.body.text
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 app.post '/stalkermode/exec/:command/:room/:user', (req, res) ->
-	rooms?[req.params.room]?.users?[req.params.user]?[req.params.command]?()
+	rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?[req.params.command]?()
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 app.post '/stalkermode/unban/:room/:user', (req, res) ->
-	rooms?[req.params.room]?.users?[req.params.user]?.banned = 0
+	rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?.banned = 0
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 
 app.post '/stalkermode/negify/:room/:user/:num', (req, res) ->
-	rooms?[req.params.room]?.users?[req.params.user]?.interrupts += (parseInt(req.params.num) || 1)
-	rooms?[req.params.room]?.sync(1)
+	rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?.interrupts += (parseInt(req.params.num) || 1)
+	rooms?[req.params.room.replace(/~/g, '/')]?.sync(1)
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 app.post '/stalkermode/cheatify/:room/:user/:num', (req, res) ->
-	rooms?[req.params.room]?.users?[req.params.user]?.correct += (parseInt(req.params.num) || 1)
-	rooms?[req.params.room]?.sync(1)
+	rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?.correct += (parseInt(req.params.num) || 1)
+	rooms?[req.params.room.replace(/~/g, '/')]?.sync(1)
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 
 app.post '/stalkermode/disco/:room/:user', (req, res) ->
-	u = rooms?[req.params.room]?.users?[req.params.user]
+	u = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
 	io.sockets.socket(sock).disconnect() for sock in u.sockets
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
@@ -896,6 +905,8 @@ app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
 app.post '/401', (req, res) -> remote.authenticate(req, res)
 
+app.get '/new/:type', (req, res) -> res.redirect '/' + req.params.type + '/' + namer.generatePage()
+
 app.get '/new', (req, res) -> res.redirect '/' + namer.generatePage()
 
 app.get '/', (req, res) -> res.redirect '/lobby'
@@ -907,14 +918,14 @@ app.get '/:channel', (req, res) ->
 	else if /\s/.test(name)
 		res.redirect "/#{name.replace(/\s/g, '-')}"
 	else
-		res.render 'room.jade', { name, development: ('dev' of req.query) }
+		res.render 'room.jade', { name, type: '', development: ('dev' of req.query) }
 
 app.get '/:type/:channel', (req, res) ->
 	name = req.params.channel
 	if /\s/.test name
 		res.redirect "/#{req.params.type}/#{name.replace(/\s/g, '-')}"
 	else
-		res.render 'room.jade', { name, development: ('dev' of req.query) }
+		res.render 'room.jade', { name, type: req.params.type, development: ('dev' of req.query) }
 
 port = process.env.PORT || 5555
 server.listen port, ->
