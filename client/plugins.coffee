@@ -155,7 +155,7 @@ do ->
 	new_year.setSeconds(0)
 	new_year.setDate(1)
 	setTimeout ->
-		$('body').fireworks(15)
+		$('body').fireworks(25)
 	, new_year - Date.now()
 
 
@@ -166,5 +166,7 @@ do ->
 
 unless console?
 	window.console = {
-		log: -> null
+		log: -> null,
+		trace: -> null,
+		error: -> null
 	}

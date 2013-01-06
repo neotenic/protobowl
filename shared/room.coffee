@@ -67,6 +67,9 @@ class QuizRoom
 		@attempt = null
 		@no_skip = false
 		@show_bonus = false
+		@interrupts = true
+		@semi = false
+		@no_pause = false
 
 	log: (message) -> @emit 'log', { verb: message }
 
@@ -350,6 +353,7 @@ class QuizRoom
 
 	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
 		team_buzzed = 0
+
 		for id, member of @users when (member.team || id) is (@users[user].team || user)
             team_buzzed += member.times_buzzed
             
@@ -361,6 +365,10 @@ class QuizRoom
 		else if @max_buzz and team_buzzed >= @max_buzz
 			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
 			@emit 'log', {user: user, verb: 'is in a team which has already buzzed'}
+
+		else if !@interrupts and @time() <= @end_time - @answer_duration
+			@emit 'log', {user: user, verb: 'attempted an illegal interrupt'}
+			fn 'THE GAME' if fn
 
 		else if !@attempt and @time() <= @end_time
 			fn 'http://www.whosawesome.com/' if fn

@@ -476,7 +476,7 @@ $(".leaderboard tbody tr").live 'click', (e) ->
 		$(this).popover {
 			placement: if mobileLayout() then "top" else "left"
 			trigger: "manual",
-			title: "#{user.name}'s Stats",
+			title: "#{user.name}",
 			content: ->
 				createStatSheet(user, true)
 		}

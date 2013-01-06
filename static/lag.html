@@ -1,22 +1,45 @@
 <link rel="stylesheet", href="/protobowl.css"></link>
 <script src="/socket.io/socket.io.js"></script>
 <div class="container">
-	<table id="tab" class="table">
+	<table id="tab" class="table table-condensed">
 	</table>
 </div>
-<script>
-function row(){
-	var start = Date.now();
+<style>
+.indicator {
+	display: inline-block;
+	margin-left: 10px;
+	background: #c0ffee;
+	border: 1px solid gray;
+	height: 10px;
+}
 
-	sock.emit('echo', {}, function(e){
+</style>
+<script>
+var tab = document.getElementById('tab');
+
+function row(){
+	var start = new Date;
+	
+
+	// sock.emit('echo', {}, function(e){
+	sock.emit('perf', {}, function(e){
 		var tr = document.createElement('tr');
 		var time = document.createElement('td');
 		var delay = document.createElement('td');
-		time.innerHTML = Date.now();
-		delay.innerHTML = (Date.now() - start);
+		var ram = document.createElement('td');
+		ram.innerHTML = (e / 1e6).toFixed(1) + 'MB';
+		time.innerHTML = start.toString().split('GMT')[0];
+		var latency = (Date.now() - start);
+		delay.innerHTML = latency + 'ms';
+		var lat_indicator = document.createElement('div');
+		lat_indicator.className = 'indicator';
+		lat_indicator.style.width = Math.min(250, Math.sqrt(latency) * 5) + 'px';
+		delay.appendChild(lat_indicator)
 		tr.appendChild(time);
 		tr.appendChild(delay);
-		document.getElementById('tab').appendChild(tr);
+		tr.appendChild(ram);
+		
+		tab.insertBefore(tr, tab.firstChild);
 	})
 }
 
@@ -25,20 +48,21 @@ sock = io.connect()
 sock.on('connect', function(){
 	console.log('connected; emitting join signal');
 
-	sock.emit('join', {
-		cookie: "lagtest", 
-		question_type: 'qb', 
-		room_name: 'lag-test', 
-		version: 6
-	})
-
-})
-
-
-sock.on('joined', function(){
-	console.log('joined with our glorious Father')
+	// sock.emit('join', {
+	// 	cookie: "lagtest", 
+	// 	question_type: 'qb', 
+	// 	room_name: 'lag-test', 
+	// 	version: 6
+	// })
 
 	setInterval(row, 1000);
 })
+
+
+// sock.on('joined', function(){
+// 	console.log('joined with our glorious Father')
+
+// 	setInterval(row, 1000);
+// })
 
 </script>

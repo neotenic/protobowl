@@ -121,14 +121,20 @@ count_cache = null
 load_questions = (cb) ->
 	if offline_questions.length is 0
 		$.ajax('/sample.txt').done (text) ->
-			offline_questions = (jQuery.parseJSON(line) for line in text.split('\n'))
-			for question in offline_questions
-				question._inc = Math.random()
-				question.type = 'qb'
-			
-			recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
-				count_cache = layers
-				setTimeout cb, 100		
+			try
+				offline_questions = (jQuery.parseJSON(line) for line in text.split('\n') when line)
+				for question in offline_questions
+					question._inc = Math.random()
+					question.type = 'qb'
+					
+				recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
+					count_cache = layers
+					setTimeout cb, 100		
+			catch err
+				console.log 'error loading questions', err
+				count_cache = {}
+				setTimeout cb, 100
+
 	else
 		setTimeout cb, 100
 
@@ -204,6 +210,12 @@ get_question = (type, difficulty, category, cb) ->
 			get_question type, difficulty, category, cb
 		, 100
 		return
+	unless typeof offline_questions[0] is 'object'
+
+		setTimeout ->
+			cb null, [], []
+		, 10
+		return 
 	# TODO: be smarter about the sampling, permute difficulty and categories to find respective likelihoods
 	if count_cache[type]
 		if !difficulty

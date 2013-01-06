@@ -70,7 +70,10 @@ class QuizPlayer
 		CORRECT = 10
 		EARLY = 15
 		INTERRUPT = -5
-		return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
+		if @room.interrupts
+			return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
+		else
+			return @correct * CORRECT
 
 	ban: -> 1
 
@@ -378,7 +381,8 @@ class QuizPlayer
 
 	pause: ->
 		@touch()
-		
+		return if @room.no_pause
+
 		return if @room.time_freeze
 
 		if !@room.attempt and @room.time() < @room.end_time
@@ -481,6 +485,49 @@ class QuizPlayer
 		return if isNaN(speed)
 		return if speed <= 0
 		@room.set_speed speed
+		@room.sync(1)
+
+	set_duration: (duration) ->
+		@touch()
+		return unless @authorized()
+		return if isNaN(duration)
+		return if duration <= 0
+		@room.answer_duration = duration
+		@room.set_speed @room.rate
+		@room.sync(1)
+
+	set_interrupts: (state) ->
+		@touch()
+		return unless @authorized()
+		if state
+			@verb 'enabled interrupts'
+		else
+			@verb 'disabled interrupts'
+		@room.interrupts = !!state
+		@room.sync(1)
+
+	set_pause: (state) ->
+		@touch()
+		return unless @authorized()
+		
+		@unpause()
+
+		if state
+			@verb 'enabled pausing questions'
+		else
+			@verb 'disabled pausing questions'
+		@room.no_pause = !state
+		@room.sync(1)
+
+
+	set_semi: (state) ->
+		@touch()
+		return unless @authorized()
+		if state
+			@verb 'enabled semi-transparent readouts'
+		else
+			@verb 'disabled semi-transparent readouts'
+		@room.semi = !!state
 		@room.sync(1)
 
 	set_team: (name) ->

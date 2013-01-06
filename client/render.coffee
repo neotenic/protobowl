@@ -80,6 +80,8 @@ renderUpdate = ->
 	if $('.settings').is(':hidden')
 		$('.settings').slideDown()
 		$(window).resize()
+	
+	$('.bundle.active').toggleClass 'semi', room.semi
 
 	if me.id of room.users and 'show_typing' of room.users[me.id]
 		$('.livechat').attr 'checked', room.users[me.id].show_typing
@@ -248,9 +250,13 @@ renderTimer = ->
 		elapsed = (time - room.begin_time)
 		progress = elapsed/(room.end_time - room.begin_time)
 		$('.skipbtn, .nextbtn').disable false
-		$('.pausebtn').disable (ms < 0)
+		$('.pausebtn').disable (ms < 0 or room.no_pause)
+
 		unless room.time_freeze
-			$('.buzzbtn').disable (ms < 0 or elapsed < 100)
+			if !room.interrupts and time < room.end_time - room.answer_duration
+				$('.buzzbtn').disable true
+			else
+				$('.buzzbtn').disable (ms < 0 or elapsed < 100)
 		if ms < 0
 			$('.bundle.active').addClass('revealed')
 			update_visibility()
@@ -576,9 +582,11 @@ createUserStatSheet = (user, full) ->
 	
 	row	"Score", $('<span>').addClass('badge').text(get_score(user))
 	row	"Correct", user.correct
-	row "Interrupts", user.interrupts
-	row "Early", user.early  if full
-	row "Incorrect", user.guesses - user.correct  if full
+	if room.interrupts
+		row "Interrupts", user.interrupts
+		row "Early", user.early  if full
+	if full or !room.interrupts
+		row "Incorrect", user.guesses - user.correct  
 	row "Guesses", user.guesses 
 	row "Seen", user.seen
 	row "Team", user.team if user.team
@@ -597,8 +605,9 @@ createTeamStatSheet = (team, full) ->
 	
 	row	"Score", $('<span>').addClass('badge').text(get_score(team))
 	row	"Correct", Sum(user.correct for user in team.members)
-	row "Interrupts", Sum(user.interrupts for user in team.members)
-	row "Early", Sum(user.early for user in team.members) if full
+	if room.interrupts
+		row "Interrupts", Sum(user.interrupts for user in team.members)
+		row "Early", Sum(user.early for user in team.members) if full
 	# row "Incorrect", team.guesses - team.correct  if full
 	row "Guesses", Sum(user.guesses for user in team.members)
 	# row "Seen", team.seen
@@ -757,6 +766,8 @@ create_report_form = (info) ->
 create_bundle = (info) ->
 	bundle = $('<div>').addClass('bundle')
 		.addClass("qid-#{info.qid}")
+
+	bundle.toggleClass 'semi', room.semi
 
 	bundle.data 'info', info
 

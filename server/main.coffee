@@ -1,5 +1,3 @@
-console.log 'hello from protobowl v3', __dirname, process.cwd(), process.memoryUsage()
-
 try 
 	remote = require './remote'
 catch err
@@ -61,6 +59,8 @@ exports.new_update = (err) ->
 
 codename = namer.generateName()
 
+console.log "hello from protobowl v3, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
+
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
@@ -77,9 +77,10 @@ if app.settings.env is 'production' and remote.deploy
 	})
 	console.log 'set to deployment defaults'
 
-	setTimeout -> 
-		am_i_a_zombie()
-	, 1000 * 60
+	if remote.zombochecker
+		setTimeout -> 
+			am_i_a_zombie()
+		, 1000 * 60
 
 app.configure 'development', ->
 	app.use express.logger()
@@ -189,15 +190,17 @@ class SocketQuizRoom extends QuizRoom
 
 	journal: -> 
 		unless @name of journal_queue
-			journal_queue[@name] = +new Date
+			journal_queue[@name] = Date.now()
 
 		STALE_TIME = 1000 * 60 * 2 # a few minutes
 		if !@archived or Date.now() - @archived > STALE_TIME
-			t_start = Date.now()
-			remote.archiveRoom? this
-			journal_queue[@name] = null
-			delete journal_queue[@name]
-			track_time t_start, "dynamic refresh_stale(#{@name})"
+			@archived = Date.now()
+			process.nextTick -> # do it the next tick, why not?
+				t_start = Date.now()
+				journal_queue[@name] = null
+				remote.archiveRoom? this
+				delete journal_queue[@name]
+				track_time t_start, "dynamic refresh_stale(#{@name})"
 		
 
 	end_buzz: (session) ->
@@ -443,6 +446,8 @@ io.sockets.on 'connection', (sock) ->
 			
 	user = null
 
+	sock.on 'perf', (noop, cb) -> cb os.freemem()
+
 	sock.on 'join', ({cookie, room_name, question_type, old_socket, version, custom_id}) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
@@ -549,12 +554,16 @@ clearInactive = ->
 	MAX_SIZE = 15
 
 	rank_user = (u) -> if u.correct > 2 then u.last_action else u.time_spent
+	
 	reap_room = (name) ->
 		log 'reap_room', name
 		rooms[name] = null
+		journal_queue[name] = null
+		delete journal_queue[name]
 		delete rooms[name]
 		remote.removeRoom?(name)
 		reaped.rooms++
+
 	reap_user = (u) ->
 		log 'reap_user', {
 			seen: u.seen, 
@@ -604,6 +613,7 @@ setInterval clearInactive, 1000 * 10 # every ten seconds
 
 # think of it like a filesystem swap; slow access external memory that is used to save ram
 swapInactive = ->
+	t_start = Date.now()
 	for name, room of rooms
 		online = (user for username, user of room.users when user.online())
 		continue if online.length > 0
@@ -614,6 +624,10 @@ swapInactive = ->
 		remote.archiveRoom? room, (name) ->
 			rooms[name] = null
 			delete rooms[name]
+			journal_queue[name] = null
+			delete journal_queue[name]
+
+	track_time t_start, 'swapInactive'
 
 if remote.archiveRoom
 	# do it every ten seconds like a bonobo
@@ -862,12 +876,12 @@ app.get '/zombo-cogito-ergo-sum', (req, res) -> res.end zombocom + ''
 
 am_i_a_zombie = ->
 	zombocom = namer.generateName()
-	req = http.get 'http://protobowl.com/zombo-cogito-ergo-sum', (res) ->
+	req = http.get remote.zombochecker, (res) ->
 		body = ''
 		res.on 'data', (chunk) -> body += chunk
 		res.on 'end', ->
-			if body isnt zombocom
-				remote?.notifyBen 'Killing Zombie Server' + codename, 'I am legend. Everything has its time and everybody dies. ' + codename
+			if body isnt zombocom and body isnt 'error'
+				remote?.notifyBen 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
 				console.log 'is a zombo; shall seppuku'
 				setTimeout ->
 					# wait a bit so ben's notified of this legendary occasion
