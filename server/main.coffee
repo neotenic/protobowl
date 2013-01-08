@@ -276,6 +276,11 @@ class SocketQuizPlayer extends QuizPlayer
 				for uid, udat of rooms[check_name].users
 					output[check_name]++ if udat.active()
 
+				# lets do some shameless promotion
+				if check_name is 'msquizbowl' and output[check_name] is 0
+					output[check_name]++
+
+
 		for name in remote.get_types()
 			check_name = name + '/lobby'
 			if rooms[check_name]?.users
@@ -455,7 +460,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'perf', (noop, cb) -> cb os.freemem()
 
-	sock.on 'join', ({cookie, room_name, question_type, old_socket, version, custom_id}) ->
+	sock.on 'join', ({cookie, room_name, question_type, old_socket, version, custom_id, muwave}) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
 			return
@@ -467,7 +472,6 @@ io.sockets.on 'connection', (sock) ->
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
 		publicID = sha1(cookie + room_name + '')
 		# get the room
-		room_name = room_name.replace(/\//g, '~')
 
 		load_room room_name, (room, is_new) ->
 			room.type = question_type if is_new
@@ -504,6 +508,7 @@ io.sockets.on 'connection', (sock) ->
 				if user.muwave
 					user._transport = sock.transport
 					user._headers = sock?.handshake?.headers
+				user.muwave = true if muwave
 			catch err
 				remote?.notifyBen 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
 
