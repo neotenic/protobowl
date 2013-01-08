@@ -504,11 +504,17 @@ io.sockets.on 'connection', (sock) ->
 			user = room.users[publicID]
 			user.name = 'secret ninja' if is_ninja
 			try
-				user.muwave = (sock.transport in ['xhr-polling', 'jsonp-polling', 'htmlfile'])
+				if muwave
+					user.muwave = 100
+				else if sock.transport is 'xhr-polling'
+					user.muwave = 1
+				else if sock.transport is 'htmlfile'
+					user.muwave = 2
+				else if sock.transport is 'jsonp-polling'
+					user.muwave = 3
 				if user.muwave
 					user._transport = sock.transport
 					user._headers = sock?.handshake?.headers
-				user.muwave = true if muwave
 			catch err
 				remote?.notifyBen 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
 

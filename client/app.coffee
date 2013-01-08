@@ -11,8 +11,8 @@
 #= require buttons.coffee
 
 do ->
-	if /anachron/.test location.search
-		window.WebSocket = -> 0
+	if 'anachron' of location.query
+		window.WebSocket = -> 0 
 
 do ->
 	try
@@ -46,7 +46,7 @@ offline_startup = ->
 		initialize_fallback() if initialize_fallback?
 
 setTimeout ->
-	if room.active_count() <= 1 and Math.random() < 0.1
+	if room.active_count() <= 1 and Math.random() < 0.01
 		chatAnnotation({text: 'Feeling lonely? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
 , 30 * 1000
 
@@ -95,6 +95,7 @@ online_startup = ->
 			question_type: room.type,
 			room_name: room.name,
 			# old_socket: localStorage.old_socket,
+			muwave: 'muwave' of location.query,
 			version: 6
 		}
 
@@ -349,7 +350,7 @@ listen 'joined', (data) ->
 			else
 				localStorage.username = data.name
 
-	if data.muwave
+	if data.muwave and data.muwave <= 34
 		unless window.WebSocket
 			$(".no-websocket").show()
 		$("#polling").slideDown()

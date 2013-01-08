@@ -27,6 +27,14 @@ jQuery.fn.disable = (value) ->
 		if current != value
 			$(this).attr 'disabled', value
 
+# inspired by https://gist.github.com/1274961
+do ->
+	qs = window.location.search?.substr 1
+	vars = qs.split '&'
+	pairs = ([key, val] = pair.split '=' for pair in vars)
+	window.location.query = {}
+	window.location.query[key] = val for [key, val] in pairs
+
 # This code is originally taken from the jQuery Cookie plugin by carhartl
 # http://plugins.jquery.com/node/1387
 # 
