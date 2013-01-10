@@ -74,7 +74,7 @@ html(lang="en")
 					| 
 					a(href="/#{room_name}?ninja") (ninja mode) 
 					| 
-					a(href="/stalkermode/room/#{room_name}") &rarr; 
+					a(href="/stalkermode/room/#{room_name.replace(/\//g, '~')}") &rarr; 
 					| 
 					| #{Object.keys(room.users).length} users,
 					| #{count_online(room)} online

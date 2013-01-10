@@ -2,6 +2,7 @@
 #= require ./lib/bootstrap.js
 #= require ./lib/time.coffee
 #= require ./lib/jquery.mobile.custom.js
+#= require ./lib/jquery.tablesort.js
 
 #= require plugins.coffee
 #= require annotations.coffee
@@ -319,7 +320,6 @@ listen 'rename_user', ({old_id, new_id}) ->
 	delete room.users[old_id]
 
 listen 'delete_user', (id) ->
-	console.log 'deleting user', id
 	delete room.users[id]
 	renderUsers()
 
@@ -385,8 +385,8 @@ synchronize = (data) ->
 
 		if  'users' of data
 			# keep the number of people in the leaderboard at a manageable number
-			if (1 for u of room.users).length > data.users.length + 5
-				room.users = {}
+			# if (1 for u of room.users).length > data.users.length + 5
+			# 	room.users = {}
 
 			user_blacklist = ['id']
 			for user in data.users

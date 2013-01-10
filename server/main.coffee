@@ -620,8 +620,11 @@ clearInactive = ->
 		reaped.time_spent += u.time_spent
 		reaped.last_action = +new Date
 
-		u.room.users[u.id] = null
-		delete u.room.users[u.id]
+		u.room.delete_user u.id
+
+		# u.room.users[u.id] = null
+		# delete u.room.users[u.id]
+
 
 	for room_name, room of rooms
 		user_pool = (user for id, user of room.users)
@@ -709,10 +712,10 @@ app.get '/stalkermode/user/:room/:user', (req, res) ->
 
 
 app.get '/stalkermode/room/:room', (req, res) ->
-	u = rooms?[req.params.room]
+	u = rooms?[req.params.room.replace(/~/g, '/')]
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['users', 'timing', 'cumulative'] and typeof v isnt 'function'
-	res.render 'control.jade', { room: u, name: req.params.room, text: util.inspect(u2)}
+	res.render 'control.jade', { room: u, name: req.params.room.replace(/~/g, '/'), text: util.inspect(u2)}
 
 app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
 

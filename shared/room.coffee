@@ -477,6 +477,11 @@ class QuizRoom
 	
 	journal: -> 0 # unimplemented
 
+	delete_user: (id) ->
+		return false unless @users[id]
+		@emit 'delete_user', id
+		@users[id] = null
+		delete @users[id]
 
 	serialize: ->
 		data = {}

@@ -488,7 +488,9 @@ renderUsers = ->
 			else if idle_count > 0
 				badge.addClass('badge-warning').attr('title', 'Idle')
 		
-		$('<td>').addClass('rank').append(badge).append(ranking).appendTo row
+		$('<td>').addClass('rank').append(ranking).appendTo(row)
+		$('<td>').addClass('score').append(badge).appendTo(row)
+
 		name = $('<td>').appendTo row
 
 		
@@ -502,6 +504,7 @@ renderUsers = ->
 				# user = room.users[member]
 				row = $('<tr>').addClass('subordinate').data('entity', user).appendTo list
 				row.click -> 1
+
 				badge = $('<span>').addClass('badge pull-right').text get_score(user)
 				if user.id is me.id
 					badge.addClass('badge-info').attr('title', 'You')
@@ -512,11 +515,15 @@ renderUsers = ->
 						else
 							badge.addClass('badge-success').attr('title', 'Online')
 
-				$('<td>').css("border", 0).append(badge).appendTo row
+				$('<td>').css("border", 0).appendTo row
+				$('<td>').css("border", 0).addClass('score').append(badge).appendTo row
 				name = $('<td>').append(userSpan(user.id))
 				name.appendTo row
 				negs = user.interrupts
 				$('<td>').text(negs).appendTo row
+
+	row = $('<tr>').appendTo list
+	row.append $('<td colspan=4>').addClass('ellipsis').html(' (<b>4</b> users hidden)')
 
 	#console.timeEnd('draw board')
 	# this if clause is ~5msecs
