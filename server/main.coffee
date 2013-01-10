@@ -19,6 +19,7 @@ rooms = {}
 
 namer = require '../shared/names'
 uptime_begin = +new Date
+message_count = 0
 
 app = express()
 server = http.Server(app)
@@ -188,14 +189,14 @@ class SocketQuizRoom extends QuizRoom
 
 	count_questions: (type, difficulty, category, cb) -> remote.count_questions(type, difficulty, category, cb) 
 
-	journal: -> 
+	journal: (force) -> 
 		unless @name of journal_queue
 			journal_queue[@name] = Date.now()
 
 		STALE_TIME = 1000 * 60 * 2 # a few minutes
-		if !@archived or Date.now() - @archived > STALE_TIME
+		if !@archived or Date.now() - @archived > STALE_TIME or force
 			@archived = Date.now()
-			process.nextTick -> # do it the next tick, why not?
+			process.nextTick => # do it the next tick, why not?
 				t_start = Date.now()
 				journal_queue[@name] = null
 				remote.archiveRoom? this
@@ -348,6 +349,7 @@ class SocketQuizPlayer extends QuizPlayer
 			# wow this is a pretty mesed up line
 			do (attr) => 
 				sock.on attr, (args...) => 
+					message_count++
 					t_start = Date.now()
 					if @banned and @room.serverTime() < @banned
 						@ban()
@@ -535,7 +537,6 @@ io.sockets.on 'connection', (sock) ->
 journal_queue = {}
 
 process_queue = ->
-	return unless gammasave
 	t_start = Date.now()
 	[min_time, min_room] = [Date.now(), null]
 	for name, time of journal_queue
@@ -544,13 +545,26 @@ process_queue = ->
 			delete journal_queue[name]
 			continue			
 		[min_time, min_room] = [time, name] if time < min_time
+	
+	track_time t_start, 'argmin_queue'
 	return unless min_room
+
+	if !gammasave
+		return if Date.now() - min_time  < 1000 * 60 * 3
+
 	room = rooms[min_room]
-	if !room?.archived or Date.now() - room?.archived > 1000 * 10
-		remote.archiveRoom? room
-		journal_queue[min_room] = null
-		delete journal_queue[min_room]
-	track_time t_start, 'process_queue'
+
+	STALE_TIME = 1000 * 3
+	
+	if !room?.archived or Date.now() - room?.archived > STALE_TIME
+		room.archived = Date.now()
+		process.nextTick ->
+			t_start = Date.now()
+			remote.archiveRoom? room
+			journal_queue[min_room] = null
+			delete journal_queue[min_room]
+			track_time t_start, "static refresh_stale(#{min_room})"
+	
 
 setInterval process_queue, 1000	
 
