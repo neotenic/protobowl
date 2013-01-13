@@ -71,7 +71,7 @@ html(lang="en", manifest="/offline.appcache")
 		div.container
 			div.row
 				div.span9.mainview
-					div.row(style="margin-bottom: 10px")
+					div.row.buttonbar(style="margin-bottom: 10px")
 						div.span9
 							div.form-horizontal
 								div.actionbar
@@ -135,7 +135,7 @@ html(lang="en", manifest="/offline.appcache")
 							div.sticky
 							div.annotations
 					div#bookmarks
-						
+
 					div#slow.well(style="display: none")
 						p
 							| It looks like Protobowl is taking a while to connect to the server. 
@@ -171,9 +171,8 @@ html(lang="en", manifest="/offline.appcache")
 
 				div.span3.sidebar
 					div.span3.thumbnail.timer-widget
-						h5 
+						h5.span3
 							i.icon-time
-							| Timer 
 							span.label.label-warning.pause(style="display:none") Paused
 							span.label.label-important.buzz(style="display:none") Buzz
 							//- span.label.label-info.finished(style="display:none") Finished

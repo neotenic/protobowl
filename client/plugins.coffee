@@ -73,7 +73,7 @@ jQuery.cookie = (name, value, options) ->
 
 jQuery.fn.capQueue = ->
 	q = $(this).queue('fx')
-	q.splice(1, q.length)
+	q.splice(1, q.length) if q
 	return $(this)
 
 jQuery.fn.fireworks = (times = 5) ->
