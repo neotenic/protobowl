@@ -415,13 +415,13 @@ class QuizPlayer
 	set_lock: (val) ->
 		@lock = !!val
 		@touch()
-		@room.sync(2)
+		@sync(true)
 
 	set_name: (name) ->
 		@touch()
 		if (name + '').trim().length > 0
 			@name = name.trim().slice(0, 140)
-			@room.sync(2)
+			@sync(true)
 
 	set_distribution: (data) ->
 		@touch()
@@ -519,6 +519,10 @@ class QuizPlayer
 		@room.no_pause = !state
 		@room.sync(1)
 
+	set_leaderboard: (state) ->
+		@touch()
+		@leaderboard = state
+		@sync()
 
 	set_semi: (state) ->
 		@touch()
@@ -537,7 +541,7 @@ class QuizPlayer
 		else
 			@verb "is playing as an individual"
 		@team = name
-		@room.sync(2)
+		@sync(true)
 
 	set_type: (name) ->
 		@touch()
@@ -555,12 +559,12 @@ class QuizPlayer
 		@touch()
 		unless @muwave
 			@show_typing = !!data
-			@room.sync(2)
+			@sync()
 
 	set_sounds: (data) ->
 		@touch()
 		@sounds = !!data
-		@room.sync(2)
+		@sync()
 
 	set_movingwindow: (num) ->
 		@touch()
@@ -568,7 +572,7 @@ class QuizPlayer
 			@movingwindow = num
 		else
 			@movingwindow = false
-		@room.sync(2)
+		@sync()
 
 	set_skip: (data) ->
 		@touch()
@@ -594,7 +598,7 @@ class QuizPlayer
 		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
 		@seen = @interrupts = @guesses = @correct = @early = 0
 		@history = []
-		@room.sync(2)
+		@sync(true)
 
 	report_question: ->
 		@verb "did something unimplemented (report question)"
@@ -609,13 +613,15 @@ class QuizPlayer
 		unless @id in @room.admins
 			@verb 'is now an administrator of this room'
 			@room.admins.push(@id) 
-			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+			# @room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+			@sync(true)
 
 	cincinnatus: ->
 		if @id in @room.admins
 			@verb 'is no longer an administrator of this room'
 			@room.admins = (id for id in @room.admins when id isnt @id)
-			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+			# @room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+			@sync(true)
 
 	serialize: ->
 		data = {}
@@ -629,5 +635,12 @@ class QuizPlayer
 		this[attr] = val for attr, val of obj when attr[0] != '_' and attr not in blacklist
 
 	update: -> 1
+
+
+	sync: (broadcast = false) ->
+		if broadcast
+			@room.sync 2
+		else
+			@room.sync this
 
 exports.QuizPlayer = QuizPlayer if exports?

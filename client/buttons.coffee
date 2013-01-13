@@ -461,7 +461,13 @@ $('.show_image').live 'click', (e) ->
 	$(this).parent().find('.chat_image').slideToggle()
 
 $(".leaderboard tbody tr").live 'click', (e) ->
+	console.log $(this)
+	if $(this).is(".ellipsis")
+		console.log 'toggle show all'
+		return
+
 	user = $(this).data('entity')
+
 	enabled = $(this).data('popover')?.enabled
 	# console.log $('.leaderboard tbody tr').not(this).popover 'toggle'
 	accessible = $('.leaderboard tbody tr').map ->

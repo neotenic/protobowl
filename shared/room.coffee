@@ -429,16 +429,28 @@ class QuizRoom
 	sync: (level = 0) ->
 		data = { real_time: @serverTime() }
 
+
 		whitelist = ["time_offset", "time_freeze", "attempt"]
 		# there is a very minimal sync level for the basic stuff
 		for attr in whitelist
 			data[attr] = this[attr]
 
+
+		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question"]
+		user_blacklist = ["sockets", "room"]
+
+		if level.id # that's no number! that's a user!
+			level = 0
+			user = {}
+			for attr of level when attr not in user_blacklist and typeof level[attr] not in ['function'] and attr[0] != '_'
+				user[attr] = level[attr]
+			user.online_state = level.online()
+			data.users = [user]
+			level.emit 'sync', data
+			return
+
 		if level >= 1
 			# all the additional attributes that aren't done in level 0
-			blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question"]
-			user_blacklist = ["sockets", "room"]
-			
 			for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
 				data[attr] = this[attr]
 

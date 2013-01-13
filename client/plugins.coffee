@@ -71,6 +71,11 @@ jQuery.cookie = (name, value, options) ->
 		cookieValue
 
 
+jQuery.fn.capQueue = ->
+	q = $(this).queue('fx')
+	q.splice(1, q.length)
+	return $(this)
+
 jQuery.fn.fireworks = (times = 5) ->
 	for i in [0...times]
 		duration = Math.random() * 2000
