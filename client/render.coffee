@@ -524,31 +524,40 @@ renderUsers = ->
 	# SHOW 10 users
 	ellipsis = null
 	render_count = 0
-	if me_entity and me_entity.position > TOP_NUM + CONTEXT * 2
-		thresh = TOP_NUM
-		bottom_size = Math.min(entities.length, me_entity.position + CONTEXT) - (me_entity.position - CONTEXT)
 
-		for i in [0..thresh + (CONTEXT * 2 - bottom_size)] when i < entities.length
-			create_row entities[i]
-			render_count++
-		row = $('<tr>').addClass('ellipsis').appendTo list
-		ellipsis = $('<td colspan=4>').appendTo(row)
-		for i in [me_entity.position - CONTEXT...me_entity.position + CONTEXT] when i >= 0 and i < entities.length
-			create_row entities[i]
-			render_count++
+	thresh = TOP_NUM + CONTEXT * 2
 
-	else
-		thresh = TOP_NUM + CONTEXT * 2
-		thresh++ if entities.lengh <= thresh
-		for i in [0..thresh] when i >= 0 and i < entities.length
-			create_row entities[i]
-			render_count++
-		if entities.length - render_count > 0
+	if me.leaderboard
+		create_row entity for entity in entities
+		if entities.length > TOP_NUM + CONTEXT * 2
 			row = $('<tr>').addClass('ellipsis').appendTo list
 			ellipsis = $('<td colspan=4>').appendTo(row)
-			
-	if ellipsis
-		msg = $('<span>').css('position', 'relative').html(" (<b>#{entities.length - render_count}</b> users hidden)").appendTo ellipsis
+			msg = $('<span>').css('position', 'relative').html(" <b>#{room.active_count()}</b> active  <b>#{user_count}</b> users (hide <b>#{entities.length - thresh}</b>)").appendTo ellipsis
+
+	else
+		if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2
+			thresh = TOP_NUM
+			bottom_size = Math.min(entities.length, me_entity.position + CONTEXT) - (me_entity.position - CONTEXT)
+
+			for i in [0...thresh + (CONTEXT * 2 - bottom_size)] when i < entities.length
+				create_row entities[i]
+				render_count++
+			row = $('<tr>').addClass('ellipsis').appendTo list
+			ellipsis = $('<td colspan=4>').appendTo(row)
+			for i in [me_entity.position - CONTEXT...me_entity.position + CONTEXT] when i >= 0 and i < entities.length
+				create_row entities[i]
+				render_count++
+
+		else
+			for i in [0...thresh] when i >= 0 and i < entities.length
+				create_row entities[i]
+				render_count++
+			if entities.length - render_count > 0
+				row = $('<tr>').addClass('ellipsis').appendTo list
+				ellipsis = $('<td colspan=4>').appendTo(row)
+				
+		if ellipsis
+			msg = $('<span>').css('position', 'relative').html(" <b>#{room.active_count()}</b> active <b>#{user_count}</b> users (<b>#{entities.length - render_count}</b> hidden)").appendTo ellipsis
 		
 		# cts = $('<span>').css('position', 'relative').html(" (<b>click</b> to show)").hide().appendTo ellipsis
 		# ellipsis.mouseenter ->

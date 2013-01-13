@@ -127,11 +127,11 @@ class QuizPlayer
 			@__elect_timeout = setTimeout =>
 				@verb 'got romneyed', true
 				@elect = null
-				@room.sync(2)
+				@sync(true)
 			, 1000 * 60
 
 			@elect = { votes: [], against: [], time: current_time, witnesses }
-			@room.sync(2)
+			@sync(true)
 
 
 
@@ -151,12 +151,12 @@ class QuizPlayer
 			@__tribunal_timeout = setTimeout =>
 				@verb 'survived the tribunal', true
 				@tribunal = null
-				@room.sync(2)
+				@sync(true)
 			, 1000 * 60
 
 			@tribunal = { votes: [], against: [], time: current_time, witnesses, term: 0 }
 			
-			@room.sync(2)
+			@sync(true)
 
 
 	trigger_tribunal: (user) ->
@@ -218,7 +218,8 @@ class QuizPlayer
 				@room.users[user].verb 'was not elected', true
 				@room.users[user].impeach()
 
-			@room.sync(2)
+			@room.users[user].sync(true)
+
 		else if elect.term > @room.serverTime()
 			{impeach, witnesses} = elect
 			return unless @id in witnesses
@@ -231,7 +232,7 @@ class QuizPlayer
 					@room.users[user].verb 'was impeached from office', true
 					@room.users[user].impeach()
 				else
-					@room.sync(2)
+					@room.users[user].sync(true)
 
 	# Come on Jessica, come on Tori,
 	# Let's go to the mall, you won't be sorry
@@ -256,7 +257,7 @@ class QuizPlayer
 	impeach: ->
 		@elect = null
 		clearTimeout @__elect_timeout
-		@room.sync(2)
+		@sync(true)
 
 	# also, that reference *did* actually make sense
 	# As in, inaugurations take place on the national mall.
@@ -265,7 +266,7 @@ class QuizPlayer
 		return if !@elect?.term # this should be enough		
 		@verb 'has finished tenure in office', true
 		@elect = null
-		@room.sync(2)
+		@sync(true)
 
 	vote_tribunal: ({user, position}) ->
 		
@@ -303,7 +304,7 @@ class QuizPlayer
 				@room.users[user].tribunal = null
 				clearTimeout @room.users[user].__tribunal_timeout
 
-			@room.sync(2)
+			@sync(true)
 
 
 	verb: (action, no_rate_limit) -> 
@@ -324,7 +325,7 @@ class QuizPlayer
 			else
 				@verb "left the room"
 				
-		@room.sync(2)
+		@sync(true)
 
 	echo: (data, callback) -> 
 		if data.avg and data.std and data.n
@@ -639,8 +640,8 @@ class QuizPlayer
 
 	sync: (broadcast = false) ->
 		if broadcast
-			@room.sync 2
+			@room.emit 'sync', @room.sync this
 		else
-			@room.sync this
+			@emit 'sync', @room.sync this
 
 exports.QuizPlayer = QuizPlayer if exports?

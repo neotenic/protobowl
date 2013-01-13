@@ -514,6 +514,8 @@ io.sockets.on 'connection', (sock) ->
 					user.muwave = 2
 				else if sock.transport is 'jsonp-polling'
 					user.muwave = 3
+				else
+					delete user.muwave
 				if user.muwave
 					user._transport = sock.transport
 					user._headers = sock?.handshake?.headers

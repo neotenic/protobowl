@@ -461,9 +461,9 @@ $('.show_image').live 'click', (e) ->
 	$(this).parent().find('.chat_image').slideToggle()
 
 $(".leaderboard tbody tr").live 'click', (e) ->
-	console.log $(this)
 	if $(this).is(".ellipsis")
-		console.log 'toggle show all'
+		# console.log 'toggle show all'
+		me.set_leaderboard !me.leaderboard
 		return
 
 	user = $(this).data('entity')

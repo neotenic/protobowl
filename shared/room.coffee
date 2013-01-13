@@ -440,14 +440,12 @@ class QuizRoom
 		user_blacklist = ["sockets", "room"]
 
 		if level.id # that's no number! that's a user!
-			level = 0
 			user = {}
 			for attr of level when attr not in user_blacklist and typeof level[attr] not in ['function'] and attr[0] != '_'
 				user[attr] = level[attr]
 			user.online_state = level.online()
 			data.users = [user]
-			level.emit 'sync', data
-			return
+			return data
 
 		if level >= 1
 			# all the additional attributes that aren't done in level 0
