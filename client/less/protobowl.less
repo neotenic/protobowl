@@ -471,6 +471,19 @@ input[type=range] {
 	}
 }
 
+
+@media print {
+	.buttonbar {
+		display: none;
+	}
+	.navbar {
+		display: none;
+	}
+	.bundle .readout {
+		display: block !important;
+	}
+}
+
 .progress .bar {
 	-webkit-transition: none;
 	-moz-transition: none;
