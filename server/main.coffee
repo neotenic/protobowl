@@ -267,6 +267,12 @@ class SocketQuizPlayer extends QuizPlayer
 		data.room = @room.name
 		data.user = @id + '-' + @name
 		log 'report_answer', data
+
+		mongoose = require 'mongoose'
+		remote.Question.findById mongoose.Types.ObjectId(data.qid), (err, doc) ->
+			if !err and doc and doc.fixed isnt 1
+				doc.fixed = -1
+				doc.save()
 		
 
 	check_public: (_, fn) ->
@@ -408,6 +414,7 @@ status_metrics = ->
 		avg_latency: Med(latencies), 
 		std_latency: IQR(latencies), 
 		free_memory: os.freemem(), 
+		message_count,
 		muwave: muwave_count
 	}
 	return metrics
@@ -839,6 +846,7 @@ app.get '/stalkermode', (req, res) ->
 		os: os_info,
 		os_text: util.inspect(os_info),
 		codename,
+		message_count,
 		rooms
 	}
 
@@ -883,7 +891,11 @@ app.post '/stalkermode/reports/simple_change/:id', (req, res) ->
 
 
 app.get '/stalkermode/to_boldly_go', (req, res) ->
-	remote.Question.findOne { fixed: null }, (err, doc) ->
+	remote.Question.findOne { fixed: -1 }, (err, doc) ->
+		if !doc
+			remote.Question.findOne { fixed: null }, (err, doc) ->
+				res.end JSON.stringify doc
+			return
 		res.end JSON.stringify doc
 
 app.get '/stalkermode/reports/all', (req, res) ->

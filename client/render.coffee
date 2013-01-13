@@ -941,6 +941,8 @@ create_bundle = (info) ->
 		else
 			el.addClass('visible-phone')
 
+	field info.year + ' ' + info.difficulty + ' ' + info.category
+	
 	field 'Room', info.name if /stalker/.test(room.name)
 	field 'Category', info.category
 	field 'Difficulty', info.difficulty
@@ -950,7 +952,6 @@ create_bundle = (info) ->
 		field 'Year', info.year
 	else if info.tournament
 		field 'Tournament', info.tournament
-	field info.year + ' ' + info.difficulty + ' ' + info.category
 
 	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone hidden-offline').text('/')
 

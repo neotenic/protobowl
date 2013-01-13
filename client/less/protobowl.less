@@ -24,6 +24,7 @@ body {
 		font-size: 250%;
 		text-align: center;
 		margin-bottom: 5px;
+		padding-right: 5px;
 		margin-top: 10px;
 		.fraction {
 			font-size: 50%;
@@ -44,7 +45,6 @@ body {
 
 }
 .table {
-	
 	margin-bottom: 5px;
 }
 .table.headless{
@@ -87,6 +87,11 @@ body {
     	opacity: 0.7;
     	overflow: hidden;
     }
+    table.table {
+    	margin-bottom: 0;
+    }
+}
+.stats {
     table.table {
     	margin-bottom: 0;
     }
@@ -430,6 +435,10 @@ input[type=range] {
 		background: url(img/christmas.png);
 		text-shadow: white 0 0 15px;
 	}
+}
+
+body.offline {
+	.hidden-offline { display: none; }
 }
 
 @media (max-width: 767px) {

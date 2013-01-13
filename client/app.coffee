@@ -405,9 +405,8 @@ synchronize = (data) ->
 				if user.id is me.id
 					for attr, val of user when attr not in user_blacklist
 						me[attr] = val
-			
-			
-			
+	
+	$('body').toggleClass('offline', !connected())
 
 	renderParameters() if 'difficulties' of data
 	renderUpdate()
