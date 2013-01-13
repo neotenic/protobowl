@@ -227,3 +227,4 @@ do ->
 		exports.parseAnswer = parseAnswer
 	else if window?
 		window.checkAnswer = safeCheckAnswer
+		window.parseAnswer = parseAnswer

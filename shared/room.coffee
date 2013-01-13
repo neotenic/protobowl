@@ -152,6 +152,8 @@ class QuizRoom
 			if @serverTime() > @attempt.realTime + @attempt.duration
 				@clear_timeout()
 				@end_buzz @attempt.session
+		# if @no_pause and !@attempt and @time_freeze
+		# 	@room.unfreeze()
 
 
 	new_question: ->

@@ -9,6 +9,7 @@
 #= require render.coffee
 #= require ../shared/player.coffee
 #= require ../shared/room.coffee
+#= require ../shared/c2r.coffee
 #= require buttons.coffee
 
 do ->
@@ -42,7 +43,6 @@ offline_startup = ->
 		room.sync(3)
 		me.verb 'joined the room'
 
-		load_bookmarked_questions()
 
 		initialize_fallback() if initialize_fallback?
 
@@ -130,7 +130,6 @@ online_startup = ->
 
 		reconnect()
 		# localStorage.old_socket = sock.socket.sessionid
-		load_bookmarked_questions()
 	
 	check_connection = (socket) ->
 		$("#load_error").remove()
@@ -193,9 +192,10 @@ load_bookmarked_questions = ->
 	try
 		bookmarks = JSON.parse(localStorage.bookmarks)
 	for question in bookmarks || []
+		continue if question.qid is room.qid
 		bundle = create_bundle(question)
 		bundle.find('.readout').hide()
-		$('#history').prepend bundle
+		$('#bookmarks').prepend bundle
 
 	update_visibility()
 
@@ -360,6 +360,9 @@ listen 'joined', (data) ->
 
 	$('#username').val me.name
 	$('#username').disable false
+
+
+	setTimeout load_bookmarked_questions, 100
 
 
 sync_offsets = []

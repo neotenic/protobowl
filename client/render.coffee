@@ -749,6 +749,7 @@ createBundle = ->
 		difficulty: room.info.difficulty, 
 		category: room.info.category, 
 		tournament: room.info.tournament,
+		bookmarked: is_bookmarked(room.qid),
 		round: room.info.round,
 		num: room.info.num,
 		qid: room.qid,
@@ -767,7 +768,9 @@ changeQuestion = ->
 	$('.bundle .ruling').tooltip('destroy')
 
 	#remove the old crap when it's really old (and turdy)
-	$('.bundle:not(.bookmarked)').slice(cutoff).slideUp 'normal', -> 
+	$('#history .bundle').slice(cutoff).find('.annotations').slideUp 'normal', -> 
+			$(this).remove()
+	$('#history .bundle').slice(cutoff).not('.bookmarked').slideUp 'normal', -> 
 			$(this).remove()
 	old = $('#history .bundle').first()
 	
@@ -816,6 +819,14 @@ toggle_bookmark = (info, state) ->
 		bookmarks.push info
 
 	localStorage.bookmarks = JSON.stringify(bookmarks)
+
+is_bookmarked = (qid) ->
+	bookmarks = []
+	try
+		bookmarks = JSON.parse(localStorage.bookmarks)
+	for b in bookmarks
+		return true if b.qid is qid
+	return false
 
 
 create_report_form = (info) ->
@@ -941,9 +952,9 @@ create_bundle = (info) ->
 		field 'Tournament', info.tournament
 	field info.year + ' ' + info.difficulty + ' ' + info.category
 
-	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone').text('/')
+	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone hidden-offline').text('/')
 
-	breadcrumb.append $('<li>').addClass('clickable hidden-phone').text('Report').click (e) ->
+	breadcrumb.append $('<li>').addClass('clickable hidden-phone hidden-offline').text('Report').click (e) ->
 		unless bundle.find('.report-form').length > 0
 			create_report_form(info).insertBefore(bundle.find(".annotations")).hide().slideDown()
 		e.stopPropagation()
@@ -1014,7 +1025,7 @@ reader_children = null
 reader_last_state = -1
 
 updateTextPosition = ->
-	return unless room.question and room.timing
+	return unless room.question and room.timing and reader_children
 
 	timeDelta = room.time() - room.begin_time
 	start_index = Math.max(0, reader_last_state)

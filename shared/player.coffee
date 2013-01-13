@@ -510,9 +510,7 @@ class QuizPlayer
 	set_pause: (state) ->
 		@touch()
 		return unless @authorized()
-		
 		@unpause()
-
 		if state
 			@verb 'enabled pausing questions'
 		else

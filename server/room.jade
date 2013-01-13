@@ -24,7 +24,7 @@ html(lang="en", manifest="/offline.appcache")
 						em.motto.hidden-phone(style="font-size: small")
 							| doing one thing and doing it acceptably well
 						
-					div.pull-right
+					div.pull-right.hidden-offline
 						if type
 							a.btn.btn-primary.new-room(href="/new/#{type}") New Room
 						else
@@ -134,7 +134,8 @@ html(lang="en", manifest="/offline.appcache")
 						div.bundle.active
 							div.sticky
 							div.annotations
-
+					div#bookmarks
+						
 					div#slow.well(style="display: none")
 						p
 							| It looks like Protobowl is taking a while to connect to the server. 
