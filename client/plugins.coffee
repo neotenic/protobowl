@@ -8,6 +8,7 @@ window.requestAnimationFrame ||=
       callback(+new Date())
     , 1000 / 60)
 
+Date.now ||= -> new Date().valueOf()
 
 # for internet explorer
 unless String::trim
