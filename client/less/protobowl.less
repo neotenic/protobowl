@@ -83,9 +83,17 @@ body {
     	}
     }
     .ellipsis td {
+    	transition: opacity 0.5s;
+		-webkit-transition: opacity 0.5s;
+		-moz-transition: opacity 0.5s;
+		-o-transition: opacity 0.5s;
+
     	text-align: center;
-    	opacity: 0.7;
+    	opacity: 0.4;
     	overflow: hidden;
+    }
+    .ellipsis:hover td {
+    	opacity: 0.7;
     }
     table.table {
     	margin-bottom: 0;
@@ -272,7 +280,14 @@ input[type=range] {
 .annotations {
 	word-wrap: break-word;
 	//word-break: break-all;
-
+	p {
+		transition: opacity 0.5s;
+		-webkit-transition: opacity 0.5s;
+		-moz-transition: opacity 0.5s;
+		-o-transition: opacity 0.5s;
+	
+	}
+	
 	.guess .username { 
 		font-weight: bold;
 	}
