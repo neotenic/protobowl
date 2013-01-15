@@ -62,6 +62,7 @@ class QuizPlayer
 	online: -> true
 
 	authorized: ->
+		# possibly support different authorization levels
 		return true unless @room.locked()
 		return @id[0] == '_' or @id in @room.admins or @elect?.term > @room.serverTime()
 
@@ -495,6 +496,22 @@ class QuizPlayer
 		return if duration <= 0
 		@room.answer_duration = duration
 		@room.set_speed @room.rate
+		@room.sync(1)
+
+	set_prompt_duration: (duration) ->
+		@touch()
+		return unless @authorized()
+		return if isNaN(duration)
+		return if duration <= 0
+		@room.prompt_duration = duration
+		@room.sync(1)
+
+	set_attempt_duration: (duration) ->
+		@touch()
+		return unless @authorized()
+		return if isNaN(duration)
+		return if duration <= 0
+		@room.attempt_duration = duration
 		@room.sync(1)
 
 	set_interrupts: (state) ->
