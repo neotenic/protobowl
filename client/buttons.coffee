@@ -469,7 +469,9 @@ $('.show_image').live 'click', (e) ->
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")
 		# console.log 'toggle show all'
-		me.set_leaderboard !me.leaderboard
+		me.leaderboard = !me.leaderboard
+		me.set_leaderboard me.leaderboard
+		renderUsers()
 		return
 
 	user = $(this).data('entity')
