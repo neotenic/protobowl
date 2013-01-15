@@ -261,17 +261,30 @@ chatAnnotation = ({session, text, user, done, time}) ->
 				</div>"
 		else
 			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
-	).replace /!@([a-z0-9]+)/g, (match, user) ->
+	).replace(/!@([a-z0-9]+)/g, (match, user) ->
 		return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html()
-	
+	)
+	# get a list of teams and highlight them
+	team_map = {}
+	team_map[user.team || 'individuals'] = 1 for id, user of room.users
+	team_list = []
+	for team of team_map
+		html = html.replace(new RegExp('\\*@(' + RegExp.quote(team) + ')', 'g'), (match, team_name) ->
+			team_list.push team_name
+			return $('<span>').text(team_name).addClass('team-recipient').wrap('<div>').parent().html()
+		)
+
 	if done
 		line.removeClass('buffer')
-		if text is '' or (text.slice(0, 1) is '@' and text.indexOf(me.id) == -1 and (user isnt me.id and me.id[0] isnt '_'))
+		if text is '' or (text.slice(0, 1) is '@' and text.indexOf(me.id) == -1 and text.indexOf('*@' + (me.team || 'individuals')) == -1 and (user isnt me.id and me.id[0] isnt '_'))
 			line.find('.comment').html('<em>(no message)</em>')
 			line.slideUp()
 		else
 			if text.slice(0, 1) is '@'
-				line.prepend '<i class="icon-user"></i> '
+				if team_list.length > 0
+					line.prepend '<i class="icon-group"></i> '
+				else
+					line.prepend '<i class="icon-user"></i> '
 			line.find('.comment').html html
 
 			if user of room.users and text.length > 70 or (dirty_regex? and dirty_regex.exec(text.replace(/[^a-z ]/ig, '')))
