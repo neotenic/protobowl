@@ -20,8 +20,10 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 
 actionMode = ''
 setActionMode = (mode) ->
+	if mode != actionMode and actionMode
+		$('.prompt_input, .guess_input, .chat_input').blur()
 	actionMode = mode
-	$('.prompt_input, .guess_input, .chat_input').blur()
+	
 	$('.actionbar' ).toggle mode is ''
 	$('.chat_form').toggle mode is 'chat'
 	$('.guess_form').toggle mode is 'guess'
@@ -30,14 +32,18 @@ setActionMode = (mode) ->
 	$(window).resize() #reset expandos
 
 $('.chatbtn').click ->
+	$('.chat_input').val('')
+	open_chat()
+
+
+open_chat = ->
 	setActionMode 'chat'
 	# create a new input session id, which helps syncing work better
 	$('.chat_input')
 		.data('input_session', Math.random().toString(36).slice(3))
 		.data('begin_time', +new Date)
-		.val('')
-		.focus()
 		.keyup()
+		.focus()
 
 recent_actions = [0]
 rate_limit_ceiling = 0
@@ -109,10 +115,10 @@ $('.score-reset').click ->
 	# i could have structured this is a more concise but weirder way
 	# but for some reason i decided against that, and I know not why
 	if me.score() > 50
-		if confirm("Are you sure you want to reset your score?") is false
-			return 
-
-	me.reset_score()
+		bootbox.confirm "Are you sure you want to reset your score?", (result) ->
+			me.reset_score() if result
+	else
+		me.reset_score()
 
 $('.lose-command').click -> me.cincinnatus()
 
@@ -139,20 +145,21 @@ $('input').keydown (e) ->
 
 
 $('.chat_input').typeahead {
-	source: ->
-		prefix = '@' + this.query.slice(1).split(',').slice(0, -1).join(',')
-		existing = ($.trim(option) for option in this.query.slice(1).split(',').slice(0, -1))
-		prefix += ', ' if prefix.length > 1
-		# names = (user.name for id, user of room.users when user isnt me)
-		names = ['individuals']
-		for id, user of room.users
-			names.push user.name if user.name not in names
-			names.push user.team if user.team and user.team not in names
-		("#{prefix}#{name}" for name in names when name not in existing and name isnt me.name)
+	source: -> list_targets(this.query)
 	matcher: (candidate) ->
-		# console.log this.query[0], findReferences(this.query)[1] 
-		this.query[0] == '@' and !findReferences(this.query)[1]
+		this.query[0] == '@' and candidate.indexOf(this.query) == 0
 }
+
+list_targets = (query) ->
+	prefix = '@' + query.slice(1).split(',').slice(0, -1).join(',')
+	existing = ($.trim(option) for option in query.slice(1).split(',').slice(0, -1))
+	prefix += ', ' if prefix.length > 1
+	# names = (user.name for id, user of room.users when user isnt me)
+	names = ['individuals']
+	for id, user of room.users
+		names.push user.name if user.name not in names
+		names.push user.team if user.team and user.team not in names
+	("#{prefix}#{name}" for name in names when name not in existing and name isnt me.name)
 
 findReferences = (text) ->
 	reconstructed = '@'
@@ -161,10 +168,7 @@ findReferences = (text) ->
 	for id, {name, team} of room.users
 		entities[name] = '!@' + id + ', '
 		team ||= 'individuals'
-		entities[team] = '' if !entities[team]
-		entities[team] += entities[name]
-
-
+		entities[team] = '*@' + team + ', '
 	while changed is true
 		changed = false
 		text = text.replace(/^[@\s,]*/g, '')
@@ -181,7 +185,6 @@ findReferences = (text) ->
 			text = text.slice(name.length)
 			# changed = true
 			break
-
 	return [reconstructed.replace(/[\s,]*$/g, ''), text]
 
 protobot_engaged = false
@@ -333,12 +336,13 @@ $('body').keydown (e) ->
 	else if e.keyCode in [87] # W
 		# whisper
 		e.preventDefault()
-		$('.chatbtn').click()
 		$('.chat_input').val('@')
+		open_chat()
 	else if e.keyCode in [84] # T
 		e.preventDefault()
-		$('.chatbtn').click()
 		$('.chat_input').val('@' + (me.team || 'individuals') + " ")
+		open_chat()
+		
 	else if e.keyCode in [70] # F
 		me.finish()
 	else if e.keyCode in [66]
@@ -447,6 +451,8 @@ if !Modernizr.touch and !mobileLayout()
 	}
 
 $('body').click (e) ->
+	$('.bundle .ruling').tooltip('destroy')
+
 	if $(e.target).parents('.leaderboard, .popover').length is 0
 		$('.popover').remove()
 
