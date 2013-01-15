@@ -40,7 +40,11 @@ class QuizRoom
 	constructor: (name = "temporary") ->
 		@name = name
 		@type = "qb"
-		@answer_duration = 1000 * 5
+		
+		@answer_duration = 5 * 1000
+		@attempt_duration = 8 * 1000
+		@prompt_duration = 10 * 1000
+
 		@time_offset = 0
 		@sync_offset = 0 # always zero for master installations
 		@start_offset = 0 # to compensate for latency, etc.
@@ -309,7 +313,7 @@ class QuizRoom
 				@attempt.realTime = @serverTime()
 				@attempt.start = @time()
 				@attempt.text = ''
-				@attempt.duration = 10 * 1000
+				@attempt.duration = @prompt_duration
 
 				@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @billMahrer, =>
 					@end_buzz session
@@ -382,7 +386,7 @@ class QuizRoom
 				user: user,
 				realTime: @serverTime(), # oh god so much time crap
 				start: @time(),
-				duration: 8 * 1000,
+				duration: @attempt_duration,
 				session, # generate 'em server side 
 				text: '',
 				early: early_index != -1 and @time() < @begin_time + @cumulative[early_index],
