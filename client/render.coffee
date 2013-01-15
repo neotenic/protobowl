@@ -527,55 +527,72 @@ renderUsers = ->
 
 	thresh = TOP_NUM + CONTEXT * 2
 
-	if me.leaderboard
-		create_row entity for entity in entities
-		if entities.length > TOP_NUM + CONTEXT * 2
-			row = $('<tr>').addClass('ellipsis').appendTo list
-			ellipsis = $('<td colspan=4>').appendTo(row)
-			msg = $('<span>').css('position', 'relative').html(" <b>#{room.active_count()}</b> active  <b>#{user_count}</b> users (hide <b>#{entities.length - thresh}</b>)").appendTo ellipsis
 
+	for i in [0...TOP_NUM] when i < entities.length
+		create_row entities[i]
+		render_count++
+
+	if entities.length > TOP_NUM
+		ellipsis = $('<tr>').addClass('ellipsis').appendTo list
+
+
+	if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2 and !me.leaderboard
+		# thresh = TOP_NUM
+		bottom_size = Math.min(entities.length, me_entity.position + CONTEXT) - (me_entity.position - CONTEXT)
+
+		for i in [TOP_NUM...TOP_NUM + (CONTEXT * 2 - bottom_size)] when i < entities.length
+			create_row entities[i]
+			render_count++
+
+		# row = $('<tr>').addClass('ellipsis').appendTo list
+		# ellipsis = $('<td colspan=4>').appendTo(row)
+		for i in [me_entity.position - CONTEXT...me_entity.position + CONTEXT] when i >= 0 and i < entities.length
+			create_row entities[i]
+			render_count++
 	else
-		if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2
-			thresh = TOP_NUM
-			bottom_size = Math.min(entities.length, me_entity.position + CONTEXT) - (me_entity.position - CONTEXT)
+		for i in [TOP_NUM...thresh] when i >= 0 and i < entities.length
+			create_row entities[i]
+			render_count++
 
-			for i in [0...thresh + (CONTEXT * 2 - bottom_size)] when i < entities.length
-				create_row entities[i]
-				render_count++
-			row = $('<tr>').addClass('ellipsis').appendTo list
-			ellipsis = $('<td colspan=4>').appendTo(row)
-			for i in [me_entity.position - CONTEXT...me_entity.position + CONTEXT] when i >= 0 and i < entities.length
-				create_row entities[i]
-				render_count++
+		# if entities.length - render_count > 0
+		# 	row = $('<tr>').addClass('ellipsis').appendTo list
+		# 	ellipsis = $('<td colspan=4>').appendTo(row)
 
-		else
-			for i in [0...thresh] when i >= 0 and i < entities.length
+		if me.leaderboard
+			for i in [thresh...entities.length]
 				create_row entities[i]
-				render_count++
-			if entities.length - render_count > 0
-				row = $('<tr>').addClass('ellipsis').appendTo list
-				ellipsis = $('<td colspan=4>').appendTo(row)
-				
-		if ellipsis
-			msg = $('<span>').css('position', 'relative').html(" <b>#{room.active_count()}</b> active <b>#{user_count}</b> users (<b>#{entities.length - render_count}</b> hidden)").appendTo ellipsis
 		
-		# cts = $('<span>').css('position', 'relative').html(" (<b>click</b> to show)").hide().appendTo ellipsis
-		# ellipsis.mouseenter ->
-		# 	msg.animate {
-		# 		left: '+=' + ellipsis.width()
-		# 	}, ->
-		# 		msg.hide()
-		# 		cts.show().css('left', "-#{ellipsis.width()}px").animate {
-		# 			left: '0'
-		# 		}
-		# ellipsis.mouseleave ->
-		# 	cts.animate {
-		# 		left: '-=' + ellipsis.width()
-		# 	}, ->
-		# 		cts.hide()
-		# 		msg.show().css('left', "#{ellipsis.width()}px").animate {
-		# 			left: '0'
-		# 		}
+	if ellipsis
+		status = "(<b>#{entities.length - render_count}</b> hidden)"
+		if me.leaderboard
+			status = "(hide <b>#{entities.length - render_count}</b>)"
+		
+
+		
+		msg = $('<span>').css('position', 'relative')
+		.html(" <span class='badge badge-success'>#{room.active_count()}</span> active <span class='badge'>#{user_count}</span> users")
+		
+		
+		# col2 = $('<td colspan=4>').appendTo(ellipsis).append($('<span>').html(status))
+		col1 = $('<td colspan=4>').appendTo(ellipsis).append($('<span>').html(status)).append(' ').append(msg)
+
+	# cts = $('<span>').css('position', 'relative').html(" (<b>click</b> to show)").hide().appendTo ellipsis
+	# ellipsis.mouseenter ->
+	# 	msg.animate {
+	# 		left: '+=' + ellipsis.width()
+	# 	}, ->
+	# 		msg.hide()
+	# 		cts.show().css('left', "-#{ellipsis.width()}px").animate {
+	# 			left: '0'
+	# 		}
+	# ellipsis.mouseleave ->
+	# 	cts.animate {
+	# 		left: '-=' + ellipsis.width()
+	# 	}, ->
+	# 		cts.hide()
+	# 		msg.show().css('left', "#{ellipsis.width()}px").animate {
+	# 			left: '0'
+	# 		}
 
 
 
