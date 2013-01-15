@@ -1,5 +1,6 @@
 #= require ./lib/modernizr.js
 #= require ./lib/bootstrap.js
+#= require ./lib/bootbox.js
 #= require ./lib/time.coffee
 #= require ./lib/jquery.mobile.custom.js
 #= require ./lib/jquery.tablesort.js
@@ -511,6 +512,13 @@ cache_event = ->
 				setTimeout ->
 					location.reload()
 				, 200 + Math.random() * 1000
+			else
+				setTimeout ->
+					bootbox.alert "Your current version of Protobowl is obsolete, this page will be automatically reloaded in 10 seconds."
+					setTimeout ->
+						location.reload()
+					, 1000 * 10
+				, 1000 * 60 * 5
 			applicationCache.swapCache()
 		when applicationCache.UNCACHED
 			$('#cachestatus').text 'Uncached'
