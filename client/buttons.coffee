@@ -239,7 +239,8 @@ chat = (text, done) ->
 		if refs[0] is '@'
 			text = '@' + refs[1]
 		else
-			new_target = text.replace(refs[1], '').trim()
+			new_target = text.trim().slice(0, text.trim().length - refs[1].trim().length).trim()
+
 			unless new_target is '@' + (me.team || 'individuals')
 				last_target = new_target + ' '
 
@@ -476,6 +477,23 @@ $('.show_image').live 'click', (e) ->
 	e.preventDefault()
 	$(this).parent().find('.chat_image').slideToggle()
 
+$('.username').live 'click', (e) ->	
+	user = room.users[$(this).data('id')]
+	# console.log e, user
+	return unless user
+	return unless e.shiftKey or e.ctrlKey or e.metaKey
+
+	e.preventDefault()
+	if actionMode is 'chat' and $('.chat_input').val()[0] == '@'
+		if $('.chat_input').val().indexOf(user.name) is -1
+			$('.chat_input').val $('.chat_input').val().replace('@', '@' + user.name + ', ')
+	else
+		$('.chat_input').val  '@' + user.name + ' '
+	
+	open_chat()
+	return
+
+
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")
 		# console.log 'toggle show all'
@@ -486,10 +504,11 @@ $(".leaderboard tbody tr").live 'click', (e) ->
 	
 	user = $(this).data('entity')
 
-	if e.shiftKey
+	if e.shiftKey or e.ctrlKey or e.metaKey
 		e.preventDefault()
 		if actionMode is 'chat' and $('.chat_input').val()[0] == '@'
-			$('.chat_input').val $('.chat_input').val().replace('@', '@' + user.name + ', ')
+			if $('.chat_input').val().indexOf(user.name) is -1
+				$('.chat_input').val $('.chat_input').val().replace('@', '@' + user.name + ', ')
 		else
 			$('.chat_input').val  '@' + user.name + ' '
 		
