@@ -41,6 +41,7 @@ userSpan = (user, global) ->
 	scope
 		.addClass(hash)
 		.addClass('user-'+user)
+		.data('id', user)
 		.addClass('username')
 		.text(text)
 
@@ -263,7 +264,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
 	).replace(/!@([a-z0-9]+)/g, (match, user) ->
 		user_list.push user
-		return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html()
+		return userSpan(user).wrap('<span>').parent().addClass('recipient').clone().wrap('<div>').parent().html()
 	)
 	# get a list of teams and highlight them
 	team_map = {}
@@ -278,7 +279,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	if done
 		line.removeClass('buffer')
 		can_see = (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
-		
+
 		if text is '' or !can_see
 			line.find('.comment').html('<em>(no message)</em>')
 			line.slideUp()
@@ -303,6 +304,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			line.find('.comment').html html
 
 	line.toggleClass 'typing', !done
+	line.data 'last_update', time
 
 
 verbAnnotation = ({user, verb, time}) ->
