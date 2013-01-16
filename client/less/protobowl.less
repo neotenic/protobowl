@@ -10,8 +10,11 @@ body {
 
 .timer-widget {
 	.label {
-		float: right;
+		// float: right;
+		right: 0;
+		position: absolute;
 		margin-right: 5px;
+		margin-top: 2px;
 	}
 	h5 {
 		position: absolute;
@@ -26,6 +29,7 @@ body {
 		margin-bottom: 5px;
 		padding-right: 5px;
 		margin-top: 10px;
+
 		.fraction {
 			font-size: 50%;
 		}
@@ -329,9 +333,6 @@ input[type=range] {
 		}
 		
 	}
-	.inline-icon {
-		text-shadow: none;
-	}
 	.inline-icon .label {
 		padding-top: 1px;
 		text-shadow: none;
@@ -339,8 +340,12 @@ input[type=range] {
 		padding-left: 3px;
 		padding-right: 3px;
 		display: inline-block;
-		.icon-pause {
-			font-size: 75%;
+	}
+	.inline-icon {
+		text-shadow: none;
+		
+		.icon-forward {
+			padding-left: 4px;
 		}
 	}
 	.breadcrumb {

@@ -371,7 +371,6 @@ latency_log = []
 last_freeze = -1
 
 synchronize = (data) ->
-	console.log 'do sync', data
 	blacklist = ['real_time', 'users']
 	
 	sync_offsets.push +new Date - data.real_time
@@ -428,7 +427,14 @@ synchronize = (data) ->
 
 
 	renderUsers() if 'users' of data
-	
+
+listen 'finish_question', (time) ->
+	del = time - room.begin_time
+	i = 0
+	i++ while del > room.cumulative[i]
+	$('.bundle.active').data('finish_point', i - 1)
+	updateInlineSymbols()
+
 # basic statistical methods for statistical purposes
 Avg = (list) -> Sum(list) / list.length
 Sum = (list) -> s = 0; s += item for item in list; s

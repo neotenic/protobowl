@@ -216,10 +216,10 @@ renderTimer = ->
 			.addClass('btn-warning')
 			.removeClass('btn-success')
 	
-	# if time >= room.end_time
-	# 	$('.label.finished').fadeIn()
-	# else
-	# 	$('.label.finished').hide()
+	if time >= room.end_time
+		$('.label.finished').capQueue().fadeIn()
+	else
+		$('.label.finished').capQueue().fadeOut()
 
 	if time >= room.end_time
 		# $('.progress').addClass 'progress-info'
@@ -1105,6 +1105,8 @@ updateInlineSymbols = ->
 	# children.slice(words.length).remove()
 
 	elements = []
+
+	finish_point = bundle.data('finish_point')
 	
 	for i in [0...words.length]
 		element = $('<span>').addClass('unread')
@@ -1126,6 +1128,8 @@ updateInlineSymbols = ->
 			element.append " <span class='inline-icon'><i class='label icon-white icon-bell  #{label_type}'></i></span> "
 		else if i in stops
 			element.append " <span class='inline-icon'><i class='label icon-white icon-pause label-warning'></i></span> "
+		else if finish_point and i is finish_point
+			element.append " <span class='inline-icon'><i class='label icon-white icon-forward label-info'></i></span> "
 
 		elements.push element
 

@@ -171,10 +171,10 @@ html(lang="en", manifest="/offline.appcache")
 				div.span3.sidebar
 					div.span3.thumbnail.timer-widget
 						h5.span3
-							i.icon-time
 							span.label.label-warning.pause(style="display:none") Paused
 							span.label.label-important.buzz(style="display:none") Buzz
-							//- span.label.label-info.finished(style="display:none") Finished
+							span.label.label-info.finished(style="display:none") Done
+							i.icon-time
 						div.timer.unselectable.disabled
 							span.face 00:00
 							span.fraction .0
@@ -354,6 +354,7 @@ html(lang="en", manifest="/offline.appcache")
 					document.getElementById('error_log').innerHTML += e.toString()
 				}
 			}
+		
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
 		if development

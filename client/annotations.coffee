@@ -318,7 +318,6 @@ verbAnnotation = ({user, verb, time}) ->
 	line = $('<p>').addClass 'log'
 	line.addClass(verbclass)
 	
-
 	if user
 		line.append userSpan(user).attr('title', formatTime(time))
 		line.append " " + verb.replace /!@([a-z0-9]+)/g, (match, user) ->

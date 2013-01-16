@@ -261,7 +261,9 @@ class QuizRoom
 		@end_time = 0 if isNaN(@end_time)
 
 
-	finish: -> @set_time @end_time
+	finish: -> 
+		@emit 'finish_question', @time()
+		@set_time @end_time
 
 	next: ->
 		return if @attempt or @time() <= @end_time
