@@ -41,7 +41,7 @@ offline_startup = ->
 			name: 'offline user'
 		}
 		
-		room.sync(3)
+		room.sync(4)
 		me.verb 'joined the room'
 
 
@@ -371,6 +371,7 @@ latency_log = []
 last_freeze = -1
 
 synchronize = (data) ->
+	console.log 'do sync', data
 	blacklist = ['real_time', 'users']
 	
 	sync_offsets.push +new Date - data.real_time
@@ -387,26 +388,26 @@ synchronize = (data) ->
 			room.cumulative = cumsum room.timing, room.rate
 			room.__last_rate = room.rate
 
-		if  'users' of data
-			# keep the number of people in the leaderboard at a manageable number
-			# if (1 for u of room.users).length > data.users.length + 5
-			# 	room.users = {}
+	if 'users' of data
+		# keep the number of people in the leaderboard at a manageable number
+		# if (1 for u of room.users).length > data.users.length + 5
+		# 	room.users = {}
 
-			user_blacklist = ['id']
-			for user in data.users
-				unless user.id of room.users
-					room.users[user.id] = new QuizPlayerClient(room, user.id)
+		user_blacklist = ['id']
+		for user in data.users
+			unless user.id of room.users
+				room.users[user.id] = new QuizPlayerClient(room, user.id)
 
+			for attr, val of user when attr not in user_blacklist
+				room.users[user.id][attr] = val
+			
+			# me != users[me.id] 
+			# that's a fairly big change that is being implemented
+			
+			if user.id is me.id
 				for attr, val of user when attr not in user_blacklist
-					room.users[user.id][attr] = val
-				
-				# me != users[me.id] 
-				# that's a fairly big change that is being implemented
-				
-				if user.id is me.id
-					for attr, val of user when attr not in user_blacklist
-						me[attr] = val
-	
+					me[attr] = val
+
 	$('body').toggleClass('offline', !connected())
 
 	renderParameters() if 'difficulties' of data
