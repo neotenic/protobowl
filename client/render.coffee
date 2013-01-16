@@ -802,7 +802,17 @@ changeQuestion = ->
 	$('#history').prepend bundle.hide()
 	# updateTextPosition()
 	updateInlineSymbols()
-
+	
+	$('.chat.typing').each ->
+		original = $(this)
+		if room.serverTime() - original.data('last_update') > 1000 * 20
+			original.removeClass 'typing'
+			return
+		self_clone = original.clone().insertBefore(original)
+		original.prependTo bundle.find('.annotations')
+		self_clone.slideUp 'normal', ->
+			$(this).remove()
+		
 	bundle.slideDown("normal").queue ->
 		bundle.width('auto')
 		$(this).dequeue()
@@ -819,6 +829,8 @@ changeQuestion = ->
 			$(this).dequeue()
 
 	update_visibility()
+
+
 
 
 toggle_bookmark = (info, state) ->
