@@ -238,7 +238,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	if $('#' + id).length > 0
 		line = $('#' + id)
 	else
-		line = $('<p>').attr('id', id)
+		line = $('<p>').attr('id', id).addClass('chat')
 		line.append $('<span>').addClass('author').append(userSpan(user).attr('title', formatTime(time)))
 		line.append document.createTextNode ' '
 		$('<span>')
