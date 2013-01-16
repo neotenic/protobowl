@@ -37,11 +37,14 @@ $('.chatbtn').click ->
 
 
 open_chat = ->
-	setActionMode 'chat'
-	# create a new input session id, which helps syncing work better
+	if actionMode != 'chat'
+		setActionMode 'chat'
+		# create a new input session id, which helps syncing work better
+		$('.chat_input')
+			.data('input_session', Math.random().toString(36).slice(3))
+			.data('begin_time', +new Date)
+	
 	$('.chat_input')
-		.data('input_session', Math.random().toString(36).slice(3))
-		.data('begin_time', +new Date)
 		.keyup()
 		.focus()
 
@@ -147,7 +150,8 @@ $('input').keydown (e) ->
 $('.chat_input').typeahead {
 	source: -> list_targets(this.query)
 	matcher: (candidate) ->
-		this.query[0] == '@' and candidate.indexOf(this.query) == 0
+		this.query[0] == '@' and candidate.toLowerCase().indexOf(this.query.toLowerCase()) == 0
+
 }
 
 list_targets = (query) ->
@@ -189,6 +193,7 @@ findReferences = (text) ->
 
 protobot_engaged = false
 protobot_last = ''
+last_target = ''
 
 protobot_write = (message) ->
 	count = 0
@@ -234,6 +239,10 @@ chat = (text, done) ->
 		if refs[0] is '@'
 			text = '@' + refs[1]
 		else
+			new_target = text.replace(refs[1], '').trim()
+			unless new_target is '@' + (me.team || 'individuals')
+				last_target = new_target + ' '
+
 			text = refs.join(' ')
 
 	me.chat {
@@ -333,10 +342,10 @@ $('body').keydown (e) ->
 	else if e.keyCode in [47, 111, 191, 67, 65, 13] # / (forward slash), C, A, Enter
 		e.preventDefault()
 		$('.chatbtn').click()
-	else if e.keyCode in [87] # W
+	else if e.keyCode in [87, 222] # W
 		# whisper
 		e.preventDefault()
-		$('.chat_input').val('@')
+		$('.chat_input').val(last_target || '@')
 		open_chat()
 	else if e.keyCode in [84] # T
 		e.preventDefault()
@@ -349,7 +358,7 @@ $('body').keydown (e) ->
 		$('.bundle.active .bookmark').click()
 
 	# debugging shortcuts	
-	if location.hostname is 'localhost' or me.id?[0] is '_'
+	if location.hostname is 'localhost' or me.id?[0] is '_' or 'dev' of location.query
 		# console.log e.keyCode, 'local'
 		if e.keyCode in [68] # D
 			me.buzz(room.qid)
@@ -357,6 +366,7 @@ $('body').keydown (e) ->
 		else if e.keyCode in [69] # E
 			me.buzz(room.qid)
 			me.guess { text: '', done: true }
+		# console.log e.keyCode
 
 	# console.log e.keyCode
 
@@ -473,8 +483,20 @@ $(".leaderboard tbody tr").live 'click', (e) ->
 		me.set_leaderboard me.leaderboard
 		renderUsers()
 		return
-
+	
 	user = $(this).data('entity')
+
+	if e.shiftKey
+		e.preventDefault()
+		if actionMode is 'chat' and $('.chat_input').val()[0] == '@'
+			$('.chat_input').val $('.chat_input').val().replace('@', '@' + user.name + ', ')
+		else
+			$('.chat_input').val  '@' + user.name + ' '
+		
+		open_chat()
+		return
+
+	
 
 	enabled = $(this).data('popover')?.enabled
 	# console.log $('.leaderboard tbody tr').not(this).popover 'toggle'
