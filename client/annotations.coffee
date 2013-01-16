@@ -244,7 +244,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			.addClass('comment')
 			.appendTo line
 		addAnnotation line, room.users[user]?.room?.name
-
+	user_list = []
 	url_regex = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig
 	html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
 	.replace(/(^|\s+)(\/[a-z0-9\-]+)(\s+|$)/g, (all, pre, room, post) ->
@@ -262,11 +262,12 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		else
 			return "<a href='#{real_url}' target='_blank'>#{url}</a>"
 	).replace(/!@([a-z0-9]+)/g, (match, user) ->
+		user_list.push user
 		return userSpan(user).addClass('recipient').clone().wrap('<div>').parent().html()
 	)
 	# get a list of teams and highlight them
 	team_map = {}
-	team_map[user.team || 'individuals'] = 1 for id, user of room.users
+	team_map[u.team || 'individuals'] = 1 for i, u of room.users
 	team_list = []
 	for team of team_map
 		html = html.replace(new RegExp('\\*@(' + RegExp.quote(team) + ')', 'g'), (match, team_name) ->
@@ -276,7 +277,9 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 	if done
 		line.removeClass('buffer')
-		if text is '' or (text.slice(0, 1) is '@' and text.indexOf(me.id) == -1 and text.indexOf('*@' + (me.team || 'individuals')) == -1 and (user isnt me.id and me.id[0] isnt '_'))
+		can_see = (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
+		
+		if text is '' or !can_see
 			line.find('.comment').html('<em>(no message)</em>')
 			line.slideUp()
 		else
