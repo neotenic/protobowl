@@ -211,7 +211,6 @@ get_question = (type, difficulty, category, cb) ->
 		, 100
 		return
 	unless typeof offline_questions[0] is 'object'
-
 		setTimeout ->
 			cb null, [], []
 		, 10
@@ -226,8 +225,15 @@ get_question = (type, difficulty, category, cb) ->
 			sampler = new AliasMethod(category)
 			category = sampler.next()
 		
-		question = offline_questions.sort((a, b) -> a._inc - b._inc)[0]
-		question._inc += Math.random() + 1
+		question_bank = offline_questions.sort((a, b) -> a._inc - b._inc)
+		question = null
+		for candidate in question_bank
+			if candidate.difficulty is difficulty and candidate.category is category and candidate.type is type
+				question = candidate
+				break
+		if question
+			question._inc += Math.random() + 1
+			
 		setTimeout ->
 			cb question, get_difficulties(type), get_categories(type)
 		, 10
