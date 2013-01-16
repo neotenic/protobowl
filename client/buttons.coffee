@@ -163,7 +163,7 @@ list_targets = (query) ->
 	for id, user of room.users
 		names.push user.name if user.name not in names
 		names.push user.team if user.team and user.team not in names
-	("#{prefix}#{name}" for name in names when name not in existing and name isnt me.name)
+	("#{prefix}#{name}" for name in names when name not in existing)
 
 findReferences = (text) ->
 	reconstructed = '@'
