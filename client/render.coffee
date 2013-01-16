@@ -809,7 +809,7 @@ changeQuestion = ->
 			original.removeClass 'typing'
 			return
 		self_clone = original.clone().insertBefore(original)
-		original.prependTo bundle.find('.annotations')
+		original.appendTo bundle.find('.annotations')
 		self_clone.slideUp 'normal', ->
 			$(this).remove()
 		
