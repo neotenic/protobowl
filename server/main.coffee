@@ -12,6 +12,7 @@ url = require 'url'
 os = require 'os'
 util = require 'util'
 
+#test
 rooms = {}
 {QuizRoom} = require '../shared/room'
 {QuizPlayer} = require '../shared/player'
