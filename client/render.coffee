@@ -216,7 +216,7 @@ renderTimer = ->
 			.addClass('btn-warning')
 			.removeClass('btn-success')
 	
-	if time >= room.end_time
+	if time >= room.end_time and !room.time_freeze
 		$('.label.finished').capQueue().fadeIn()
 	else
 		$('.label.finished').capQueue().fadeOut()

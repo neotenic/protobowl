@@ -303,7 +303,9 @@ $('.prompt_form').submit (e) ->
 	}
 	e.preventDefault()
 	
-
+$('.textbar-submit').click ->
+	$(this).parents('form').submit()
+	
 key_can_skip = true
 
 $('body').keyup (e) ->
