@@ -348,7 +348,10 @@ class QuizPlayer
 		# at this moment private messages are enforced on the end of the recipient
 		# which is not a good thing because technically anyone can see the messages
 		# and they aren't actually private, but that's probably okay for now
+		
+		return if typeof text != 'string'
 
+		text = text.slice(0, 10000) # server enforced limit is 10x the client enforced limit
 
 		id = @id # ninjas should be able to choose their names
 		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
