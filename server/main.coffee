@@ -65,17 +65,17 @@ console.log "hello from protobowl v3, my name is #{codename}", __dirname, proces
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
-	remote?.notifyBen 'Server Starting ' + codename, 'The server was started. \n Codename: ' + codename + '\n\n' + util.inspect({
-		hostname: os.hostname(),
-		type: os.type(),
-		platform: os.platform(),
-		arch: os.arch(),
-		release: os.release(),
-		loadavg: os.loadavg(),
-		uptime: os.uptime(),
-		totalmem: os.totalmem(),
-		freemem: os.freemem()
-	})
+	# remote?.notifyBen 'Server Starting ' + codename, 'The server was started. \n Codename: ' + codename + '\n\n' + util.inspect({
+	# 	hostname: os.hostname(),
+	# 	type: os.type(),
+	# 	platform: os.platform(),
+	# 	arch: os.arch(),
+	# 	release: os.release(),
+	# 	loadavg: os.loadavg(),
+	# 	uptime: os.uptime(),
+	# 	totalmem: os.totalmem(),
+	# 	freemem: os.freemem()
+	# })
 	console.log 'set to deployment defaults'
 
 	if remote.zombochecker
@@ -932,7 +932,8 @@ am_i_a_zombie = ->
 		res.on 'data', (chunk) -> body += chunk
 		res.on 'end', ->
 			if body isnt zombocom and body isnt 'error'
-				remote?.notifyBen 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
+				# remote?.notifyBen 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
+				
 				console.log 'is a zombo; shall seppuku'
 				setTimeout ->
 					# wait a bit so ben's notified of this legendary occasion

@@ -278,7 +278,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 	if done
 		line.removeClass('buffer')
-		can_see = (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
+		can_see = text[0] != '@' or (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
 
 		if text is '' or !can_see
 			line.find('.comment').html('<em>(no message)</em>')
