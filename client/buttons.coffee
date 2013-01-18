@@ -184,7 +184,7 @@ findReferences = (text) ->
 				break
 	# final pass for incompletes
 	for name, identity of entities
-		if text.slice(0, name.length) is name.slice(0, text.length) and text.length > 0
+		if text.slice(0, name.length) is name and text.length > 0
 			reconstructed += identity
 			text = text.slice(name.length)
 			# changed = true
