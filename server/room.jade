@@ -52,20 +52,6 @@ html(lang="en", manifest="/offline.appcache")
 				a.btn.btn-primary(href="#", data-dismiss="modal") Close
 		
 
-		div#team_modal.modal.hide.fade(tabindex="-1",role="dialog",aria-hidden="true")
-			div.modal-header
-				button.close(type="button", data-dismiss="modal", aria-hidden="true") ×
-				h3 Create a Team
-			div.modal-body
-				form.form-horizontal
-					div.control-group
-						label.control-label(for="team_input") Team Name
-						div.controls
-							input#team_input(type='text', value='', placeholder='Team Name').extra-large
-
-			div.modal-footer
-				a.btn(href="#", data-dismiss="modal") Cancel
-				button.btn.btn-primary#make_button Create Team
 
 		div.container
 			div.row
@@ -335,6 +321,21 @@ html(lang="en", manifest="/offline.appcache")
 										a#reload(href="") Reload
 									td#cachestatus 
 		
+
+		div#team_modal.modal.hide.fade(tabindex="-1",role="dialog",aria-hidden="true")
+			div.modal-header
+				button.close(type="button", data-dismiss="modal", aria-hidden="true") ×
+				h3 Create a Team
+			div.modal-body
+				form.form-horizontal
+					div.control-group
+						label.control-label(for="team_input") Team Name
+						div.controls
+							input#team_input(type='text', value='', placeholder='Team Name').extra-large
+
+			div.modal-footer
+				a.btn(href="#", data-dismiss="modal") Cancel
+				button.btn.btn-primary#make_button Create Team
 
 			
 		script(src="/socket.io/socket.io.js")

@@ -665,6 +665,8 @@ createUserStatSheet = (user, full) ->
 	row	"Score", $('<span>').addClass('badge').text(get_score(user))
 	row	"Correct", user.correct
 	row "Streak", user.streak
+	if full
+		row "Record", user.streak_record
 	if room.interrupts
 		row "Interrupts", user.interrupts
 		row "Early", user.early  if full
