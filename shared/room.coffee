@@ -329,12 +329,18 @@ class QuizRoom
 		if @attempt.done
 			@unfreeze()
 			if @attempt.correct
-				@users[@attempt.user].correct++
+				# woo increment mah streak
+				@users[@attempt.user].streak++
+				# end everyone else's streak
+				user.streak = 0 for id, user of @users when id isnt @attempt.user
 
+				@users[@attempt.user].correct++
 				if @attempt.early 
 					@users[@attempt.user].early++
 				@finish()
 			else # incorrect
+				@users[@attempt.user].streak = 0
+
 				if @attempt.interrupt
 					@users[@attempt.user].interrupts++
 				

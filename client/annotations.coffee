@@ -181,6 +181,10 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else if correct
 			decision = "correct"
 			ruling.addClass('label-success').text('Correct')
+
+			if room.users[user]?.streak >= 3 and room.active_count() > 2
+				banButton user, line
+
 			if user is me.id # if the person who got it right was me
 				old_score = me.score()
 				checkScoreUpdate = ->
@@ -389,21 +393,37 @@ notifyLike = ->
 # (contemporary poetry)
 
 boxxyAnnotation = ({id, tribunal}) ->
-	{votes, time, witnesses, against} = tribunal
+	{votes, time, witnesses, against, initiator} = tribunal
+	console.log id, tribunal
 	return if me.id not in witnesses and me.id[0] != '_' # people who havent witnessed the crime do not constitute a jury of peers
 	# majority + opposers - votes
 	votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
 
 	line = $('<div>').addClass('alert').addClass('troll-' + id)
+	
+	initiator = '' if initiator and initiator[0] is '_' # diplomatic immunity?
+
 	if id is me.id # who would vote for their own banning?
-		line.text('Protobowl has detected high rates of activity coming from your account.\n')
+		if initiator
+			line.append userSpan(initiator)
+			line.append ' has complained about your behavior. '
+		else
+			line.text('Protobowl has detected high rates of activity coming from your computer.\n')
 		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room for 10 minutes)."
 	else
 		line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
-		line.append 'Protobowl has detected high rates of activity coming from the user '
-		line.append userSpan(id)
-		line.append '. If a majority of other active players vote to ban this user, the user will be sent to '
-		line.append "<a href='/b'>/b</a> and banned from this room for 10 minutes. This message will be automatically dismissed in a minute. <br> "
+		if initiator
+			line.append userSpan(initiator)
+			line.append ' has created a ban tribunal for '
+			line.append userSpan(id)
+			line.append '. '
+		else
+			line.append 'Protobowl has detected high rates of activity coming from the user '
+			line.append userSpan(id)
+			line.append '. '
+
+		line.append 'If a majority of other active players vote to ban this user, the user will be sent to '
+		line.append "<a href='/b'>/b</a> and banned from this room. This message will be automatically dismissed in a minute. <br> "
 		guilty = $('<button>').addClass('btn btn-small').text('Ban this user')
 		line.append guilty
 		line.append ' '
@@ -424,13 +444,10 @@ boxxyAnnotation = ({id, tribunal}) ->
 	else
 		$('.troll-'+id).slideUp 'normal', ->
 			$(this).remove()
-		if id isnt me.id or votes.length > 1
-			addImportant line
+		addImportant line
 
 
 congressionalAnnotation = ({id, elect}) ->
-	
-
 	line = $('<div>').addClass('alert alert-info').addClass('elect-' + id)
 
 	if elect.term
@@ -442,7 +459,16 @@ congressionalAnnotation = ({id, elect}) ->
 				$(this).remove()
 			return
 		if id is me.id
-			line.html("You have access to the settings for <b>the next 60 seconds</b>. \n")
+			updateTermTimeout = ->
+				remaining = Math.round(Math.max(0, me.elect.term - room.serverTime()) / 1000)
+				$('.term-timeout').text(remaining)
+				if remaining > 0
+					setTimeout updateTermTimeout, 1000
+
+			line.html("You have access to the settings for <b>the next <span class='term-timeout'>60</span> seconds</b>. \n")
+			
+			updateTermTimeout()
+
 			finish = $('<button>').addClass('btn btn-small').text('Done')
 			finish.click ->
 				me.finish_term()
@@ -465,7 +491,7 @@ congressionalAnnotation = ({id, elect}) ->
 		{votes, time, witnesses, against} = elect
 		votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
 		if id is me.id # who would vote for their own banning?
-			line.html("You are a contestant in Protobowl's <i>Who Wants to be an Admin (for 60 seconds)</i>.\n")
+			# line.html("You are a contestant in Protobowl's <i>Who Wants to be an Admin (for 60 seconds)</i>.\n")
 			line.append " <strong>#{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to pass your referendum)"
 		else
 			line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trustworthy? ')

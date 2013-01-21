@@ -971,5 +971,7 @@ app.get '/:type/:channel', (req, res) ->
 		res.render 'room.jade', { name, type: req.params.type, development: ('dev' of req.query) }
 
 port = process.env.PORT || 5555
-server.listen port, ->
-	console.log "listening on port", port
+
+remote.ready ->
+	server.listen port, ->
+		console.log "listening on port", port

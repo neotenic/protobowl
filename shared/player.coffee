@@ -14,6 +14,7 @@ class QuizPlayer
 		@early = 0
 		@seen = 0
 		@correct = 0
+		@streak = 0
 		@history = [] # todo: store history as a string?
 		
 		# timekeeping and other stuff
@@ -136,7 +137,7 @@ class QuizPlayer
 
 
 
-	create_tribunal: ->
+	create_tribunal: (initiator = false) ->
 		if !@tribunal
 			current_time = @room.serverTime()
 			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
@@ -155,7 +156,7 @@ class QuizPlayer
 				@sync(true)
 			, 1000 * 60
 
-			@tribunal = { votes: [], against: [], time: current_time, witnesses, term: 0 }
+			@tribunal = { votes: [], against: [], time: current_time, witnesses, term: 0, initiator }
 			
 			@sync(true)
 
@@ -170,12 +171,12 @@ class QuizPlayer
 		is_admin = @id in @room.admins or @id[0] is '_'
 
 		if is_admin or @score() >= 0
-
 			if user in @room.admins or user[0] is '_'
 				@verb 'cannot fell a god with a mortal sword'
 				return
-			@verb 'created a ban tribunal for !@' + user
-			@room.users[user]?.create_tribunal()
+			# @verb 'created a ban tribunal for !@' + user
+			
+			@room.users[user]?.create_tribunal @id
 
 	ban_user: (user) ->
 		is_admin = @id in @room.admins or @id[0] is '_'
@@ -242,16 +243,15 @@ class QuizPlayer
 	# At the mall, having fun is what it's all about
 
 	inaugurate: ->
-		return if !@elect?.term # this should be enough
+		return unless @elect?.term # this should be enough
 
 		# must be quasi-protected method because we dont want to defeat the purpose
 		# of having a convoluted system of bureaucracy!
 		clearTimeout @__elect_timeout
 
 		@__elect_timeout = setTimeout =>
-			if @authorized()
-				@verb 'is no longer commander in chief', true
-				@impeach()
+			@verb 'is no longer commander in chief', true
+			@impeach()
 		, @elect.term - @room.serverTime()
 
 
@@ -266,8 +266,7 @@ class QuizPlayer
 	finish_term: ->
 		return if !@elect?.term # this should be enough		
 		@verb 'has finished tenure in office', true
-		@elect = null
-		@sync(true)
+		@impeach()
 
 	vote_tribunal: ({user, position}) ->
 		
@@ -282,7 +281,6 @@ class QuizPlayer
 		tribunal = @room.users[user]?.tribunal
 		if tribunal
 			{votes, against, witnesses} = tribunal
-			console.log votes, against, witnesses
 			return unless @id in witnesses
 			return if @id in votes or @id in against
 			if position is 'ban'
@@ -306,7 +304,7 @@ class QuizPlayer
 				@room.users[user].tribunal = null
 				clearTimeout @room.users[user].__tribunal_timeout
 
-			@sync(true)
+			@room.users[user].sync(true)
 
 
 	verb: (action, no_rate_limit) -> 
@@ -616,7 +614,7 @@ class QuizPlayer
 
 	reset_score: ->
 		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
-		@seen = @interrupts = @guesses = @correct = @early = 0
+		@streak = @seen = @interrupts = @guesses = @correct = @early = 0
 		@history = []
 		@sync(true)
 

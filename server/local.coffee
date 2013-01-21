@@ -70,3 +70,5 @@ exports.initialize_remote = initialize_remote
 exports.handle_report = handle_report
 # exports.Report = Report
 # exports.Question = question
+
+exports.ready = (fn) -> fn()
