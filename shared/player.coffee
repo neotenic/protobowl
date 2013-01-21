@@ -15,6 +15,7 @@ class QuizPlayer
 		@seen = 0
 		@correct = 0
 		@streak = 0
+		@streak_record = 0
 		@history = [] # todo: store history as a string?
 		
 		# timekeeping and other stuff
@@ -614,7 +615,7 @@ class QuizPlayer
 
 	reset_score: ->
 		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
-		@streak = @seen = @interrupts = @guesses = @correct = @early = 0
+		@streak_record = @streak = @seen = @interrupts = @guesses = @correct = @early = 0
 		@history = []
 		@sync(true)
 

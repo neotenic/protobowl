@@ -331,6 +331,7 @@ class QuizRoom
 			if @attempt.correct
 				# woo increment mah streak
 				@users[@attempt.user].streak++
+				@users[@attempt.user].streak_record = Math.max(@users[@attempt.user].streak, @users[@attempt.user].streak_record)
 				# end everyone else's streak
 				user.streak = 0 for id, user of @users when id isnt @attempt.user
 

@@ -309,6 +309,7 @@ renderTimer = ->
 
 
 get_score = (user) -> 
+	return 0 unless user
 	if user.members
 		return Sum(get_score(member) for member in user.members)
 	else	
@@ -481,6 +482,8 @@ renderUsers = ->
 
 
 	create_row = (user, subordinate = false) ->
+		return unless user
+
 		row = $('<tr>').appendTo(list).data('entity', user)
 		row.click -> 1
 		badge = $('<span>').addClass('badge pull-right').text get_score(user)
@@ -562,7 +565,8 @@ renderUsers = ->
 			for i in [thresh...entities.length]
 				create_row entities[i]
 		
-	if ellipsis
+	if ellipsis 
+		# if entities.length - render_count > 0
 		status = "(<b>#{entities.length - render_count}</b> hidden)"
 		if me.leaderboard
 			status = "(hide <b>#{entities.length - render_count}</b>)"
@@ -594,70 +598,6 @@ renderUsers = ->
 	# 			left: '0'
 	# 		}
 
-
-
-
-	# for user, user_index in entities.sort((a, b) -> get_weight(b) - get_weight(a))
-			
-	# 	# if me_index < TOP_NUM
-	# 	if user_index < TOP_NUM
-	# 		create_row user
-	# 	if user_index is TOP_NUM - 1 and entities.length > TOP_NUM
-	# 		row = $('<tr>').appendTo list
-	# 		row.append $('<td colspan=4>').addClass('ellipsis').html(" (<b>#{entities.length - TOP_NUM}</b> users hidden)")
-		# row = $('<tr>').data('entity', user).appendTo list
-		# row.click -> 1
-		# badge = $('<span>').addClass('badge pull-right').text get_score(user)
-		# if room.users[me.id] in (user.members || [user])
-		# 	badge.addClass('badge-info').attr('title', 'You')
-		# else
-		# 	idle_count = 0
-		# 	active_count = 0
-		# 	for member in (user.members || [user])
-		# 		if member.online()
-		# 			if member.active()
-		# 				active_count++
-		# 			else
-		# 				idle_count++
-						
-		# 	if active_count > 0
-		# 		badge.addClass('badge-success').attr('title', 'Online')
-		# 	else if idle_count > 0
-		# 		badge.addClass('badge-warning').attr('title', 'Idle')
-		
-		# $('<td>').addClass('rank').append(ranking).appendTo(row)
-		# $('<td>').addClass('score').append(badge).appendTo(row)
-
-		# name = $('<td>').appendTo row
-
-		
-		# $('<td>').text(user.interrupts).appendTo row
-		# if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
-		# 	name.append($('<span>').append(userSpan(user.id))) #.css('font-weight', 'bold'))
-		# else
-		# 	name.append($('<span>').text(user.name).css('font-weight', 'bold')).append(" (#{user.members.length})")
-		
-		# 	for user in user.members.sort((a, b) -> get_weight(b) - get_weight(a))
-		# 		# user = room.users[member]
-		# 		row = $('<tr>').addClass('subordinate').data('entity', user).appendTo list
-		# 		row.click -> 1
-
-		# 		badge = $('<span>').addClass('badge pull-right').text get_score(user)
-		# 		if user.id is me.id
-		# 			badge.addClass('badge-info').attr('title', 'You')
-		# 		else
-		# 			if user.online()
-		# 				if room.serverTime() - user.last_action > 1000 * 60 * 10
-		# 					badge.addClass('badge-warning').attr('title', 'Idle')
-		# 				else
-		# 					badge.addClass('badge-success').attr('title', 'Online')
-
-		# 		$('<td>').css("border", 0).appendTo row
-		# 		$('<td>').css("border", 0).addClass('score').append(badge).appendTo row
-		# 		name = $('<td>').append(userSpan(user.id))
-		# 		name.appendTo row
-		# 		negs = user.interrupts
-		# 		$('<td>').text(negs).appendTo row
 
 
 	#console.timeEnd('draw board')
