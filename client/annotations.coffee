@@ -182,7 +182,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "correct"
 			ruling.addClass('label-success').text('Correct')
 
-			if room.users[user]?.streak >= 3 and room.active_count() > 2
+			if room.users[user]?.streak > 3 and room.active_count() > 2
 				banButton user, line
 
 			if user is me.id # if the person who got it right was me
@@ -394,7 +394,7 @@ notifyLike = ->
 
 boxxyAnnotation = ({id, tribunal}) ->
 	{votes, time, witnesses, against, initiator} = tribunal
-	console.log id, tribunal
+	
 	return if me.id not in witnesses and me.id[0] != '_' # people who havent witnessed the crime do not constitute a jury of peers
 	# majority + opposers - votes
 	votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
@@ -406,7 +406,7 @@ boxxyAnnotation = ({id, tribunal}) ->
 	if id is me.id # who would vote for their own banning?
 		if initiator
 			line.append userSpan(initiator)
-			line.append ' has complained about your behavior. '
+			line.append ' has complained about your behavior and created a ban tribunal. '
 		else
 			line.text('Protobowl has detected high rates of activity coming from your computer.\n')
 		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room for 10 minutes)."
@@ -452,6 +452,9 @@ congressionalAnnotation = ({id, elect}) ->
 
 	if elect.term
 		{witnesses, impeach} = elect
+		
+		return if me.id not in witnesses and me.id[0] != '_'
+
 		votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - impeach.length
 
 		if room.serverTime() > elect.term
@@ -489,6 +492,9 @@ congressionalAnnotation = ({id, elect}) ->
 
 	else
 		{votes, time, witnesses, against} = elect
+		
+		return if me.id not in witnesses and me.id[0] != '_'
+
 		votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
 		if id is me.id # who would vote for their own banning?
 			# line.html("You are a contestant in Protobowl's <i>Who Wants to be an Admin (for 60 seconds)</i>.\n")
