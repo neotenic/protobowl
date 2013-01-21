@@ -90,7 +90,7 @@ sock = null
 online_startup = ->
 
 	reconnect = ->
-		cookie = jQuery.cookie('protocookie')
+		cookie = location.query.id || jQuery.cookie('protocookie')
 
 		sock.emit 'join', {
 			cookie,

@@ -191,7 +191,7 @@ class QuizPlayer
 		if !elect.term
 			{votes, against, witnesses} = elect
 			return unless @id in witnesses
- 			return if @id in votes or @id in against
+			return if @id in votes or @id in against
 			if position is 'elect'
 				votes.push @id
 				# @verb 'voted to elect !@' + user
@@ -282,8 +282,9 @@ class QuizPlayer
 		tribunal = @room.users[user]?.tribunal
 		if tribunal
 			{votes, against, witnesses} = tribunal
+			console.log votes, against, witnesses
 			return unless @id in witnesses
- 			return if @id in votes or @id in against
+			return if @id in votes or @id in against
 			if position is 'ban'
 				votes.push @id
 				@verb 'voted to ban !@' + user
