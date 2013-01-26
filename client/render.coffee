@@ -179,9 +179,9 @@ renderTimer = ->
 	time = Math.max(room.begin_time, room.time())
 
 	if connected()
-		$('.offline').capQueue().fadeOut()
+		$('.offline-badge').capQueue().fadeOut()
 	else
-		$('.offline').capQueue().fadeIn()
+		$('.offline-badge').capQueue().fadeIn()
 
 	if room.time_freeze
 		$('.buzzbtn').disable true

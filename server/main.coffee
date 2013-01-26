@@ -537,9 +537,9 @@ io.sockets.on 'connection', (sock) ->
 			room.sync(4) # tell errybody that there's a new person at the partaay
 
 			# # detect if the server had been recently restarted
-			if new Date - uptime_begin < 1000 * 60
+			if new Date - uptime_begin < 1000 * 60 * 2
 				if existing_user
-					sock.emit 'log', {verb: 'The server has recently been restarted. Your scores may have been preserved in the journal (however, restoration is experimental). This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
+					sock.emit 'log', {verb: 'The server has recently been restarted. This may have been part of a software update, or the result of an unexpected server crash. We apologize for any inconvenience this may have caused.'}
 				sock.emit 'application_update', Date.now() # check for updates in case it was an update
 
 
@@ -729,6 +729,8 @@ app.get '/stalkermode/room/:room', (req, res) ->
 app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
 
 app.post '/stalkermode/the-scene-is-safe', (req, res) -> 
+	io.sockets.emit 'impending_doom', Date.now()
+
 	user_names = (name for name, time of journal_queue)
 	restart_server = ->
 		console.log 'Server shutdown has been manually triggered'
@@ -933,7 +935,7 @@ am_i_a_zombie = ->
 		res.on 'end', ->
 			if body isnt zombocom and body isnt 'error'
 				remote?.notifyBen 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
-				
+				io.sockets.emit 'impending_doom', Date.now()
 				console.log 'is a zombo; shall seppuku'
 				setTimeout ->
 					# wait a bit so ben's notified of this legendary occasion

@@ -57,6 +57,11 @@ setTimeout ->
 , 1000 * 60 * 10
 
 
+impending_doom = ->
+	line = $('<div>').addClass 'alert alert-info'
+	line.append $('<div>').append("A  ", $('<span class="label label-info">').text("server restart"), " will happen momentarily. This may result in a message indicating that you have been disconnected from the server. However, don't panic as a new connection will automatically be established shortly afterwards. ")
+	addImportant $('<div>').addClass('log doom-notice').append(line)
+
 disconnect_notice = ->
 	initialize_fallback() if initialize_fallback?
 
@@ -66,7 +71,7 @@ disconnect_notice = ->
 	line = $('<div>').addClass 'alert alert-error'
 	line.append $('<p>').append("You were ", $('<span class="label label-important">').text("disconnected"), 
 			" from the server for some reason. ", $('<em>').text(new Date))
-	line.append $('<p>').append("This may be due to a drop in the network 
+	line.append $('<div>').append("This may be due to a drop in the network 
 			connectivity or a malfunction in the server. The client will automatically 
 			attempt to reconnect to the server and in the mean time, the app has automatically transitioned
 			into <b>offline mode</b>. You can continue playing alone with a limited offline set
@@ -80,6 +85,8 @@ disconnect_notice = ->
 			$('.emergency-message').remove()
 			$('#history').before message
 
+	renderUsers() # show transition to offline mode
+	renderTimer() # update the offline badge
 
 
 
@@ -101,7 +108,7 @@ online_startup = ->
 			version: 6
 		}
 
-		$('.disconnect-notice').slideUp()
+		$('.disconnect-notice, .doom-notice').slideUp()
 		# allow the user to reload/disconnect/reconnect
 		$('#reload, #disconnect, #reconnect').hide()
 		$('#disconnect').show()
@@ -303,6 +310,7 @@ listen = (name, fn) ->
 listen 'echo', (data, fn) -> fn 'alive'
 listen 'application_update', -> applicationCache.update() if applicationCache?
 listen 'force_application_update', -> $('#update').data('force', true); applicationCache.update()
+listen 'impending_doom', -> impending_doom()
 listen 'redirect', (url) -> window.location = url
 listen 'alert', (text) -> window.alert text
 listen 'chat', (data) -> chatAnnotation data
