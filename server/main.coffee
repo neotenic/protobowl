@@ -577,6 +577,16 @@ process_queue = ->
 
 setInterval process_queue, 1000	
 
+check_performance = ->
+	t_now = Date.now()
+	delay = 100
+	setTimeout ->
+		t_delta = Math.max(0, Date.now() - t_now - delay)
+		if t_delta > 50
+			io.sockets.in("stalkermode-dash").emit 'slow', t_delta
+	, delay
+
+setInterval check_performance, 1000
 
 reaped = {
 	name: "__reaped",

@@ -145,7 +145,7 @@ script
 		line.appendChild(document.createTextNode(' '))
 		line.appendChild(document.createTextNode(message.replace(/\!\@\w+/g, '')))
 		addLine(room, line)
-		console.log('chat', e)
+		//console.log('chat', e)
 	})
 	sock.on('next', function(e){
 		var room = e[0];
@@ -156,7 +156,7 @@ script
 		line.appendChild(document.createTextNode('new question: '))
 		line.appendChild(document.createTextNode(answer))
 		addLine(room, line)
-		console.log('next', e)
+		//console.log('next', e)
 	})
 	sock.on('verb', function(e){
 		var room = e[0];
@@ -169,10 +169,10 @@ script
 		line.appendChild(document.createTextNode(' '))
 		line.appendChild(document.createTextNode(message))
 		addLine(room, line)
-		console.log('chat', e)
+		//console.log('chat', e)
 	})
 	sock.on('buzz', function(e){
-		console.log('buzz', e);
+		//console.log('buzz', e);
 		var room = e[0];
 		var user = e[1];
 		var guess = e[2];
@@ -222,7 +222,7 @@ script
 		online_data.push([e.online, new Date]);
 		if(e.avg_latency && !isNaN(e.avg_latency)) latency_data.push([Math.round(e.avg_latency * 100) / 100, new Date]);
 
-		console.log('user_count', e)
+		//console.log('user_count', e)
 		document.getElementById('active').innerText = e.active;
 		document.getElementById('online').innerText = e.online;
 		if(latency_data.length > 0){
@@ -247,6 +247,11 @@ script
 			line.innerText = e.message.replace(/ [0-9a-z]+\-/, ' ')
 			addLine(e.room, line);	
 		}
+	})
+
+
+	sock.on('slow', function(e){
+		console.log('slow', e)
 	})
 
 	jQuery.fn.sortElements = function() {
