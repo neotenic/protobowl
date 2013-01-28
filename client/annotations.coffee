@@ -106,7 +106,7 @@ banButton = (id, line, degree = 4) ->
 			.click (e) ->
 				e.preventDefault()
 				me.ban_user id
-	else if (me.score() > 50 and usercount > 2) or degree <= 2
+	else if ((me.score() > 50 and usercount > 2) or degree <= 2 and !room.admin_online()) or id is me.id # only show it if no admins are here
 		line.append $('<a>')
 			.attr('href', '#')
 			.attr('title', 'Initiate ban tribunal for this user')

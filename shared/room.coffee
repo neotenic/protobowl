@@ -98,6 +98,12 @@ class QuizRoom
 			return true
 		return false
 
+	admin_online: ->
+		for id, user of @users when user.active() and user.authorized(2)
+			return true
+		return false
+
+
 	active_count: ->
 		active_count = 0
 		active_count++ for id, user of @users when user.active()
@@ -490,7 +496,7 @@ class QuizRoom
 
 		if level >= 4
 			data.topic = @topic if 'topic' of this
-			
+
 			data.distribution = @distribution
 			# async stuff
 			@get_parameters @type, @difficulty, (difficulties, categories) =>

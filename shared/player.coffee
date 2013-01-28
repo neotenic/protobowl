@@ -712,15 +712,15 @@ class QuizPlayer
 		unless @id in @room.admins
 			@verb 'is now an administrator of this room'
 			@room.admins.push(@id) 
-			# @room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
-			@sync(true)
+			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+	
 
 	cincinnatus: ->
 		if @id in @room.admins
 			@verb 'is no longer an administrator of this room'
 			@room.admins = (id for id in @room.admins when id isnt @id)
-			# @room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
-			@sync(true)
+			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
+			
 
 	serialize: ->
 		data = {}
