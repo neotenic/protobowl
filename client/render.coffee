@@ -182,6 +182,9 @@ renderTimer = ->
 		$('.offline-badge').capQueue().fadeOut()
 	else
 		$('.offline-badge').capQueue().fadeIn()
+	
+	
+	$('.chatbtn').disable(room.mute and me.id[0] != '_')
 
 	if room.time_freeze
 		$('.buzzbtn').disable true
@@ -462,6 +465,7 @@ renderUsers = ->
 			attrs.interrupts = Sum(u.interrupts for u in attrs.members)
 			
 			attrs.name = team
+			attrs.id = 'team-' + escape(team).toLowerCase().replace(/[^a-z0-9]/g, '')
 
 			attrs
 			
@@ -481,13 +485,21 @@ renderUsers = ->
 		if !me_entity and room.users[me.id] in (user.members || [user])
 			me_entity = user
 
-	list.empty()
+	# list.empty()
 
+	list.find('tr').removeClass('refreshed')
 
 	create_row = (user, subordinate = false) ->
 		return unless user
-
-		row = $('<tr>').appendTo(list).data('entity', user)
+		existing = $(".row-#{user.id}")
+		if existing.length > 0
+			row = existing.first().empty()
+		else
+			row = $('<tr>')
+				.appendTo(list)
+				.addClass('row-' + user.id)
+		
+		row.addClass('refreshed').data('entity', user)
 		row.click -> 1
 		badge = $('<span>').addClass('badge pull-right').text get_score(user)
 		if room.users[me.id] in (user.members || [user])
@@ -567,7 +579,8 @@ renderUsers = ->
 		if me.leaderboard
 			for i in [thresh...entities.length]
 				create_row entities[i]
-		
+	
+	list.find('tr:not(.refreshed)').remove()
 	if ellipsis 
 		# if entities.length - render_count > 0
 		status = "(<b>#{entities.length - render_count}</b> hidden)"
