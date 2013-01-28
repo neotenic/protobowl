@@ -560,7 +560,7 @@ renderUsers = ->
 		render_count++
 
 	if entities.length > TOP_NUM
-		ellipsis = $('<tr>').addClass('ellipsis').appendTo list
+		ellipsis = $('<tr>').addClass('ellipsis refreshed').appendTo list
 
 
 	if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2 and !me.leaderboard
@@ -596,14 +596,16 @@ renderUsers = ->
 		if me.leaderboard
 			status = "(hide <b>#{entities.length - render_count}</b>)"
 		
-
-		
-		msg = $('<span>').css('position', 'relative')
-		.html(" <span class='badge badge-success'>#{room.active_count()}</span> active <span class='badge'>#{user_count}</span> users")
-		
+		msg = $('<span>')
+			.css('position', 'relative')
+			.html(" <span class='badge badge-success'>#{room.active_count()}</span> active <span class='badge'>#{user_count}</span> users")
 		
 		# col2 = $('<td colspan=4>').appendTo(ellipsis).append($('<span>').html(status))
-		col1 = $('<td colspan=4>').appendTo(ellipsis).append($('<span>').html(status)).append(' ').append(msg)
+		col1 = $('<td colspan=4>')
+			.appendTo(ellipsis)
+			.append($('<span>').html(status))
+			.append(' ')
+			.append(msg)
 
 	# cts = $('<span>').css('position', 'relative').html(" (<b>click</b> to show)").hide().appendTo ellipsis
 	# ellipsis.mouseenter ->
