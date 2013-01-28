@@ -190,7 +190,7 @@ renderTimer = ->
 		$('.offline-badge').capQueue().fadeIn()
 	
 	
-	$('.chatbtn').disable(room.mute and me.id[0] != '_')
+	$('.chatbtn').disable(room.mute and !me.authorized(2))
 
 	if room.time_freeze
 		$('.buzzbtn').disable true

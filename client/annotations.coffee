@@ -323,7 +323,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	line.data 'last_update', time
 
 
-verbAnnotation = ({user, verb, time}) ->
+verbAnnotation = ({user, verb, time, notify}) ->
 	# destroy the tooltip
 	setTimeout ->
 		$('.bundle .ruling').tooltip('destroy')
@@ -335,6 +335,9 @@ verbAnnotation = ({user, verb, time}) ->
 	line.addClass(verbclass)
 	
 	if user
+		if notify
+			line.prepend '<i class="icon-user"></i> '
+		
 		line.append userSpan(user).attr('title', formatTime(time))
 		line.append " " + verb.replace /!@([a-z0-9]+)/g, (match, user) ->
 			return userSpan(user).clone().wrap('<div>').parent().html()
@@ -361,7 +364,9 @@ verbAnnotation = ({user, verb, time}) ->
 		# Life is
 		# For Thine is the
 
-		# (3x) This is the way the world ends
+		# This is the way the world ends
+		# This is the way the world ends
+		# This is the way the world ends
 		# Not with a bang but a whimper.
 
 

@@ -32,13 +32,12 @@ setActionMode = (mode) ->
 	$(window).resize() #reset expandos
 
 $('.chatbtn').click ->
-
 	$('.chat_input').val('')
 	open_chat()
 
 
 open_chat = ->
-	return if room.mute and me.id[0] != '_'
+	return if room.mute and !room.authorized(2)
 
 	if actionMode != 'chat'
 		setActionMode 'chat'

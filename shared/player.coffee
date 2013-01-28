@@ -144,12 +144,19 @@ class QuizPlayer
 	nominate: ->
 		@touch()
 		return if @room.no_escalate
+		if @elect_embargo and @elect_embargo > @room.serverTime()
+			@notify 'can not run for reelection for another ' + Math.ceil((@elect_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
+			return 
+
 		if !@elect
 			# @verb "TERMPOEWJROSIJWER THIS PERSON IS A NARCONARC"
 			current_time = @room.serverTime()
 			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
 			@__elect_timeout = setTimeout =>
 				@verb 'got romneyed', true
+				
+				@elect_embargo = @room.serverTime() + 1000 * 60 * 4 # romney can't run until 2016, no?
+
 				@elect = null
 				@sync(true)
 			, 1000 * 60
@@ -187,15 +194,16 @@ class QuizPlayer
 	trigger_tribunal: (user) ->
 		@touch()
 		return unless user and @room?.users[user]
+		
 		if user is @id
-			@verb 'is somewhat of a masochist'
+			@notify 'is somewhat of a masochist'
 			return
 
 		is_admin = @id in @room.admins or @id[0] is '_'
 
 		if is_admin or @score() >= 0
 			if user in @room.admins or user[0] is '_'
-				@verb 'cannot fell a god with a mortal sword'
+				@notify 'cannot fell a god with a mortal sword'
 				return
 			# @verb 'created a ban tribunal for !@' + user
 			
@@ -246,6 +254,9 @@ class QuizPlayer
 			undecided = (witnesses.length - against.length - votes.length - 1)
 			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
 				@room.users[user].verb 'was not elected', true
+				
+				@room.users[user].elect_embargo = @room.serverTime() + 1000 * 60 * 12
+
 				@room.users[user].impeach()
 
 			@room.users[user].sync(true)
@@ -341,9 +352,12 @@ class QuizPlayer
 		# dont send any messages for actions done by ninjas
 		return if @id.toString().slice(0, 2) is '__'
 		@rate_limit() unless no_rate_limit
-		@room.emit 'log', {user: @id, verb: action, time: @room.serverTime() }
+		@room.emit 'log', { user: @id, verb: action, time: @room.serverTime() }
 
-	
+	notify: (action) ->
+		# this is basically verb, but directed back at only the user
+		@emit 'log', { user: @id, verb: action, time: @room.serverTime(), notify: true }
+
 	disconnect: ->
 		@touch()
 		if @sockets.length is 0
