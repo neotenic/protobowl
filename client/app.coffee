@@ -481,8 +481,33 @@ compute_sync_offset = ->
 	# console.log 'sec iter', below
 	$('#sync_offset').text(room.sync_offset.toFixed(1) + '±' + StDev(below).toFixed(1) + ' (' + sync_offsets.length + ')')
 
+
+page_birthday = Date.now()
+
 test_latency = ->
 	return unless connected()
+	
+	# this isn't particularly relevant to latency testing
+	# check if the user has been inactive for over an hour
+
+	idle_disconnect = 1000 * 60 * 60 # one hour
+
+	# incase for some reason the idle time doesn't update
+	if room.serverTime() - me.last_action > idle_disconnect and Date.now() - page_birthday > idle_disconnect
+		sock.disconnect()
+		bootbox.dialog "<h4>Disconnected for Inactivity</h4> <p>You have been disconnected from the server for an extended period of inactivity.</p> <p>Simply press <span class='label label-info'>Reconnect</span> if you wish to reestablish a connection to the server to resume from the previous state, or press <span class='label'>Cancel</span> if you would like to continue using protobowl offline.</p> ", [
+			{
+				label: "Cancel"
+			},
+			{
+				label: "Reconnect",
+				class: "btn-primary",
+				callback: ->
+					sock.socket.reconnect()
+					page_birthday = Date.now()
+			}
+		]
+
 	initialTime = +new Date
 	sock.emit 'echo', {}, (firstServerTime) ->
 		recieveTime = +new Date
@@ -514,7 +539,7 @@ setTimeout ->
 		delay = 3 * 60 * 1000 if me.muwave # longer delay when you dont like server reqs
 		setTimeout recurring_test, delay
 	recurring_test()
-, 2000
+, 8000
 
 
 cache_event = ->
