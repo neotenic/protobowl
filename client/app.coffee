@@ -232,6 +232,10 @@ class QuizPlayerSlave extends QuizPlayerClient
 		else
 			@__listeners[name](data)
 
+	authorized: (level = 1) ->
+		return true unless connected()
+		return super(level)
+
 	envelop_action: (name) ->
 		# master_action = this[name]
 		this[name] = (data, callback) ->
