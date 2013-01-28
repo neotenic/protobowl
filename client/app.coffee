@@ -600,7 +600,7 @@ if io?
 		$('#slow').slideDown() if !has_connected
 	, 1000 * 3
 
-	setTimeout initialize_offline, 1000
+	setTimeout initialize_offline, 3000
 else
 	offline_startup()
 

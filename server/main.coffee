@@ -578,16 +578,22 @@ process_queue = ->
 
 setInterval process_queue, 1000	
 
+perf_hist = (0 for i in [0..1000])
+
 check_performance = ->
 	t_now = Date.now()
 	delay = 100
 	setTimeout ->
 		t_delta = Math.max(0, Date.now() - t_now - delay)
+		
+		if t_delta < perf_hist.length
+			perf_hist[t_delta]++
+
 		if t_delta > 50
 			io.sockets.in("stalkermode-dash").emit 'slow', t_delta
 	, delay
 
-setInterval check_performance, 1000
+setInterval check_performance, 762
 
 reaped = {
 	name: "__reaped",
@@ -956,6 +962,8 @@ am_i_a_zombie = ->
 				setTimeout am_i_a_zombie, 1000 * 60 * 2
 	req.on 'error', (err) ->
 		console.log 'zombie checking error', err
+
+app.get '/perf-histogram', (req, res) -> res.end util.inspect(perf_hist)
 
 app.get '/401', (req, res) -> res.render 'auth.jade', {}
 

@@ -181,6 +181,9 @@ class QuizPlayer
 			# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
 			
 			@__tribunal_timeout = setTimeout =>
+				if @room.users[@tribunal?.initiator]
+					@room.users[@tribunal.initiator].tribunal_embargo = @room.serverTime() + 1000 * 60 * 4
+
 				@verb 'survived the tribunal', true
 				@tribunal = null
 				@sync(true)
@@ -194,7 +197,12 @@ class QuizPlayer
 	trigger_tribunal: (user) ->
 		@touch()
 		return unless user and @room?.users[user]
-		
+
+		if @tribunal_embargo and @tribunal_embargo > @room.serverTime()
+			@notify 'can not trigger an embargo for another ' + Math.ceil((@tribunal_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
+			return 
+
+
 		if user is @id
 			@notify 'is somewhat of a masochist'
 			return
@@ -341,6 +349,10 @@ class QuizPlayer
 
 			undecided = (witnesses.length - against.length - votes.length - 1)
 			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
+
+				if @room.users[@room.users[user]?.tribunal?.initiator]
+					@room.users[@room.users[user].tribunal.initiator].tribunal_embargo = @room.serverTime() + 1000 * 60 * 8
+
 				@room.users[user].verb 'was freed because of a hung jury', true
 				@room.users[user].tribunal = null
 				clearTimeout @room.users[user].__tribunal_timeout
@@ -621,8 +633,9 @@ class QuizPlayer
 		@room.semi = !!state
 		@room.sync(1)
 
-
 	set_type: (name) ->
+		# well, this is sort of different
+		# might not belong here
 		@touch()
 		return unless @authorized(3)
 		if name
@@ -632,7 +645,6 @@ class QuizPlayer
 			@room.sync(4)
 			@room.get_size (size) =>
 				@verb "changed the question type to #{name} (#{size} questions)"
-
 
 	set_escalate: (state) ->
 		# this should not ever be made user accessible for obvious reasons
