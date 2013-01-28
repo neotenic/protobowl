@@ -299,24 +299,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 				else
 					line.prepend '<i class="icon-user"></i> '
 			
-			dirty = (dirty_regex? and new RegExp(' (' + dirty_regex + ') ', 'i').exec(' ' + text.replace(/[^a-z ]/ig, '') + ' '))
-
-			substitutions = {'o': ['0'], 's': ['5', '$'], 't': ['7'], 'a': ['4']}
-			working = text
-			for letter, replacements of substitutions
-				for r in replacements
-					working = working.replace(new RegExp(RegExp.quote(r), 'g'), letter)
-			
-			# this allows us to ban creative permutations of things
-			for word in working.split(' ')
-				remaining = word.replace(new RegExp('(' + dirty_regex + ')', 'ig'), '')
-				continue if remaining is word
-				removed = word.length - remaining.length
-				# console.log remaining, word
-				if remaining.length is 0 or (remaining.length > 3 and removed > 3)
-					dirty = true
-					break
-			# text.replace(/[^a-z ]/ig, '')
+			dirty = check_profanity? text
 			
 			if dirty and room.name is 'lobby'
 				html = html.replace(/nigger/gi, '******')

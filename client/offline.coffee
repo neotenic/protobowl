@@ -1,6 +1,8 @@
 #= require ./lib/html5slider.js
 #= require ./lib/sha1.js
 #= require ./lib/chatbot.js
+#= require ./lib/unidecode.coffee
+#= require ./lib/profanity.coffee
 
 #= require ../shared/names.coffee
 #= require ../shared/removeDiacritics.js
