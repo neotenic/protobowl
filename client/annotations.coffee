@@ -50,15 +50,20 @@ userSpan = (user, global) ->
 		scope.append $('<span style="color: rgb(150, 150, 150)">').text(room.users[user]._suffix)
 		
 	
-
+	if room.users[user]?.banned and room.serverTime() < room.users[user]?.banned
+		scope.prepend "<i class='icon-ban-circle user-prefix'></i>"
+				
 	if user.slice(0, 2) == "__"
+
 		if /ninja/.test user
 			scope.prepend "<i class='icon-magic user-prefix'></i>"	
 		else
 			scope.prepend "<i class='icon-bullhorn user-prefix'></i>"
 	
 	else if room.admins and user in room.admins
+
 		scope.prepend "<i class='icon-star-empty user-prefix'></i>"	
+	
 	scope
 		
 addAnnotation = (el, name = sync?.name) ->
@@ -90,28 +95,28 @@ banButton = (id, line, degree = 4) ->
 	usercount = (1 for i, u of room.users when u.active()).length
 	is_admin = me.id[0] is '_' or me.id in room.admins
 	
-	if is_admin or (me.score() > 50 and usercount > 2) or degree <= 2
-		line.append $('<a>')
-			.attr('href', '#')
-			.attr('title', 'Initiate ban tribunal for this user')
-			.attr('rel', 'tooltip')
-			.addClass('label label-warning pull-right banhammer')
-			.append($("<i>").addClass('icon-legal'))
-			.click (e) ->
-				e.preventDefault()
-				me.trigger_tribunal id
-
-	if is_admin
+	if is_admin and me.id isnt id
 		line.append $('<a>')
 			.attr('href', '#')
 			.attr('title', 'Instantly ban this user for 10 minutes')
 			.attr('rel', 'tooltip')
-			.addClass('label label-important pull-right banhammer')
+			.attr('data-id', id)
+			.addClass('label label-important pull-right banhammer instaban')
 			.append($("<i>").addClass('icon-ban-circle'))
 			.click (e) ->
 				e.preventDefault()
 				me.ban_user id
-		
+	else if (me.score() > 50 and usercount > 2) or degree <= 2
+		line.append $('<a>')
+			.attr('href', '#')
+			.attr('title', 'Initiate ban tribunal for this user')
+			.attr('rel', 'tooltip')
+			.attr('data-id', id)
+			.addClass('label label-warning pull-right banhammer make-tribunal')
+			.append($("<i>").addClass('icon-legal'))
+			
+
+
 
 guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt}) ->
 	# TODO: make this less like chats
@@ -293,10 +298,16 @@ chatAnnotation = ({session, text, user, done, time}) ->
 					line.prepend '<i class="icon-group"></i> '
 				else
 					line.prepend '<i class="icon-user"></i> '
+			dirty = (dirty_regex? and new RegExp(dirty_regex, 'i').exec(' ' + text.replace(/[^a-z ]/ig, '') + ' '))
+			
+			if dirty and room.name is 'lobby'
+				html = html.replace(/nigger/gi, '******')
+				
 			line.find('.comment').html html
-
-			if user of room.users and text.length > 70 or (dirty_regex? and dirty_regex.exec(text.replace(/[^a-z ]/ig, '')))
+			
+			if user of room.users and text.length > 70 or dirty
 				banButton user, line, 2
+
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
 			line.addClass('buffer')
