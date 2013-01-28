@@ -586,8 +586,7 @@ check_performance = ->
 	setTimeout ->
 		t_delta = Math.max(0, Date.now() - t_now - delay)
 		
-		if t_delta < perf_hist.length
-			perf_hist[t_delta]++
+		perf_hist[Math.min(perf_hist.length - 1, t_delta)]++
 
 		if t_delta > 50
 			io.sockets.in("stalkermode-dash").emit 'slow', t_delta
