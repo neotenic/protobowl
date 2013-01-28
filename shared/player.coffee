@@ -47,8 +47,11 @@ class QuizPlayer
 		@__recent_actions = []
 		@__rate_limited = 0
 
-	# keep track of how long someone's been online
+	emit: (name, data) ->
+		@room.log 'QuizPlayer.emit(name, data) not implemented'
 
+	# keep track of how long someone's been online
+	# this function is called on user initiated actions
 	touch: (no_add_time) ->
 		@idle = false
 		current_time = @room.serverTime() 
@@ -63,10 +66,23 @@ class QuizPlayer
 
 	online: -> true
 
-	authorized: ->
-		# possibly support different authorization levels
-		return true unless @room.locked()
-		return @id[0] == '_' or @id in @room.admins or @elect?.term > @room.serverTime()
+	authorized: (level = 1) ->
+		# level zero is lowly peon
+		return true if level <= 0
+		# level 1 is changing settings
+		if level <= 1
+			# for when you're alone
+			return true if !@room.locked() and !@room.no_escalate
+			# for when you've been elected
+			return true if @elect?.term > @room.serverTime()
+		# level 2 allows banning and other stuff
+		if level <= 2
+			return true if @id in @room.admins
+		# level 3 gives you access to all those things
+		if level <= 3
+			return true if @id[0] == '_'
+		# well if all of those dont work 
+		return false
 
 
 	score: ->
@@ -78,12 +94,15 @@ class QuizPlayer
 		else
 			return @correct * CORRECT
 
-	ban: -> 1
-
-	emit: (name, data) ->
-		@room.log 'QuizPlayer.emit(name, data) not implemented'
+	reset_score: ->
+		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
+		@streak_record = @streak = @seen = @interrupts = @guesses = @correct = @early = 0
+		@history = []
+		@sync(true)
 
 	bookmark: ({ value, id }) -> 0 # not implemented
+
+	ban: -> 1
 
 	rate_limited: ->
 		witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
@@ -123,6 +142,8 @@ class QuizPlayer
 
 
 	nominate: ->
+		@touch()
+		return if @room.no_escalate
 		if !@elect
 			# @verb "TERMPOEWJROSIJWER THIS PERSON IS A NARCONARC"
 			current_time = @room.serverTime()
@@ -139,6 +160,7 @@ class QuizPlayer
 
 
 	create_tribunal: (initiator = false) ->
+		@touch()
 		if !@tribunal
 			current_time = @room.serverTime()
 			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
@@ -185,8 +207,11 @@ class QuizPlayer
 			@verb 'banned !@' + user + ' from /' + @room.name
 			@room.users[user]?.ban(1000 * 60 * 5)
 
+	# exercise your right and duty
+
 	vote_election: ({user, position}) ->
 		@touch()
+		return if @room.no_escalate
 		elect = @room.users[user]?.elect
 		return if !elect
 
@@ -255,16 +280,18 @@ class QuizPlayer
 			@impeach()
 		, @elect.term - @room.serverTime()
 
+	# also, that reference *did* actually make sense
+	# As in, inaugurations take place on the national mall.
+
 
 	impeach: ->
+		# I Did Not Have Sexual Relations With That Woman
 		@elect = null
 		clearTimeout @__elect_timeout
 		@sync(true)
 
-	# also, that reference *did* actually make sense
-	# As in, inaugurations take place on the national mall.
-
 	finish_term: ->
+		# A True Cincinnatus you are
 		return if !@elect?.term # this should be enough		
 		@verb 'has finished tenure in office', true
 		@impeach()
@@ -335,7 +362,6 @@ class QuizPlayer
 
 	buzz: (data, fn) -> 
 		@touch()
-
 		if @room.qid is data and @room.buzz(@id, fn)
 			@rate_limit()
 
@@ -412,21 +438,10 @@ class QuizPlayer
 			@room.unfreeze()
 		@room.sync()
 
-	set_idle: (val) ->  
-		# idle state doesn't matter and it's really a waste of packets
-		# so dont send it until its convenient, that is, the next update
-		@idle = !!val
 
-	set_lock: (val) ->
-		@lock = !!val
-		@touch()
-		@sync(true)
-
-	set_name: (name) ->
-		@touch()
-		if (name + '').trim().length > 0
-			@name = name.trim().slice(0, 140)
-			@sync(true)
+	##############################################################
+	# Here are the things which are global settings
+	##############################################################
 
 	set_distribution: (data) ->
 		@touch()
@@ -446,8 +461,6 @@ class QuizPlayer
 				@verb "enabled #{enabled.join(', ')} (#{size} questions)"
 			if disabled.length > 0
 				@verb "disabled #{disabled.join(', ')} (#{size} questions)"
-
-
 
 	set_difficulty: (data) ->
 		@touch()
@@ -484,114 +497,6 @@ class QuizPlayer
 		@room.max_buzz = data
 		@room.sync(1)
 
-	set_speed: (speed) ->
-		@touch()
-		return unless @authorized()
-		return if isNaN(speed)
-		return if speed <= 0
-		@room.set_speed speed
-		@room.sync(1)
-
-	set_duration: (duration) ->
-		@touch()
-		return unless @authorized()
-		return if isNaN(duration)
-		return if duration <= 0
-		@room.answer_duration = duration
-		@room.set_speed @room.rate
-		@room.sync(1)
-
-	set_prompt_duration: (duration) ->
-		@touch()
-		return unless @authorized()
-		return if isNaN(duration)
-		return if duration <= 0
-		@room.prompt_duration = duration
-		@room.sync(1)
-
-	set_attempt_duration: (duration) ->
-		@touch()
-		return unless @authorized()
-		return if isNaN(duration)
-		return if duration <= 0
-		@room.attempt_duration = duration
-		@room.sync(1)
-
-	set_interrupts: (state) ->
-		@touch()
-		return unless @authorized()
-		if state
-			@verb 'enabled interrupts'
-		else
-			@verb 'disabled interrupts'
-		@room.interrupts = !!state
-		@room.sync(1)
-
-	set_pause: (state) ->
-		@touch()
-		return unless @authorized()
-		@unpause()
-		if state
-			@verb 'enabled pausing questions'
-		else
-			@verb 'disabled pausing questions'
-		@room.no_pause = !state
-		@room.sync(1)
-
-	set_leaderboard: (state) ->
-		@touch()
-		@leaderboard = state
-		@sync()
-
-	set_semi: (state) ->
-		@touch()
-		return unless @authorized()
-		if state
-			@verb 'enabled semi-transparent readouts'
-		else
-			@verb 'disabled semi-transparent readouts'
-		@room.semi = !!state
-		@room.sync(1)
-
-	set_team: (name) ->
-		@touch()
-		if name
-			@verb "switched to team #{name}"
-		else
-			@verb "is playing as an individual"
-		@team = name
-		@sync(true)
-
-	set_type: (name) ->
-		@touch()
-		return unless @authorized()
-		
-		if name
-			@room.type = name
-			@room.category = ''
-			@room.difficulty = ''
-			@room.sync(4)
-			@room.get_size (size) =>
-				@verb "changed the question type to #{name} (#{size} questions)"
-
-	set_show_typing: (data) ->
-		@touch()
-		unless @muwave
-			@show_typing = !!data
-			@sync()
-
-	set_sounds: (data) ->
-		@touch()
-		@sounds = !!data
-		@sync()
-
-	set_movingwindow: (num) ->
-		@touch()
-		if num and !isNaN(num)
-			@movingwindow = num
-		else
-			@movingwindow = false
-		@sync()
 
 	set_skip: (data) ->
 		@touch()
@@ -613,21 +518,170 @@ class QuizPlayer
 			@verb 'disabled showing bonus questions'
 		@room.sync(1)
 
-	reset_score: ->
-		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
-		@streak_record = @streak = @seen = @interrupts = @guesses = @correct = @early = 0
-		@history = []
+	set_speed: (speed) ->
+		@touch()
+		return unless @authorized()
+		return if isNaN(speed)
+		return if speed <= 0
+		@room.set_speed speed
+		@room.sync(1)
+
+
+	##############################################################
+	# Here are global settings which aren't user-accessible
+	# Hence the higher authentication necessary to enable them
+	# because it's hard to disable them if some user were able
+	# to somehow manually trigger them
+	# If and when these settings gain user-accessible control
+	# then their authorization criterion should be reduced and
+	# moved away from this section.
+	##############################################################
+
+	set_duration: (duration) ->
+		@touch()
+		return unless @authorized(3)
+		return if isNaN(duration)
+		return if duration <= 0
+		@room.answer_duration = duration
+		@room.set_speed @room.rate
+		@room.sync(1)
+
+	set_prompt_duration: (duration) ->
+		@touch()
+		return unless @authorized(3)
+		return if isNaN(duration)
+		return if duration <= 0
+		@room.prompt_duration = duration
+		@room.sync(1)
+
+	set_attempt_duration: (duration) ->
+		@touch()
+		return unless @authorized(3)
+		return if isNaN(duration)
+		return if duration <= 0
+		@room.attempt_duration = duration
+		@room.sync(1)
+
+	set_interrupts: (state) ->
+		@touch()
+		return unless @authorized(3)
+		if state
+			@verb 'enabled interrupts'
+		else
+			@verb 'disabled interrupts'
+		@room.interrupts = !!state
+		@room.sync(1)
+
+	set_pause: (state) ->
+		@touch()
+		return unless @authorized(3)
+		@unpause()
+		if state
+			@verb 'enabled pausing questions'
+		else
+			@verb 'disabled pausing questions'
+		@room.no_pause = !state
+		@room.sync(1)
+
+
+	set_semi: (state) ->
+		@touch()
+		return unless @authorized(3)
+		if state
+			@verb 'enabled semi-transparent readouts'
+		else
+			@verb 'disabled semi-transparent readouts'
+		@room.semi = !!state
+		@room.sync(1)
+
+
+	set_type: (name) ->
+		@touch()
+		return unless @authorized(3)
+		if name
+			@room.type = name
+			@room.category = ''
+			@room.difficulty = ''
+			@room.sync(4)
+			@room.get_size (size) =>
+				@verb "changed the question type to #{name} (#{size} questions)"
+
+
+	set_escalate: (state) ->
+		# this should not ever be made user accessible for obvious reasons
+		@touch()
+		return unless @authorized(3)
+		@room.no_escalate = !state
+		@room.sync(1)
+
+	##############################################################
+	# Here are the user settings, no auth required
+	##############################################################
+
+
+	set_leaderboard: (state) ->
+		@touch()
+		@leaderboard = state
+		@sync()
+
+	set_team: (name) ->
+		@touch()
+		if name
+			@verb "switched to team #{name}"
+		else
+			@verb "is playing as an individual"
+		@team = name
 		@sync(true)
 
+	set_show_typing: (data) ->
+		@touch()
+		unless @muwave
+			@show_typing = !!data
+			@sync()
+
+	set_sounds: (data) ->
+		@touch()
+		@sounds = !!data
+		@sync()
+
+	set_movingwindow: (num) ->
+		@touch()
+		if num and !isNaN(num)
+			@movingwindow = num
+		else
+			@movingwindow = false
+		@sync()
+
+	set_idle: (val) ->  
+		# idle state doesn't matter and it's really a waste of packets
+		# so dont send it until its convenient, that is, the next update
+		@idle = !!val
+
+	set_lock: (val) ->
+		@lock = !!val
+		@touch()
+		@sync(true)
+
+	set_name: (name) ->
+		@touch()
+		if (name + '').trim().length > 0
+			@name = name.trim().slice(0, 140)
+			@sync(true)
+
+
+	# for when the db is wrong
 	report_question: ->
 		@verb "did something unimplemented (report question)"
 
+	# for when people think my algorith sucks
 	report_answer: ->
 		@verb "did something unimplemented (report answer)"
 
+	# well, that's kind of self explanatory
 	check_public: ->
 		@verb "did something unimplemented (check public)"
 
+	# underscore means it's not a publically accessibl emethod
 	_apotheify: ->
 		unless @id in @room.admins
 			@verb 'is now an administrator of this room'

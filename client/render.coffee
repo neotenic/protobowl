@@ -331,7 +331,7 @@ get_score = (user) ->
 render_lock = ->
 	lock_votes = 0
 	lock_electorate = 0
-	is_locked = false
+
 	for id, user of room.users when user.active()
 		if user.active()
 			lock_electorate++
@@ -339,10 +339,8 @@ render_lock = ->
 				lock_votes++
 	needed = Math.floor(lock_electorate / 2 + 1)
 
-	if lock_electorate <= 2
+	if lock_electorate <= 2 or room.no_escalate
 		$('.lockvote').slideUp()
-		is_locked = false
-
 		
 	else
 		$('.lockvote').slideDown()
@@ -352,12 +350,11 @@ render_lock = ->
 		else
 			$('.lockvote .electorate').text "#{lock_votes}/#{lock_electorate} votes"
 		
-		if lock_votes >= needed
-			is_locked = true
-	
 	$('.lockvote .status_icon').removeClass('icon-lock icon-unlock icon-flag')
 	
 	$('.request-access button').disable !!me.elect
+
+	$('.globalsettings').toggleClass('escalate', !room.no_escalate)
 
 	if room.locked()
 		if me.authorized()
@@ -368,7 +365,7 @@ render_lock = ->
 				.find('select, input')
 				.disable(false)
 					
-		else	
+		else		
 			$('.lockvote .status_icon').addClass('icon-lock')
 			$('.globalsettings').addClass('locked')
 			$('.globalsettings .checkbox, .globalsettings .expando')

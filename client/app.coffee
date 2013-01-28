@@ -105,6 +105,7 @@ online_startup = ->
 			room_name: room.name,
 			# old_socket: localStorage.old_socket,
 			muwave: 'muwave' of location.query,
+			custom_id: location.query.id,
 			version: 6
 		}
 

@@ -245,19 +245,22 @@ input[type=range] {
 		-moz-transition: opacity 0.5s;
 		-o-transition: opacity 0.5s;
 	}
-	.globalsettings.locked {
+	.globalsettings.locked.escalate {
 		.request-access {
 			height: 0;
 			top: -100px;
 			position: relative;
 			display: block;
+
 		}
+	}
+	.globalsettings.locked {
 		.checkbox, .expando, .custom-category {
 			opacity: 0.5;
 			pointer-events: none;
 		}
 	}
-	.globalsettings.locked:hover {
+	.globalsettings.escalate.locked:hover {
 		.request-access {
 			opacity: 1;
 		}

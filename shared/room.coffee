@@ -75,11 +75,15 @@ class QuizRoom
 		@semi = false
 		@no_pause = false
 
+		# @no_escalate = false
+
 	log: (message) -> @emit 'log', { verb: message }
 
 	# is this the only room.coffee function which gets called from
 	# the client side? that's rather odd design wise
 	locked: ->
+		return true if @no_escalate
+		
 		lock_electorate = 0
 		lock_votes = 0
 
