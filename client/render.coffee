@@ -64,6 +64,12 @@ renderParameters = ->
 		
 	render_categories()
 
+	if room.topic
+		$('.topic .thumbnail').html(room.topic)
+		$('.topic').slideDown()
+	else
+		$('.topic').slideUp()
+
 renderUpdate = ->
 	if room.category is 'custom'
 		render_categories()
@@ -487,20 +493,23 @@ renderUsers = ->
 
 	# list.empty()
 
-	list.find('tr').removeClass('refreshed')
+	list.find('.refreshed').removeClass('refreshed')
 
 	create_row = (user, subordinate = false) ->
 		return unless user
 		existing = $(".row-#{user.id}")
+		
 		if existing.length > 0
 			row = existing.first().empty()
 		else
-			row = $('<tr>')
-				.appendTo(list)
-				.addClass('row-' + user.id)
+			row = $('<tr>').addClass('row-' + user.id)
 		
-		row.addClass('refreshed').data('entity', user)
-		row.click -> 1
+		row
+			.addClass('refreshed')
+			.data('entity', user)
+			.appendTo(list)
+			.click( -> 1 ) # iOS devices dont allow things to be clickable unless an event handler is there
+
 		badge = $('<span>').addClass('badge pull-right').text get_score(user)
 		if room.users[me.id] in (user.members || [user])
 			badge.addClass('badge-info').attr('title', 'You')
@@ -679,20 +688,26 @@ createUserStatSheet = (user, full) ->
 			.append($("<td>").addClass("value").append(val))
 	
 	row	"Score", $('<span>').addClass('badge').text(get_score(user))
-	row	"Correct", user.correct
-	row "Streak", user.streak
-	if full
-		row "Record", user.streak_record
+	row	"Correct", "#{user.correct} <span style='color:gray'>/ #{user.guesses}</span>"
+	row "Streak",  "#{user.streak} <span style='color:gray'>/ #{user.streak_record}</span>"
+	# if full
+	# 	row "Record", user.streak_record
 	if room.interrupts
 		row "Interrupts", user.interrupts
-		row "Early", user.early  if full
-	if full or !room.interrupts
-		row "Incorrect", user.guesses - user.correct  
-	row "Guesses", user.guesses 
+		row "Early", user.early if full
+	# if full or !room.interrupts
+	# 	row "Incorrect", user.guesses - user.correct  
+	# row "Guesses", user.guesses 
 	row "Seen", user.seen
 	row "Team", user.team if user.team
 	row "ID", user.id.slice(0, 10) if full
-	row "Last Seen", formatRelativeTime(user.last_action) if full
+	if full
+		row "Last Seen", "<span style='font-size:x-small'>#{formatRelativeTime(user.last_action)}</span>"
+	
+	if full and user.id isnt me.id and me.authorized(2)
+		line = $('<span>')
+		banButton user.id, line, 1
+		row "Admin", line
 	return table
 
 createTeamStatSheet = (team, full) ->

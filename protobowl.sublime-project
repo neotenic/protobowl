@@ -5,5 +5,7 @@
 			"path": "."
 		}
 	],
-	"build_on_save": false
+	"settings": {
+		"build_on_save": false
+	}
 }

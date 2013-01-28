@@ -204,7 +204,9 @@ class QuizPlayer
 	ban_user: (user) ->
 		is_admin = @id in @room.admins or @id[0] is '_'
 		if is_admin
-			@verb 'banned !@' + user + ' from /' + @room.name
+			if !@room.users[user]?.banned or @room.serverTime() > @room.users[user]?.banned
+				# only wear the badge of accomplishment if you've done something new
+				@verb 'banned !@' + user + ' from /' + @room.name
 			@room.users[user]?.ban(1000 * 60 * 5)
 
 	# exercise your right and duty

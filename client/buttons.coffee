@@ -32,11 +32,14 @@ setActionMode = (mode) ->
 	$(window).resize() #reset expandos
 
 $('.chatbtn').click ->
+
 	$('.chat_input').val('')
 	open_chat()
 
 
 open_chat = ->
+	return if room.mute and me.id[0] != '_'
+
 	if actionMode != 'chat'
 		setActionMode 'chat'
 		# create a new input session id, which helps syncing work better
@@ -469,6 +472,8 @@ $('body').click (e) ->
 	$('.bundle .ruling').tooltip('destroy')
 
 	if $(e.target).parents('.leaderboard, .popover').length is 0
+		$('.leaderboard tbody tr').popover 'destroy'
+
 		$('.popover').remove()
 
 $('.singleuser').click ->
@@ -497,6 +502,14 @@ $('.username').live 'click', (e) ->
 	open_chat()
 	return
 
+
+$('.banhammer.make-tribunal').live 'click', (e) ->
+	e.preventDefault()
+	me.trigger_tribunal $(this).data('id')
+
+$('.banhammer.instaban').live 'click', (e) ->
+	e.preventDefault()
+	me.ban_user $(this).data('id')
 
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")

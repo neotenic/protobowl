@@ -40,10 +40,12 @@ html(lang="en")
 			mixin display_user(user)
 				li #{user.team || ''} 
 					if user.muwave
-						span.badge.badge-important MICROWAVE
+						span.badge.badge-info MICROWAVE
 					if user.room && user.room.admins && user.room.admins.indexOf(user.id) != -1
 						span.badge ADMIN
-					b #{user.name} 
+					if Date.now() < user.banned
+						span.badge.badge-important BANNED
+					b  #{user.name} 
 					if !('users' in user)
 						a(href="/stalkermode/user/#{user.room.name.replace(/\//g, '~')}/#{user.id}") &rarr; 
 					| (last seen 
@@ -60,9 +62,6 @@ html(lang="en")
 						if user.users || user.rooms
 							li
 								| users: #{user.users} rooms: #{user.rooms}
-						if Date.now() < user.banned
-							li
-								| BANNED
 			- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].online()})}
 			- function get_active(room){return get_online(room).filter(function(e){return room.users[e].active()})}
 			- function count_online(room) {return get_online(room).length}

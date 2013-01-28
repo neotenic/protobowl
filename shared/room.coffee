@@ -74,7 +74,7 @@ class QuizRoom
 		@interrupts = true
 		@semi = false
 		@no_pause = false
-
+		# @mute = false
 		# @no_escalate = false
 
 	log: (message) -> @emit 'log', { verb: message }
@@ -83,7 +83,7 @@ class QuizRoom
 	# the client side? that's rather odd design wise
 	locked: ->
 		return true if @no_escalate
-		
+
 		lock_electorate = 0
 		lock_votes = 0
 
@@ -455,7 +455,7 @@ class QuizRoom
 			data[attr] = this[attr]
 
 
-		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question"]
+		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic"]
 		user_blacklist = ["sockets", "room"]
 
 		if level.id # that's no number! that's a user!
@@ -489,6 +489,8 @@ class QuizRoom
 			data.generated_time = @generated_time
 
 		if level >= 4
+			data.topic = @topic if 'topic' of this
+			
 			data.distribution = @distribution
 			# async stuff
 			@get_parameters @type, @difficulty, (difficulties, categories) =>

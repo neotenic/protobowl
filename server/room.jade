@@ -6,7 +6,8 @@ html(lang="en", manifest="/offline.appcache")
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		meta(name="keywords", content="protobowl,quizbowl,application,reader,academic,multiplayer,practice")
 		meta(name="description", "A real time multiplayer quizbowl application")
-		
+		style
+			.navbar, .sidebar, .actionbar, #team_modal, .modal-footer, .modal-header { display: none; }
 		if development
 			link(rel='stylesheet', href='/protobowl.dev.css')
 		else
@@ -169,6 +170,9 @@ html(lang="en", manifest="/offline.appcache")
 							div.bar.primary-bar(style="width:0%")
 							div.bar.aux-bar.bar-info(style="width:0%")
 
+					div.span3.topic(style="display:none; margin: 0")
+						div.span3.thumbnail
+							| Yo Wassup Dawg
 
 					div.span3.leaderboard(style="display:none; margin: 0")
 						div.span3.thumbnail
@@ -343,6 +347,7 @@ html(lang="en", manifest="/offline.appcache")
 			var _gaq = _gaq || [];
 			_gaq.push(['_setAccount', 'UA-34434821-1']);
 			_gaq.push(['_trackPageview']);
+
 		script
 			setTimeout(function(){
 				if(document.getElementById('load_error')){

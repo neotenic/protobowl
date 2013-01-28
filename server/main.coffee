@@ -298,6 +298,7 @@ class SocketQuizPlayer extends QuizPlayer
 
 	ban: (duration = 1000 * 60 * 10) ->
 		if @room.serverTime() > @banned
+			# if you have not been banned already
 			@banned = @room.serverTime() + duration
 			@room._ip_ban = {} if !@room._ip_ban
 			for ip in @ip()
@@ -310,7 +311,7 @@ class SocketQuizPlayer extends QuizPlayer
 
 		if !destination # nothing, there is nothing
 			@banned = 0
-			return 
+			return  false
 
 		@emit 'redirect', '/' + destination
 		
