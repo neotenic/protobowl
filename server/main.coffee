@@ -317,7 +317,7 @@ class SocketQuizPlayer extends QuizPlayer
 		for sock in @sockets
 			io.sockets.socket(sock)?.disconnect()
 
-	ip_ban: (duration = 1000 * 60 * 15) ->
+	ip_ban: (duration = 1000 * 60 * 25) ->
 		@room._ip_ban = {} if !@room._ip_ban
 		for ip in @ip()
 			@room._ip_ban[ip] = { strikes: 0, banished: @room.serverTime() + duration }
