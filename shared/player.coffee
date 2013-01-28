@@ -371,23 +371,34 @@ class QuizPlayer
 
 	chat: ({text, done, session}) ->
 		@touch()
-		# at this moment private messages are enforced on the end of the recipient
-		# which is not a good thing because technically anyone can see the messages
-		# and they aren't actually private, but that's probably okay for now
-		
+		# obviously malformed things are bad
 		return if typeof text != 'string'
 
-		text = text.slice(0, 10000) # server enforced limit is 10x the client enforced limit
+		# discard chat messages if a radio silence is enforced
+		return if @room.mute and @id[0] isnt '_'
+ 		
+ 		# server enforced limit is 10x the client enforced limit
+ 		# is this a formulation of postel's rule?
+ 		# I don't know and I don't really care.
+		text = text.slice(0, 10000)
 
 		id = @id # ninjas should be able to choose their names
 		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
 		
 		packet = { text, session, user: id, done, time: @room.serverTime() }
 
+		# at this moment private messages are enforced on the end of the recipient
+		# which is not a good thing because technically anyone can see the messages
+		# and they aren't actually private, but that's probably okay for now
+		
+		
 		if done or text is '(typing)'
+			# tell errybody!
 			@rate_limit()
 			@room.emit 'chat', packet
 		else
+			# progressive chat updates (i.e. letter by letter)
+			# are saved for websocket based connections
 			for id, user of @room.users when user.show_typing and !user.muwave
 				user.emit 'chat', packet
 
@@ -613,6 +624,19 @@ class QuizPlayer
 		return unless @authorized(3)
 		@room.no_escalate = !state
 		@room.sync(1)
+
+	set_mute: (state) ->
+		@touch()
+		return unless @authorized(3)
+		@room.mute = !!state
+		@room.sync(1)
+
+	set_topic: (topic) ->
+		@touch()
+		return unless @authorized(3)
+		@room.topic = topic
+		@room.sync(4)
+
 
 	##############################################################
 	# Here are the user settings, no auth required
