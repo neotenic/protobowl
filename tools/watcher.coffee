@@ -202,12 +202,15 @@ watcher = (event, filename) ->
 
 
 updateCache()
-
+console.log 'watching shared'
 fs.watch "shared", watcher
+console.log 'watching client'
 fs.watch "client", watcher
+console.log 'watching less'
 fs.watch "client/less", watcher
+console.log 'watching lib'
 fs.watch "client/lib", watcher
-
+console.log 'watching jade'
 fs.watch "server/room.jade", ->
 	console.log 'forcing update'
 	do_update(true)

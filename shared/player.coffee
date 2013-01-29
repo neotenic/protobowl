@@ -200,14 +200,14 @@ class QuizPlayer
 		@touch()
 		return unless user and @room?.users[user]
 
-		if @tribunal_embargo and @tribunal_embargo > @room.serverTime()
-			@notify 'can not trigger an embargo for another ' + Math.ceil((@tribunal_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
-			return 
-
-
 		if user is @id
 			@notify 'is somewhat of a masochist'
 			return
+
+		if @tribunal_embargo and @tribunal_embargo > @room.serverTime()
+			@notify 'can not trigger a ban tribunal for another ' + Math.ceil((@tribunal_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
+			return 
+
 
 		is_admin = @id in @room.admins or @id[0] is '_'
 

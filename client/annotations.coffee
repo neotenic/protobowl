@@ -425,8 +425,8 @@ boxxyAnnotation = ({id, tribunal}) ->
 			line.append userSpan(initiator)
 			line.append ' has complained about your behavior and created a ban tribunal. '
 		else
-			line.text('Protobowl has detected high rates of activity coming from your computer.\n')
-		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room for 10 minutes)."
+			line.text('Protobowl has detected abnormally high activity from your computer.\n')
+		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room)."
 	else
 		line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
 		if initiator
@@ -435,20 +435,21 @@ boxxyAnnotation = ({id, tribunal}) ->
 			line.append userSpan(id)
 			line.append '. '
 		else
-			line.append 'Protobowl has detected high rates of activity coming from the user '
+			line.append 'Protobowl has detected abnormally high rates of activity from '
 			line.append userSpan(id)
 			line.append '. '
 
-		line.append 'If a majority of other active players vote to ban this user, the user will be sent to '
-		line.append "<a href='/b'>/b</a> and banned from this room. This message will be automatically dismissed in a minute. <br> "
+		# line.append 'The user may be sent to '
+		# line.append "<a href='/b'>/b</a> and banned from this room if a majority of users vote to do so. <br> "
+
+		line.append '<br>'
+
 		guilty = $('<button>').addClass('btn btn-small').text('Ban this user')
 		line.append guilty
 		line.append ' '
 		not_guilty = $('<button>').addClass('btn btn-small').text("Don't ban")
 		line.append not_guilty
-		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban "
-		line.append userSpan(id)
-		line.append ")"
+		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes needed)"
 		guilty.click ->
 			me.vote_tribunal {user: id, position: 'ban'}
 		not_guilty.click ->
