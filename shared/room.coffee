@@ -77,6 +77,8 @@ class QuizRoom
 		# @mute = false
 		# @no_escalate = false
 
+		# @acl = {}
+
 	log: (message) -> @emit 'log', { verb: message }
 
 	# is this the only room.coffee function which gets called from

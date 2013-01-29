@@ -250,9 +250,24 @@ chat = (text, done) ->
 
 			text = refs.join(' ')
 
+	first = false
+	
+	# use a cached input session data attribute to determine whether or not a 
+	# certain thing has been sent to the server before- this is useful for
+	# broadcasting to muwave participants
+
+	if $('.chat_input').data('cached_session') isnt $('.chat_input').data('input_session')
+		# set it there if it wasnt there before
+		$('.chat_input').data('cached_session', $('.chat_input').data('input_session'))
+		
+		# maybe it would be cleaner for this to have been set via an expression
+
+		first = true
+
 	me.chat {
 		text: text, 
 		session: $('.chat_input').data('input_session'), 
+		first,
 		done: done
 	}
 

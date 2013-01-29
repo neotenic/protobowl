@@ -75,12 +75,14 @@ class QuizPlayer
 			return true if !@room.locked() and !@room.no_escalate
 			# for when you've been elected
 			return true if @elect?.term > @room.serverTime()
+		
 		# level 2 allows banning and other stuff
 		if level <= 2
 			return true if @id in @room.admins
+		
 		# level 3 gives you access to all those things
-		if level <= 3
-			return true if @id[0] == '_'
+		return true if @id[0] == '_'
+
 		# well if all of those dont work 
 		return false
 
@@ -213,7 +215,7 @@ class QuizPlayer
 			if user in @room.admins or user[0] is '_'
 				@notify 'cannot fell a god with a mortal sword'
 				return
-			# @verb 'created a ban tribunal for !@' + user
+			@verb 'created a ban tribunal for !@' + user
 			
 			@room.users[user]?.create_tribunal @id
 
@@ -397,8 +399,9 @@ class QuizPlayer
 		@touch()
 		@room.guess @id, data
 
-	chat: ({text, done, session}) ->
+	chat: ({text, done, first, session}) ->
 		@touch()
+
 		# obviously malformed things are bad
 		return if typeof text != 'string'
 
@@ -413,7 +416,14 @@ class QuizPlayer
 		id = @id # ninjas should be able to choose their names
 		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
 		
-		packet = { text, session, user: id, done, time: @room.serverTime() }
+		packet = { text, session, user: id, first, done, time: @room.serverTime() }
+
+		# broadcast things to certain people
+		if first
+			# do a shallow object clone
+			alt_packet = {}
+			alt_packet[key] = val for key, val of packet
+			alt_packet.text = '(typing)'
 
 		# at this moment private messages are enforced on the end of the recipient
 		# which is not a good thing because technically anyone can see the messages
@@ -427,8 +437,12 @@ class QuizPlayer
 		else
 			# progressive chat updates (i.e. letter by letter)
 			# are saved for websocket based connections
-			for id, user of @room.users when user.show_typing and !user.muwave
-				user.emit 'chat', packet
+			for id, user of @room.users 
+				if user.show_typing and !user.muwave
+					user.emit 'chat', packet
+				else if first
+					user.emit 'chat', alt_packet
+
 
 	
 	skip: ->
@@ -717,7 +731,10 @@ class QuizPlayer
 	set_name: (name) ->
 		@touch()
 		if (name + '').trim().length > 0
-			@name = name.trim().slice(0, 140)
+			@name = name
+				.trim() # remove whitespace
+				.slice(0, 140) # limit to tweet size
+				.replace(/\u2606|\u2605|\u269d/g, '') # get rid of stars
 			@sync(true)
 
 
