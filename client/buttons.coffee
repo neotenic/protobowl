@@ -236,9 +236,8 @@ chat = (text, done) ->
 					reply = pick omeglebot_replies[reply]
 					protobot_write reply
 					# doesnt matter to set protobot last because you dont repeat afterwars anyway
-		
 
-	if text.slice(0, 1) is '@'
+	if text.slice(0, 1) is '@' and text.slice(0, 3) isnt '@$>'
 		refs = findReferences(text)
 		if refs[0] is '@'
 			text = '@' + refs[1]
@@ -273,11 +272,16 @@ chat = (text, done) ->
 
 $('.chat_input').keyup (e) ->
 	return if e.keyCode is 13
-	if $('.livechat')[0].checked and !me.muwave and $('.chat_input').val().slice(0, 1) != '@'
+	text = $('.chat_input').val()
+
+	if $('.livechat')[0].checked and !me.muwave and text.slice(0, 1) != '@'
 		$('.chat_input').data('sent_typing', '')
-		chat $('.chat_input').val(), false
+		chat text, false
 	else if $('.chat_input').data('sent_typing') isnt $('.chat_input').data('input_session')
-		chat '(typing)', false
+
+		# commands are considered special
+		if text.slice(0, 3) isnt '@$>'		
+			chat '(typing)', false
 		$('.chat_input').data 'sent_typing', $('.chat_input').data('input_session')
 
 
@@ -342,6 +346,11 @@ $('body').keydown (e) ->
 		$('.chatbtn').click()
 		$('.chat_input').focus()
 
+	if e.keyCode is 190 and e.shiftKey
+		e.preventDefault()
+		$('.chat_input').val("@$> ")
+		open_chat()
+
 	return if e.shiftKey or e.ctrlKey or e.metaKey
 
 	if e.keyCode is 32
@@ -390,7 +399,7 @@ $('body').keydown (e) ->
 			me.guess { text: '', done: true }
 		# console.log e.keyCode
 
-	# console.log e.keyCode
+	console.log e.keyCode
 
 
 $('.speed').change ->
@@ -524,6 +533,10 @@ $('.banhammer.make-tribunal').live 'click', (e) ->
 $('.banhammer.instaban').live 'click', (e) ->
 	e.preventDefault()
 	me.ban_user $(this).data('id')
+
+$('.banhammer.reprimand').live 'click', (e) ->
+	e.preventDefault()
+	me.reprimand $(this).data('id')
 
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")

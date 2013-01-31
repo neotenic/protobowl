@@ -114,6 +114,14 @@ banButton = (id, line, degree = 4) ->
 			.attr('data-id', id)
 			.addClass('label label-warning pull-right banhammer make-tribunal')
 			.append($("<i>").addClass('icon-legal'))
+
+	line.append $('<a>')
+		.attr('href', '#')
+		.attr('title', 'Reprimand this user')
+		.attr('rel', 'tooltip')
+		.attr('data-id', id)
+		.addClass('label label-info pull-right banhammer reprimand')
+		.append($('<i>').addClass('icon-thumbs-down'))
 			
 
 

@@ -75,7 +75,7 @@ class QuizRoom
 		@semi = false
 		@no_pause = false
 		# @mute = false
-		# @no_escalate = false
+		# @escalate = false
 
 		# @acl = {}
 
@@ -83,8 +83,9 @@ class QuizRoom
 
 	# is this the only room.coffee function which gets called from
 	# the client side? that's rather odd design wise
+	# this is objective locking, not subjective locking
 	locked: ->
-		return true if @no_escalate
+		return true if @escalate
 
 		lock_electorate = 0
 		lock_votes = 0
@@ -93,11 +94,15 @@ class QuizRoom
 			if user.active()
 				lock_electorate++
 				lock_votes++ if user.lock
+		
 		needed = Math.floor(lock_electorate / 2 + 1)
+		
 		if lock_electorate <= 2
 			return false
+		
 		if lock_votes >= needed
 			return true
+		
 		return false
 
 	admin_online: ->

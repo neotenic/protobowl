@@ -72,7 +72,7 @@ class QuizPlayer
 		# level 1 is changing settings
 		if level <= 1
 			# for when you're alone
-			return true if !@room.locked() and !@room.no_escalate
+			return true if !@room.locked() and !@room.escalate
 			# for when you've been elected
 			return true if @elect?.term > @room.serverTime()
 		
@@ -143,9 +143,13 @@ class QuizPlayer
 			@create_tribunal()
 
 
+	reprimand: (user) ->
+		@room.users[user]?.notify 'is being a douche'
+
+
 	nominate: ->
 		@touch()
-		return if @room.no_escalate
+		return if @room.escalate
 		if @elect_embargo and @elect_embargo > @room.serverTime()
 			@notify 'can not run for reelection for another ' + Math.ceil((@elect_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
 			return 
@@ -231,7 +235,7 @@ class QuizPlayer
 
 	vote_election: ({user, position}) ->
 		@touch()
-		return if @room.no_escalate
+		return if @room.escalate
 		elect = @room.users[user]?.elect
 		return if !elect
 
@@ -408,6 +412,20 @@ class QuizPlayer
 		# discard chat messages if a radio silence is enforced
 		return if @room.mute and @id[0] isnt '_'
  		
+		# Standing there alone,
+		# the ship is waiting.
+		# All systems are go.
+		# "Are you sure?"
+		# Control is not convinced,
+		# but the computer
+		# has the evidence.
+		# No need to abort.
+		# The countdown starts.
+
+		if text.substr(0, 3) == '@$>' and done
+			@notify 'the computer has the evidence'
+			return
+
  		# server enforced limit is 10x the client enforced limit
  		# is this a formulation of postel's rule?
  		# I don't know and I don't really care.
@@ -652,6 +670,7 @@ class QuizPlayer
 		# might not belong here
 		@touch()
 		return unless @authorized(3)
+		return @notify "error `#{state}` is not string" unless typeof name is 'string'
 		if name
 			@room.type = name
 			@room.category = ''
@@ -664,18 +683,21 @@ class QuizPlayer
 		# this should not ever be made user accessible for obvious reasons
 		@touch()
 		return unless @authorized(3)
-		@room.no_escalate = !state
+		return @notify "error `#{state}` is not number" unless typeof state is 'string'
+		@room.escalate = state
 		@room.sync(1)
 
 	set_mute: (state) ->
 		@touch()
 		return unless @authorized(3)
-		@room.mute = !!state
+		return @notify "error `#{state}` is not number" unless typeof state is 'string'
+		@room.mute = state
 		@room.sync(1)
 
 	set_topic: (topic) ->
 		@touch()
 		return unless @authorized(3)
+		return @notify "error `#{state}` is not string" unless typeof topic is 'string'
 		@room.topic = topic
 		@room.sync(4)
 
