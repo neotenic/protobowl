@@ -66,26 +66,20 @@ class QuizPlayer
 
 	online: -> true
 
-	authorized: (level = 1) ->
-		# level zero is lowly peon
-		return true if level <= 0
-		# level 1 is changing settings
-		if level <= 1
-			# for when you're alone
-			return true if !@room.locked() and !@room.escalate
-			# for when you've been elected
-			return true if @elect?.term > @room.serverTime()
-		
-		# level 2 allows banning and other stuff
-		if level <= 2
-			return true if @id in @room.admins
-		
-		# level 3 gives you access to all those things
-		return true if @id[0] == '_'
+	level: ->
+		# returns the user's largest authorization level
+		# you're a secret ninja
+		return 4 if @id[0] is '_'
+		# you're a moderator/admin, we should decide on a term for this
+		return 3 if @id in @room.admins
+		# an elected official
+		return 2 if @elect?.term > @room.serverTime()
+		# in a failed democracy
+		return 1 if !@room.locked()
+		# lowly peon
+		return 0
 
-		# well if all of those dont work 
-		return false
-
+	authorized: (level = 1) -> @level() >= level
 
 	score: ->
 		CORRECT = 10
@@ -149,7 +143,8 @@ class QuizPlayer
 
 	nominate: ->
 		@touch()
-		return if @room.escalate
+		return if @room.escalate > 2
+
 		if @elect_embargo and @elect_embargo > @room.serverTime()
 			@notify 'can not run for reelection for another ' + Math.ceil((@elect_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
 			return 
@@ -235,9 +230,9 @@ class QuizPlayer
 
 	vote_election: ({user, position}) ->
 		@touch()
-		return if @room.escalate
+		
 		elect = @room.users[user]?.elect
-		return if !elect
+		return unless elect
 
 		if !elect.term
 			{votes, against, witnesses} = elect
@@ -367,8 +362,9 @@ class QuizPlayer
 
 
 	verb: (action, no_rate_limit) -> 
-		# dont send any messages for actions done by ninjas
-		return if @id.toString().slice(0, 2) is '__'
+		# what happens to a ninja, stays to a ninja
+		return @notify(action) if @id.toString()[0] is '_'
+
 		@rate_limit() unless no_rate_limit
 		@room.emit 'log', { user: @id, verb: action, time: @room.serverTime() }
 
@@ -610,7 +606,7 @@ class QuizPlayer
 
 	set_duration: (duration) ->
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		return if isNaN(duration)
 		return if duration <= 0
 		@room.answer_duration = duration
@@ -619,7 +615,7 @@ class QuizPlayer
 
 	set_prompt_duration: (duration) ->
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		return if isNaN(duration)
 		return if duration <= 0
 		@room.prompt_duration = duration
@@ -627,7 +623,7 @@ class QuizPlayer
 
 	set_attempt_duration: (duration) ->
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		return if isNaN(duration)
 		return if duration <= 0
 		@room.attempt_duration = duration
@@ -635,7 +631,7 @@ class QuizPlayer
 
 	set_interrupts: (state) ->
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		if state
 			@verb 'enabled interrupts'
 		else
@@ -645,7 +641,7 @@ class QuizPlayer
 
 	set_pause: (state) ->
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		@unpause()
 		if state
 			@verb 'enabled pausing questions'
@@ -657,7 +653,7 @@ class QuizPlayer
 
 	set_semi: (state) ->
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		if state
 			@verb 'enabled semi-transparent readouts'
 		else
@@ -669,7 +665,7 @@ class QuizPlayer
 		# well, this is sort of different
 		# might not belong here
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		return @notify "error `#{state}` is not string" unless typeof name is 'string'
 		if name
 			@room.type = name
@@ -682,21 +678,24 @@ class QuizPlayer
 	set_escalate: (state) ->
 		# this should not ever be made user accessible for obvious reasons
 		@touch()
-		return unless @authorized(3)
-		return @notify "error `#{state}` is not number" unless typeof state is 'string'
+		return unless @authorized(4)
+		return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.escalate = state
-		@room.sync(1)
+		@room.sync(2)
+		# technically it's only a class 1 action, but requires a re-render of the 
+		# leaderboard.
 
 	set_mute: (state) ->
 		@touch()
-		return unless @authorized(3)
-		return @notify "error `#{state}` is not number" unless typeof state is 'string'
+		return unless @authorized(4)
+		return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.mute = state
 		@room.sync(1)
 
+
 	set_topic: (topic) ->
 		@touch()
-		return unless @authorized(3)
+		return unless @authorized(4)
 		return @notify "error `#{state}` is not string" unless typeof topic is 'string'
 		@room.topic = topic
 		@room.sync(4)
@@ -802,7 +801,7 @@ class QuizPlayer
 
 
 	sync: (broadcast = false) ->
-		if broadcast
+		if broadcast and @id[0] isnt '_'
 			@room.emit 'sync', @room.sync this
 		else
 			@emit 'sync', @room.sync this

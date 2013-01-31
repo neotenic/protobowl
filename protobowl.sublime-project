@@ -3,7 +3,7 @@
 	[
 		{
 			"path": ".",
-			"folder_exclude_patterns": ["build", "node_modules", "less"],
+			"folder_exclude_patterns": ["build", "node_modules"],
 			"file_exclude_patterns": ["protobowl.css", "protobowl.dev.css", "offline.js", "app.dev.js", "app.js"]
 		}
 	],

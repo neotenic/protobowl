@@ -74,8 +74,8 @@ class QuizRoom
 		@interrupts = true
 		@semi = false
 		@no_pause = false
-		# @mute = false
-		# @escalate = false
+		# @mute = 0
+		# @escalate = 0
 
 		# @acl = {}
 
@@ -85,7 +85,7 @@ class QuizRoom
 	# the client side? that's rather odd design wise
 	# this is objective locking, not subjective locking
 	locked: ->
-		return true if @escalate
+		return true if @escalate and @escalate > 2
 
 		lock_electorate = 0
 		lock_votes = 0

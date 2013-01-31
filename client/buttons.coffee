@@ -37,7 +37,7 @@ $('.chatbtn').click ->
 
 
 open_chat = ->
-	return if room.mute and !room.authorized(2)
+	return if room.mute and !room.authorized(room.mute)
 
 	if actionMode != 'chat'
 		setActionMode 'chat'

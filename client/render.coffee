@@ -348,7 +348,7 @@ render_lock = ->
 				lock_votes++
 	needed = Math.floor(lock_electorate / 2 + 1)
 
-	if lock_electorate <= 2 or room.no_escalate
+	if lock_electorate <= 2 or room.escalate > 2
 		$('.lockvote').slideUp()
 		
 	else
@@ -363,7 +363,7 @@ render_lock = ->
 	
 	$('.request-access button').disable !!me.elect
 
-	$('.globalsettings').toggleClass('escalate', !room.no_escalate)
+	$('.globalsettings').toggleClass 'escalate', !(room.escalate > 2)
 
 	if room.locked()
 		if me.authorized()
