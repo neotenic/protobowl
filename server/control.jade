@@ -66,6 +66,21 @@ html(lang="en")
 		
 				br
 
+				form(action="/stalkermode/anarchy/#{name.replace(/\//g, '~')}", method="post")
+					button.btn(type="submit") Terminate Admins
+					|  
+					| Terminate them with extreme prejudice
+
+				blockquote
+					| Anarchy — that I run! / 
+					| It's Dr. Horrible's turn... /
+					| You people all have to learn / 
+					| This world is going to burn...
+					small Dr. Horrible, Slipping
+
+		
+				br
+
 				form(action="/stalkermode/delete_room/#{name.replace(/\//g, '~')}", method="post")
 					button.btn(type="submit") Delete Room
 					| 

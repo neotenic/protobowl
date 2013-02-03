@@ -406,7 +406,15 @@ class QuizPlayer
 
 
 	command: (name, args) ->
-		@notify "the computer has the evidence `#{name}` for `#{args}`"
+		if name is 'auth'
+			if args[0].trim().toLowerCase() is @_password?()
+				@_apotheify()
+			else
+				@notify "has an invalid password"
+		else
+			@notify "no command named `#{name}` exists"
+
+		# @notify "the computer has the evidence `#{name}` for `#{args}`"
 
 	chat: ({text, done, first, session}) ->
 		@touch()

@@ -226,7 +226,6 @@ class SocketQuizRoom extends QuizRoom
 			
 		@emit 'rename_user', {old_id: id, new_id: new_id}
 		@sync(1)
-		
 
 	deserialize: (data) ->
 		blacklist = ['users', 'attempt', 'generating_question']
@@ -333,6 +332,8 @@ class SocketQuizPlayer extends QuizPlayer
 			addr = (forward_ip || real_ip)
 			ips.push addr if sock and addr
 		return ips
+
+	_password: -> remote?.passcode(this)
 
 	update: -> io.sockets.emit 'force_application_update', Date.now()
 
@@ -771,6 +772,12 @@ app.post '/stalkermode/the-scene-is-safe', (req, res) ->
 
 app.post '/stalkermode/clear_bans/:room', (req, res) ->
 	delete rooms?[req.params.room.replace(/~/g, '/')]?._ip_bans
+	res.redirect "/stalkermode/room/#{req.params.room}"
+
+app.post '/stalkermode/anarchy/:room', (req, res) ->
+	room = rooms?[req.params.room.replace(/~/g, '/')]
+	room?.admins = []
+	room?.sync(1)
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
 app.post '/stalkermode/delete_room/:room', (req, res) ->

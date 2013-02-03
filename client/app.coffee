@@ -232,7 +232,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 		else
 			@__listeners[name](data)
 
-	authorized: (level = 1) ->
+	authorized: (level) ->
 		return true unless connected()
 		return super(level)
 

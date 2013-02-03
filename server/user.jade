@@ -59,6 +59,9 @@ html(lang="en")
 				p
 					| IP Addresses: <code> #{JSON.stringify(ips)} </code>
 
+				p
+					| Authorization Code: <code> #{user._password()} </code>
+
 				pre= text
 
 				hr
