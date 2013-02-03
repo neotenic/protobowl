@@ -521,14 +521,14 @@ congressionalAnnotation = ({id, elect}) ->
 		
 		return if me.id not in witnesses and me.id[0] != '_'
 
-		votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - votes.length + against.length
+		votes_needed = Math.floor((witnesses.length)/2 + 1) - votes.length + against.length
 		if id is me.id # who would vote for their own banning?
 			# line.html("You are a contestant in Protobowl's <i>Who Wants to be an Admin (for 60 seconds)</i>.\n")
-			line.append " <strong>#{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to pass your referendum)"
+			line.append " <strong>#{votes.length} of #{witnesses.length} users have voted</strong> (#{votes_needed} more votes are needed)"
 		else
 			line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trustworthy? ')
 			
-			line.append "A user has requested power to change settings. Grant access if you believe the motives of "
+			line.append "Grant control over the room settings if you believe the motives of "
 			line.append userSpan(id)
 			line.append " are pure. Elected terms are 1 minute. <br>"
 			# line.append "will be granted one minute of control over the settings. You have one minute to cast your vote. <br> "
@@ -537,7 +537,7 @@ congressionalAnnotation = ({id, elect}) ->
 			line.append ' '
 			not_worthy = $('<button>').addClass('btn btn-small').text("Deny")
 			line.append not_worthy
-			line.append " <strong> #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes needed)"
+			line.append " <strong> #{votes.length} of #{witnesses.length} users have voted</strong> (#{votes_needed} more votes needed)"
 			worthy.click ->
 				me.vote_election {user: id, position: 'elect'}
 			not_worthy.click ->

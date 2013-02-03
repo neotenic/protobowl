@@ -75,7 +75,61 @@ class QuizRoom
 		@semi = false
 		@no_pause = false
 		# @mute = 0
-		# @escalate = 0
+		
+		# Okay, so this feature actually needs a bit of 
+		# explaining because it's actually a bit convoluted
+		# the reason it's called escalate is kind of a weird
+		# product of having a different original meaning which
+		# has kind of transmuted into something more complicated
+		# in large part because protobowl actions have a
+		# somewhat lame system of access control lists,
+		# and it used to be a simple binary value - yes
+		# can a user escalate, and no- a user can't escalate
+		# where the latter necessarily entails that normal
+		# users can't run for election, and as a matter of
+		# basic fairness, users in rooms small enough not
+		# to meet the lock criterion also can not change
+		# the settings. But, this sort of convoluted set of
+		# meanings had to go because it lacked the degree
+		# of control that is afforded by having an actual
+		# access control paradigm.
+
+		# In this new sense, the escalation parameter 
+		# which is defined below means the minimum security
+		# level which the user needs to have in order to 
+		# change the settings.
+
+		# It basically starts at level 1 because level 0
+		# is kind of absurd, in its most logical form it
+		# means that the settings can not be locked. As
+		# such it means that the user can not escalate
+		# from this level, but there's no way for the 
+		# escalation button to even show up under this
+		# level, so that doesn't really mean anything.
+
+		# Level 1 means that people can change the settings
+		# if they're in a situation whereby the settings
+		# are a) not locked or b) the room is small 
+		# enough that it fails to reach the locking criterion
+		# Users are allowed to escalate, because users can't
+		# always be alone.
+
+		# Level 2 means that only elected people can
+		# change the settings. That means, even if 
+		# you're alone in a room, you can't change the
+		# settings. Thats kind of absurd.
+
+		# Level 3 means that only admins and secret ninjas
+		# can change settings, this is what escalate used
+		# to do when it was a binary value
+
+		# Level 4 means only secret ninjas can change settinsg
+		# which is the reason this new complicated ACL system
+		# exists
+
+		@escalate = 1
+
+
 
 		# @acl = {}
 
@@ -85,7 +139,7 @@ class QuizRoom
 	# the client side? that's rather odd design wise
 	# this is objective locking, not subjective locking
 	locked: ->
-		return true if @escalate and @escalate > 2
+		return true if @escalate and @escalate > 1
 
 		lock_electorate = 0
 		lock_votes = 0

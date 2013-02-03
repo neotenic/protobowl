@@ -79,7 +79,7 @@ class QuizPlayer
 		# lowly peon
 		return 0
 
-	authorized: (level = 1) -> @level() >= level
+	authorized: (level = @room.escalate) -> @level() >= level
 
 	score: ->
 		CORRECT = 10
@@ -163,7 +163,13 @@ class QuizPlayer
 			, 1000 * 60
 
 			@elect = { votes: [], against: [], time: current_time, witnesses }
-			@sync(true)
+			# @sync(true)
+
+			@vote_election { user: @id, position: 'elect' }
+
+			# vote fer yerself
+
+
 
 
 
@@ -193,7 +199,6 @@ class QuizPlayer
 			@tribunal = { votes: [], against: [], time: current_time, witnesses, term: 0, initiator }
 			
 			@sync(true)
-
 
 	trigger_tribunal: (user) ->
 		@touch()
@@ -247,7 +252,7 @@ class QuizPlayer
 			else
 				@verb 'voted from a diebold machine'
 
-			if votes.length > (witnesses.length - 1) / 2 + against.length
+			if votes.length > (witnesses.length) / 2 + against.length
 				# @room.users[user].verb 'gots the blanc haus', true
 				
 				term_length = 1000 * 60
@@ -260,8 +265,8 @@ class QuizPlayer
 				# let's go to the mall!
 				@room.users[user].inaugurate()
 
-			undecided = (witnesses.length - against.length - votes.length - 1)
-			if votes.length + undecided <= (witnesses.length - 1) / 2 + against.length
+			undecided = (witnesses.length - against.length - votes.length)
+			if votes.length + undecided <= (witnesses.length) / 2 + against.length
 				@room.users[user].verb 'was not elected', true
 				
 				@room.users[user].elect_embargo = @room.serverTime() + 1000 * 60 * 12
@@ -277,7 +282,7 @@ class QuizPlayer
 			if position is 'impeach'
 				impeach.push @id
 				# @verb 'hates bill clinton'
-				votes_needed = Math.floor((witnesses.length - 1)/2 + 1) - impeach.length
+				votes_needed = Math.floor((witnesses.length)/2 + 1) - impeach.length
 				if votes_needed <= 0
 					@room.users[user].verb 'was impeached from office', true
 					@room.users[user].impeach()
@@ -399,6 +404,10 @@ class QuizPlayer
 		@touch()
 		@room.guess @id, data
 
+
+	command: (name, args) ->
+		@notify "the computer has the evidence `#{name}` for `#{args}`"
+
 	chat: ({text, done, first, session}) ->
 		@touch()
 
@@ -419,7 +428,8 @@ class QuizPlayer
 		# The countdown starts.
 
 		if text.substr(0, 3) == '@$>' and done
-			@notify 'the computer has the evidence'
+			[name, args...] = text.substr(3).trim().split(' ')
+			@command name, args
 			return
 
  		# server enforced limit is 10x the client enforced limit

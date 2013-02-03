@@ -729,6 +729,7 @@ app.get '/stalkermode/logout', (req, res) ->
 
 
 app.get '/stalkermode/user/:room/:user', (req, res) ->
+	req.params.room = req.params.room.replace(/~/g, '/')
 	u = rooms?[req.params.room]?.users?[req.params.user]
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['room'] and typeof v isnt 'function'
