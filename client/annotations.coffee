@@ -16,6 +16,29 @@ createAlert = (bundle, title, message) ->
 			$(this).remove()
 	, 5000
 	
+		
+addAnnotation = (el, name = sync?.name) ->
+	# destroy the tooltip
+	$('.bundle .ruling').tooltip('destroy')
+	current_bundle = $('.room-' + (name || '').replace(/[^a-z0-9]/g, ''))
+	if current_bundle.length is 0
+		current_bundle = $('#history .bundle.active')
+	current_block = current_bundle.eq(0).find('.annotations')
+	if current_block.length is 0
+		current_block = $('#history .annotations').eq(0)
+	el.css('display', 'none').prependTo current_block
+	el.slideDown()
+	return el
+
+addImportant = (el) ->
+	$('.bundle .ruling').tooltip('destroy')
+	if $('#history .bundle.active .sticky').length isnt 0
+		el.css('display', 'none').prependTo $('#history .bundle.active .sticky')
+	else
+		el.css('display', 'none').prependTo $('#history .sticky:first')
+	el.slideDown()
+	return el
+
 
 userSpan = (user, global) ->
 	prefix = ''
@@ -65,28 +88,44 @@ userSpan = (user, global) ->
 		scope.prepend "<i class='icon-star-empty user-prefix'></i>"	
 	
 	scope
-		
-addAnnotation = (el, name = sync?.name) ->
-	# destroy the tooltip
-	$('.bundle .ruling').tooltip('destroy')
-	current_bundle = $('.room-' + (name || '').replace(/[^a-z0-9]/g, ''))
-	if current_bundle.length is 0
-		current_bundle = $('#history .bundle.active')
-	current_block = current_bundle.eq(0).find('.annotations')
-	if current_block.length is 0
-		current_block = $('#history .annotations').eq(0)
-	el.css('display', 'none').prependTo current_block
-	el.slideDown()
-	return el
 
-addImportant = (el) ->
-	$('.bundle .ruling').tooltip('destroy')
-	if $('#history .bundle.active .sticky').length isnt 0
-		el.css('display', 'none').prependTo $('#history .bundle.active .sticky')
+render_admin_panel = ->
+	# if you can't reprimand people, then, don't show it
+	if me.reprimand_embargo	> room.serverTime()
+		$('.banham').fadeOut()
 	else
-		el.css('display', 'none').prependTo $('#history .sticky:first')
-	el.slideDown()
-	return el
+		$('.banham').fadeIn()
+
+
+
+admin_panel = (id, full = false) -> 
+	# the sequel to banButton, inspired by userSpan
+
+	new_el = $("<span>").addClass("banham banham-#{id}")
+
+	access = [] # R, T, I = reprimand, tribunal, instaban
+	if full
+		access = ['r', 't', 'i']
+
+	access.push 'r'
+	if me.authorized(3)
+		access.push 'i'
+	else if (me.score() > 50 and usercount > 2) and !room.admin_online()
+		access.push 't'
+
+
+	scope = $(".banham-#{id}").add(new_el).html('')
+
+	scope.append $('<a>')
+		.attr('href', '#')
+		.attr('title', 'Reprimand this user')
+		.attr('rel', 'tooltip')
+		.attr('data-id', id)
+		.addClass('label label-info pull-right banhammer reprimand')
+		.append($('<i>').addClass('icon-thumbs-down'))
+
+	return new_el
+
 
 
 banButton = (id, line, degree = 4) ->
@@ -196,7 +235,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			ruling.addClass('label-success').text('Correct')
 
 			if room.users[user]?.streak > 3 and room.active_count() > 2
-				banButton user, line
+				line.append admin_panel(user)
 
 			if user is me.id # if the person who got it right was me
 				old_score = me.score()
@@ -219,7 +258,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
 			if user of room.users and room.users[user].score() < 0
-				banButton user, line
+				line.append admin_panel(user)
 			
 			if user is me.id and me.id of room.users
 				old_score = me.score()
@@ -315,7 +354,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			line.find('.comment').html html
 			
 			if user of room.users and text.length > 70 or dirty
-				banButton user, line, 2
+				line.append admin_panel(user)
 
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
@@ -355,7 +394,8 @@ verbAnnotation = ({user, verb, time, notify}) ->
 
 	# if /paused the/.test(verb)
 	if /paused the/.test(verb) or /skipped/.test(verb) or /category/.test(verb) or /difficulty/.test(verb) or /ban tribunal/.test(verb) or me.id[0] == '_'
-		banButton user, line
+		# banButton user, line
+		line.append admin_panel(user)
 
 	left = $(".bundle.active .verb-#{user}-left-the")
 	if verb.split(' ')[0] is 'joined' and left.length > 0
@@ -472,6 +512,13 @@ boxxyAnnotation = ({id, tribunal}) ->
 			$(this).remove()
 		addImportant line
 
+# ERMAGERD HOUSE OF CARDS IS SOOO GOOODDDD
+
+# Power is a lot like real estate
+# It's all about location, location, location
+# The closer you are to the source, the higher your property value
+# Centuries from now, when people watch this footage
+# who will they see smiling at the edge of this frame?
 
 congressionalAnnotation = ({id, elect}) ->
 	line = $('<div>').addClass('alert alert-info').addClass('elect-' + id)

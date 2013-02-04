@@ -708,7 +708,7 @@ createUserStatSheet = (user, full) ->
 	
 	if full and user.id isnt me.id and me.authorized(2)
 		line = $('<span>')
-		banButton user.id, line, 1
+		line.append admin_panel(user)
 		row "Admin", line
 	return table
 

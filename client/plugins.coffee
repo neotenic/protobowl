@@ -184,6 +184,12 @@ do ->
 	now = new Date()
 	if now.getDate() in [24, 25] and now.getMonth() is 11
 		$('body').addClass 'christmas'
+	
+	# superbowl is first sunday of february
+	if now.getMonth() is 1 and now.getDay() is 0 and now.getDate() <= 7
+		$('a.brand strong').text('Super')
+
+
 
 unless console?
 	window.console = {

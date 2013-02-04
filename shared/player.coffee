@@ -138,7 +138,18 @@ class QuizPlayer
 
 
 	reprimand: (user) ->
-		@room.users[user]?.notify 'is being a douche'
+		if @reprimand_embargo > @room.serverTime()
+			@notify "can not reprimand anyone for #{Math.ceil((@room.serverTime() - @reprimand_embargo)/1000)} seconds"
+			return
+		# lets limit the amount of spanks people can give
+		unless @authorized(3)
+			# unless you're a registered sex offender- erm. i mean moderator
+			@reprimand_embargo = @room.serverTime() + 1000 * 60
+			# propagate the bans you can not make
+			@sync()
+		# todo, make this less crude
+		@room.users[user]?.notify "'s behavior has been reprimanded by !@#{@id}"
+
 
 
 	nominate: ->
@@ -733,7 +744,7 @@ class QuizPlayer
 		@touch()
 		if name
 			@verb "switched to team #{name}"
-		else
+		else if name isnt @name
 			@verb "is playing as an individual"
 		@team = name
 		@sync(true)
