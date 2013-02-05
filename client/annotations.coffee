@@ -89,83 +89,130 @@ userSpan = (user, global) ->
 	
 	scope
 
-render_admin_panel = ->
+render_admin_panel = (el)->
 	# if you can't reprimand people, then, don't show it
-	if me.reprimand_embargo	> room.serverTime() or !me.authorized('elected')
-		$('.banham').fadeOut()
+	# if me.reprimand_embargo	> room.serverTime() or !me.authorized('elected')
+	# 	$('.banham .reprimand').hide()
+	# else
+	# 	$('.banham .reprimand').show()
+		
+	# # go through each one
+	# $('.banham').each ->
+	full = el.hasClass('full')
+	id = el.data('uid')
+	
+	# secret ninjas can not be in trouble
+	return if id[0] is '_'
+
+	if id is me.id
+		el.append $('<span>')
+		.attr('title', 'This post can be used against you')
+		.attr('rel', 'tooltip')
+		# .addClass('label label-info pull-right banhammer reprimand')
+		.addClass('pull-right banhammer')
+		.append($('<i>').addClass('icon-legal'))
+
 	else
-		$('.banham').fadeIn()
-		
-	# go through each one
-	$('.banham').each ->
-		full = $(this).hasClass('full')
-		
+		el.append $('<a>')
+		.attr('href', '#')
+		.attr('title', 'Reprimand this user')
+		.attr('rel', 'tooltip')
+		.attr('data-id', id)
+		.addClass('label label-info pull-right banhammer reprimand')
+		.append($('<i>').addClass('icon-thumbs-down'))
+
+	if full
+		el.append $('<a>')
+		.attr('href', '#')
+		.attr('title', 'Initiate ban tribunal for this user')
+		.attr('rel', 'tooltip')
+		.attr('data-id', id)
+		.addClass('label label-warning pull-right banhammer make-tribunal')
+		.append($("<i>").addClass('icon-legal'))
+
+	if full
+		el.append $('<a>')
+		.attr('href', '#')
+		.attr('title', 'Instantly ban this user for 10 minutes')
+		.attr('rel', 'tooltip')
+		.attr('data-id', id)
+		.addClass('label label-important pull-right banhammer instaban')
+		.append($("<i>").addClass('icon-ban-circle'))
+			
+
+
+			
 
 
 admin_panel = (id, full = false) -> 
 	# the sequel to banButton, inspired by userSpan
 
-	new_el = $("<span>").addClass("banham banham-#{id}")
+	new_el = $("<span>")
+		.addClass("banham banham-#{id}")
+		.attr('data-uid', id)
+
 	new_el.addClass('full') if full
+	render_admin_panel new_el
+	# access = [] # R, T, I = reprimand, tribunal, instaban
+	# if full
+	# 	access = ['r', 't', 'i']
 
-	access = [] # R, T, I = reprimand, tribunal, instaban
-	if full
-		access = ['r', 't', 'i']
-
-	access.push 'r'
-	if me.authorized('moderator')
-		access.push 'i'
-	else if (me.score() > 50 and usercount > 2) and !room.admin_online()
-		access.push 't'
+	# access.push 'r'
+	# if me.authorized('moderator')
+	# 	access.push 'i'
+	# else if (me.score() > 50 and room.active_count() > 2) and !room.admin_online()
+	# 	access.push 't'
 
 
-	scope = $(".banham-#{id}").add(new_el).html('')
+	# scope = $(".banham-#{id}").add(new_el).html('')
 
-	scope.append $('<a>')
-		.attr('href', '#')
-		.attr('title', 'Reprimand this user')
-		.attr('rel', 'tooltip')
-		.attr('data-id', id)
-		.addClass('label label-info pull-right banhammer reprimand')
-		.append($('<i>').addClass('icon-thumbs-down'))
-
+	# scope.append $('<a>')
+	# 	.attr('href', '#')
+	# 	.attr('title', 'Reprimand this user')
+	# 	.attr('rel', 'tooltip')
+	# 	.attr('data-id', id)
+	# 	.addClass('label label-info pull-right banhammer reprimand')
+	# 	.append($('<i>').addClass('icon-thumbs-down'))
+	# setTimeout ->
+	# 	render_admin_panel()
+	# , 100
 	return new_el
 
 
 
-banButton = (id, line, degree = 4) ->
-	# return if id is me.id # stop hitting yourself
+# banButton = (id, line, degree = 4) ->
+# 	# return if id is me.id # stop hitting yourself
 
-	usercount = (1 for i, u of room.users when u.active()).length
-	is_admin = me.id[0] is '_' or me.id in room.admins
+# 	usercount = (1 for i, u of room.users when u.active()).length
+# 	is_admin = me.id[0] is '_' or me.id in room.admins
 	
-	if is_admin and me.id isnt id
-		line.append $('<a>')
-			.attr('href', '#')
-			.attr('title', 'Instantly ban this user for 10 minutes')
-			.attr('rel', 'tooltip')
-			.attr('data-id', id)
-			.addClass('label label-important pull-right banhammer instaban')
-			.append($("<i>").addClass('icon-ban-circle'))
-			.click (e) ->
-				e.preventDefault()
-				me.ban_user id
-	else if ((me.score() > 50 and usercount > 2) or degree <= 2 and !room.admin_online()) or id is me.id # only show it if no admins are here
-		line.append $('<a>')
-			.attr('href', '#')
-			.attr('title', 'Initiate ban tribunal for this user')
-			.attr('rel', 'tooltip')
-			.attr('data-id', id)
-			.addClass('label label-warning pull-right banhammer make-tribunal')
-			.append($("<i>").addClass('icon-legal'))
+# 	if is_admin and me.id isnt id
+# 		line.append $('<a>')
+# 			.attr('href', '#')
+# 			.attr('title', 'Instantly ban this user for 10 minutes')
+# 			.attr('rel', 'tooltip')
+# 			.attr('data-id', id)
+# 			.addClass('label label-important pull-right banhammer instaban')
+# 			.append($("<i>").addClass('icon-ban-circle'))
+# 			.click (e) ->
+# 				e.preventDefault()
+# 				me.ban_user id
+# 	else if ((me.score() > 50 and usercount > 2) or degree <= 2 and !room.admin_online()) or id is me.id # only show it if no admins are here
+# 		line.append $('<a>')
+# 			.attr('href', '#')
+# 			.attr('title', 'Initiate ban tribunal for this user')
+# 			.attr('rel', 'tooltip')
+# 			.attr('data-id', id)
+# 			.addClass('label label-warning pull-right banhammer make-tribunal')
+# 			.append($("<i>").addClass('icon-legal'))
 
-	line.append $('<a>')
-		.attr('href', '#')
-		.attr('title', 'Reprimand this user')
-		.attr('rel', 'tooltip')
-		.attr('data-id', id)
-		.addClass('label label-info pull-right banhammer reprimand')
-		.append($('<i>').addClass('icon-thumbs-down'))
+# 	line.append $('<a>')
+# 		.attr('href', '#')
+# 		.attr('title', 'Reprimand this user')
+# 		.attr('rel', 'tooltip')
+# 		.attr('data-id', id)
+# 		.addClass('label label-info pull-right banhammer reprimand')
+# 		.append($('<i>').addClass('icon-thumbs-down'))
 			
 
 
@@ -262,7 +309,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
-			if (room.users[user]?.negstreak > 3 or room.users[user].score() < 0) and room.active_count() > 2
+			if (room.users[user]?.negstreak > 3 or room.users[user]?.score() < 0) and room.active_count() > 2 or check_profanity?(text)
 				line.append admin_panel(user)
 			
 			if user is me.id and me.id of room.users

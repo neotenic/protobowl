@@ -12,7 +12,7 @@ class QuizPlayer
 		@guesses = 0
 		@interrupts = 0
 		@early = 0
-		@seen = 0
+		@seen = 0		
 		@correct = 0
 		
 		@streak = 0
@@ -151,7 +151,7 @@ class QuizPlayer
 
 	reprimand: (user) ->
 		if @reprimand_embargo > @room.serverTime()
-			@notify "can not reprimand anyone for #{Math.ceil((@room.serverTime() - @reprimand_embargo)/1000)} seconds"
+			@notify "can not reprimand anyone for #{Math.ceil((@reprimand_embargo - @room.serverTime())/1000)} seconds"
 			return
 
 		# lets limit the amount of spanks people can give
