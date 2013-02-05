@@ -348,7 +348,7 @@ render_lock = ->
 				lock_votes++
 	needed = Math.floor(lock_electorate / 2 + 1)
 
-	if lock_electorate <= 2 or room.escalate > 2
+	if lock_electorate <= 2 or room.escalate >= room.acl.moderator
 		$('.lockvote').slideUp()
 		
 	else
@@ -365,27 +365,24 @@ render_lock = ->
 
 	$('.globalsettings').toggleClass 'escalate', !(room.escalate > 2)
 
-	if room.locked()
-		if me.authorized()
-			# woo ima adminiman
+	if me.authorized()
+		# woo ima adminiman
+		if room.locked()
 			$('.lockvote .status_icon').addClass('icon-flag')
-			$('.globalsettings').removeClass('locked')	
-			$('.globalsettings .checkbox, .globalsettings .expando')
-				.find('select, input')
-				.disable(false)
-					
-		else		
-			$('.lockvote .status_icon').addClass('icon-lock')
-			$('.globalsettings').addClass('locked')
-			$('.globalsettings .checkbox, .globalsettings .expando')
-				.find('select, input')
-				.disable(true)
-	else
-		$('.lockvote .status_icon').addClass('icon-unlock')
-		$('.globalsettings').removeClass('locked')
+		else
+			$('.lockvote .status_icon').addClass('icon-unlock')
+		$('.globalsettings').removeClass('locked')	
 		$('.globalsettings .checkbox, .globalsettings .expando')
 			.find('select, input')
 			.disable(false)
+				
+	else		
+		$('.lockvote .status_icon').addClass('icon-lock')
+		$('.globalsettings').addClass('locked')
+		$('.globalsettings .checkbox, .globalsettings .expando')
+			.find('select, input')
+			.disable(true)
+
 
 renderUsers = ->
 	# render the user list and that stuff

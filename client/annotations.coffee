@@ -91,17 +91,22 @@ userSpan = (user, global) ->
 
 render_admin_panel = ->
 	# if you can't reprimand people, then, don't show it
-	if me.reprimand_embargo	> room.serverTime()
+	if me.reprimand_embargo	> room.serverTime() or !me.authorized('elected')
 		$('.banham').fadeOut()
 	else
 		$('.banham').fadeIn()
-
+		
+	# go through each one
+	$('.banham').each ->
+		full = $(this).hasClass('full')
+		
 
 
 admin_panel = (id, full = false) -> 
 	# the sequel to banButton, inspired by userSpan
 
 	new_el = $("<span>").addClass("banham banham-#{id}")
+	new_el.addClass('full') if full
 
 	access = [] # R, T, I = reprimand, tribunal, instaban
 	if full

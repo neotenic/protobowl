@@ -717,7 +717,7 @@ class QuizPlayer
 		# this should not ever be made user accessible for obvious reasons
 		@touch()
 		return unless @authorized 'ninja'
-		# return @notify "error `#{state}` is not number" unless typeof state is 'number'
+		return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.escalate = state
 		@room.sync(2)
 		# technically it's only a class 1 action, but requires a re-render of the 
@@ -726,7 +726,7 @@ class QuizPlayer
 	set_mute: (state) ->
 		@touch()
 		return unless @authorized 'ninja'
-		# return @notify "error `#{state}` is not number" unless typeof state is 'number'
+		return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.mute = state
 		@room.sync(1)
 

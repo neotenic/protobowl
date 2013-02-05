@@ -96,7 +96,7 @@ class QuizRoom
 	# the client side? that's rather odd design wise
 	# this is objective locking, not subjective locking
 	locked: ->
-		return true if @escalate and @escalate > 1
+		return true if @escalate and @escalate > @acl.unlocked
 
 		lock_electorate = 0
 		lock_votes = 0
