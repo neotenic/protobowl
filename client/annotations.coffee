@@ -257,7 +257,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		else
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
-			if user of room.users and room.users[user].score() < 0
+			if (room.users[user]?.negstreak > 3 or room.users[user].score() < 0) and room.active_count() > 2
 				line.append admin_panel(user)
 			
 			if user is me.id and me.id of room.users

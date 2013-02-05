@@ -690,17 +690,18 @@ createUserStatSheet = (user, full) ->
 			.append($("<td>").addClass("value").append(val))
 	
 	row	"Score", $('<span>').addClass('badge').text(get_score(user))
-	row	"Correct", "#{user.correct} <span style='color:gray'>/ #{user.guesses}</span>"
-	row "Streak",  "#{user.streak} <span style='color:gray'>/ #{user.streak_record}</span>"
+	row	"Correct", "#{user.correct} <span class='mini-stat' title='Guesses'>/ #{user.streak} / #{user.streak_record}</span>"
+	# row "Streak",  "#{user.streak} <span style='color:gray' title='Streak record'>/ #{user.streak_record}</span>"
 	# if full
 	# 	row "Record", user.streak_record
 	if room.interrupts
-		row "Interrupts", user.interrupts
+		row "Interrupts", "#{user.interrupts} <span class='mini-stat' title='Neg Streak'>/ #{user.negstreak} / #{user.negstreak_record}</span>"
+
 		row "Early", user.early if full
 	# if full or !room.interrupts
 	# 	row "Incorrect", user.guesses - user.correct  
 	# row "Guesses", user.guesses 
-	row "Seen", user.seen
+	row "Seen", "#{user.seen} <span class='mini-stat' title='Guesses'>/ #{user.guesses}</span>"
 	row "Team", user.team if user.team
 	row "ID", user.id.slice(0, 10) if full
 	if full
