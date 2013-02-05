@@ -190,7 +190,7 @@ renderTimer = ->
 		$('.offline-badge').capQueue().fadeIn()
 	
 	
-	$('.chatbtn').disable(room.mute and !me.authorized(2))
+	$('.chatbtn').disable(!me.authorized(room.mute))
 
 	if room.time_freeze
 		$('.buzzbtn').disable true
@@ -706,7 +706,7 @@ createUserStatSheet = (user, full) ->
 	if full
 		row "Last Seen", "<span style='font-size:x-small'>#{formatRelativeTime(user.last_action)}</span>"
 	
-	if full and user.id isnt me.id and me.authorized(2)
+	if full and user.id isnt me.id and me.authorized('moderator')
 		line = $('<span>')
 		line.append admin_panel(user)
 		row "Admin", line

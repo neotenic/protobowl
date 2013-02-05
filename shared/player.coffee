@@ -14,8 +14,13 @@ class QuizPlayer
 		@early = 0
 		@seen = 0
 		@correct = 0
+		
 		@streak = 0
 		@streak_record = 0
+		
+		@negstreak = 0
+		@negstreak_record = 0
+
 		@history = [] # todo: store history as a string?
 		
 		# timekeeping and other stuff
@@ -67,19 +72,22 @@ class QuizPlayer
 	online: -> true
 
 	level: ->
-		# returns the user's largest authorization level
+		x = @room.acl
+		# returns the user's highest authorization level
 		# you're a secret ninja
-		return 4 if @id[0] is '_'
+		return x.ninja if @id[0] is '_'
 		# you're a moderator/admin, we should decide on a term for this
-		return 3 if @id in @room.admins
+		return x.moderator if @id in @room.admins
 		# an elected official
-		return 2 if @elect?.term > @room.serverTime()
+		return x.elected if @elect?.term > @room.serverTime()
 		# in a failed democracy
-		return 1 if !@room.locked()
+		return x.unlocked if !@room.locked()
 		# lowly peon
-		return 0
+		return x.baseline
 
-	authorized: (level = @room.escalate) -> @level() >= level
+	authorized: (level = @room.escalate) -> 
+		level = @room.acl[level] if typeof level is 'string'
+		@level() >= level
 
 	score: ->
 		CORRECT = 10
@@ -92,7 +100,7 @@ class QuizPlayer
 
 	reset_score: ->
 		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
-		@streak_record = @streak = @seen = @interrupts = @guesses = @correct = @early = 0
+		@negstreak_record = @negstreak = @streak_record = @streak = @seen = @interrupts = @guesses = @correct = @early = 0
 		@history = []
 		@sync(true)
 
@@ -141,8 +149,9 @@ class QuizPlayer
 		if @reprimand_embargo > @room.serverTime()
 			@notify "can not reprimand anyone for #{Math.ceil((@room.serverTime() - @reprimand_embargo)/1000)} seconds"
 			return
+
 		# lets limit the amount of spanks people can give
-		unless @authorized(3)
+		unless @authorized @room.acl.moderator
 			# unless you're a registered sex offender- erm. i mean moderator
 			@reprimand_embargo = @room.serverTime() + 1000 * 60
 			# propagate the bans you can not make
@@ -434,7 +443,7 @@ class QuizPlayer
 		return if typeof text != 'string'
 
 		# discard chat messages if a radio silence is enforced
-		return if @room.mute and @id[0] isnt '_'
+		return unless @room.authorized @room.mute
  		
 		# Standing there alone,
 		# the ship is waiting.
@@ -635,7 +644,7 @@ class QuizPlayer
 
 	set_duration: (duration) ->
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		return if isNaN(duration)
 		return if duration <= 0
 		@room.answer_duration = duration
@@ -644,7 +653,7 @@ class QuizPlayer
 
 	set_prompt_duration: (duration) ->
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		return if isNaN(duration)
 		return if duration <= 0
 		@room.prompt_duration = duration
@@ -652,7 +661,7 @@ class QuizPlayer
 
 	set_attempt_duration: (duration) ->
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		return if isNaN(duration)
 		return if duration <= 0
 		@room.attempt_duration = duration
@@ -660,7 +669,7 @@ class QuizPlayer
 
 	set_interrupts: (state) ->
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		if state
 			@verb 'enabled interrupts'
 		else
@@ -670,7 +679,7 @@ class QuizPlayer
 
 	set_pause: (state) ->
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		@unpause()
 		if state
 			@verb 'enabled pausing questions'
@@ -682,7 +691,7 @@ class QuizPlayer
 
 	set_semi: (state) ->
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		if state
 			@verb 'enabled semi-transparent readouts'
 		else
@@ -694,7 +703,7 @@ class QuizPlayer
 		# well, this is sort of different
 		# might not belong here
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		return @notify "error `#{state}` is not string" unless typeof name is 'string'
 		if name
 			@room.type = name
@@ -707,8 +716,8 @@ class QuizPlayer
 	set_escalate: (state) ->
 		# this should not ever be made user accessible for obvious reasons
 		@touch()
-		return unless @authorized(4)
-		return @notify "error `#{state}` is not number" unless typeof state is 'number'
+		return unless @authorized 'ninja'
+		# return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.escalate = state
 		@room.sync(2)
 		# technically it's only a class 1 action, but requires a re-render of the 
@@ -716,15 +725,15 @@ class QuizPlayer
 
 	set_mute: (state) ->
 		@touch()
-		return unless @authorized(4)
-		return @notify "error `#{state}` is not number" unless typeof state is 'number'
+		return unless @authorized 'ninja'
+		# return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.mute = state
 		@room.sync(1)
 
 
 	set_topic: (topic) ->
 		@touch()
-		return unless @authorized(4)
+		return unless @authorized 'ninja'
 		return @notify "error `#{state}` is not string" unless typeof topic is 'string'
 		@room.topic = topic
 		@room.sync(4)

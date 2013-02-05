@@ -108,7 +108,7 @@ admin_panel = (id, full = false) ->
 		access = ['r', 't', 'i']
 
 	access.push 'r'
-	if me.authorized(3)
+	if me.authorized('moderator')
 		access.push 'i'
 	else if (me.score() > 50 and usercount > 2) and !room.admin_online()
 		access.push 't'

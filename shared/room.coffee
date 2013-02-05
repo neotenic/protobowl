@@ -75,63 +75,20 @@ class QuizRoom
 		@semi = false
 		@no_pause = false
 		# @mute = 0
-		
-		# Okay, so this feature actually needs a bit of 
-		# explaining because it's actually a bit convoluted
-		# the reason it's called escalate is kind of a weird
-		# product of having a different original meaning which
-		# has kind of transmuted into something more complicated
-		# in large part because protobowl actions have a
-		# somewhat lame system of access control lists,
-		# and it used to be a simple binary value - yes
-		# can a user escalate, and no- a user can't escalate
-		# where the latter necessarily entails that normal
-		# users can't run for election, and as a matter of
-		# basic fairness, users in rooms small enough not
-		# to meet the lock criterion also can not change
-		# the settings. But, this sort of convoluted set of
-		# meanings had to go because it lacked the degree
-		# of control that is afforded by having an actual
-		# access control paradigm.
 
-		# In this new sense, the escalation parameter 
-		# which is defined below means the minimum security
-		# level which the user needs to have in order to 
-		# change the settings.
+		@acl = {
+			baseline: 100,
+			unlocked: 200,
+			elected: 201,
+			moderator: 300,
+			admin: 301,
+			ninja: 400
+		}
 
-		# It basically starts at level 1 because level 0
-		# is kind of absurd, in its most logical form it
-		# means that the settings can not be locked. As
-		# such it means that the user can not escalate
-		# from this level, but there's no way for the 
-		# escalation button to even show up under this
-		# level, so that doesn't really mean anything.
+		# the default level necessary to call authorized()
 
-		# Level 1 means that people can change the settings
-		# if they're in a situation whereby the settings
-		# are a) not locked or b) the room is small 
-		# enough that it fails to reach the locking criterion
-		# Users are allowed to escalate, because users can't
-		# always be alone.
+		@escalate = @acl.unlocked
 
-		# Level 2 means that only elected people can
-		# change the settings. That means, even if 
-		# you're alone in a room, you can't change the
-		# settings. Thats kind of absurd.
-
-		# Level 3 means that only admins and secret ninjas
-		# can change settings, this is what escalate used
-		# to do when it was a binary value
-
-		# Level 4 means only secret ninjas can change settinsg
-		# which is the reason this new complicated ACL system
-		# exists
-
-		@escalate = 1
-
-
-
-		# @acl = {}
 
 	log: (message) -> @emit 'log', { verb: message }
 
@@ -160,7 +117,7 @@ class QuizRoom
 		return false
 
 	admin_online: ->
-		for id, user of @users when user.active() and user.authorized(2)
+		for id, user of @users when user.active() and user.authorized 'moderator'
 			return true
 		return false
 
@@ -357,8 +314,10 @@ class QuizRoom
 	end_buzz: (session) -> #killit, killitwithfire
 		return unless @attempt?.session is session
 
+		user = @users[@attempt?.user]
+
 		# maybe the user just died...?
-		if !@attempt or !@users[@attempt?.user]
+		if !@attempt or !user
 			@attempt = null
 			@sync()
 			return
@@ -401,28 +360,32 @@ class QuizRoom
 			@unfreeze()
 			if @attempt.correct
 				# woo increment mah streak
-				@users[@attempt.user].streak++
-				@users[@attempt.user].streak_record = Math.max(@users[@attempt.user].streak, @users[@attempt.user].streak_record)
+				user.streak++
+				user.streak_record = Math.max(user.streak, user.streak_record)
 				# end everyone else's streak
 				user.streak = 0 for id, user of @users when id isnt @attempt.user
+				# end mah negstreak
+				user.negstreak = 0
 
-				@users[@attempt.user].correct++
+				user.correct++
 				if @attempt.early 
-					@users[@attempt.user].early++
+					user.early++
 				@finish()
 			else # incorrect
-				@users[@attempt.user].streak = 0
+				user.streak = 0
+				user.negstreak++
+				user.negstreak_record = Math.max(user.negstreak, user.negstreak_record)
 
 				if @attempt.interrupt
-					@users[@attempt.user].interrupts++
+					user.interrupts++
 				
 				buzzed = 0
 				pool = 0
 				teams = {}
-				for id, user of @users when id[0] isnt "_" # skip secret ninja
-					if user.active()
-						teams[user.team || id] = (teams[user.team || id] || 0)
-						teams[user.team || id] += user.times_buzzed
+				for id, u of @users when id[0] isnt "_" # skip secret ninja
+					if u.active()
+						teams[u.team || id] = (teams[u.team || id] || 0)
+						teams[u.team || id] += u.times_buzzed
 				for team, times_buzzed of teams
 					if times_buzzed >= @max_buzz and @max_buzz
 						buzzed++
@@ -522,7 +485,7 @@ class QuizRoom
 			data[attr] = this[attr]
 
 
-		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic"]
+		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic", "acl"]
 		user_blacklist = ["sockets", "room"]
 
 		if level.id # that's no number! that's a user!
