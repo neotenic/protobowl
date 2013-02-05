@@ -144,14 +144,20 @@ render_admin_panel = (el)->
 			
 
 
-admin_panel = (id, full = false) -> 
+admin_panel = (id, arg = false) -> 
 	# the sequel to banButton, inspired by userSpan
 
 	new_el = $("<span>")
 		.addClass("banham banham-#{id}")
 		.attr('data-uid', id)
 
-	new_el.addClass('full') if full
+	
+	if typeof arg is 'boolean' and arg == true
+		new_el.addClass('full') 
+
+	if typeof arg is 'string' and arg
+		new_el.attr('data-reason', arg)
+
 	render_admin_panel new_el
 	# access = [] # R, T, I = reprimand, tribunal, instaban
 	# if full
@@ -310,7 +316,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
 			if (room.users[user]?.negstreak > 3 or room.users[user]?.score() < 0) and room.active_count() > 2 or check_profanity?(text)
-				line.append admin_panel(user)
+				line.append admin_panel(user, 'bad language')
 			
 			if user is me.id and me.id of room.users
 				old_score = me.score()
@@ -405,8 +411,11 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 			line.find('.comment').html html
 			
-			if user of room.users and text.length > 70 or dirty
-				line.append admin_panel(user)
+			if user of room.users
+				if dirty
+					line.append admin_panel(user, 'bad language')
+				else if text.length > 70 
+					line.append admin_panel(user, 'spamming')
 
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
@@ -420,6 +429,32 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 	line.toggleClass 'typing', !done
 	line.data 'last_update', time
+
+
+reprimandAnnotation = ({time, trigger, reason}) ->
+	# destroy the tooltip
+	setTimeout ->
+		$('.bundle .ruling').tooltip('destroy')
+	, 100
+
+	line = $('<p>').addClass 'log'
+	line.prepend '<i class="icon-thumbs-down"></i> '
+	if trigger?[0] != '_' and room.users[trigger]
+		line.append userSpan(trigger)
+		line.append ' has issued you a warning for '
+		if reason
+			line.append reason
+		else
+			line.append 'your behavior'
+		line.append ' '
+	else
+		line.append 'your behavior has been reprimanded'
+		if reason
+			line.append ' for '
+			line.append reason
+		
+	addAnnotation line
+
 
 
 verbAnnotation = ({user, verb, time, notify}) ->

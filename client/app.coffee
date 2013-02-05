@@ -320,6 +320,7 @@ listen 'redirect', (url) -> window.location = url
 listen 'alert', (text) -> window.alert text
 listen 'chat', (data) -> chatAnnotation data
 listen 'log', (data) -> verbAnnotation data
+listen 'reprimand', (data) -> reprimandAnnotation data
 listen 'debug', (data) -> logAnnotation data
 listen 'sync', (data) -> synchronize data
 listen 'throttle', (data) ->

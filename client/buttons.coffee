@@ -536,7 +536,7 @@ $('.banhammer.instaban').live 'click', (e) ->
 
 $('.banhammer.reprimand').live 'click', (e) ->
 	e.preventDefault()
-	me.reprimand $(this).data('id')
+	me.reprimand { user: $(this).data('id'), reason: $(this).parents('.banham').data('reason') }
 
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")

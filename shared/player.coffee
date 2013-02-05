@@ -149,7 +149,7 @@ class QuizPlayer
 			@create_tribunal()
 
 
-	reprimand: (user) ->
+	reprimand: ({user, reason}) ->
 		if @reprimand_embargo > @room.serverTime()
 			@notify "can not reprimand anyone for #{Math.ceil((@reprimand_embargo - @room.serverTime())/1000)} seconds"
 			return
@@ -161,7 +161,11 @@ class QuizPlayer
 			# propagate the bans you can not make
 			@sync()
 		# todo, make this less crude
-		@room.users[user]?.notify "'s behavior has been reprimanded by !@#{@id}"
+		@room.users[user]?.emit 'reprimand', {
+			trigger: @id,
+			time: @room.serverTime(),
+			reason: reason
+		}
 
 
 
