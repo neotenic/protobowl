@@ -228,7 +228,7 @@ class SocketQuizRoom extends QuizRoom
 		@sync(1)
 
 	deserialize: (data) ->
-		blacklist = ['users', 'attempt', 'generating_question']
+		blacklist = ['users', 'attempt', 'generating_question', 'acl']
 		for attr, val of data when attr not in blacklist
 			@[attr] = val
 		for user in data.users

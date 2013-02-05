@@ -77,13 +77,14 @@ class QuizRoom
 		# @mute = 0
 
 		@acl = {
-			baseline: 100,
-			positive: 110,
-			unlocked: 200,
-			elected: 201,
+			baseline:  100,
+			positive:  110,
+			fifty:     120,
+			unlocked:  200,
+			elected:   230,
 			moderator: 300,
-			admin: 301,
-			ninja: 400
+			admin:     310,
+			ninja:     400
 		}
 
 		# the default level necessary to call authorized()
@@ -364,13 +365,14 @@ class QuizRoom
 				user.streak++
 				user.streak_record = Math.max(user.streak, user.streak_record)
 				# end everyone else's streak
-				user.streak = 0 for id, user of @users when id isnt @attempt.user
+				for id, u of @users when id isnt @attempt.user
+					u.streak = 0
 				# end mah negstreak
 				user.negstreak = 0
-
+				# gimme mah points
 				user.correct++
-				if @attempt.early 
-					user.early++
+				user.early++ if @attempt.early 
+				
 				@finish()
 			else # incorrect
 				user.streak = 0
@@ -547,7 +549,7 @@ class QuizRoom
 
 	serialize: ->
 		data = {}
-		blacklist = ['users', 'attempt']
+		blacklist = ['users', 'attempt', 'generating_question', 'acl']
 		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[0] != '_'
 			data[attr] = this[attr]
 		data.users = (user.serialize() for id, user of @users)

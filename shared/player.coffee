@@ -83,9 +83,9 @@ class QuizPlayer
 		# in a failed democracy
 		return x.unlocked if !@room.locked()
 		# people with lots of points are special
-		return x.fifty if me.score() > 50
+		return x.fifty if @score() >= 50
 		# at least the score is positive
-		return x.positive if me.score() > 0
+		return x.positive if @score() > 0
 		# lowly peon
 		return x.baseline
 
