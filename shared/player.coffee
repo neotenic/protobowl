@@ -82,6 +82,10 @@ class QuizPlayer
 		return x.elected if @elect?.term > @room.serverTime()
 		# in a failed democracy
 		return x.unlocked if !@room.locked()
+		# people with lots of points are special
+		return x.fifty if me.score() > 50
+		# at least the score is positive
+		return x.positive if me.score() > 0
 		# lowly peon
 		return x.baseline
 
@@ -443,7 +447,7 @@ class QuizPlayer
 		return if typeof text != 'string'
 
 		# discard chat messages if a radio silence is enforced
-		return unless @room.authorized @room.mute
+		return unless @authorized @room.mute
  		
 		# Standing there alone,
 		# the ship is waiting.

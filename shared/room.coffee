@@ -78,6 +78,7 @@ class QuizRoom
 
 		@acl = {
 			baseline: 100,
+			positive: 110,
 			unlocked: 200,
 			elected: 201,
 			moderator: 300,
