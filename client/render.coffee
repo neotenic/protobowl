@@ -706,7 +706,7 @@ createUserStatSheet = (user, full) ->
 	
 	if full and user.id isnt me.id and me.authorized('moderator')
 		line = $('<span>')
-		line.append admin_panel(user, true)
+		line.append admin_panel(user.id, true)
 		row "Admin", line
 	return table
 

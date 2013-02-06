@@ -215,9 +215,13 @@ class QuizPlayer
 			# "YOU IS TROLLIN!" and I was like 
 			# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
 			
+			if @room.users[@tribunal?.initiator] and !@room.users[@tribunal?.initiator].authorized('moderator')
+				@room.users[@tribunal.initiator].tribunal_embargo = @room.serverTime() + 1000 * 60
+
 			@__tribunal_timeout = setTimeout =>
-				if @room.users[@tribunal?.initiator]
+				if @room.users[@tribunal?.initiator] and !@room.users[@tribunal?.initiator].authorized('moderator')
 					@room.users[@tribunal.initiator].tribunal_embargo = @room.serverTime() + 1000 * 60 * 4
+					@room.users[@tribunal.initiator].sync()
 
 				@verb 'survived the tribunal', true
 				@tribunal = null
@@ -240,16 +244,12 @@ class QuizPlayer
 			@notify 'can not trigger a ban tribunal for another ' + Math.ceil((@tribunal_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
 			return 
 
-
-		is_admin = @id in @room.admins or @id[0] is '_'
-
-		if is_admin or @score() >= 0
-			if user in @room.admins or user[0] is '_'
-				@notify 'cannot fell a god with a mortal sword'
-				return
-			@verb 'created a ban tribunal for !@' + user
-			
-			@room.users[user]?.create_tribunal @id
+		if @room.users[user].authorized('moderator')
+			@notify 'cannot fell a god with a mortal sword'
+			return
+		@verb 'created a ban tribunal for !@' + user
+		
+		@room.users[user]?.create_tribunal @id
 
 	ban_user: (user) ->
 		is_admin = @id in @room.admins or @id[0] is '_'

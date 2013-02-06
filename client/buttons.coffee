@@ -530,13 +530,25 @@ $('.banhammer.make-tribunal').live 'click', (e) ->
 	e.preventDefault()
 	me.trigger_tribunal $(this).data('id')
 
+
 $('.banhammer.instaban').live 'click', (e) ->
 	e.preventDefault()
 	me.ban_user $(this).data('id')
 
+
 $('.banhammer.reprimand').live 'click', (e) ->
 	e.preventDefault()
-	me.reprimand { user: $(this).data('id'), reason: $(this).parents('.banham').data('reason') }
+	me.reprimand { 
+		user: $(this).data('id'), 
+		reason: $(this).parents('.banham').data('reason') 
+	}
+	
+	room.users[$(this).data('id')].__reprimanded = Date.now()
+
+	setTimeout ->
+		render_admin_panel()
+	, 1000 * 15
+
 
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")

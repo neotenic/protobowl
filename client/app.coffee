@@ -426,6 +426,7 @@ synchronize = (data) ->
 	renderParameters() if 'difficulties' of data
 	renderUpdate()
 	renderPartial()
+	render_admin_panel()
 	
 	if last_freeze isnt room.time_freeze
 		last_freeze = room.time_freeze

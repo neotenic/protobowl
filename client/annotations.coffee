@@ -89,7 +89,14 @@ userSpan = (user, global) ->
 	
 	scope
 
-render_admin_panel = (el)->
+
+render_admin_panel = (el) ->
+	if !el
+		$('.tooltip').remove()
+		$('.banham').each ->
+			render_admin_panel $(this)
+
+	return unless el
 	# if you can't reprimand people, then, don't show it
 	# if me.reprimand_embargo	> room.serverTime() or !me.authorized('elected')
 	# 	$('.banham .reprimand').hide()
@@ -100,11 +107,19 @@ render_admin_panel = (el)->
 	# $('.banham').each ->
 	full = el.hasClass('full')
 	id = el.data('uid')
-	
+
 	# secret ninjas can not be in trouble
 	return if id[0] is '_'
+	
+	# reset it
+	el.html('')
+
+	return unless room.users[id]
+
+	button_type = ""
 
 	if id is me.id
+		button_type = "identity"
 		el.append $('<span>')
 		.attr('title', 'This post can be used against you')
 		.attr('rel', 'tooltip')
@@ -112,7 +127,26 @@ render_admin_panel = (el)->
 		.addClass('pull-right banhammer')
 		.append($('<i>').addClass('icon-legal'))
 
-	else
+	else if me.reprimand_embargo < room.serverTime() or me.authorized('elected')
+		button_type = "reprimand"
+		
+	if 1000 * 60 * 10 > Date.now() - room.users[id].__reprimanded > 1000 * 10 and me.tribunal_embargo < room.serverTime()
+		button_type = "tribunal"
+	unless full
+		if room.users[id].banned > room.serverTime()
+			
+			el.append $('<span>')
+			.addClass('pull-right banhammer')
+			.css('color', '#c83025')
+			.append($('<i>').addClass('icon-ban-circle'))
+			button_type = ''
+
+		else if button_type is ''
+			el.append $('<span>')
+			.addClass('pull-right banhammer')
+			.append($('<i>').addClass('icon-legal'))
+
+	if button_type is 'reprimand' or full
 		el.append $('<a>')
 		.attr('href', '#')
 		.attr('title', 'Reprimand this user')
@@ -121,7 +155,7 @@ render_admin_panel = (el)->
 		.addClass('label label-info pull-right banhammer reprimand')
 		.append($('<i>').addClass('icon-thumbs-down'))
 
-	if full
+	if button_type is 'tribunal' or full
 		el.append $('<a>')
 		.attr('href', '#')
 		.attr('title', 'Initiate ban tribunal for this user')
