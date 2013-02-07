@@ -160,6 +160,7 @@ class QuizPlayer
 			@reprimand_embargo = @room.serverTime() + 1000 * 60
 			# propagate the bans you can not make
 			@sync()
+			
 		# todo, make this less crude
 		@room.users[user]?.emit 'reprimand', {
 			trigger: @id,
@@ -435,7 +436,7 @@ class QuizPlayer
 
 	command: (name, args) ->
 		if name is 'auth'
-			if args[0].trim().toLowerCase() is @_password?()
+			if args[0]?.trim().toLowerCase() is @_password?()
 				@_apotheify()
 			else
 				@notify "has an invalid password"
@@ -777,6 +778,11 @@ class QuizPlayer
 		@sounds = !!data
 		@sync()
 
+	set_distraction: (data) ->
+		@touch()
+		@distraction = !!data
+		@sync()
+		
 	set_movingwindow: (num) ->
 		@touch()
 		if num and !isNaN(num)

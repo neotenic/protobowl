@@ -27,7 +27,8 @@ addAnnotation = (el, name = sync?.name) ->
 	if current_block.length is 0
 		current_block = $('#history .annotations').eq(0)
 	el.css('display', 'none').prependTo current_block
-	el.slideDown()
+	unless el.is('p.chat, p.log') and me.distraction
+		el.slideDown()
 	return el
 
 addImportant = (el) ->
@@ -130,8 +131,9 @@ render_admin_panel = (el) ->
 	else if me.reprimand_embargo < room.serverTime() or me.authorized('elected')
 		button_type = "reprimand"
 		
-	if 1000 * 60 * 10 > Date.now() - room.users[id].__reprimanded > 1000 * 10 and me.tribunal_embargo < room.serverTime()
+	if 1000 * 60 * 10 > Date.now() - room.users[id].__reprimanded > 1000 * 10 and me.tribunal_embargo < room.serverTime() and !room.admin_online()
 		button_type = "tribunal"
+
 	unless full
 		if room.users[id].banned > room.serverTime()
 			
@@ -164,7 +166,7 @@ render_admin_panel = (el) ->
 		.addClass('label label-warning pull-right banhammer make-tribunal')
 		.append($("<i>").addClass('icon-legal'))
 
-	if full
+	if full or me.authorized('moderator')
 		el.append $('<a>')
 		.attr('href', '#')
 		.attr('title', 'Instantly ban this user for 10 minutes')

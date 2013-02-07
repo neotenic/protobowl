@@ -37,7 +37,7 @@ $('.chatbtn').click ->
 
 
 open_chat = ->
-	return if !me.authorized(room.mute)
+	return if !me.authorized(room.mute) or me.distraction
 
 	if actionMode != 'chat'
 		setActionMode 'chat'
@@ -459,6 +459,14 @@ $('.showbonus').change -> me.set_bonus $('.showbonus')[0].checked
 $('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
 
 $('.lock').change -> me.set_lock $('.lock')[0].checked
+
+$('.adhd').change -> 
+	me.distraction = $('.adhd')[0].checked
+	me.set_distraction me.distraction
+	if me.distraction
+		$('p.chat, p.log').slideUp()
+	else
+		$('p.chat, p.log').slideDown()
 
 $('.request-access').click -> me.nominate()
 
