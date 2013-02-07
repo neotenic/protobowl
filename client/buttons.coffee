@@ -36,8 +36,11 @@ $('.chatbtn').click ->
 	open_chat()
 
 
-open_chat = ->
-	return if !me.authorized(room.mute) or me.distraction
+open_chat = (text) ->
+	if text is "@$> "
+		$('.chat_input').val text
+	else
+		return if !me.authorized(room.mute) or me.distraction
 
 	if actionMode != 'chat'
 		setActionMode 'chat'
@@ -346,10 +349,9 @@ $('body').keydown (e) ->
 		$('.chatbtn').click()
 		$('.chat_input').focus()
 
-	if e.keyCode is 190 and e.shiftKey
+	if e.keyCode is 190 and (e.shiftKey or e.ctrlKey or e.metaKey or e.altKey)
 		e.preventDefault()
-		$('.chat_input').val("@$> ")
-		open_chat()
+		open_chat("@$> ")
 
 	return if e.shiftKey or e.ctrlKey or e.metaKey
 
@@ -464,9 +466,15 @@ $('.adhd').change ->
 	me.distraction = $('.adhd')[0].checked
 	me.set_distraction me.distraction
 	if me.distraction
-		$('p.chat, p.log').slideUp()
+		$('p.annoying')
+		.removeClass('annoying')
+		.slideUp 'normal', ->
+			$(this).addClass('annoying')
+
+		$('body').addClass 'distraction'
 	else
-		$('p.chat, p.log').slideDown()
+		$('body').removeClass 'distraction'
+		$('p.annoying').hide().slideDown()
 
 $('.request-access').click -> me.nominate()
 

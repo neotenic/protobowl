@@ -81,6 +81,8 @@ renderUpdate = ->
 	$('.difficulties').val room.difficulty
 	$('.multibuzz').attr 'checked', !room.max_buzz
 	$('.allowskip').attr 'checked', !room.no_skip
+	$('.adhd').attr 'checked', !!me.distraction
+	$('body').toggleClass 'distraction', !!me.distraction
 
 
 	if $('.settings').is(':hidden')
@@ -95,7 +97,7 @@ renderUpdate = ->
 		$('.lock').attr 'checked', room.users[me.id].lock
 		$('.teams').val room.users[me.id].team
 
-		$('.microwave').toggle !room.users[me.id].muwave
+		$('.microwave').toggle !(room.users[me.id].muwave)
 
 		if me.guesses > 0
 			$('.reset-score').slideDown()

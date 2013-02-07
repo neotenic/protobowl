@@ -181,7 +181,7 @@ class QuizPlayer
 		if !@elect
 			# @verb "TERMPOEWJROSIJWER THIS PERSON IS A NARCONARC"
 			current_time = @room.serverTime()
-			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.distraction)
 			@__elect_timeout = setTimeout =>
 				@verb 'got romneyed', true
 				
@@ -206,7 +206,7 @@ class QuizPlayer
 		@touch()
 		if !@tribunal
 			current_time = @room.serverTime()
-			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.distraction)
 			return if witnesses.length <= 1
 
 			# Ummmm ahh such as like, 

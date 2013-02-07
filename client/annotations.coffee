@@ -26,9 +26,11 @@ addAnnotation = (el, name = sync?.name) ->
 	current_block = current_bundle.eq(0).find('.annotations')
 	if current_block.length is 0
 		current_block = $('#history .annotations').eq(0)
-	el.css('display', 'none').prependTo current_block
-	unless el.is('p.chat, p.log') and me.distraction
-		el.slideDown()
+	el.prependTo current_block
+	
+	unless el.hasClass('annoying') and me.distraction
+		el.css('display', 'none').slideDown()
+
 	return el
 
 addImportant = (el) ->
@@ -388,7 +390,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	if $('#' + id).length > 0
 		line = $('#' + id)
 	else
-		line = $('<p>').attr('id', id).addClass('chat')
+		line = $('<p>').attr('id', id).addClass('chat annoying')
 		line.append $('<span>').addClass('author').append(userSpan(user).attr('title', formatTime(time)))
 		line.append document.createTextNode ' '
 		$('<span>')
@@ -428,12 +430,20 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 	if done
 		line.removeClass('buffer')
-		can_see = text[0] != '@' or (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
+		
+		restricted_see = (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
+		
+		can_see = text[0] != '@' or restricted_see
+		
+		if restricted_see
+			line.removeClass 'annoying'
 
 		if text is '' or !can_see
 			line.find('.comment').html('<em>(no message)</em>')
-			line.slideUp()
+			line.slideUp 'normal', ->
+				line.remove()
 		else
+
 			if text.slice(0, 1) is '@'
 				if team_list.length > 0
 					line.prepend '<i class="icon-group"></i> '
@@ -501,10 +511,12 @@ verbAnnotation = ({user, verb, time, notify}) ->
 	
 	verbclass = "verb-#{user}-#{verb.split(' ').slice(0, 2).join('-')}"
 
-	line = $('<p>').addClass 'log'
+	line = $('<p>').addClass 'log annoying'
 	line.addClass(verbclass)
 	
 	if user
+		if user is me.id
+			line.removeClass 'annoying'
 		if notify
 			line.prepend '<i class="icon-user"></i> '
 		
