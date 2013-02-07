@@ -154,5 +154,3 @@ I wanted to skip straight into the low latency websocket-driven synchronized mul
 Chronologically, this places us at about two weeks ago. That's actually quite confusing because I wrote that sentence a bit over a month ago, where "a month ago" means August 8th, and "now" means September 12th. That is, you can imagine the gap between the first sentence in this paragraph and the sentence immediately succeeding it as joined by that scene from Monty Python where the animator dies of some fatal heart attack, in which case that animator is me, and I just sort of gave up on writing the readme.
 
 And just like that, in the blink of a sentence, it's been another month.
-
-## Test
