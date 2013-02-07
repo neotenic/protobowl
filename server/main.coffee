@@ -157,6 +157,11 @@ class SocketQuizRoom extends QuizRoom
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question)
 
 	get_question: (callback) ->
+		db.create_event {
+			"qid": @qid,
+			"date": Date.now(),
+			"users": (user.id for id, user of @users)
+		}
 		cb = (question) =>
 			log 'next', [@name, question?.answer, @qid]
 			callback(question)
@@ -189,6 +194,22 @@ class SocketQuizRoom extends QuizRoom
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
+			db.create_event {
+				"uid": @attempt.user,
+				"sid": user.sid || user.id,
+				"room": @name,
+				"date": Date.now(),
+				"early": @attempt.early,
+				"seen":  user.seen,
+				"tspent": user.time_spent,
+				"answer": @answer,
+				"category": @info.category,
+				"difficulty": @info.difficulty,
+				"guess": @attempt.text,
+				"ruling": ruling,
+				"interrupt": @attempt.interrupt
+			}
+
 		super(session)
 
 	merge_user: (id, new_id) ->
