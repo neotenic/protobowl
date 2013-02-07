@@ -5,7 +5,7 @@ current_difficulty = ''
 current_queue = []
 
 console.log 'loading local questions'
-	
+
 listProps = (prop) ->
 	propmap = {}
 	for q in questions
@@ -23,17 +23,16 @@ fisher_yates = (i) ->
 	arr = [0...i]
 	while --i
 		j = Math.floor(Math.random() * (i+1))
-		[arr[i], arr[j]] = [arr[j], arr[i]] 
+		[arr[i], arr[j]] = [arr[j], arr[i]]
 	arr
 
-initialize_remote = (cb) -> 
+initialize_remote = (cb) ->
 	fs = require 'fs'
 	fs.readFile 'static/sample.txt', 'utf8', (err, data) ->
 		throw err if err
 		questions = (JSON.parse(line) for line in data.split("\n"))
 		console.log "parsed #{questions.length} questions"
 		cb() if cb
-
 
 handle_report = (data) -> console.log data
 
