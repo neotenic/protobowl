@@ -24,7 +24,6 @@ IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.len
 MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
 exports.sha1 = sha1
-exports.md5 = md5
 exports.Avg = Avg
 exports.Sum = Sum
 exports.StDev = StDev

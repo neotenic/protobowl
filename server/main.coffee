@@ -11,6 +11,7 @@ http = require 'http'
 url = require 'url'
 os = require 'os'
 util = require 'util'
+helper = require './modules/utils'
 
 rooms = {}
 {QuizRoom} = require '../shared/room'
@@ -98,7 +99,7 @@ app.use (req, res, next) ->
 		expire_date = new Date()
 		expire_date.setFullYear expire_date.getFullYear() + 2
 
-		res.cookie 'protocookie', sha1(seed + ''), {
+		res.cookie 'protocookie', helper.sha1(seed + ''), {
 			expires: expire_date,
 			httpOnly: false,
 			signed: false,
@@ -128,24 +129,6 @@ app.use (req, res, next) ->
 
 app.use express.static('static')
 app.use express.favicon('static/img/favicon.ico')
-
-crypto = require 'crypto'
-
-# simple helper function that hashes things
-sha1 = (text) ->
-	hash = crypto.createHash('sha1')
-	hash.update(text + '')
-	hash.digest('hex')
-
-# basic statistical methods for statistical purposes
-Avg = (list) -> Sum(list) / list.length
-Sum = (list) -> s = 0; s += item for item in list; s
-StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for item in list)
-
-# so i hears that robust statistics are bettrawr, so uh, heres it is
-Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
-IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
-MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
 track_time = (start_time, label) ->
 	duration = Date.now() - start_time
@@ -411,8 +394,8 @@ status_metrics = ->
 	metrics = {
 		online: online_count,
 		active: active_count,
-		avg_latency: Med(latencies),
-		std_latency: IQR(latencies),
+		avg_latency: helper.Med(latencies),
+		std_latency: helper.IQR(latencies),
 		free_memory: os.freemem(),
 		message_count,
 		muwave: muwave_count
@@ -479,7 +462,7 @@ io.sockets.on 'connection', (sock) ->
 			sock.disconnect()
 			return
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
-		publicID = sha1(cookie + room_name + '')
+		publicID = helper.sha1(cookie + room_name + '')
 		# get the room
 
 		load_room room_name, (room, is_new) ->

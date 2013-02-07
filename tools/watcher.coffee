@@ -9,11 +9,11 @@ send_update = -> null
 exports.watch = (fn) -> send_update = fn
 
 less = require 'less'
-	
+
 Snockets = require 'snockets'
 CoffeeScript = require 'coffee-script'
 
-Snockets.compilers.coffee = 
+Snockets.compilers.coffee =
 	match: /\.js$/
 	compileSync: (sourcePath, source) ->
 		CoffeeScript.compile source, {filename: sourcePath, bare: true}
@@ -35,7 +35,7 @@ recursive_build = (src, dest, cb) ->
 						return cb(err) if err
 						filename = files.shift()
 						return cb() if filename is null or typeof filename is 'undefined'
-						
+
 						file = src + '/' + filename
 						destfile = dest + '/' + filename
 
@@ -115,21 +115,21 @@ updateCache = (force_update = false) ->
 
 
 	file_list = ['app', 'offline', 'auth']
-	
+
 	compileCoffee = ->
 		file = file_list.shift()
 		return saveFiles() if !file
-		
+
 
 		snockets.getConcatenation "client/#{file}.coffee", minify: false, (err, js) ->
 			outfile = "static/#{file}.js"
 			if file is 'app'
-				outfile = "static/#{file}.dev.js" 
+				outfile = "static/#{file}.dev.js"
 
 			source_list.push {
 				hash: sha1(js + ''),
-				code: "protobowl_#{file}_build = '#{compile_date}'; //dev\n\n#{js}\n", 
-				err: err, 
+				code: "protobowl_#{file}_build = '#{compile_date}'; //dev\n\n#{js}\n",
+				err: err,
 				file: outfile
 			}
 
@@ -139,11 +139,11 @@ updateCache = (force_update = false) ->
 				snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
 					source_list.push {
 						hash: sha1(js + ''),
-						code: "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n", 
-						err: err, 
+						code: "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n",
+						err: err,
 						file: "static/#{file}.js"
-					}		
-					compileCoffee()			
+					}
+					compileCoffee()
 
 	saveFiles = ->
 		# its something like a unitard
@@ -154,7 +154,7 @@ updateCache = (force_update = false) ->
 			scheduledUpdate = null
 			return
 		error_message = ''
-			
+
 		console.log 'saving files'
 		for i in source_list
 			error_message += "File: #{i.file}\n#{i.err}\n\n" if i.err
@@ -187,13 +187,13 @@ updateCache = (force_update = false) ->
 		fs.readFile 'static/offline.appcache', 'utf8', (err, data) ->
 			timehash = data?.match(/INSERT_DATE (.*?)\n/)?[1]?.split(" # ")?[1]
 			compileLess()
-		
+
 
 do_update = (force) ->
 	unless scheduledUpdate
 		scheduledUpdate = setTimeout ->
 			updateCache(force)
-		, 100	
+		, 100
 
 watcher = (event, filename) ->
 	return if filename in ["offline.appcache", "protobowl.css", "app.js"]
@@ -211,7 +211,7 @@ fs.watch "client/less", watcher
 console.log 'watching lib'
 fs.watch "client/lib", watcher
 console.log 'watching jade'
-fs.watch "server/room.jade", ->
+fs.watch "server/views/room.jade", ->
 	console.log 'forcing update'
 	do_update(true)
 
