@@ -1,0 +1,89 @@
+doctype 5
+html(lang="en")
+	head
+		//- for posterity, let it be known that the only reason this is called control.jade
+		//- was because room.jade was already taken.
+		title ROOM MANAGER
+		link(rel="stylesheet", href="/protobowl.css")
+	body
+		div.container
+			h1 STALKERMODE ROOM CONTROL
+			h3= name
+
+			ul.nav.nav-pills
+				li
+					a(href="/stalkermode") &larr; Stalkermode 
+			
+			
+			if typeof room == 'undefined'
+				h1 Nothing here
+				h5 404 ROOM NOT EXTANT
+				
+				hr
+
+				blockquote 
+					| These aren't the droids you're looking for. 
+					small Obi Wan Kenobi
+				
+				blockquote
+					| He is the second Dirac, only this time, human.
+					small Oppenheimer describing Feynman
+				
+				blockquote
+					| There is nothing in the desert, and no man needs nothing
+					small Lawrence of Arabia
+
+				blockquote
+					| The ship and her entire crew are gone. If you are receiving this transmission, make no attempt to come to its point of origin. There's only death here now and I am leaving it behind. It is New Years Day, the year of our Lord, 2094. My Name is Elizabeth Shaw, last survivor of the Prometheus, and I'm still searching.
+					small Final report of the vessel Prometheus, Elizabeth Shaw
+
+				blockquote
+					| The future has not been written. There is no fate but what we make for ourselves. I wish I could believe that. 
+					small John Connor, Terminator 3
+
+			else
+				pre= text
+
+				p
+					code= JSON.stringify(room.timing, null, ' ')
+				p
+					code= JSON.stringify(room.cumulative, null, ' ')
+
+
+				hr
+				form(action="/stalkermode/disco_room/#{name.replace(/\//g, '~')}", method="post")
+					button.btn(type="submit") Disconnect Room
+					| 
+					| Disconnect everyone in a room
+
+				br
+
+				form(action="/stalkermode/clear_bans/#{name.replace(/\//g, '~')}", method="post")
+					button.btn(type="submit") Clear IP Bans
+					| 
+					| BEES!!! BEES FOR EVERYBODY!!!
+
+		
+				br
+
+				form(action="/stalkermode/anarchy/#{name.replace(/\//g, '~')}", method="post")
+					button.btn(type="submit") Terminate Admins
+					|  
+					| Terminate them with extreme prejudice
+
+				blockquote
+					| Anarchy — that I run! / 
+					| It's Dr. Horrible's turn... /
+					| You people all have to learn / 
+					| This world is going to burn...
+					small Dr. Horrible, Slipping
+
+		
+				br
+
+				form(action="/stalkermode/delete_room/#{name.replace(/\//g, '~')}", method="post")
+					button.btn(type="submit") Delete Room
+					| 
+					| If nothing else works, who do you call? Room busters!
+
+			

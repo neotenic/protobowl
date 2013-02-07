@@ -1,0 +1,251 @@
+doctype 5
+html(lang="en")
+	head
+		title STALKERMODE
+		link(rel="stylesheet", href="/protobowl.css")
+		style
+			.offline {
+				color: #BBB;
+			}
+			.idle {
+				color: #F89406;
+			}
+
+	body
+		div.container
+			mixin score(user)
+				| #{user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5}
+
+			mixin time(timestamp)
+				- var secs = (new Date - timestamp) / 1000
+				if secs > 60 * 60
+					| #{Math.floor(secs / 60 / 60)} hours 
+				if secs > 60
+					| #{Math.floor(secs / 60) % 60} minutes 
+				| #{Math.floor(secs % 60)} seconds
+				| ago
+				if secs > 60 * 60
+					- var dt = new Date()
+					- dt.setTime(timestamp)
+					| &nbsp;@#{dt.toString().split(' ')[4]}
+			
+			mixin duration(millisecs)
+				- var secs = millisecs / 1000
+				if secs > 60 * 60
+					| #{Math.floor(secs / 60 / 60)} hours 
+				if secs > 60
+					| #{Math.floor(secs / 60) % 60} minutes 
+				| #{Math.floor(secs % 60)} seconds
+
+			mixin display_user(user)
+				li #{user.team || ''} 
+					if user.muwave
+						span.badge.badge-info MICROWAVE
+					if user.room && user.room.admins && user.room.admins.indexOf(user.id) != -1
+						span.badge ADMIN
+					if Date.now() < user.banned
+						span.badge.badge-important BANNED
+					b  #{user.name} 
+					if !('users' in user)
+						a(href="/stalkermode/user/#{user.room.name.replace(/\//g, '~')}/#{user.id}") &rarr; 
+					| (last seen 
+					mixin time(user.last_action)
+					| )
+					| online for 
+					mixin duration(user.time_spent)
+					ul
+						li score: 
+							mixin score(user)
+							- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001)), f_score = 2 * (precision * recall) / (precision + recall + 0.001);
+							- var latency = '?'; if(user._latency){ latency = user._latency[0].toFixed(1) + 'ms ±' + user._latency[1].toFixed(1) + ' (' + user._latency[2] + ')' }
+							|  correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early} precision: #{precision.toFixed(2)} recall: #{recall.toFixed(2)} f1: #{f_score.toFixed(2)} latency: #{latency}
+						if user.users || user.rooms
+							li
+								| users: #{user.users} rooms: #{user.rooms}
+			- function get_online(room)	{return Object.keys(room.users).filter(function(e){return room.users[e].online()})}
+			- function get_active(room){return get_online(room).filter(function(e){return room.users[e].active()})}
+			- function count_online(room) {return get_online(room).length}
+			- function count_active(room) {return get_active(room).length}
+			- function weight_room(room) {return count_online(room) * 0.1 + count_active(room)}
+			mixin display_room(room, room_name)
+				li
+					a(href="/#{room_name}") #{room_name}
+					| 
+					a(href="/#{room_name}?ninja&dev") (ninja mode) 
+					| 
+					a(href="/stalkermode/room/#{room_name.replace(/\//g, '~')}") &rarr; 
+					| 
+					| #{Object.keys(room.users).length} users,
+					| #{count_online(room)} online
+					| #{count_active(room)} active
+					ul Difficulty/Subject: #{room.difficulty || "All"} #{room.category || "Pot"}
+					ul
+						each user, id in room.users
+							if user.active()
+								mixin display_user(user)
+					ul.idle
+						each user, id in room.users
+							if user.online() && !user.active()
+								mixin display_user(user)
+					ul.offline
+						each user, id in room.users
+							if !user.online()
+								mixin display_user(user)
+
+			h1 STALKERMODE ENGAGED
+			h3 server codename #{codename}
+
+			ul.nav.nav-pills
+				li
+					a(href="/stalkermode/users") Users
+
+				li
+					a(href="/stalkermode/patriot") Wiretap
+
+				li
+					a(href="/stalkermode/audacity") Bold
+				
+				li
+					a(href="/lag.html") Lag
+					
+				li
+					a(href='/perf-histogram') Histogram
+
+				li
+					a(href="/stalkermode/reports/all") Reports
+
+				if cookie
+					li
+						a(href="/stalkermode/logout") Logout 
+				else
+					li
+						a(href="/stalkermode/cook") Cook
+
+
+			p #{mem} #{os_text}
+
+			if gammasave
+				p
+					a(href="/stalkermode/gamma-off") Disable High Frequency Saving
+
+				h3 WARNING! HIGH FREQUENCY SAVE ENABLED 
+					mixin time(gammasave)
+			else
+				p
+					a(href="/stalkermode/hulk-smash") Enable High Frequency Saving
+
+
+
+			- var online = 0, active_users = 0, points = 0, room_num = 0, online_rooms = 0, active_rooms = 0, time_spent = 0, total_users = 0, muwave_online = 0, muwave_users = 0
+			each room, room_name in rooms
+				- room_num++
+				- var active = false, room_online = false;
+				each user, id in room.users
+					- total_users++
+					if user.muwave
+						- muwave_users++
+					if user.sockets.length > 0
+						if user.muwave
+							- muwave_online++
+						- online++
+						- room_online = true
+						if user.active()
+							- active_users++
+							- active = true
+					- points += (user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5)
+					- time_spent += user.time_spent
+				if active
+					- active_rooms++
+				if room_online
+					- online_rooms++
+			p 
+				| Users Online: #{online}, 
+				| Active Users: #{active_users}, 
+				| Total Users: #{total_users}, 
+				| Total Points: #{points}, 
+				| Total Rooms: #{room_num}, 
+				| Online Rooms: #{online_rooms}, 
+				| Active Rooms: #{active_rooms}, 
+				| Latency: #{avg_latency.toFixed(2)}ms ±#{std_latency.toFixed(2)},
+				| &mu;wave: #{muwave_online} (#{(100 * muwave_online / (online + 0.1)).toFixed(1)}%) online #{muwave_users} total, 
+				| Message Count: #{message_count}, 
+				| Time Spent: 
+				mixin duration(time_spent), 
+				| Journal Queue: #{queue}
+			p Server started 
+				mixin time(start)
+
+
+			hr
+
+			ul
+				mixin display_user(reaped)
+				- var sorted_names = Object.keys(rooms).sort(function(b,a){return weight_room(rooms[a]) - weight_room(rooms[b])})
+				each room_name in sorted_names
+					- var room = rooms[room_name]
+					mixin display_room(room, room_name)
+
+
+			hr
+
+			ul.nav.nav-pills
+				li.disabled 
+					a Other Destinations
+				li
+					a(href="/stalkermode/archived") Archived 
+
+
+			hr
+			form(action="/stalkermode/announce", method="post")
+				label(for="name") Name
+				input#name(name="name", type="text", value="protobowl_announcement", style="width: 200px")
+				br
+				label(for="message") Message 
+				input#message(type="text", name="message", style="width:500px")
+				| 
+				button.btn(type="submit") Announce
+			
+			hr
+
+			form(action="/stalkermode/algore", method="post")
+				button.btn(type="submit") Reinitialize Resource Counts
+
+			//- form(action="/stalkermode/update", method="post")
+			//- 	button(type="submit") Trigger Application Update
+
+			//- form(action="/stalkermode/forceupdate", method="post")
+			//- 	button(type="submit") Force Application Update
+
+			hr
+
+			form(action="/stalkermode/the-scene-is-safe", method="post")
+				button.btn.btn-danger(type="submit") Safe Server Restart Procedure
+
+			hr
+
+			form(action="/stalkermode/stahp", method="post")
+				button.btn.btn-link(type="submit") Emergency Server Termination
+				span.label.label-warning This may lead to the loss of session state
+
+
+			//- I see a beautiful city and a brilliant people 
+			//- rising from this abyss, 
+			//- and, in their struggles to be truly free, 
+			//- in their triumphs and defeats, 
+			//- through long years to come, 
+			//- I see the evil of this time and of the previous time 
+			//- of which this is the natural birth, 
+			//- gradually making expiation for itself 
+			//- and wearing out.
+
+			//- I see the lives for which I lay down my life, 
+			//- peaceful, useful, prosperous and happy
+
+			//- I see that I hold a sanctuary in their hearts, 
+			//- and in the hearts of their descendants, 
+			//- generations hence. 
+
+			//- It is a far, far better thing that I do, 
+			//- than I have ever done; 
+			//- it is a far, far better rest that I go to 
+			//- than I have ever known.
