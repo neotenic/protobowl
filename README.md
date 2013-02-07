@@ -8,7 +8,7 @@ The current version of Protobowl which lies before you is the "third" version. B
 
 # README & Anachronisms
 
-Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions. As you might figure out in the "Prototype Quizbowl Application" section, the core of protobowl has evolved significantly during the life of this readme, and especially because I'm so insistent on writing pseudo-literary fluff in lieu of helpful concise manuals and bullets, there's a good chance that the vast majority of the readme will be rife with anachronisms, statements that once were true, were falsified, returned to truthfulness and then fell into a stasis of untruth. 
+Okay, so I think NPM would complain if I didn't have a readme, so I guess I'll start writing something which might be mistaken for a readme given a certain number of prior conditions. As you might figure out in the "Prototype Quizbowl Application" section, the core of protobowl has evolved significantly during the life of this readme, and especially because I'm so insistent on writing pseudo-literary fluff in lieu of helpful concise manuals and bullets, there's a good chance that the vast majority of the readme will be rife with anachronisms, statements that once were true, were falsified, returned to truthfulness and then fell into a stasis of untruth.
 
 # Manual
 
@@ -20,7 +20,7 @@ But it's got a somewhat large scope which makes me believe that it may be useful
 
 Yeah, yeah, buzzwords galore. It's responsively designed which means that it should, at least in theory, work on all screen sizes, from gigantic monitor walls of 60 HD displays (I've only tested the application on six WXQGA monitors) to an iPhone screen (I won't venture any smaller, because running on watches represents a significant effort beyond what I already have).
 
-It's been tested on a few browsers, Chrome (on Linux, Windows, iPad, Galaxy Nexus) and Firefox and Safari on iPad. 
+It's been tested on a few browsers, Chrome (on Linux, Windows, iPad, Galaxy Nexus) and Firefox and Safari on iPad.
 
 It's built with Twitter Bootstrap, sans fugly black bar on top, so it should inherit most of the responsiveness. Also, it uses Font Awesome for all glyphs and that means everything's vector and smooth even at absurd pixel densities.
 
@@ -28,13 +28,13 @@ It's built with Twitter Bootstrap, sans fugly black bar on top, so it should inh
 
 Protobowl was designed first with a flexible sync architecture. However, regrettably, it wasn't designed with the idea of Offline-first. Don't get me wrong, offline works great, but it's implemented with a offline.coffee which is largely (I'd say 80%) a reimplementation of methods in web.coffee. That's not a good quantity of don't repeat yourself, or at least it's hardly ideal.
 
-However, by virtue of running off Node, there's a single language (javascript) which runs both client and server. As such there's a natural ability to reuse some code, in this case, all the supporting libraries are shared between client and server, the answer checking (which is surprisingly sophisticated, albeit likely unnecessarily so). 
+However, by virtue of running off Node, there's a single language (javascript) which runs both client and server. As such there's a natural ability to reuse some code, in this case, all the supporting libraries are shared between client and server, the answer checking (which is surprisingly sophisticated, albeit likely unnecessarily so).
 
 Offline was built with Appcache in mind, that's pretty obvious because you sort of need appcache to make things work offline. The offline code is loaded asynchronously and there isn't any fundamental difference between offline-start and disconnect behavior. So that means there isn't any fumbling between multiple copies of the code or any limitation on the functionality of the offline mode. You can disconnect from the server in the midst of the game, perhaps because of a flaky connection and you can continue without interruption. And it even tries to automatically reconnect, and picks up the state and resumes (albeit, probably losing what you've done offline).
 
 I have a sort of wordsy packrat syndrome, so I'll leave all the text above untarnished, and state plainly that none of the words above are true, not anymore at least. Version 3 was a rewrite of the entire core of protobowl: client, server, heaven and earth. And to make the architecture more clean and gody, I endeavored to share code between client and server in a pretty cool way.
 
-I don't think this is meant to be a technical exposé of the artistic symmetries in the yet-unmade UML diagram of the universe, but I'll talk about it a bit anyway, at least long enough for this document to hit the 3000 word mark. 
+I don't think this is meant to be a technical exposé of the artistic symmetries in the yet-unmade UML diagram of the universe, but I'll talk about it a bit anyway, at least long enough for this document to hit the 3000 word mark.
 
 ## Interface
 
@@ -46,9 +46,9 @@ The primary interface is meant to be the keyboard. In fact, early design sketche
 
 The first button is `space`, which make sense because it's the biggest button and also probably the most important. Space generally means "buzz", however there's another very small thing it does: when you open up and see that big green button saying "start the game", you can also press space to trigger that (no ambiguity since the buzz button is disabled in such circumstances).
 
-Next, or skipping, as it was referred to in earlier iterations is also a fairly commonplace operation. It can be accessed with not one, but three keys, `S`, `N` and `J`. `S` and `N` are probably pretty obvious, referring to "Skip" and "Next". J is just convenient because it's on the home row (well, so is `S`, technically) and usually refers to "down" for people who use Vi (which notably doesn't include me, but Gmail, Google Reader and Google Wave, three applications that I did, at some point in time use also follow that pattern). 
+Next, or skipping, as it was referred to in earlier iterations is also a fairly commonplace operation. It can be accessed with not one, but three keys, `S`, `N` and `J`. `S` and `N` are probably pretty obvious, referring to "Skip" and "Next". J is just convenient because it's on the home row (well, so is `S`, technically) and usually refers to "down" for people who use Vi (which notably doesn't include me, but Gmail, Google Reader and Google Wave, three applications that I did, at some point in time use also follow that pattern).
 
-Pause and Resume can be accessed with `P` and `R`, and are both equivalent. So you can technically pause with `R`, and resume with `P`, though that would be metaphorically confusing. 
+Pause and Resume can be accessed with `P` and `R`, and are both equivalent. So you can technically pause with `R`, and resume with `P`, though that would be metaphorically confusing.
 
 Since it's designed to be "social", if you don't mind me tossing around more loaded buzzwords, chat was one of the first features added (also one of the easiest, but that doesn't help me rewrite history). Chat is accessed through the `/` key, that is, the forward slash. For those who don't like letters which aren't in the alphabet, it's also accessible through the letter `C`.
 
@@ -65,7 +65,7 @@ There are a number of non-button things which can be clicked on as well.
 
 The "breadcrumb", as Bootstrap calls it, is the little row which precedes every question which includes the category, difficulty and tournament to which the question belongs. The one on the top isn't clickable, but all the other ones are. Clicking on those expands the question readout which gets collapsed below them.
 
-Within the breadcrumb is a slightly grayed out word "Report", which can be clicked on to bring up a (as of yet non functional) modal dialog to submit a question for manual review in case there was something wrong with the question. For instance, maybe the question was formatted wrong or truncated, or you're exceedingly pedantic and think that there is a typo which hinders your ability to participate, or something. 
+Within the breadcrumb is a slightly grayed out word "Report", which can be clicked on to bring up a (as of yet non functional) modal dialog to submit a question for manual review in case there was something wrong with the question. For instance, maybe the question was formatted wrong or truncated, or you're exceedingly pedantic and think that there is a typo which hinders your ability to participate, or something.
 
 Also, on the far right is a blue star which can be clicked on to "bookmark" a question. Right now, bookmarking does little other than filling in that blue star and preventing the question from getting deleted (questions that drop far enough down get deleted unless they're bookmarked). However, in the future, it may be imaginable that the bookmarked questions would be added to some kind of interface which could be managed by the server.
 
@@ -98,9 +98,9 @@ It also has shiny transitions between single player and multiplayer modes.
 
 ## Debugging
 
-The debugging panel is the furthest down and takes the form of what looks like a table. The first two rows sound vaguely technical (with an underscore too!), latency and sync_offset. And you'd be right, they're both just little metrics which go indicate the health of the network connection. 
+The debugging panel is the furthest down and takes the form of what looks like a table. The first two rows sound vaguely technical (with an underscore too!), latency and sync_offset. And you'd be right, they're both just little metrics which go indicate the health of the network connection.
 
-The titling of "Debugging" is a tad disingenuous, it's mostly networking. But then again, networking is like the vast majority of what can actually fail. 
+The titling of "Debugging" is a tad disingenuous, it's mostly networking. But then again, networking is like the vast majority of what can actually fail.
 
 The very last in the menu is a link that quite plainly says "Disconnect", and opposite is a piece of text representing the application cache's status. Disconnect is nice for when the network's flakey and you know your connection won't last long anyway. Or if you're like antisocial and need to make your own little corner to cry in. Or something like that. Sure. Okay. Next.
 
@@ -121,13 +121,13 @@ On May 25th of this year, I was introduced to the website quizbowldb.com which h
 
 ### Bayesian Classifier
 
-The first thing which needed to be done was getting some set of labeled questions for the database. I looked around and found a few sources but most of them weren't really large or labeled. I had finished the online AI class a few months ago, and felt like applying it in a fairly obvious scenario, so over the course of the next few hours I built a simple naive bayesian classifier to give categories to questions. 
+The first thing which needed to be done was getting some set of labeled questions for the database. I looked around and found a few sources but most of them weren't really large or labeled. I had finished the online AI class a few months ago, and felt like applying it in a fairly obvious scenario, so over the course of the next few hours I built a simple naive bayesian classifier to give categories to questions.
 
-But, in order to do that, I had to first have some manually labeled corpus. I certainly wasn't up for the tedium, so I decided to pull some from the quizbowldb.com site to seed the algorithm. At that point in time, for some reason, I was using some preview release of Windows 8 and rather regrettably couldn't use wget. But I coped by writing a short python script (rather than the more reasonable solution of rebooting into another operating system) which would incrementaly clone the site's database. 
+But, in order to do that, I had to first have some manually labeled corpus. I certainly wasn't up for the tedium, so I decided to pull some from the quizbowldb.com site to seed the algorithm. At that point in time, for some reason, I was using some preview release of Windows 8 and rather regrettably couldn't use wget. But I coped by writing a short python script (rather than the more reasonable solution of rebooting into another operating system) which would incrementaly clone the site's database.
 
-Because of rate limiting or something to that effect, the script only pulled about 10 questions every 40 seconds, and given that there were 30,000 questions in the database, the process wasn't terribly fast. I eventually booted back into linux and rewrote the script so that it was resumable (for the event that the script might be interrupted for some reason on its scheduled week-long run). 
+Because of rate limiting or something to that effect, the script only pulled about 10 questions every 40 seconds, and given that there were 30,000 questions in the database, the process wasn't terribly fast. I eventually booted back into linux and rewrote the script so that it was resumable (for the event that the script might be interrupted for some reason on its scheduled week-long run).
 
-However, by the next day, some number of them were downloaded and that small number was enough to train the classifier. The first thing was trying to run the classifier on the question set itself and comparing how well it fared. The results were actually surprisingly good, and after careful combing through the exceptions, it appeared that most of the errors manifested from the manual mislabeling of the original corpus. 
+However, by the next day, some number of them were downloaded and that small number was enough to train the classifier. The first thing was trying to run the classifier on the question set itself and comparing how well it fared. The results were actually surprisingly good, and after careful combing through the exceptions, it appeared that most of the errors manifested from the manual mislabeling of the original corpus.
 
 After that initial successful result, I did a bit of work on a question extraction algorithm which would use the command line version of Abiword to convert .doc and .docx files that packets are usually distributed as into some machine readable format for feeding into the classifier. However, I never quite finished that, as school work caught up with me and I waited for the database to finish downloading.
 
@@ -141,7 +141,7 @@ But nothing really happened after that. The school year was nearing a close and 
 
 I wasn't the only person in my school's quiz bowl team who was interested in pursuing the idea. In fact, it was Ben who actually started the app first. I didn't write code for the actual project until two weeks ago.
 
-Early in July (or possibly late in June), Ben wanted to build that quiz bowl application when I was still working on a few other projects as well as an internship. I gave him the big JSON file of questions and he toiled away for the next few days, experimenting first with Ruby on Rails and then later settling with Node.JS (and the accompanying popular stacks). 
+Early in July (or possibly late in June), Ben wanted to build that quiz bowl application when I was still working on a few other projects as well as an internship. I gave him the big JSON file of questions and he toiled away for the next few days, experimenting first with Ruby on Rails and then later settling with Node.JS (and the accompanying popular stacks).
 
 Within a few days, he had put out a pretty impresive application using Mongoose, Jade, Twitter Bootstrap, Express, and Node running on Heroku at the (now defunct) its-ac-attack URL. Soon afterwards search was fairly functional and I started to take an interest in the project again (having almost finished another project, though at time of writing, I have yet to begin writing the blog post for that project).
 
@@ -151,6 +151,8 @@ I wanted to skip straight into the low latency websocket-driven synchronized mul
 
 ## Prototype Quizbowl Application
 
-Chronologically, this places us at about two weeks ago. That's actually quite confusing because I wrote that sentence a bit over a month ago, where "a month ago" means August 8th, and "now" means September 12th. That is, you can imagine the gap between the first sentence in this paragraph and the sentence immediately succeeding it as joined by that scene from Monty Python where the animator dies of some fatal heart attack, in which case that animator is me, and I just sort of gave up on writing the readme. 
+Chronologically, this places us at about two weeks ago. That's actually quite confusing because I wrote that sentence a bit over a month ago, where "a month ago" means August 8th, and "now" means September 12th. That is, you can imagine the gap between the first sentence in this paragraph and the sentence immediately succeeding it as joined by that scene from Monty Python where the animator dies of some fatal heart attack, in which case that animator is me, and I just sort of gave up on writing the readme.
 
-And just like that, in the blink of a sentence, it's been another month. 
+And just like that, in the blink of a sentence, it's been another month.
+
+## Test
