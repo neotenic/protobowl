@@ -170,11 +170,12 @@ class SocketQuizRoom extends QuizRoom
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question)
 
 	get_question: (callback) ->
-		remote.create_event {
-			"qid": @qid,
-			"date": Date.now(),
-			"users": (user.id for id, user of @users)
-		}
+		# commented out until the user-auth stuff goes into effect
+		# remote.create_event {
+		# 	"qid": @qid,
+		# 	"date": Date.now(),
+		# 	"users": (user.id for id, user of @users)
+		# }
 		cb = (question) =>
 			log 'next', [@name, question?.answer, @qid]
 			callback(question)
@@ -207,21 +208,22 @@ class SocketQuizRoom extends QuizRoom
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
-			remote.create_event {
-				"uid": @attempt.user,
-				"sid": user.sid || user.id,
-				"room": @name,
-				"date": Date.now(),
-				"early": @attempt.early,
-				"seen":  user.seen,
-				"tspent": user.time_spent,
-				"answer": @answer,
-				"category": @info.category,
-				"difficulty": @info.difficulty,
-				"guess": @attempt.text,
-				"ruling": ruling,
-				"interrupt": @attempt.interrupt
-			}
+			# commented out until the user-auth stuff goes into effect
+			# remote.create_event {
+			# 	"uid": @attempt.user,
+			# 	"sid": user.sid || user.id,
+			# 	"room": @name,
+			# 	"date": Date.now(),
+			# 	"early": @attempt.early,
+			# 	"seen":  user.seen,
+			# 	"tspent": user.time_spent,
+			# 	"answer": @answer,
+			# 	"category": @info.category,
+			# 	"difficulty": @info.difficulty,
+			# 	"guess": @attempt.text,
+			# 	"ruling": ruling,
+			# 	"interrupt": @attempt.interrupt
+			# }
 
 		super(session)
 
@@ -730,7 +732,7 @@ app.post '/stalkermode/algore', (req, res) ->
 	remote.populate_cache (layers) ->
 		res.end("counted all cats #{JSON.stringify(layers, null, '  ')}")
 
-app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
+app.get '/stalkermode/users', (req, res) -> res.render './ninja/users.jade', { rooms: rooms }
 
 
 app.get '/stalkermode/cook', (req, res) ->
@@ -748,14 +750,14 @@ app.get '/stalkermode/user/:room/:user', (req, res) ->
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['room'] and typeof v isnt 'function'
 
-	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips: u?.ip() }
+	res.render './ninja/user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips: u?.ip() }
 
 
 app.get '/stalkermode/room/:room', (req, res) ->
 	u = rooms?[req.params.room.replace(/~/g, '/')]
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['users', 'timing', 'cumulative'] and typeof v isnt 'function'
-	res.render 'control.jade', { room: u, name: req.params.room.replace(/~/g, '/'), text: util.inspect(u2)}
+	res.render './ninja/control.jade', { room: u, name: req.params.room.replace(/~/g, '/'), text: util.inspect(u2)}
 
 app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
 
@@ -872,7 +874,7 @@ app.get '/stalkermode', (req, res) ->
 		totalmem: os.totalmem(),
 		freemem: os.freemem()
 	}
-	res.render 'admin.jade', {
+	res.render './ninja/admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,
@@ -938,26 +940,26 @@ app.get '/stalkermode/to_boldly_go', (req, res) ->
 		res.end JSON.stringify doc
 
 app.get '/stalkermode/reports/all', (req, res) ->
-	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
+	return res.render './ninja/reports.jade', { reports: [], categories: [] } unless remote.Report
 	remote.Report.find {}, (err, docs) ->
-		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
+		res.render './ninja/reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/stalkermode/reports/:type', (req, res) ->
-	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
+	return res.render './ninja/reports.jade', { reports: [], categories: [] } unless remote.Report
 
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
-		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
+		res.render './ninja/reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/stalkermode/audacity', (req, res) ->
-	res.render 'audacity.jade', { }
+	res.render './ninja/audacity.jade', { }
 
 
-app.get '/stalkermode/patriot', (req, res) -> res.render 'dash.jade'
+app.get '/stalkermode/patriot', (req, res) -> res.render './ninja/dash.jade'
 
 app.get '/stalkermode/archived', (req, res) ->
-	return res.render 'archived.jade', { list: [], rooms } unless remote.listArchived
+	return res.render './ninja/archived.jade', { list: [], rooms } unless remote.listArchived
 	remote.listArchived (list) ->
-		res.render 'archived.jade', { list, rooms }
+		res.render './ninja/archived.jade', { list, rooms }
 
 app.get '/stalkermode/:other', (req, res) -> res.redirect '/stalkermode'
 
@@ -983,7 +985,7 @@ am_i_a_zombie = ->
 	req.on 'error', (err) ->
 		console.log 'zombie checking error', err
 
-app.get '/401', (req, res) -> res.render 'auth.jade', {}
+app.get '/401', (req, res) -> res.render './ninja/auth.jade', {}
 
 app.post '/401', (req, res) -> remote.authenticate(req, res)
 
