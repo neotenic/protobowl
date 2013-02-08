@@ -81,8 +81,8 @@ renderUpdate = ->
 	$('.difficulties').val room.difficulty
 	$('.multibuzz').attr 'checked', !room.max_buzz
 	$('.allowskip').attr 'checked', !room.no_skip
-	$('.adhd').attr 'checked', !!me.distraction
-	$('body').toggleClass 'distraction', !!me.distraction
+	$('.adhd').attr 'checked', !!me.prefs.distraction
+	$('body').toggleClass 'distraction', !!me.prefs.distraction
 
 
 	if $('.settings').is(':hidden')
@@ -91,13 +91,27 @@ renderUpdate = ->
 	
 	$('.bundle.active').toggleClass 'semi', room.semi
 
-	if me.id of room.users and 'show_typing' of room.users[me.id]
-		$('.livechat').attr 'checked', room.users[me.id].show_typing
-		$('.sounds').attr 'checked', room.users[me.id].sounds
-		$('.lock').attr 'checked', room.users[me.id].lock
-		$('.teams').val room.users[me.id].team
+	if me.id of room.users  and 'prefs' of room.users[me.id]
 
-		$('.microwave').toggle !(room.users[me.id].muwave)
+		if !$('.timer-widget').data('hidden') != !me.prefs.timer_hide
+			if me.prefs.timer_hide
+				$('.timer-widget').data('hidden', true)
+				$('.timer, .progress').animate({opacity: 0}).slideUp().queue ->
+						$(this).css('opacity', '').dequeue()
+						$('.expand-timer').fadeIn()
+			else
+				$('.timer-widget').data('hidden', false)
+				$('.expand-timer').fadeOut()
+				$('.timer, .progress').slideDown().animate({opacity: 0.7}).queue ->
+						$(this).css('opacity', '').dequeue()
+
+
+		$('.livechat').attr 'checked', me.prefs.typing
+		$('.sounds').attr 'checked', me.prefs.sounds
+		$('.lock').attr 'checked', me.lock
+		$('.teams').val me.team
+
+		$('.microwave').toggle !(me.muwave)
 
 		if me.guesses > 0
 			$('.reset-score').slideDown()
@@ -192,7 +206,7 @@ renderTimer = ->
 		$('.offline-badge').capQueue().fadeIn()
 	
 	
-	$('.chatbtn').disable !me.authorized(room.mute) or me.distraction
+	$('.chatbtn').disable !me.authorized(room.mute) or me.prefs.distraction
 
 	if room.time_freeze
 		$('.buzzbtn').disable true
@@ -325,8 +339,8 @@ get_score = (user) ->
 	if user.members
 		score = Sum(get_score(member) for member in user.members)
 	else	
-		if me.movingwindow
-			score = user.score() - [0].concat(user.history).slice(-me.movingwindow)[0]
+		if me.prefs.movingwindow
+			score = user.score() - [0].concat(user.history).slice(-me.prefs.movingwindow)[0]
 			# basis = user.history.concat [user.score()]
 			# basis[basis.length - 1]
 		else
@@ -562,7 +576,7 @@ renderUsers = ->
 		ellipsis = $('<tr>').addClass('ellipsis refreshed').appendTo list
 
 
-	if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2 and !me.leaderboard
+	if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2 and !me.prefs.leaderboard
 		# thresh = TOP_NUM
 		bottom_size = Math.min(entities.length, me_entity.position + CONTEXT) - (me_entity.position - CONTEXT)
 
@@ -584,7 +598,7 @@ renderUsers = ->
 		# 	row = $('<tr>').addClass('ellipsis').appendTo list
 		# 	ellipsis = $('<td colspan=4>').appendTo(row)
 
-		if me.leaderboard
+		if me.prefs.leaderboard
 			for i in [thresh...entities.length]
 				create_row entities[i]
 	
@@ -592,7 +606,7 @@ renderUsers = ->
 	if ellipsis 
 		# if entities.length - render_count > 0
 		status = "(<b>#{entities.length - render_count}</b> hidden)"
-		if me.leaderboard
+		if me.prefs.leaderboard
 			status = "(hide <b>#{entities.length - render_count}</b>)"
 		
 		msg = $('<span>')

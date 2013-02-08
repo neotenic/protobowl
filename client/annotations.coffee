@@ -28,7 +28,7 @@ addAnnotation = (el, name = sync?.name) ->
 		current_block = $('#history .annotations').eq(0)
 	el.prependTo current_block
 	
-	unless el.hasClass('annoying') and me.distraction
+	unless el.hasClass('annoying') and me.prefs.distraction
 		el.css('display', 'none').slideDown()
 
 	return el
@@ -515,8 +515,9 @@ verbAnnotation = ({user, verb, time, notify}) ->
 	line.addClass(verbclass)
 	
 	if user
-		if user is me.id
+		if user is me.id and !/skip|pause|resume/.test(verb)
 			line.removeClass 'annoying'
+
 		if notify
 			line.prepend '<i class="icon-user"></i> '
 		

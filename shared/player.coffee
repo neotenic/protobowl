@@ -34,19 +34,19 @@ class QuizPlayer
 		@times_buzzed = 0
 		
 		# user settings
-		@show_typing = true
 		@team = ''
 		@banned = 0
-		@sounds = false
+
+		@prefs = {}
+
 		@lock = false
-		@movingwindow = false
 
 		# sort of half a setting but not really
 		@muwave = false
 
 		# rate limiting and banning
-		@tribunal = null
-		@elect = null
+		# @tribunal = null
+		# @elect = null
 		# @__tribunal_timeout = null
 		# @__elect_timeout = null
 		@__recent_actions = []
@@ -181,7 +181,7 @@ class QuizPlayer
 		if !@elect
 			# @verb "TERMPOEWJROSIJWER THIS PERSON IS A NARCONARC"
 			current_time = @room.serverTime()
-			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.distraction)
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.prefs.distraction)
 			@__elect_timeout = setTimeout =>
 				@verb 'got romneyed', true
 				
@@ -206,7 +206,7 @@ class QuizPlayer
 		@touch()
 		if !@tribunal
 			current_time = @room.serverTime()
-			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.distraction)
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.prefs.distraction)
 			return if witnesses.length <= 1
 
 			# Ummmm ahh such as like, 
@@ -752,11 +752,16 @@ class QuizPlayer
 	# Here are the user settings, no auth required
 	##############################################################
 
-
-	set_leaderboard: (state) ->
+	pref: (name, value) ->
 		@touch()
-		@leaderboard = state
-		@sync()
+		
+		return unless typeof name is 'string'
+		return if name in ['toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor']
+		
+		if name[0] != '_'
+			@prefs[name] = value
+			@sync()
+
 
 	set_team: (name) ->
 		@touch()
@@ -767,29 +772,6 @@ class QuizPlayer
 		@team = name
 		@sync(true)
 
-	set_show_typing: (data) ->
-		@touch()
-		unless @muwave
-			@show_typing = !!data
-			@sync()
-
-	set_sounds: (data) ->
-		@touch()
-		@sounds = !!data
-		@sync()
-
-	set_distraction: (data) ->
-		@touch()
-		@distraction = !!data
-		@sync()
-		
-	set_movingwindow: (num) ->
-		@touch()
-		if num and !isNaN(num)
-			@movingwindow = num
-		else
-			@movingwindow = false
-		@sync()
 
 	set_idle: (val) ->  
 		# idle state doesn't matter and it's really a waste of packets

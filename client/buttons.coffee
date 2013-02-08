@@ -40,7 +40,7 @@ open_chat = (text) ->
 	if text is "@$> "
 		$('.chat_input').val text
 	else
-		return if !me.authorized(room.mute) or me.distraction
+		return if !me.authorized(room.mute) or me.prefs.distraction
 
 	if actionMode != 'chat'
 		setActionMode 'chat'
@@ -458,14 +458,14 @@ $('.allowskip').change -> me.set_skip $('.allowskip')[0].checked
 
 $('.showbonus').change -> me.set_bonus $('.showbonus')[0].checked
 
-$('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
+$('.livechat').change -> me.pref 'typing', $('.livechat')[0].checked
 
 $('.lock').change -> me.set_lock $('.lock')[0].checked
 
 $('.adhd').change -> 
-	me.distraction = $('.adhd')[0].checked
-	me.set_distraction me.distraction
-	if me.distraction
+	me.prefs.distraction = $('.adhd')[0].checked
+	me.pref 'distraction', me.prefs.distraction
+	if me.prefs.distraction
 		$('p.annoying')
 		.removeClass('annoying')
 		.slideUp 'normal', ->
@@ -480,12 +480,12 @@ $('.request-access').click -> me.nominate()
 
 $('.movingwindow').change -> 
 	if $('.movingwindow')[0].checked
-		me.set_movingwindow 20
+		me.pref 'movingwindow', 20
 	else
-		me.set_movingwindow false
+		me.pref 'movingwindow', false
 
 $('.sounds').change -> 
-	me.set_sounds $('.sounds')[0].checked
+	me.pref 'sounds', $('.sounds')[0].checked
 	$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
 
 mobileLayout = -> 
@@ -566,11 +566,18 @@ $('.banhammer.reprimand').live 'click', (e) ->
 	, 1000 * 15
 
 
+$('.timer-widget').click ->
+	me.prefs.timer_hide = !$('.timer-widget').data('hidden')
+	renderUpdate()
+	me.pref 'timer_hide', me.prefs.timer_hide
+	
+
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")
 		# console.log 'toggle show all'
-		me.leaderboard = !me.leaderboard
-		me.set_leaderboard me.leaderboard
+		me.prefs.leaderboard = !me.prefs.leaderboard
+		me.pref 'leaderboard', me.prefs.leaderboard
+		
 		renderUsers()
 		return
 	

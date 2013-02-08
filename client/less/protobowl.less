@@ -7,6 +7,15 @@ body {
 	background: #fbfbfb;
 }
 
+
+.unselectable {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+	cursor: default;
+}
+
+
 .distraction {
 	.annoying {
 		display: none;
@@ -14,6 +23,7 @@ body {
 }
 
 .timer-widget {
+
 	.label {
 		// float: right;
 		right: 0;
@@ -42,7 +52,31 @@ body {
 			color: #DA2F22;
 		}
 	}
+	.timer, .progress {
+		transition: opacity 0.5s;
+		-webkit-transition: opacity 0.5s;
+		-moz-transition: opacity 0.5s;
+		-o-transition: opacity 0.5s;
+	}
+	
+	min-height: 22px;
+
+	&:hover {
+		.timer, .progress {
+			opacity: 0.7;
+		}
+	}
+	
+	cursor: pointer !important;	
+	&.timer-hide {
+		.timer, .progress {
+			display: none;
+		}
+	}
+	
 }
+
+
 
 .thumbnail {
 	margin: 0;
@@ -438,13 +472,6 @@ input[type=range] {
 }
 .bundle:not(.active) .breadcrumb {
 	cursor: pointer;
-}
-
-.unselectable {
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	user-select: none;
-	cursor: default;
 }
 
 .btn.disabled, .btn[disabled], .timer.disabled {
