@@ -264,7 +264,7 @@ renderTimer = ->
 	$('.primary-bar').toggleClass 'bar-danger', !!room.attempt
 	$('.progress').toggleClass 'active', !!room.attempt
 
-	
+
 	if room.attempt
 		elapsed = room.serverTime() - room.attempt.realTime
 		ms = room.attempt.duration - elapsed
@@ -297,40 +297,39 @@ renderTimer = ->
 					})
 				
 				el.tooltip('show')
-				
-	# if $('.progress .primary-bar').hasClass 'pull-right'
-	# 	$('.progress .primary-bar').width (1 - progress) * 100 + '%'
-	# else
-	# 	
-	if room.attempt or room.time_freeze
-		$('.progress .primary-bar').width progress * 100 + '%'
-		$('.progress .aux-bar').width '0%'
-	else
-		fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100
-		$('.progress .primary-bar').width Math.min(progress * 100, fraction) + '%'
-		$('.progress .aux-bar').width Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%'
 
 	if room.no_skip
 		$('.skipbtn').disable true
 
-	ms = Math.max(0, ms) # force time into positive range, comment this out to show negones
-	sign = ""
-	sign = "+" if ms < 0
-	sec = Math.abs(ms) / 1000
+	unless $('.timer-widget').data('hidden')		
+	
+		if room.attempt or room.time_freeze
+			$('.progress .primary-bar').width progress * 100 + '%'
+			$('.progress .aux-bar').width '0%'
+		else
+			fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100
+			$('.progress .primary-bar').width Math.min(progress * 100, fraction) + '%'
+			$('.progress .aux-bar').width Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%'
 
-	if isNaN(sec)
-		$('.timer .face').text('00:00')
-		$('.timer .fraction').text('.0')
-	else
-		cs = (sec % 1).toFixed(1).slice(1)
-		$('.timer .fraction').text cs
-		min = sec / 60
-		pad = (num) ->
-			str = Math.floor(num).toString()
-			while str.length < 2
-				str = '0' + str
-			str
-		$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
+
+		ms = Math.max(0, ms) # force time into positive range, comment this out to show negones
+		sign = ""
+		sign = "+" if ms < 0
+		sec = Math.abs(ms) / 1000
+
+		if isNaN(sec)
+			$('.timer .face').text('00:00')
+			$('.timer .fraction').text('.0')
+		else
+			cs = (sec % 1).toFixed(1).slice(1)
+			$('.timer .fraction').text cs
+			min = sec / 60
+			pad = (num) ->
+				str = Math.floor(num).toString()
+				while str.length < 2
+					str = '0' + str
+				str
+			$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
 
 
 get_score = (user) -> 

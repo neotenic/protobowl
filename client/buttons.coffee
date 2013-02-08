@@ -100,12 +100,15 @@ $('.buzzbtn').click ->
 		.val('')
 		.addClass('disabled')
 		.focus()
+		
 	# so it seems that on mobile devices with on screen virtual keyboards
 	# if your focus isn't event initiated (eg. based on the callback of
 	# some server query to confirm control of the textbox) it wont actualy
 	# bring up the keyboard, so the solution here is to first open it up
 	# and ask nicely for forgiveness otherwise
+	
 	submit_time = +new Date
+
 	if $('.sounds')[0].checked and !$('.sounds').data('ding_sound')
 		$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
 
