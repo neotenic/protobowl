@@ -113,6 +113,8 @@ render_admin_panel = (el) ->
 
 	# secret ninjas can not be in trouble
 	return if id[0] is '_'
+
+	return unless connected()
 	
 	# reset it
 	el.html('')
@@ -138,7 +140,6 @@ render_admin_panel = (el) ->
 
 	unless full
 		if room.users[id].banned > room.serverTime()
-			
 			el.append $('<span>')
 			.addClass('pull-right banhammer')
 			.css('color', '#c83025')
@@ -222,42 +223,6 @@ admin_panel = (id, arg = false) ->
 	# , 100
 	return new_el
 
-
-
-# banButton = (id, line, degree = 4) ->
-# 	# return if id is me.id # stop hitting yourself
-
-# 	usercount = (1 for i, u of room.users when u.active()).length
-# 	is_admin = me.id[0] is '_' or me.id in room.admins
-	
-# 	if is_admin and me.id isnt id
-# 		line.append $('<a>')
-# 			.attr('href', '#')
-# 			.attr('title', 'Instantly ban this user for 10 minutes')
-# 			.attr('rel', 'tooltip')
-# 			.attr('data-id', id)
-# 			.addClass('label label-important pull-right banhammer instaban')
-# 			.append($("<i>").addClass('icon-ban-circle'))
-# 			.click (e) ->
-# 				e.preventDefault()
-# 				me.ban_user id
-# 	else if ((me.score() > 50 and usercount > 2) or degree <= 2 and !room.admin_online()) or id is me.id # only show it if no admins are here
-# 		line.append $('<a>')
-# 			.attr('href', '#')
-# 			.attr('title', 'Initiate ban tribunal for this user')
-# 			.attr('rel', 'tooltip')
-# 			.attr('data-id', id)
-# 			.addClass('label label-warning pull-right banhammer make-tribunal')
-# 			.append($("<i>").addClass('icon-legal'))
-
-# 	line.append $('<a>')
-# 		.attr('href', '#')
-# 		.attr('title', 'Reprimand this user')
-# 		.attr('rel', 'tooltip')
-# 		.attr('data-id', id)
-# 		.addClass('label label-info pull-right banhammer reprimand')
-# 		.append($('<i>').addClass('icon-thumbs-down'))
-			
 
 
 
