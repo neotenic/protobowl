@@ -97,7 +97,7 @@ renderUpdate = ->
 		if !$('.timer-widget').data('hidden') != !me.prefs.timer_hide
 			if me.prefs.timer_hide
 				$('.timer-widget').data('hidden', true)
-				$('.timer, .progress').animate({opacity: 0}).slideUp().queue ->
+				$('.timer, .progress').slideUp().queue ->
 						$(this).css('opacity', '').dequeue()
 						$('.expand-timer').fadeIn()
 			else
