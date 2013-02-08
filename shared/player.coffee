@@ -622,6 +622,18 @@ class QuizPlayer
 		else
 			@verb 'enabled question skipping'
 
+	set_pause: (state) ->
+		@touch()
+		return unless @authorized()
+		@unpause()
+		if state
+			@verb 'enabled pausing questions'
+		else
+			@verb 'disabled pausing questions'
+		@room.no_pause = !state
+		@room.sync(1)
+
+
 	set_bonus: (data) ->
 		@touch()
 		return unless @authorized()
@@ -686,16 +698,6 @@ class QuizPlayer
 		@room.interrupts = !!state
 		@room.sync(1)
 
-	set_pause: (state) ->
-		@touch()
-		return unless @authorized 'ninja'
-		@unpause()
-		if state
-			@verb 'enabled pausing questions'
-		else
-			@verb 'disabled pausing questions'
-		@room.no_pause = !state
-		@room.sync(1)
 
 
 	set_semi: (state) ->

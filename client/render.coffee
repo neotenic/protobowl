@@ -81,6 +81,7 @@ renderUpdate = ->
 	$('.difficulties').val room.difficulty
 	$('.multibuzz').attr 'checked', !room.max_buzz
 	$('.allowskip').attr 'checked', !room.no_skip
+	$('.allowpause').attr 'checked', !room.no_pause
 	$('.adhd').attr 'checked', !!me.prefs.distraction
 	$('body').toggleClass 'distraction', !!me.prefs.distraction
 

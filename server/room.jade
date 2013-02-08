@@ -284,6 +284,9 @@ html(lang="en", manifest="/offline.appcache")
 									label.checkbox
 										input.allowskip(type="checkbox", checked)
 										| Allow players to skip questions
+									label.checkbox(style="display: none")
+										input.allowpause(type="checkbox", checked)
+										| Allow players to pause questions
 									
 									div.request-access
 										button.btn.btn-large <i class="icon-cog"></i>&nbsp; Request Access
