@@ -479,10 +479,12 @@ $('.adhd').change ->
 		$('body').addClass 'distraction'
 
 		unless me.prefs.timer_hide
-			$('.timer-widget').addClass('pulse')
 			setTimeout ->
-				$('.timer-widget').removeClass('pulse')
-			, 1500
+				$('.timer-widget').addClass('pulse')
+				setTimeout ->
+					$('.timer-widget').removeClass('pulse')
+				, 1500
+			, 500
 	else
 		$('body').removeClass 'distraction'
 		$('p.annoying').hide().slideDown()

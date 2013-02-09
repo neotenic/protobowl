@@ -88,7 +88,7 @@ body {
 	}
 
 	&.pulse {
-		animation-duration: 0.5s;
+		animation-duration: 1s;
 		animation-name: pulse;
 		-webkit-animation-duration: 1s;
 		-webkit-animation-name: pulse;
@@ -99,27 +99,15 @@ body {
 }
 
 @-webkit-keyframes pulse {
-	from {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.5;
-	}
-	to {
-		opacity: 1;
-	}
+	from { opacity: 1; }
+	50% { opacity: 0.5; }
+	to { opacity: 1; }
 }
 
 @-moz-keyframes pulse {
-	from {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.5;
-	}
-	to {
-		opacity: 1;
-	}
+	from { opacity: 1; }
+	50% { opacity: 0.5; }
+	to { opacity: 1; }
 }
 
 .thumbnail {
