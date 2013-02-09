@@ -37,7 +37,9 @@ class QuizPlayer
 		@team = ''
 		@banned = 0
 
-		@prefs = {}
+		@prefs = {
+			typing: true
+		}
 
 		@lock = false
 
@@ -499,7 +501,7 @@ class QuizPlayer
 			# progressive chat updates (i.e. letter by letter)
 			# are saved for websocket based connections
 			for id, user of @room.users 
-				if user.show_typing and !user.muwave
+				if user.prefs.typing and !user.muwave
 					user.emit 'chat', packet
 				else if first
 					user.emit 'chat', alt_packet

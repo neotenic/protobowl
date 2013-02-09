@@ -107,9 +107,9 @@ renderUpdate = ->
 						$(this).css('opacity', '').dequeue()
 
 
-		$('.livechat').attr 'checked', me.prefs.typing
-		$('.sounds').attr 'checked', me.prefs.sounds
-		$('.lock').attr 'checked', me.lock
+		$('.livechat').attr 'checked', !!me.prefs.typing
+		$('.sounds').attr 'checked', !!me.prefs.sounds
+		$('.lock').attr 'checked', !!me.lock
 		$('.teams').val me.team
 
 		$('.microwave').toggle !(me.muwave)
