@@ -74,7 +74,7 @@ class QuizRoom
 		@interrupts = true
 		@semi = false
 		@no_pause = false
-		# @mute = 0
+		
 
 		@acl = {
 			baseline:  100,
@@ -89,6 +89,7 @@ class QuizRoom
 
 		# the default level necessary to call authorized()
 
+		@mute = @acl.baseline
 		@escalate = @acl.unlocked
 
 
