@@ -79,10 +79,10 @@ renderUpdate = ->
 
 	$('.categories').val room.category
 	$('.difficulties').val room.difficulty
-	$('.multibuzz').attr 'checked', !room.max_buzz
-	$('.allowskip').attr 'checked', !room.no_skip
-	$('.allowpause').attr 'checked', !room.no_pause
-	$('.adhd').attr 'checked', !!me.prefs.distraction
+	$('.multibuzz').prop 'checked', !room.max_buzz
+	$('.allowskip').prop 'checked', !room.no_skip
+	$('.allowpause').prop 'checked', !room.no_pause
+	$('.adhd').prop 'checked', !!me.prefs.distraction
 	$('body').toggleClass 'distraction', !!me.prefs.distraction
 
 
@@ -107,9 +107,9 @@ renderUpdate = ->
 						$(this).css('opacity', '').dequeue()
 
 
-		$('.livechat').attr 'checked', !!me.prefs.typing
-		$('.sounds').attr 'checked', !!me.prefs.sounds
-		$('.lock').attr 'checked', !!me.lock
+		$('.livechat').prop 'checked', !!me.prefs.typing
+		$('.sounds').prop 'checked', !!me.prefs.sounds
+		$('.lock').prop 'checked', !!me.lock
 		$('.teams').val me.team
 
 		$('.microwave').toggle !(me.muwave)

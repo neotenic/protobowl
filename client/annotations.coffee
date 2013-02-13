@@ -1,9 +1,10 @@
 createAlert = (bundle, title, message) ->
 	div = $("<div>").addClass("alert alert-success")
 		.insertAfter(bundle.find(".annotations")).hide()
-	div.append $("<button>")
-		.attr("data-dismiss", "alert")
-		.attr("type", "button")
+	div.append $("<button>", {
+			"data-dismiss": "alert",
+			"type": "button"
+		})
 		.html("&times;")
 		.addClass("close")
 	div.append $("<strong>").text(title)
@@ -100,12 +101,8 @@ render_admin_panel = (el) ->
 			render_admin_panel $(this)
 
 	return unless el
-	# if you can't reprimand people, then, don't show it
-	# if me.reprimand_embargo	> room.serverTime() or !me.authorized('elected')
-	# 	$('.banham .reprimand').hide()
-	# else
-	# 	$('.banham .reprimand').show()
-		
+
+	
 	# # go through each one
 	# $('.banham').each ->
 	full = el.hasClass('full')
@@ -125,9 +122,10 @@ render_admin_panel = (el) ->
 
 	if id is me.id
 		button_type = "identity"
-		el.append $('<span>')
-		.attr('title', 'This post can be used against you')
-		.attr('rel', 'tooltip')
+		el.append $('<span>', {
+			'title': 'This post can be used against you',
+			rel: 'tooltip'
+		})
 		# .addClass('label label-info pull-right banhammer reprimand')
 		.addClass('pull-right banhammer')
 		.append($('<i>').addClass('icon-legal'))
@@ -138,7 +136,7 @@ render_admin_panel = (el) ->
 	if 1000 * 60 * 10 > Date.now() - room.users[id].__reprimanded > 1000 * 10 and me.tribunal_embargo < room.serverTime() and !room.admin_online()
 		button_type = "tribunal"
 
-	unless full
+	unless full or me.authorized('moderator')
 		if room.users[id].banned > room.serverTime()
 			el.append $('<span>')
 			.addClass('pull-right banhammer')
@@ -152,29 +150,32 @@ render_admin_panel = (el) ->
 			.append($('<i>').addClass('icon-legal'))
 
 	if button_type is 'reprimand' or full
-		el.append $('<a>')
-		.attr('href', '#')
-		.attr('title', 'Reprimand this user')
-		.attr('rel', 'tooltip')
-		.attr('data-id', id)
+		el.append $('<a>', {
+			href: '#', 
+			title: 'Reprimand this user',
+			rel: 'tooltip',
+			'data-id': id
+		})
 		.addClass('label label-info pull-right banhammer reprimand')
 		.append($('<i>').addClass('icon-thumbs-down'))
 
 	if button_type is 'tribunal' or full
-		el.append $('<a>')
-		.attr('href', '#')
-		.attr('title', 'Initiate ban tribunal for this user')
-		.attr('rel', 'tooltip')
-		.attr('data-id', id)
+		el.append $('<a>', {
+			href: '#', 
+			title: 'Initiate ban tribunal for this user',
+			rel: 'tooltip',
+			'data-id': id
+		})
 		.addClass('label label-warning pull-right banhammer make-tribunal')
 		.append($("<i>").addClass('icon-legal'))
 
 	if full or me.authorized('moderator')
-		el.append $('<a>')
-		.attr('href', '#')
-		.attr('title', 'Instantly ban this user for 10 minutes')
-		.attr('rel', 'tooltip')
-		.attr('data-id', id)
+		el.append $('<a>', {
+			href: '#', 
+			title: 'Instantly ban this user for 10 minutes',
+			rel: 'tooltip',
+			'data-id': id
+		})
 		.addClass('label label-important pull-right banhammer instaban')
 		.append($("<i>").addClass('icon-ban-circle'))
 			
@@ -296,7 +297,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			ruling.addClass('label-success').text('Correct')
 
 			if room.users[user]?.streak > 3 and room.active_count() > 2
-				line.append admin_panel(user)
+				line.prepend admin_panel(user)
 
 			if user is me.id # if the person who got it right was me
 				old_score = me.score()
@@ -319,7 +320,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			decision = "wrong"
 			ruling.addClass('label-warning').text('Wrong')
 			if (room.users[user]?.negstreak > 3 or room.users[user]?.score() < 0) and room.active_count() > 2 or check_profanity?(text)
-				line.append admin_panel(user, 'bad language')
+				line.prepend admin_panel(user, 'bad language')
 			
 			if user is me.id and me.id of room.users
 				old_score = me.score()
@@ -424,9 +425,9 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			
 			if user of room.users
 				if dirty
-					line.append admin_panel(user, 'bad language')
+					line.prepend admin_panel(user, 'bad language')
 				else if text.length > 70 
-					line.append admin_panel(user, 'spamming')
+					line.prepend admin_panel(user, 'spamming')
 
 	else
 		if !$('.livechat')[0].checked or text is '(typing)'
@@ -496,7 +497,7 @@ verbAnnotation = ({user, verb, time, notify}) ->
 	# if /paused the/.test(verb)
 	if /paused the/.test(verb) or /skipped/.test(verb) or /category/.test(verb) or /difficulty/.test(verb) or /ban tribunal/.test(verb) or me.id[0] == '_'
 		# banButton user, line
-		line.append admin_panel(user)
+		line.prepend admin_panel(user)
 
 	left = $(".bundle.active .verb-#{user}-left-the")
 	if verb.split(' ')[0] is 'joined' and left.length > 0
