@@ -29,9 +29,8 @@ RegExp.quote = (str) ->
 jQuery.fn.disable = (value) ->
 	value = !!value # force it into a bool
 	$(this).each ->
-		current = $(this).attr('disabled') is 'disabled'
-		if current != value
-			$(this).attr 'disabled', value
+		if $(this).prop('disabled') != value
+			$(this).prop 'disabled', value
 
 # inspired by https://gist.github.com/1274961
 do ->

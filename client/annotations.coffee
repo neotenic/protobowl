@@ -199,29 +199,7 @@ admin_panel = (id, arg = false) ->
 		new_el.attr('data-reason', arg)
 
 	render_admin_panel new_el
-	# access = [] # R, T, I = reprimand, tribunal, instaban
-	# if full
-	# 	access = ['r', 't', 'i']
 
-	# access.push 'r'
-	# if me.authorized('moderator')
-	# 	access.push 'i'
-	# else if (me.score() > 50 and room.active_count() > 2) and !room.admin_online()
-	# 	access.push 't'
-
-
-	# scope = $(".banham-#{id}").add(new_el).html('')
-
-	# scope.append $('<a>')
-	# 	.attr('href', '#')
-	# 	.attr('title', 'Reprimand this user')
-	# 	.attr('rel', 'tooltip')
-	# 	.attr('data-id', id)
-	# 	.addClass('label label-info pull-right banhammer reprimand')
-	# 	.append($('<i>').addClass('icon-thumbs-down'))
-	# setTimeout ->
-	# 	render_admin_panel()
-	# , 100
 	return new_el
 
 

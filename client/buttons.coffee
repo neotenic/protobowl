@@ -93,7 +93,7 @@ $('.skipbtn').click skip
 $('.nextbtn').click next
 
 $('.buzzbtn').click ->
-	return if $('.buzzbtn').attr('disabled') is 'disabled'
+	return if $('.buzzbtn').prop('disabled')
 	return if rate_limit_check()
 	setActionMode 'guess'
 	$('.guess_input')
@@ -411,7 +411,7 @@ $('.speed').change ->
 	$('.speed').not(this).val($(this).val())
 	$('.speed').data("last_update", +new Date)
 	rate = 1000 * 60 / 5 / Math.round($(this).val())
-	if +$('.speed').val() > $('.speed').attr('max') - 10
+	if +$('.speed').val() > $('.speed').prop('max') - 10
 		# technically not speed, but duration per syllable
 		# 0.1 is close enough, though 0.01 might be better
 		me.set_speed 0.1

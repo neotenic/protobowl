@@ -131,7 +131,7 @@ renderUpdate = ->
 			$('.set-team').slideUp()
 
 	if me.id and me.id[0] is '_'
-		$('a.brand').attr('href', '/stalkermode')
+		$('a.brand').prop('href', '/stalkermode')
 		$('div.navbar-inner').css('background', 'rgb(224, 235, 225)')
 		$('.motto').text('omg did you know im a ninja?')
 
@@ -192,8 +192,6 @@ renderPartial = ->
 
 
 renderTimer = ->
-	# $('#pause').show !!room.time_freeze
-	# $('.buzzbtn').attr 'disabled', !!room.attempt
 	if room.end_time and room.begin_time
 		$('.timer').removeClass 'disabled'
 	else
@@ -525,7 +523,7 @@ renderUsers = ->
 
 		badge = $('<span>').addClass('badge pull-right').text get_score(user)
 		if room.users[me.id] in (user.members || [user])
-			badge.addClass('badge-info').attr('title', 'You')
+			badge.addClass('badge-info').prop('title', 'You')
 		else
 			idle_count = 0
 			active_count = 0
@@ -537,9 +535,9 @@ renderUsers = ->
 						idle_count++
 						
 			if active_count > 0
-				badge.addClass('badge-success').attr('title', 'Online')
+				badge.addClass('badge-success').prop('title', 'Online')
 			else if idle_count > 0
-				badge.addClass('badge-warning').attr('title', 'Idle')
+				badge.addClass('badge-warning').prop('title', 'Idle')
 		if subordinate
 			row.addClass('subordinate')
 			$('<td>').addClass('rank').appendTo(row)
@@ -850,11 +848,14 @@ is_bookmarked = (qid) ->
 
 create_report_form = (info) ->
 	div = $("<div>").addClass("alert alert-block alert-info report-form")
-	div.append $("<button>")
-		.attr("data-dismiss", "alert")
-		.attr("type", "button")
-		.html("&times;")
-		.addClass("close")
+	
+	div.append $("<button>", {
+		"data-dismiss": "alert",
+		"type": "button"
+	})
+	.html("&times;")
+	.addClass("close")
+
 	div.append $("<h4>").text "Report Question"
 	form = $("<form>")
 	form.addClass('form-horizontal').appendTo div
@@ -867,7 +868,9 @@ create_report_form = (info) ->
 			.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))
 			.append(option)
 
-	submit_btn = $('<button type=submit>').addClass('btn btn-primary').text('Submit')
+	submit_btn = $('<button>', { type: "submit" })
+		.addClass('btn btn-primary')
+		.text('Submit')
 
 	form.find(":radio").change ->
 		if form.find(":radio:checked").val() is 'category'
