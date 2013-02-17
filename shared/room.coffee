@@ -75,6 +75,7 @@ class QuizRoom
 		@semi = false
 		@no_pause = false
 		
+		@created = @serverTime()
 
 		@acl = {
 			baseline:  100,
