@@ -1,4 +1,7 @@
 var levenshtein = (function(){
+	// this is the standard qwerty keyboard,
+	// we can ignore all those weird dvorak people
+	
 	var qwerty = "1234567890qwertyuiopasdfghjkl;'\\zxcvbnm,./";
 	
 	function letter_coord(letter){
