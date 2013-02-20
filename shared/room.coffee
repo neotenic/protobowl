@@ -78,6 +78,7 @@ class QuizRoom
 		@created = @serverTime()
 
 		@acl = {
+			# pariah:    50,
 			baseline:  100,
 			positive:  110,
 			fifty:     120,

@@ -36,6 +36,8 @@ class QuizPlayer
 		# user settings
 		@team = ''
 		@banned = 0
+		# @demoted = 0
+		@bubble = 0
 
 		@prefs = {
 			typing: true
@@ -78,6 +80,11 @@ class QuizPlayer
 		# returns the user's highest authorization level
 		# you're a secret ninja
 		return x.ninja if @id[0] is '_'
+		
+		# # this is kind of weird ordinally, but yeah
+		# if @demoted and @demoted < x.baseline
+		# 	return @demoted
+
 		# you're a moderator/admin, we should decide on a term for this
 		return x.moderator if @id in @room.admins
 		# an elected official
@@ -88,6 +95,7 @@ class QuizPlayer
 		return x.fifty if @score() >= 50
 		# at least the score is positive
 		return x.positive if @score() > 0
+
 		# lowly peon
 		return x.baseline
 
@@ -492,6 +500,9 @@ class QuizPlayer
 		# which is not a good thing because technically anyone can see the messages
 		# and they aren't actually private, but that's probably okay for now
 		
+		if room.serverTime() < @bubble
+			@emit 'chat', packet
+			return
 		
 		if done or text is '(typing)'
 			# tell errybody!
