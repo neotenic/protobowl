@@ -804,7 +804,7 @@ class QuizPlayer
 			@name = name
 				.trim() # remove whitespace
 				.slice(0, 140) # limit to tweet size
-				.replace(/\u2606|\u2605|\u269d/g, '') # get rid of stars
+				.replace(/\u202e|\u2606|\u2605|\u269d/g, '') # get rid of stars, and get rid of unicode rtl chars
 			@sync(true)
 
 
