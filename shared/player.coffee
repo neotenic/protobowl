@@ -824,7 +824,8 @@ class QuizPlayer
 	_apotheify: ->
 		unless @id in @room.admins
 			@verb 'is now an administrator of this room'
-			@room.admins.push(@id) 
+			@admin_name = @name
+			@room.admins.push(@id)
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 	
 

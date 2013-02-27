@@ -957,7 +957,7 @@ am_i_a_zombie = ->
 		body = ''
 		res.on 'data', (chunk) -> body += chunk
 		res.on 'end', ->
-			if body isnt zombocom and body isnt 'error'
+			if body isnt zombocom and body isnt 'error' and body
 				remote?.notifyBen 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
 				io.sockets.emit 'impending_doom', Date.now()
 				console.log 'is a zombo; shall seppuku'
