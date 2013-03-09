@@ -38,14 +38,13 @@ protocompile.watch(protobowl_main.new_update);
 // entertained enough to go through with their part
 // of the bargain.
 
+// Creation Date: July 20, 2012
+
 // 2014.
 
-// Right now, it's 2012, rather close to the end
-// of it. If those doom-sayers are indeed correct
-// protobowl might only have lived six months,
-// certainly a pitiful death, but perhaps the worse
-// alternative is for protobowl to die with my own
-// neglect clutching the figurative knife.
+// Right now, it's 2013, just about the beginning
+// of it. We, as well as protobowl have survived.
+// Current Age of Protobowl: 9 months
 
 // I'm not really known at all, but if you were to
 // know me, I'm rather infamous for leaving projects
