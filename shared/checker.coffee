@@ -19,8 +19,8 @@ do ->
 		stemmer = require('./porter').stemmer
 	# stopwords = 'lol,dont,accept,either,underlined,prompt,on,in,to,the,of,is,a,read,mentioned,before,that,have,word,equivalents,forms,jr,sr,dr,phd,etc,a'.toLowerCase().split(',')
 	# some people like to append "lol" to every answer
-	stopwords = "derp rofl lmao lawl lole lol the prompt on of is a in on that have for at so it do or de y by accept any and book battle".split(' ')
-	stopnames = "ivan james john robert michael william david richard charles joseph thomas christopher daniel paul mark donald george steven edward brian ronald anthony kevin jason benjamin mary patricia linda barbara elizabeth jennifer maria susan margaret dorothy lisa karen henry harold luke matthew"
+	stopwords = "a accept and any at battle book by de derp do for hah have hee in is it lawl lmao lol lole of on on or prompt rofl roflmao so that the what wut y".split(' ')
+	stopnames = "anthony barbara benjamin brian charles christopher daniel david donald dorothy edward elizabeth george harold henry ivan james jason jennifer john joseph karen kevin linda lisa luke margaret maria mark mary matthew michael patricia paul richard robert ronald steven susan thomas william"
 	# commwords = "war battle river"
 
 	log = (args...)->
@@ -62,13 +62,13 @@ do ->
 		if /\d+nd/.test(word) or /\d+st/.test(word)
 			return parseInt(word, 10)
 		return 0 if word in ['zero', 'zeroeth', 'zeroth']
-		return 1 if word in ['one', 'first', 'i']
-		return 2 if word in ['two', 'second', 'twoth', 'ii'] # someone might say twoth
-		return 3 if word in ['three', 'third', 'turd', 'iii', 'iiv']
-		return 4 if word in ['forth', 'fourth', 'four', 'iiii', 'iv']
-		return 5 if word in ['fifth', 'five', 'v']
-		return 6 if word in ['sixth', 'six', 'vi', 'emacs']
-		return 7 if word in ['seventh', 'seven', 'vii']
+		return 1 if word in ['one', 'first', 'single' 'i']
+		return 2 if word in ['two', 'second', 'twoth', 'double', 'ii'] # someone might say twoth
+		return 3 if word in ['three', 'third', 'turd', 'triple', 'iii']
+		return 4 if word in ['forth', 'fourth', 'four', 'quadruple', 'iv']
+		return 5 if word in ['fifth', 'five', 'fifth', 'quintuple', 'v']
+		return 6 if word in ['sixth', 'six', 'sixth', 'sextuple', 'vi', 'emacs'] # probably the funniest line of code in the entire software
+		return 7 if word in ['seven', 'seventh', 'vii']
 		return 8 if word in ['eight', 'eighth', 'viii', 'iix']
 		return 9 if word in ['nine', 'nein', 'ninth', 'ix', 'viiii']
 		return 10 if word in ['tenth', 'ten', 'x']
@@ -91,7 +91,7 @@ do ->
 	isPerson = (answer) ->
 		# filter out words less than 3 letters long because they suck
 		canon = (name for name in answer.split(/\s+/) when name.length > 3)
-		# find words of the canon (seriously i dont know what to call it)
+		# find words of the canon (seriously I dont know what to call it)
 		caps = (name for name in canon when "A" <= name[0] <= "Z")
 		# if all words that matter are caps, that means its a person woot
 		return caps.length == canon.length
@@ -100,8 +100,9 @@ do ->
 	# damerau deals with transpositions
 	# and this letter reduction algorithm deals with conflated letters
 	reduceLetter = (letter) ->
-		return 's' if letter in ['z', 's', 'k', 'c']
-		return 'e' if letter in ['e', 'a', 'o', 'u', 'y', 'i']
+		return 's' if letter in ['z', 'c']
+		return 'e' if letter in ['a', 'o', 'u', 'y', 'i']
+		return 'z' if letter in ['s']
 		return letter
 
 	reduceAlphabet = (word) ->
