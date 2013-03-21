@@ -676,3 +676,4 @@ congressionalAnnotation = ({id, elect}) ->
 		$('.elect-'+id).replaceWith line
 	else
 		addAnnotation line
+	

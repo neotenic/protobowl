@@ -228,3 +228,4 @@ do ->
 	else if window?
 		window.checkAnswer = safeCheckAnswer
 		window.parseAnswer = parseAnswer
+		
