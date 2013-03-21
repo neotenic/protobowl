@@ -450,6 +450,12 @@ class QuizPlayer
 				@_apotheify()
 			else
 				@notify "has an invalid password"
+		else if name in ['ragequit', 'qq', 'corgi', 'super', 'quit', 'dog', 'cute']
+			@emit 'redirect', 'http://i.imgur.com/4Dx75Bq.jpg'
+		else if name in ['deauth', 'unauth']
+			@cincinnatus()
+		else if name in ['rename', 'name']
+			@set_name args[0]?.trim()
 		else
 			@notify "no command named `#{name}` exists"
 
@@ -500,7 +506,7 @@ class QuizPlayer
 		# which is not a good thing because technically anyone can see the messages
 		# and they aren't actually private, but that's probably okay for now
 		
-		if room.serverTime() < @bubble
+		if @room.serverTime() < @bubble
 			@emit 'chat', packet
 			return
 		
@@ -833,6 +839,7 @@ class QuizPlayer
 		if @id in @room.admins
 			@verb 'is no longer an administrator of this room'
 			@room.admins = (id for id in @room.admins when id isnt @id)
+			@admin_name = ''
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 			
 

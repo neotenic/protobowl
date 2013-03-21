@@ -714,6 +714,8 @@ createUserStatSheet = (user, full) ->
 	# row "Guesses", user.guesses 
 	row "Seen", "#{user.seen} <span class='mini-stat' title='Guesses'>/ #{user.guesses}</span>"
 	row "Team", user.team if user.team
+	if user.admin_name
+		row "Auth", user.admin_name
 	row "ID", user.id.slice(0, 10) if full
 	if full
 		row "Last Seen", "<span style='font-size:x-small'>#{formatRelativeTime(user.last_action)}</span>"
