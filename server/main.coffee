@@ -65,7 +65,7 @@ console.log "hello from protobowl v3, my name is #{codename}", __dirname, proces
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
-	remote?.notifyBen 'Server Starting ' + codename, 'The server was started. \n Codename: ' + codename + '\n\n' + util.inspect({
+	remote?.notifyBen? 'Server Starting ' + codename, 'The server was started. \n Codename: ' + codename + '\n\n' + util.inspect({
 		hostname: os.hostname(),
 		type: os.type(),
 		platform: os.platform(),
@@ -157,8 +157,8 @@ track_time = (start_time, label) ->
 log = (action, obj) ->
 	req = http.request log_config, ->
 		# console.log "saved log"
-	req.on 'error', ->
-		console.log "backup log", action, JSON.stringify(obj)
+	req.on 'error', (e) ->
+		console.log "backup log", action, JSON.stringify(obj), JSON.stringify(e)
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
 	req.end()
 
@@ -432,7 +432,7 @@ user_count_log = (message, room_name) ->
 	
 	if Date.now() > last_message + 1000 * 60 * 10 and metrics.avg_latency > 250 and app.settings.env is 'production'
 		last_message = Date.now()
-		remote?.notifyBen 'Detected Increased Latency', "THE WAG IN HERE IS TOO DAMN HIGH #{metrics.avg_latency} ± #{metrics.std_latency}\n\n#{util.inspect(metrics)}"
+		remote?.notifyBen? 'Detected Increased Latency', "THE WAG IN HERE IS TOO DAMN HIGH #{metrics.avg_latency} ± #{metrics.std_latency}\n\n#{util.inspect(metrics)}"
 
 	track_time t_start, "user_count_log"
 
@@ -529,7 +529,7 @@ io.sockets.on 'connection', (sock) ->
 					user._transport = sock.transport
 					user._headers = sock?.handshake?.headers
 			catch err
-				remote?.notifyBen 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
+				remote?.notifyBen? 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
 
 			sock.join room_name
 			user.add_socket sock
@@ -714,8 +714,16 @@ app.post '/stalkermode/announce', (req, res) ->
 
 # i forgot why it was called al gore; possibly change
 app.post '/stalkermode/algore', (req, res) ->
+	return res.end('nothing to count') unless remote.populate_cache
 	remote.populate_cache (layers) ->
 		res.end("counted all cats #{JSON.stringify(layers, null, '  ')}")
+
+app.post '/stalkermode/dapowah', (req, res) ->
+	remote.loadAuthfile()
+	res.end("loaded authorization file")
+
+app.get '/stalkermode/authcodes', (req, res) ->
+	res.end(JSON.stringify(remote.passcodes, null, '  '))
 
 app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
 
@@ -958,7 +966,7 @@ am_i_a_zombie = ->
 		res.on 'data', (chunk) -> body += chunk
 		res.on 'end', ->
 			if body isnt zombocom and body isnt 'error' and body
-				remote?.notifyBen 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
+				remote?.notifyBen? 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
 				io.sockets.emit 'impending_doom', Date.now()
 				console.log 'is a zombo; shall seppuku'
 				setTimeout ->
