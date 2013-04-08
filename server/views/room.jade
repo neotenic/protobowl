@@ -162,7 +162,8 @@ html(lang="en", manifest="/offline.appcache")
 							span.label.label-important.buzz(style="display:none") Buzz
 							span.label.label-info.finished(style="display:none") Done
 							i.icon-time
-						div.timer.unselectable.disabled
+							span.expand-timer(style="display:none") Timer
+						div.timer.disabled
 							span.face 00:00
 							span.fraction .0
 
@@ -237,6 +238,10 @@ html(lang="en", manifest="/offline.appcache")
 									label.checkbox
 										input.movingwindow(type="checkbox")
 										| Points earned in last 20 questions
+									
+									label.checkbox
+										input.adhd(type="checkbox")
+										| Enable distraction free mode
 
 									div.microwave
 										label.checkbox
@@ -246,6 +251,7 @@ html(lang="en", manifest="/offline.appcache")
 									label.checkbox
 										input.sounds(type="checkbox")
 										| Play sound on successful buzz
+
 
 									div.lockvote(style="display:none;white-space:nowrap;")
 										label.checkbox
@@ -278,6 +284,9 @@ html(lang="en", manifest="/offline.appcache")
 									label.checkbox
 										input.allowskip(type="checkbox", checked)
 										| Allow players to skip questions
+									label.checkbox(style="display: none")
+										input.allowpause(type="checkbox", checked)
+										| Allow players to pause questions
 									
 									div.request-access
 										button.btn.btn-large <i class="icon-cog"></i>&nbsp; Request Access

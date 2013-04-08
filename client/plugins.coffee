@@ -27,6 +27,7 @@ RegExp.quote = (str) ->
     return (str+'').replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
 
 jQuery.fn.disable = (value) ->
+	value = !!value # force it into a bool
 	$(this).each ->
 		current = $(this).attr('disabled') is 'disabled'
 		if current != value

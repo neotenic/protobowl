@@ -26,8 +26,11 @@ addAnnotation = (el, name = sync?.name) ->
 	current_block = current_bundle.eq(0).find('.annotations')
 	if current_block.length is 0
 		current_block = $('#history .annotations').eq(0)
-	el.css('display', 'none').prependTo current_block
-	el.slideDown()
+	el.prependTo current_block
+	
+	unless el.hasClass('annoying') and me.prefs.distraction
+		el.css('display', 'none').slideDown()
+
 	return el
 
 addImportant = (el) ->
@@ -110,6 +113,8 @@ render_admin_panel = (el) ->
 
 	# secret ninjas can not be in trouble
 	return if id[0] is '_'
+
+	return unless connected()
 	
 	# reset it
 	el.html('')
@@ -130,11 +135,11 @@ render_admin_panel = (el) ->
 	else if me.reprimand_embargo < room.serverTime() or me.authorized('elected')
 		button_type = "reprimand"
 		
-	if 1000 * 60 * 10 > Date.now() - room.users[id].__reprimanded > 1000 * 10 and me.tribunal_embargo < room.serverTime()
+	if 1000 * 60 * 10 > Date.now() - room.users[id].__reprimanded > 1000 * 10 and me.tribunal_embargo < room.serverTime() and !room.admin_online()
 		button_type = "tribunal"
+
 	unless full
 		if room.users[id].banned > room.serverTime()
-			
 			el.append $('<span>')
 			.addClass('pull-right banhammer')
 			.css('color', '#c83025')
@@ -164,7 +169,7 @@ render_admin_panel = (el) ->
 		.addClass('label label-warning pull-right banhammer make-tribunal')
 		.append($("<i>").addClass('icon-legal'))
 
-	if full
+	if full or me.authorized('moderator')
 		el.append $('<a>')
 		.attr('href', '#')
 		.attr('title', 'Instantly ban this user for 10 minutes')
@@ -218,42 +223,6 @@ admin_panel = (id, arg = false) ->
 	# , 100
 	return new_el
 
-
-
-# banButton = (id, line, degree = 4) ->
-# 	# return if id is me.id # stop hitting yourself
-
-# 	usercount = (1 for i, u of room.users when u.active()).length
-# 	is_admin = me.id[0] is '_' or me.id in room.admins
-	
-# 	if is_admin and me.id isnt id
-# 		line.append $('<a>')
-# 			.attr('href', '#')
-# 			.attr('title', 'Instantly ban this user for 10 minutes')
-# 			.attr('rel', 'tooltip')
-# 			.attr('data-id', id)
-# 			.addClass('label label-important pull-right banhammer instaban')
-# 			.append($("<i>").addClass('icon-ban-circle'))
-# 			.click (e) ->
-# 				e.preventDefault()
-# 				me.ban_user id
-# 	else if ((me.score() > 50 and usercount > 2) or degree <= 2 and !room.admin_online()) or id is me.id # only show it if no admins are here
-# 		line.append $('<a>')
-# 			.attr('href', '#')
-# 			.attr('title', 'Initiate ban tribunal for this user')
-# 			.attr('rel', 'tooltip')
-# 			.attr('data-id', id)
-# 			.addClass('label label-warning pull-right banhammer make-tribunal')
-# 			.append($("<i>").addClass('icon-legal'))
-
-# 	line.append $('<a>')
-# 		.attr('href', '#')
-# 		.attr('title', 'Reprimand this user')
-# 		.attr('rel', 'tooltip')
-# 		.attr('data-id', id)
-# 		.addClass('label label-info pull-right banhammer reprimand')
-# 		.append($('<i>').addClass('icon-thumbs-down'))
-			
 
 
 
@@ -386,7 +355,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	if $('#' + id).length > 0
 		line = $('#' + id)
 	else
-		line = $('<p>').attr('id', id).addClass('chat')
+		line = $('<p>').attr('id', id).addClass('chat annoying')
 		line.append $('<span>').addClass('author').append(userSpan(user).attr('title', formatTime(time)))
 		line.append document.createTextNode ' '
 		$('<span>')
@@ -426,12 +395,20 @@ chatAnnotation = ({session, text, user, done, time}) ->
 
 	if done
 		line.removeClass('buffer')
-		can_see = text[0] != '@' or (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
+		
+		restricted_see = (me.team || 'individuals') in team_list or me.id in user_list or me.id[0] is '_' or user is me.id
+		
+		can_see = text[0] != '@' or restricted_see
+		
+		if restricted_see
+			line.removeClass 'annoying'
 
 		if text is '' or !can_see
 			line.find('.comment').html('<em>(no message)</em>')
-			line.slideUp()
+			line.slideUp 'normal', ->
+				line.remove()
 		else
+
 			if text.slice(0, 1) is '@'
 				if team_list.length > 0
 					line.prepend '<i class="icon-group"></i> '
@@ -499,10 +476,13 @@ verbAnnotation = ({user, verb, time, notify}) ->
 	
 	verbclass = "verb-#{user}-#{verb.split(' ').slice(0, 2).join('-')}"
 
-	line = $('<p>').addClass 'log'
+	line = $('<p>').addClass 'log annoying'
 	line.addClass(verbclass)
 	
 	if user
+		if user is me.id and !/skip|pause|resume/.test(verb)
+			line.removeClass 'annoying'
+
 		if notify
 			line.prepend '<i class="icon-user"></i> '
 		

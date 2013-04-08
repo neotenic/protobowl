@@ -81,6 +81,9 @@ renderUpdate = ->
 	$('.difficulties').val room.difficulty
 	$('.multibuzz').attr 'checked', !room.max_buzz
 	$('.allowskip').attr 'checked', !room.no_skip
+	$('.allowpause').attr 'checked', !room.no_pause
+	$('.adhd').attr 'checked', !!me.prefs.distraction
+	$('body').toggleClass 'distraction', !!me.prefs.distraction
 
 
 	if $('.settings').is(':hidden')
@@ -89,13 +92,27 @@ renderUpdate = ->
 	
 	$('.bundle.active').toggleClass 'semi', room.semi
 
-	if me.id of room.users and 'show_typing' of room.users[me.id]
-		$('.livechat').attr 'checked', room.users[me.id].show_typing
-		$('.sounds').attr 'checked', room.users[me.id].sounds
-		$('.lock').attr 'checked', room.users[me.id].lock
-		$('.teams').val room.users[me.id].team
+	if me.id of room.users  and 'prefs' of room.users[me.id]
 
-		$('.microwave').toggle !room.users[me.id].muwave
+		if !$('.timer-widget').data('hidden') != !me.prefs.timer_hide
+			if me.prefs.timer_hide
+				$('.timer-widget').data('hidden', true)
+				$('.timer, .progress').slideUp().queue ->
+						$(this).css('opacity', '').dequeue()
+						$('.expand-timer').fadeIn()
+			else
+				$('.timer-widget').data('hidden', false)
+				$('.expand-timer').fadeOut()
+				$('.timer, .progress').slideDown().animate({opacity: 0.7}).queue ->
+						$(this).css('opacity', '').dequeue()
+
+
+		$('.livechat').attr 'checked', !!me.prefs.typing
+		$('.sounds').attr 'checked', !!me.prefs.sounds
+		$('.lock').attr 'checked', !!me.lock
+		$('.teams').val me.team
+
+		$('.microwave').toggle !(me.muwave)
 
 		if me.guesses > 0
 			$('.reset-score').slideDown()
@@ -190,7 +207,7 @@ renderTimer = ->
 		$('.offline-badge').capQueue().fadeIn()
 	
 	
-	$('.chatbtn').disable(!me.authorized(room.mute))
+	$('.chatbtn').disable !me.authorized(room.mute) or me.prefs.distraction
 
 	if room.time_freeze
 		$('.buzzbtn').disable true
@@ -248,7 +265,7 @@ renderTimer = ->
 	$('.primary-bar').toggleClass 'bar-danger', !!room.attempt
 	$('.progress').toggleClass 'active', !!room.attempt
 
-	
+
 	if room.attempt
 		elapsed = room.serverTime() - room.attempt.realTime
 		ms = room.attempt.duration - elapsed
@@ -281,40 +298,39 @@ renderTimer = ->
 					})
 				
 				el.tooltip('show')
-				
-	# if $('.progress .primary-bar').hasClass 'pull-right'
-	# 	$('.progress .primary-bar').width (1 - progress) * 100 + '%'
-	# else
-	# 	
-	if room.attempt or room.time_freeze
-		$('.progress .primary-bar').width progress * 100 + '%'
-		$('.progress .aux-bar').width '0%'
-	else
-		fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100
-		$('.progress .primary-bar').width Math.min(progress * 100, fraction) + '%'
-		$('.progress .aux-bar').width Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%'
 
 	if room.no_skip
 		$('.skipbtn').disable true
 
-	ms = Math.max(0, ms) # force time into positive range, comment this out to show negones
-	sign = ""
-	sign = "+" if ms < 0
-	sec = Math.abs(ms) / 1000
+	unless $('.timer-widget').data('hidden')		
+	
+		if room.attempt or room.time_freeze
+			$('.progress .primary-bar').width progress * 100 + '%'
+			$('.progress .aux-bar').width '0%'
+		else
+			fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100
+			$('.progress .primary-bar').width Math.min(progress * 100, fraction) + '%'
+			$('.progress .aux-bar').width Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%'
 
-	if isNaN(sec)
-		$('.timer .face').text('00:00')
-		$('.timer .fraction').text('.0')
-	else
-		cs = (sec % 1).toFixed(1).slice(1)
-		$('.timer .fraction').text cs
-		min = sec / 60
-		pad = (num) ->
-			str = Math.floor(num).toString()
-			while str.length < 2
-				str = '0' + str
-			str
-		$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
+
+		ms = Math.max(0, ms) # force time into positive range, comment this out to show negones
+		sign = ""
+		sign = "+" if ms < 0
+		sec = Math.abs(ms) / 1000
+
+		if isNaN(sec)
+			$('.timer .face').text('00:00')
+			$('.timer .fraction').text('.0')
+		else
+			cs = (sec % 1).toFixed(1).slice(1)
+			$('.timer .fraction').text cs
+			min = sec / 60
+			pad = (num) ->
+				str = Math.floor(num).toString()
+				while str.length < 2
+					str = '0' + str
+				str
+			$('.timer .face').text sign + pad(min) + ':' + pad(sec % 60)
 
 
 get_score = (user) -> 
@@ -323,8 +339,8 @@ get_score = (user) ->
 	if user.members
 		score = Sum(get_score(member) for member in user.members)
 	else	
-		if me.movingwindow
-			score = user.score() - [0].concat(user.history).slice(-me.movingwindow)[0]
+		if me.prefs.movingwindow
+			score = user.score() - [0].concat(user.history).slice(-me.prefs.movingwindow)[0]
 			# basis = user.history.concat [user.score()]
 			# basis[basis.length - 1]
 		else
@@ -560,7 +576,7 @@ renderUsers = ->
 		ellipsis = $('<tr>').addClass('ellipsis refreshed').appendTo list
 
 
-	if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2 and !me.leaderboard
+	if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2 and !me.prefs.leaderboard
 		# thresh = TOP_NUM
 		bottom_size = Math.min(entities.length, me_entity.position + CONTEXT) - (me_entity.position - CONTEXT)
 
@@ -582,7 +598,7 @@ renderUsers = ->
 		# 	row = $('<tr>').addClass('ellipsis').appendTo list
 		# 	ellipsis = $('<td colspan=4>').appendTo(row)
 
-		if me.leaderboard
+		if me.prefs.leaderboard
 			for i in [thresh...entities.length]
 				create_row entities[i]
 	
@@ -590,7 +606,7 @@ renderUsers = ->
 	if ellipsis 
 		# if entities.length - render_count > 0
 		status = "(<b>#{entities.length - render_count}</b> hidden)"
-		if me.leaderboard
+		if me.prefs.leaderboard
 			status = "(hide <b>#{entities.length - render_count}</b>)"
 		
 		msg = $('<span>')

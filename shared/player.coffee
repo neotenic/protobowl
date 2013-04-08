@@ -37,16 +37,19 @@ class QuizPlayer
 		@show_typing = true
 		@team = ''
 		@banned = 0
-		@sounds = false
+
+		@prefs = {
+			typing: true
+		}
+
 		@lock = false
-		@movingwindow = false
 
 		# sort of half a setting but not really
 		@muwave = false
 
 		# rate limiting and banning
-		@tribunal = null
-		@elect = null
+		# @tribunal = null
+		# @elect = null
 		# @__tribunal_timeout = null
 		# @__elect_timeout = null
 		@__recent_actions = []
@@ -59,7 +62,7 @@ class QuizPlayer
 	# this function is called on user initiated actions
 	touch: (no_add_time) ->
 		@idle = false
-		current_time = @room.serverTime()
+		current_time = @room.serverTime() 
 		unless no_add_time
 			elapsed = current_time - @last_action
 			if elapsed < 1000 * 60 * 10
@@ -89,7 +92,7 @@ class QuizPlayer
 		# lowly peon
 		return x.baseline
 
-	authorized: (level = @room.escalate) ->
+	authorized: (level = @room.escalate) -> 
 		level = @room.acl[level] if typeof level is 'string'
 		@level() >= level
 
@@ -108,8 +111,7 @@ class QuizPlayer
 		@history = []
 		@sync(true)
 
-	bookmark: ({ value, id }) ->
-		db.add_boomark(@uid, @id)
+	bookmark: ({ value, id }) -> 0 # not implemented
 
 	ban: -> 1
 
@@ -140,12 +142,12 @@ class QuizPlayer
 			@__recent_actions.push @room.serverTime()
 
 		@__rate_limited = new_time
-
+		
 
 
 	rate_limit: ->
 		@__recent_actions.push @room.serverTime()
-
+		
 		if @rate_limited()
 			@create_tribunal()
 
@@ -161,6 +163,7 @@ class QuizPlayer
 			@reprimand_embargo = @room.serverTime() + 1000 * 60
 			# propagate the bans you can not make
 			@sync()
+			
 		# todo, make this less crude
 		@room.users[user]?.emit 'reprimand', {
 			trigger: @id,
@@ -176,15 +179,15 @@ class QuizPlayer
 
 		if @elect_embargo and @elect_embargo > @room.serverTime()
 			@notify 'can not run for reelection for another ' + Math.ceil((@elect_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
-			return
+			return 
 
 		if !@elect
 			# @verb "TERMPOEWJROSIJWER THIS PERSON IS A NARCONARC"
 			current_time = @room.serverTime()
-			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.prefs.distraction)
 			@__elect_timeout = setTimeout =>
 				@verb 'got romneyed', true
-
+				
 				@elect_embargo = @room.serverTime() + 1000 * 60 * 4 # romney can't run until 2016, no?
 
 				@elect = null
@@ -206,16 +209,16 @@ class QuizPlayer
 		@touch()
 		if !@tribunal
 			current_time = @room.serverTime()
-			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active())
+			witnesses = (id for id, user of @room.users when id[0] isnt "_" and user.active() and !user.prefs.distraction)
 			return if witnesses.length <= 1
 
-			# Ummmm ahh such as like,
-			# like the one where I'm like mmm and it says,
-			# "I saw watchoo did there!"
-			# And like and and then like you peoples were all like,
-			# "YOU IS TROLLIN!" and I was like
+			# Ummmm ahh such as like, 
+			# like the one where I'm like mmm and it says, 
+			# "I saw watchoo did there!" 
+			# And like and and then like you peoples were all like, 
+			# "YOU IS TROLLIN!" and I was like 
 			# "I AM NOT TROLLING!! I AM BOXXY YOU SEE!"
-
+			
 			if @room.users[@tribunal?.initiator] and !@room.users[@tribunal?.initiator].authorized('moderator')
 				@room.users[@tribunal.initiator].tribunal_embargo = @room.serverTime() + 1000 * 60
 
@@ -230,7 +233,7 @@ class QuizPlayer
 			, 1000 * 60
 
 			@tribunal = { votes: [], against: [], time: current_time, witnesses, term: 0, initiator }
-
+			
 			@sync(true)
 
 	trigger_tribunal: (user) ->
@@ -243,13 +246,13 @@ class QuizPlayer
 
 		if @tribunal_embargo and @tribunal_embargo > @room.serverTime()
 			@notify 'can not trigger a ban tribunal for another ' + Math.ceil((@tribunal_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
-			return
+			return 
 
 		if @room.users[user].authorized('moderator')
 			@notify 'cannot fell a god with a mortal sword'
 			return
 		@verb 'created a ban tribunal for !@' + user
-
+		
 		@room.users[user]?.create_tribunal @id
 
 	ban_user: (user) ->
@@ -264,7 +267,7 @@ class QuizPlayer
 
 	vote_election: ({user, position}) ->
 		@touch()
-
+		
 		elect = @room.users[user]?.elect
 		return unless elect
 
@@ -283,7 +286,7 @@ class QuizPlayer
 
 			if votes.length > (witnesses.length) / 2 + against.length
 				# @room.users[user].verb 'gots the blanc haus', true
-
+				
 				term_length = 1000 * 60
 
 				# there is a new species in new york; it can be aggressive if threatened
@@ -297,7 +300,7 @@ class QuizPlayer
 			undecided = (witnesses.length - against.length - votes.length)
 			if votes.length + undecided <= (witnesses.length) / 2 + against.length
 				@room.users[user].verb 'was not elected', true
-
+				
 				@room.users[user].elect_embargo = @room.serverTime() + 1000 * 60 * 12
 
 				@room.users[user].impeach()
@@ -348,12 +351,12 @@ class QuizPlayer
 
 	finish_term: ->
 		# A True Cincinnatus you are
-		return if !@elect?.term # this should be enough
+		return if !@elect?.term # this should be enough		
 		@verb 'has finished tenure in office', true
 		@impeach()
 
 	vote_tribunal: ({user, position}) ->
-
+		
 		# Instruct democracy, if possible to reanimate its beliefs, to
 		# purify its mores, to regulate its movements, to substitute
 		# little by little the science of affairs for its
@@ -395,7 +398,7 @@ class QuizPlayer
 			@room.users[user].sync(true)
 
 
-	verb: (action, no_rate_limit) ->
+	verb: (action, no_rate_limit) -> 
 		# what happens to a ninja, stays to a ninja
 		return @notify(action) if @id.toString()[0] is '_'
 
@@ -416,27 +419,27 @@ class QuizPlayer
 				@verb "left the room (logged on #{Math.round(seconds)} seconds ago)"
 			else
 				@verb "left the room"
-
+				
 		@sync(true)
 
-	echo: (data, callback) ->
+	echo: (data, callback) -> 
 		if data.avg and data.std and data.n
 			@_latency = [data.avg, data.std, data.n]
 		callback @room.serverTime()
 
-	buzz: (data, fn) ->
+	buzz: (data, fn) -> 
 		@touch()
 		if @room.qid is data and @room.buzz(@id, fn)
 			@rate_limit()
 
-	guess: (data) ->
+	guess: (data) -> 
 		@touch()
 		@room.guess @id, data
 
 
 	command: (name, args) ->
 		if name is 'auth'
-			if args[0].trim().toLowerCase() is @_password?()
+			if args[0]?.trim().toLowerCase() is @_password?()
 				@_apotheify()
 			else
 				@notify "has an invalid password"
@@ -453,7 +456,7 @@ class QuizPlayer
 
 		# discard chat messages if a radio silence is enforced
 		return unless @authorized @room.mute
-
+ 		
 		# Standing there alone,
 		# the ship is waiting.
 		# All systems are go.
@@ -476,7 +479,7 @@ class QuizPlayer
 
 		id = @id # ninjas should be able to choose their names
 		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
-
+		
 		packet = { text, session, user: id, first, done, time: @room.serverTime() }
 
 		# broadcast things to certain people
@@ -489,8 +492,8 @@ class QuizPlayer
 		# at this moment private messages are enforced on the end of the recipient
 		# which is not a good thing because technically anyone can see the messages
 		# and they aren't actually private, but that's probably okay for now
-
-
+		
+		
 		if done or text is '(typing)'
 			# tell errybody!
 			@rate_limit()
@@ -498,28 +501,28 @@ class QuizPlayer
 		else
 			# progressive chat updates (i.e. letter by letter)
 			# are saved for websocket based connections
-			for id, user of @room.users
-				if user.show_typing and !user.muwave
+			for id, user of @room.users 
+				if user.prefs.typing and !user.muwave
 					user.emit 'chat', packet
 				else if first
 					user.emit 'chat', alt_packet
 
 
-
+	
 	skip: ->
 		@touch()
 		if !@room.attempt and !@room.no_skip
 			@room.new_question()
 			@verb 'skipped a question'
 
-	next: ->
+	next: -> 
 		@touch()
 		@room.next()
 
 	finish: ->
 		@touch()
 		return if @attempt or @room.no_skip or @room.time() >= @room.end_time or @room.time_freeze
-
+	
 		@verb 'skipped to the end of a question'
 		@room.finish()
 		@room.sync()
@@ -590,14 +593,14 @@ class QuizPlayer
 		return unless @authorized()
 		# @verb 'changed the category to something which needs to be changed'
 		@room.category = data
-		@room.reset_distribution() unless data # reset to the default question distribution
+		@room.reset_distribution() unless data # reset to the default question distribution 
 		@room.sync(1)
 		@room.get_size (size) =>
 			if data is 'custom'
 				@verb "enabled a custom category distribution (#{size} questions)"
 			else
 				@verb "set category to #{data.toLowerCase() || 'potpourri'} (#{size} questions)"
-
+		
 	set_max_buzz: (data) ->
 		@touch()
 		return unless @authorized()
@@ -621,6 +624,18 @@ class QuizPlayer
 			@verb 'disabled question skipping'
 		else
 			@verb 'enabled question skipping'
+
+	set_pause: (state) ->
+		@touch()
+		return unless @authorized()
+		@unpause()
+		if state
+			@verb 'enabled pausing questions'
+		else
+			@verb 'disabled pausing questions'
+		@room.no_pause = !state
+		@room.sync(1)
+
 
 	set_bonus: (data) ->
 		@touch()
@@ -686,16 +701,6 @@ class QuizPlayer
 		@room.interrupts = !!state
 		@room.sync(1)
 
-	set_pause: (state) ->
-		@touch()
-		return unless @authorized 'ninja'
-		@unpause()
-		if state
-			@verb 'enabled pausing questions'
-		else
-			@verb 'disabled pausing questions'
-		@room.no_pause = !state
-		@room.sync(1)
 
 
 	set_semi: (state) ->
@@ -729,7 +734,7 @@ class QuizPlayer
 		return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.escalate = state
 		@room.sync(2)
-		# technically it's only a class 1 action, but requires a re-render of the
+		# technically it's only a class 1 action, but requires a re-render of the 
 		# leaderboard.
 
 	set_mute: (state) ->
@@ -752,11 +757,16 @@ class QuizPlayer
 	# Here are the user settings, no auth required
 	##############################################################
 
-
-	set_leaderboard: (state) ->
+	pref: (name, value) ->
 		@touch()
-		@leaderboard = state
-		@sync()
+		
+		return unless typeof name is 'string'
+		return if name in ['toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor']
+		
+		if name[0] != '_'
+			@prefs[name] = value
+			@sync()
+
 
 	set_team: (name) ->
 		@touch()
@@ -767,26 +777,8 @@ class QuizPlayer
 		@team = name
 		@sync(true)
 
-	set_show_typing: (data) ->
-		@touch()
-		unless @muwave
-			@show_typing = !!data
-			@sync()
 
-	set_sounds: (data) ->
-		@touch()
-		@sounds = !!data
-		@sync()
-
-	set_movingwindow: (num) ->
-		@touch()
-		if num and !isNaN(num)
-			@movingwindow = num
-		else
-			@movingwindow = false
-		@sync()
-
-	set_idle: (val) ->
+	set_idle: (val) ->  
 		# idle state doesn't matter and it's really a waste of packets
 		# so dont send it until its convenient, that is, the next update
 		@idle = !!val
@@ -822,16 +814,16 @@ class QuizPlayer
 	_apotheify: ->
 		unless @id in @room.admins
 			@verb 'is now an administrator of this room'
-			@room.admins.push(@id)
+			@room.admins.push(@id) 
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
-
+	
 
 	cincinnatus: ->
 		if @id in @room.admins
 			@verb 'is no longer an administrator of this room'
 			@room.admins = (id for id in @room.admins when id isnt @id)
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
-
+			
 
 	serialize: ->
 		data = {}

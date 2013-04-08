@@ -36,8 +36,11 @@ $('.chatbtn').click ->
 	open_chat()
 
 
-open_chat = ->
-	return if !me.authorized(room.mute)
+open_chat = (text) ->
+	if text is "@$> "
+		$('.chat_input').val text
+	else
+		return if !me.authorized(room.mute) or me.prefs.distraction
 
 	if actionMode != 'chat'
 		setActionMode 'chat'
@@ -97,12 +100,15 @@ $('.buzzbtn').click ->
 		.val('')
 		.addClass('disabled')
 		.focus()
+		
 	# so it seems that on mobile devices with on screen virtual keyboards
 	# if your focus isn't event initiated (eg. based on the callback of
 	# some server query to confirm control of the textbox) it wont actualy
 	# bring up the keyboard, so the solution here is to first open it up
 	# and ask nicely for forgiveness otherwise
+	
 	submit_time = +new Date
+
 	if $('.sounds')[0].checked and !$('.sounds').data('ding_sound')
 		$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
 
@@ -346,10 +352,9 @@ $('body').keydown (e) ->
 		$('.chatbtn').click()
 		$('.chat_input').focus()
 
-	if e.keyCode is 190 and e.shiftKey
+	if e.keyCode is 190 and (e.shiftKey or e.ctrlKey or e.metaKey or e.altKey)
 		e.preventDefault()
-		$('.chat_input').val("@$> ")
-		open_chat()
+		open_chat("@$> ")
 
 	return if e.shiftKey or e.ctrlKey or e.metaKey
 
@@ -454,22 +459,46 @@ $('.multibuzz').change -> me.set_max_buzz (if $('.multibuzz')[0].checked then nu
 
 $('.allowskip').change -> me.set_skip $('.allowskip')[0].checked
 
+$('.allowpause').change -> me.set_pause $('.allowpause')[0].checked
+
 $('.showbonus').change -> me.set_bonus $('.showbonus')[0].checked
 
-$('.livechat').change -> me.set_show_typing $('.livechat')[0].checked
+$('.livechat').change -> me.pref 'typing', $('.livechat')[0].checked
 
 $('.lock').change -> me.set_lock $('.lock')[0].checked
+
+$('.adhd').change -> 
+	me.prefs.distraction = $('.adhd')[0].checked
+	me.pref 'distraction', me.prefs.distraction
+	if me.prefs.distraction
+		$('p.annoying')
+		.removeClass('annoying')
+		.slideUp 'normal', ->
+			$(this).addClass('annoying')
+
+		$('body').addClass 'distraction'
+
+		unless me.prefs.timer_hide
+			setTimeout ->
+				$('.timer-widget').addClass('pulse')
+				setTimeout ->
+					$('.timer-widget').removeClass('pulse')
+				, 1500
+			, 500
+	else
+		$('body').removeClass 'distraction'
+		$('p.annoying').hide().slideDown()
 
 $('.request-access').click -> me.nominate()
 
 $('.movingwindow').change -> 
 	if $('.movingwindow')[0].checked
-		me.set_movingwindow 20
+		me.pref 'movingwindow', 20
 	else
-		me.set_movingwindow false
+		me.pref 'movingwindow', false
 
 $('.sounds').change -> 
-	me.set_sounds $('.sounds')[0].checked
+	me.pref 'sounds', $('.sounds')[0].checked
 	$('.sounds').data('ding_sound', new Audio('/sound/ding.wav'))
 
 mobileLayout = -> 
@@ -550,11 +579,18 @@ $('.banhammer.reprimand').live 'click', (e) ->
 	, 1000 * 15
 
 
+$('.timer-widget').click ->
+	me.prefs.timer_hide = !$('.timer-widget').data('hidden')
+	renderUpdate()
+	me.pref 'timer_hide', me.prefs.timer_hide
+	
+
 $(".leaderboard tbody tr").live 'click', (e) ->
 	if $(this).is(".ellipsis")
 		# console.log 'toggle show all'
-		me.leaderboard = !me.leaderboard
-		me.set_leaderboard me.leaderboard
+		me.prefs.leaderboard = !me.prefs.leaderboard
+		me.pref 'leaderboard', me.prefs.leaderboard
+		
 		renderUsers()
 		return
 	
