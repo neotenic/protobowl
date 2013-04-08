@@ -317,8 +317,8 @@ listen = (name, fn) ->
 # probably should figure out some more elegant way to do things, but then again
 # these things hardly actually need to be frequently added - it's mostly hacks
 listen 'echo', (data, fn) -> fn 'alive'
-listen 'application_update', -> applicationCache.update() if applicationCache?
-listen 'force_application_update', -> $('#update').data('force', true); applicationCache.update()
+# listen 'application_update', -> applicationCache.update() if applicationCache?
+# listen 'force_application_update', -> $('#update').data('force', true); applicationCache.update()
 listen 'impending_doom', -> impending_doom()
 listen 'redirect', (url) -> window.location = url
 listen 'alert', (text) -> window.alert text

@@ -154,13 +154,14 @@ $('input').keydown (e) ->
 	if $(this).hasClass("disabled")
 		e.preventDefault()
 
+# donno why this is the line that so oft errs
+try
+	$('.chat_input').typeahead {
+		source: -> list_targets(this.query)
+		matcher: (candidate) ->
+			this.query[0] == '@' and candidate.toLowerCase().indexOf(this.query.toLowerCase()) == 0
 
-$('.chat_input').typeahead {
-	source: -> list_targets(this.query)
-	matcher: (candidate) ->
-		this.query[0] == '@' and candidate.toLowerCase().indexOf(this.query.toLowerCase()) == 0
-
-}
+	}
 
 list_targets = (query) ->
 	prefix = '@' + query.slice(1).split(',').slice(0, -1).join(',')

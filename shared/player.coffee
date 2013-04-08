@@ -36,6 +36,10 @@ class QuizPlayer
 		# user settings
 		@team = ''
 		@banned = 0
+
+		# @auth = 0
+		@moderator = false
+
 		# @demoted = 0
 		@bubble = 0
 
@@ -86,7 +90,8 @@ class QuizPlayer
 		# 	return @demoted
 
 		# you're a moderator/admin, we should decide on a term for this
-		return x.moderator if @id in @room.admins
+		return x.moderator if @moderator # @id in @room.admins
+
 		# an elected official
 		return x.elected if @elect?.term > @room.serverTime()
 		# in a failed democracy
@@ -263,8 +268,7 @@ class QuizPlayer
 		@room.users[user]?.create_tribunal @id
 
 	ban_user: (user) ->
-		is_admin = @id in @room.admins or @id[0] is '_'
-		if is_admin
+		if @authorized('moderator')
 			if !@room.users[user]?.banned or @room.serverTime() > @room.users[user]?.banned
 				# only wear the badge of accomplishment if you've done something new
 				@verb 'banned !@' + user + ' from /' + @room.name
@@ -828,17 +832,19 @@ class QuizPlayer
 
 	# underscore means it's not a publically accessibl emethod
 	_apotheify: ->
-		unless @id in @room.admins
+		unless @authorized 'moderator'
 			@verb 'is now an administrator of this room'
 			@admin_name = @name
-			@room.admins.push(@id)
+			# @room.admins.push(@id)
+			@moderator = true
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 	
 
 	cincinnatus: ->
 		if @id in @room.admins
 			@verb 'is no longer an administrator of this room'
-			@room.admins = (id for id in @room.admins when id isnt @id)
+			# @room.admins = (id for id in @room.admins when id isnt @id)
+			@moderator = false
 			@admin_name = ''
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 			

@@ -121,7 +121,7 @@ renderUpdate = ->
 		else
 			$('.reset-score').slideUp()
 
-		if room.admins and me.id in room.admins
+		if me.authorized('moderator')
 			$('.relinquish-command').slideDown()
 		else
 			$('.relinquish-command').slideUp()

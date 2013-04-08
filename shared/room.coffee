@@ -64,7 +64,7 @@ class QuizRoom
 
 		@freeze()
 		@users = {}
-		@admins = []
+		# @admins = []
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null

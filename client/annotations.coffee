@@ -55,7 +55,7 @@ userSpan = (user, global) ->
 	
 	
 	special = ''
-	if user in room.admins
+	if room.users[user]?.authorized('moderator')
 		special = 'admin'
 
 	hash = 'userhash-' + special + '-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -87,7 +87,7 @@ userSpan = (user, global) ->
 		else
 			scope.prepend "<i class='icon-bullhorn user-prefix'></i>"
 	
-	else if room.admins and user in room.admins
+	else if room.users[user]?.authorized('moderator')
 
 		scope.prepend "<i class='icon-star-empty user-prefix'></i>"	
 	
