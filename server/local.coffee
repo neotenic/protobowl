@@ -30,9 +30,10 @@ initialize_remote = (cb) ->
 	fs = require 'fs'
 	fs.readFile 'static/sample.txt', 'utf8', (err, data) ->
 		throw err if err
-		questions = (JSON.parse(line) for line in data.split("\n"))
+		questions = (JSON.parse(line) for line in data.split("\n") when line)
 		console.log "parsed #{questions.length} questions"
 		cb() if cb
+
 
 handle_report = (data) -> console.log data
 

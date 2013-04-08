@@ -1,5 +1,7 @@
-remote = require './remote'
-
+try
+	remote = require './remote'
+catch err
+	remote = require './local'
 
 remote.initialize_remote()
 
@@ -9,7 +11,6 @@ http = require 'http'
 url = require 'url'
 os = require 'os'
 util = require 'util'
-crypto = require 'crypto'
 
 rooms = {}
 {QuizRoom} = require '../shared/room'
@@ -23,9 +24,10 @@ message_count = 0
 app = express()
 server = http.Server(app)
 
-app.set 'views', "server/views" # directory where the jade files are
+app.set 'views', "server" # directory where the jade files are
 app.set 'view options', layout: false
 app.set 'trust proxy', true
+
 
 io = require('socket.io').listen(server)
 
@@ -42,11 +44,13 @@ io.configure 'development', ->
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
 	io.set 'flash policy port', 0
+
 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 
 
 journal_config = { host: 'localhost', port: 15865 }
 log_config = { host: 'localhost', port: 18228 }
+
 
 exports.new_update = (err) ->
 	if err
@@ -61,7 +65,7 @@ console.log "hello from protobowl v3, my name is #{codename}", __dirname, proces
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 	journal_config = remote.deploy.journal
-	remote?.notifyBen 'Server Starting ' + codename, 'The server was started. \n Codename: ' + codename + '\n\n' + util.inspect({
+	remote?.notifyBen? 'Server Starting ' + codename, 'The server was started. \n Codename: ' + codename + '\n\n' + util.inspect({
 		hostname: os.hostname(),
 		type: os.type(),
 		platform: os.platform(),
@@ -125,7 +129,9 @@ app.use (req, res, next) ->
 app.use express.static('static')
 app.use express.favicon('static/img/favicon.ico')
 
-# simple function that hashes things
+crypto = require 'crypto'
+
+# simple helper function that hashes things
 sha1 = (text) ->
 	hash = crypto.createHash('sha1')
 	hash.update(text + '')
@@ -141,6 +147,8 @@ Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
 MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
+
+
 track_time = (start_time, label) ->
 	duration = Date.now() - start_time
 	if (duration > 0 and gammasave) or duration >= 42
@@ -149,8 +157,8 @@ track_time = (start_time, label) ->
 log = (action, obj) ->
 	req = http.request log_config, ->
 		# console.log "saved log"
-	req.on 'error', ->
-		console.log "backup log", action, JSON.stringify(obj)
+	req.on 'error', (e) ->
+		console.log "backup log", action, JSON.stringify(obj), JSON.stringify(e)
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
 	req.end()
 
@@ -168,12 +176,6 @@ class SocketQuizRoom extends QuizRoom
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question)
 
 	get_question: (callback) ->
-		# commented out until the user-auth stuff goes into effect
-		remote.create_event {
-			"qid": @qid,
-			"date": Date.now(),
-			"users": ["2ef1be90f12e5111ed6ef29e8c6b638f24c97da0"]
-		}
 		cb = (question) =>
 			log 'next', [@name, question?.answer, @qid]
 			callback(question)
@@ -206,24 +208,6 @@ class SocketQuizRoom extends QuizRoom
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
-			# commented out until the user-auth stuff goes into effect
-			user = @users[@attempt.user]
-			remote.create_event {
-				"uid": "2ef1be90f12e5111ed6ef29e8c6b638f24c97da0",
-				"sid": user.sid || user.id,
-				"room": @name,
-				"date": Date.now(),
-				"early": @attempt.early,
-				"seen":  user.seen,
-				"tspent": user.time_spent,
-				"answer": @answer,
-				"category": @info.category,
-				"difficulty": @info.difficulty,
-				"guess": @attempt.text,
-				"ruling": ruling,
-				"interrupt": @attempt.interrupt
-			}
-
 		super(session)
 
 	merge_user: (id, new_id) ->
@@ -448,7 +432,7 @@ user_count_log = (message, room_name) ->
 
 	if Date.now() > last_message + 1000 * 60 * 10 and metrics.avg_latency > 250 and app.settings.env is 'production'
 		last_message = Date.now()
-		remote?.notifyBen 'Detected Increased Latency', "THE WAG IN HERE IS TOO DAMN HIGH #{metrics.avg_latency} ± #{metrics.std_latency}\n\n#{util.inspect(metrics)}"
+		remote?.notifyBen? 'Detected Increased Latency', "THE WAG IN HERE IS TOO DAMN HIGH #{metrics.avg_latency} ± #{metrics.std_latency}\n\n#{util.inspect(metrics)}"
 
 	track_time t_start, "user_count_log"
 
@@ -545,7 +529,7 @@ io.sockets.on 'connection', (sock) ->
 					user._transport = sock.transport
 					user._headers = sock?.handshake?.headers
 			catch err
-				remote?.notifyBen 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
+				remote?.notifyBen? 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
 
 			sock.join room_name
 			user.add_socket sock
@@ -712,6 +696,8 @@ if remote.archiveRoom
 	# do it every ten seconds like a bonobo
 	setInterval swapInactive, 1000 * 10
 
+
+
 app.post '/stalkermode/kickoffline', (req, res) ->
 	clearInactive 1000 * 5 # five seconds
 	res.redirect '/stalkermode'
@@ -728,10 +714,18 @@ app.post '/stalkermode/announce', (req, res) ->
 
 # i forgot why it was called al gore; possibly change
 app.post '/stalkermode/algore', (req, res) ->
+	return res.end('nothing to count') unless remote.populate_cache
 	remote.populate_cache (layers) ->
 		res.end("counted all cats #{JSON.stringify(layers, null, '  ')}")
 
-app.get '/stalkermode/users', (req, res) -> res.render './ninja/users.jade', { rooms: rooms }
+app.post '/stalkermode/dapowah', (req, res) ->
+	remote.loadAuthfile()
+	res.end("loaded authorization file")
+
+app.get '/stalkermode/authcodes', (req, res) ->
+	res.end(JSON.stringify(remote.passcodes, null, '  '))
+
+app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
 
 
 app.get '/stalkermode/cook', (req, res) ->
@@ -749,14 +743,14 @@ app.get '/stalkermode/user/:room/:user', (req, res) ->
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['room'] and typeof v isnt 'function'
 
-	res.render './ninja/user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips: u?.ip() }
+	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips: u?.ip() }
 
 
 app.get '/stalkermode/room/:room', (req, res) ->
 	u = rooms?[req.params.room.replace(/~/g, '/')]
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['users', 'timing', 'cumulative'] and typeof v isnt 'function'
-	res.render './ninja/control.jade', { room: u, name: req.params.room.replace(/~/g, '/'), text: util.inspect(u2)}
+	res.render 'control.jade', { room: u, name: req.params.room.replace(/~/g, '/'), text: util.inspect(u2)}
 
 app.post '/stalkermode/stahp', (req, res) -> process.exit(0)
 
@@ -873,7 +867,7 @@ app.get '/stalkermode', (req, res) ->
 		totalmem: os.totalmem(),
 		freemem: os.freemem()
 	}
-	res.render './ninja/admin.jade', {
+	res.render 'admin.jade', {
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,
@@ -939,26 +933,26 @@ app.get '/stalkermode/to_boldly_go', (req, res) ->
 		res.end JSON.stringify doc
 
 app.get '/stalkermode/reports/all', (req, res) ->
-	return res.render './ninja/reports.jade', { reports: [], categories: [] } unless remote.Report
+	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
 	remote.Report.find {}, (err, docs) ->
-		res.render './ninja/reports.jade', { reports: docs, categories: remote.get_categories('qb') }
+		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/stalkermode/reports/:type', (req, res) ->
-	return res.render './ninja/reports.jade', { reports: [], categories: [] } unless remote.Report
+	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
 
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
-		res.render './ninja/reports.jade', { reports: docs, categories: remote.get_categories('qb') }
+		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
 
 app.get '/stalkermode/audacity', (req, res) ->
-	res.render './ninja/audacity.jade', { }
+	res.render 'audacity.jade', { }
 
 
-app.get '/stalkermode/patriot', (req, res) -> res.render './ninja/dash.jade'
+app.get '/stalkermode/patriot', (req, res) -> res.render 'dash.jade'
 
 app.get '/stalkermode/archived', (req, res) ->
-	return res.render './ninja/archived.jade', { list: [], rooms } unless remote.listArchived
+	return res.render 'archived.jade', { list: [], rooms } unless remote.listArchived
 	remote.listArchived (list) ->
-		res.render './ninja/archived.jade', { list, rooms }
+		res.render 'archived.jade', { list, rooms }
 
 app.get '/stalkermode/:other', (req, res) -> res.redirect '/stalkermode'
 
@@ -971,8 +965,8 @@ am_i_a_zombie = ->
 		body = ''
 		res.on 'data', (chunk) -> body += chunk
 		res.on 'end', ->
-			if body isnt zombocom and body isnt 'error'
-				remote?.notifyBen 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
+			if body isnt zombocom and body isnt 'error' and body
+				remote?.notifyBen? 'Killing Zombie Server ' + codename, 'I am legend. Everything has its time and everybody dies, for his name was ' + codename
 				io.sockets.emit 'impending_doom', Date.now()
 				console.log 'is a zombo; shall seppuku'
 				setTimeout ->
@@ -984,7 +978,9 @@ am_i_a_zombie = ->
 	req.on 'error', (err) ->
 		console.log 'zombie checking error', err
 
-app.get '/401', (req, res) -> res.render './ninja/auth.jade', {}
+app.get '/perf-histogram', (req, res) -> res.end util.inspect(perf_hist)
+
+app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
 app.post '/401', (req, res) -> remote.authenticate(req, res)
 
@@ -1012,5 +1008,6 @@ app.get '/:type/:channel', (req, res) ->
 
 port = process.env.PORT || 5555
 
-server.listen port, ->
-	console.log "listening on port", port
+remote.ready ->
+	server.listen port, ->
+		console.log "listening on port", port
