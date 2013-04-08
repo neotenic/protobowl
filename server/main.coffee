@@ -1,7 +1,5 @@
-try
-	remote = require './remote'
-catch err
-	remote = require './local'
+remote = require './remote'
+
 
 remote.initialize_remote()
 
@@ -171,11 +169,11 @@ class SocketQuizRoom extends QuizRoom
 
 	get_question: (callback) ->
 		# commented out until the user-auth stuff goes into effect
-		# remote.create_event {
-		# 	"qid": @qid,
-		# 	"date": Date.now(),
-		# 	"users": (user.id for id, user of @users)
-		# }
+		remote.create_event {
+			"qid": @qid,
+			"date": Date.now(),
+			"users": ["2ef1be90f12e5111ed6ef29e8c6b638f24c97da0"]
+		}
 		cb = (question) =>
 			log 'next', [@name, question?.answer, @qid]
 			callback(question)
@@ -209,21 +207,22 @@ class SocketQuizRoom extends QuizRoom
 			ruling = @check_answer @attempt.text, @answer, @question
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
 			# commented out until the user-auth stuff goes into effect
-			# remote.create_event {
-			# 	"uid": @attempt.user,
-			# 	"sid": user.sid || user.id,
-			# 	"room": @name,
-			# 	"date": Date.now(),
-			# 	"early": @attempt.early,
-			# 	"seen":  user.seen,
-			# 	"tspent": user.time_spent,
-			# 	"answer": @answer,
-			# 	"category": @info.category,
-			# 	"difficulty": @info.difficulty,
-			# 	"guess": @attempt.text,
-			# 	"ruling": ruling,
-			# 	"interrupt": @attempt.interrupt
-			# }
+			user = @users[@attempt.user]
+			remote.create_event {
+				"uid": "2ef1be90f12e5111ed6ef29e8c6b638f24c97da0",
+				"sid": user.sid || user.id,
+				"room": @name,
+				"date": Date.now(),
+				"early": @attempt.early,
+				"seen":  user.seen,
+				"tspent": user.time_spent,
+				"answer": @answer,
+				"category": @info.category,
+				"difficulty": @info.difficulty,
+				"guess": @attempt.text,
+				"ruling": ruling,
+				"interrupt": @attempt.interrupt
+			}
 
 		super(session)
 
@@ -1013,6 +1012,5 @@ app.get '/:type/:channel', (req, res) ->
 
 port = process.env.PORT || 5555
 
-remote.ready ->
-	server.listen port, ->
-		console.log "listening on port", port
+server.listen port, ->
+	console.log "listening on port", port
