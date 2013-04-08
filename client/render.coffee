@@ -1,4 +1,6 @@
 render_categories = ->
+	# turns out this function is quite slow
+
 	$('.custom-category').empty()
 	return unless room.distribution
 	
@@ -809,6 +811,10 @@ changeQuestion = ->
 
 	if old.find('.readout').length > 0
 		nested = old.find('.readout .well>span')
+		for el in nested
+			if $(el).data('text')
+				el.childNodes[0].nodeValue = $(el).data('text')
+				
 		old.find('.readout .well').append nested.contents()
 		nested.remove()
 
