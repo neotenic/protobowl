@@ -2,7 +2,7 @@ fs = require 'fs'
 path = require 'path'
 wrench = require 'wrench'
 util = require 'util'
-
+jade = require 'jade'
 crypto = require 'crypto'
 
 send_update = -> null
@@ -111,7 +111,33 @@ updateCache = (force_update = false) ->
 					file: "static/protobowl.css"
 				}
 
+				compileJade()
+
+	jade_list = ['settings']
+	jade_src = ''
+
+	compileJade = ->
+		file = jade_list.shift()
+		if !file
+			fs.writeFile 'client/jade/_compiled.js', jade_src, 'utf8', (err) ->
+				throw err if err
 				compileCoffee()
+			return
+
+		jadePath = "client/jade/#{file}.jade"
+		fs.readFile jadePath, 'utf8', (err, data) ->
+			throw err if err
+			fn = jade.compile(data, {
+					pretty: false,
+					filename: jadePath,
+					compileDebug: true,
+					client: true
+				})
+			jade_src += "//file: #{jadePath}\n\nvar #{file} = " + fn.toString() + "\n\n\n\n"
+			compileJade()
+
+		
+
 
 
 	file_list = ['app', 'offline', 'auth']
@@ -179,6 +205,8 @@ updateCache = (force_update = false) ->
 			send_update()
 			compile_server()
 			scheduledUpdate = null
+			# clean up things
+			# fs.unlink 'client/jade/_compiled.js'
 
 
 	fs.readFile 'client/protobowl.appcache', 'utf8', (err, data) ->

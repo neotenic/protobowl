@@ -5,6 +5,9 @@
 #= require ./lib/jquery.mobile.custom.js
 #= require ./lib/jquery.tablesort.js
 
+#= require ./jade/runtime.js
+#= require ./jade/_compiled.js
+
 #= require plugins.coffee
 #= require annotations.coffee
 #= require render.coffee
@@ -12,6 +15,7 @@
 #= require ../shared/room.coffee
 #= require ../shared/c2r.coffee
 #= require buttons.coffee
+
 
 do ->
 	if 'anachron' of location.query

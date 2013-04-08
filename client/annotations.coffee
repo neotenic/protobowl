@@ -265,7 +265,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 
 
 	if done
-		ruling = line.find('.ruling').show().css('display', 'inline')
+		ruling = line.find('.ruling').css('display', 'none')
 		decision = ""
 		if correct is "prompt"
 			ruling.addClass('label-info').text('Prompt')
@@ -305,6 +305,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 				if old_score < -100 # just a little way of saying "you suck"
 					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.'
 
+		ruling.fadeIn().css('display', 'inline')
 
 		answer = room.answer
 		qid = room.qid

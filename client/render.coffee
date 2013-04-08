@@ -987,7 +987,7 @@ create_bundle = (info) ->
 	
 	answer = $('<li>').addClass('pull-right answer')
 	pad_answer = $('<li>').addClass('pull-right answer')
-	padding_text = info.answer.replace /\w/g, 'x'
+	padding_text = rewrite_word(info.answer)
 	# text = info.answer.replace /[a-z]+/gi, (e) ->
 	# 	next = word_archive[e.length - 1]
 	# 	word_archive[e.length - 1] = e if Math.random() > 0.5
@@ -1005,18 +1005,25 @@ create_bundle = (info) ->
 	breadcrumb.append pad_answer
 	readout = $('<div>').addClass('readout')
 	well = $('<div>').addClass('well').appendTo(readout)
+
 	well.append $('<span>').addClass('unread').text(info.question)
+
 	bundle
 		.append($('<ul>').addClass('breadcrumb').append(breadcrumb))
 		.append(readout)
 		.append($('<div>').addClass('sticky'))
 		.append($('<div>').addClass('annotations'))
 
+
+
 # $('.bundle').not('.active').add('.bundle.revealed').find('.answer').not('.done').replaceWith(function(){return $(this).data('actual_answer').addClass('done')})
 
 update_visibility = ->
 	$('.bundle').not('.active').add('.bundle.revealed').find('.answer').not('.done').replaceWith -> 
 		$(this).data('actual_answer').addClass('done')
+
+
+
 
 # complicated reciprocal cipher for sake of being a complicated reciprocal cipher
 alphanum_xor = (input) ->
@@ -1061,8 +1068,12 @@ updateTextPosition = ->
 		for word_index in [index...start_index]		
 			reader_children[word_index].className = 'unread'
 
+
 	for word_index in [start_index...index]
 		reader_children[word_index].className = ''
+		text = $(reader_children[word_index]).data('text')
+		if text
+			reader_children[word_index].childNodes[0].nodeValue = text
 		# console.log reader_children[word_index]
 
 	reader_last_state = index - 1
@@ -1077,6 +1088,37 @@ updateTextPosition = ->
 
 	# children.slice(0, index).removeClass('unread')
 	# children.slice(index).addClass('unread')
+
+width_to_letter = {}
+letter_to_width = {}
+
+calculate_widths = ->
+	# console.time('widthify')	
+	fake_well = $("<div>").addClass("well")
+	container = $("<div>").css('overflow', 'hidden').css('width', 0).css('height', 0).appendTo("body").append(fake_well)
+	span = $("<span>").appendTo(fake_well)
+	
+	for code in [33...126]
+		letter = String.fromCharCode(code)
+		span.text letter
+		width = span.width()
+		width_to_letter[width] = letter
+		letter_to_width[letter] = width
+	container.remove()
+	# console.timeEnd('widthify')
+
+rewrite_word = (text) ->
+	unless letter_to_width['x'] > 0
+		calculate_widths()
+
+	word = for letter in text
+		if letter of letter_to_width
+			width_to_letter[letter_to_width[letter]]
+		else
+			letter
+
+	word.join('')
+
 
 
 updateInlineSymbols = ->
@@ -1102,6 +1144,8 @@ updateInlineSymbols = ->
 	elements = []
 
 	finish_point = bundle.data('finish_point')
+
+
 	
 	for i in [0...words.length]
 		element = $('<span>').addClass('unread')
@@ -1109,7 +1153,14 @@ updateInlineSymbols = ->
 		if words[i].indexOf('*') isnt -1
 			element.append " <span class='inline-icon'><span class='asterisk'>"+words[i]+"</span><i class='label icon-white icon-asterisk'></i></span> "
 		else
-			element.append(words[i] + " ")
+			word = words[i]
+			# inner_span = $('<span>')
+			# inner_span.append(word + " ")
+			# element.append(inner_span)
+			# element.append(word + " ")
+			element.data('text', word + " ")
+			element.append(rewrite_word(word) + " ")
+
 
 		if i in spots
 			# element.append('<span class="label label-important">'+words[i]+'</span> ')

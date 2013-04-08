@@ -723,7 +723,7 @@ app.post '/stalkermode/dapowah', (req, res) ->
 	res.end("loaded authorization file")
 
 app.get '/stalkermode/authcodes', (req, res) ->
-	res.end(JSON.stringify(remote.passcodes, null, '  '))
+	res.end(JSON.stringify(remote.get_passcodes(), null, '  '))
 
 app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
 
