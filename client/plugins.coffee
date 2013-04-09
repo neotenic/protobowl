@@ -193,6 +193,19 @@ do ->
 			protobot_write 'pass the weed, man'
 		, time_delta
 
+	# Ben's birthday
+	dt = new Date()
+	dt.setHours(0)
+	dt.setMinutes(0)
+	dt.setSeconds(0)
+	dt.setMonth(8)
+	dt.setDate(5)
+	time_delta = dt - Date.now()
+	if time_delta < 2147483647 and time_delta > 0
+		setTimeout ->
+			addImportant($('<div>').addClass('alert alert-info').html("Today is protobowl developer <b>Ben Vest</b>'s birthday. Send him an email at <code>vestben@gmail.com</code> or something."))
+		, time_delta
+
 
 check_holiday = ->
 	now = new Date()

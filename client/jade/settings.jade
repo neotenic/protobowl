@@ -1,0 +1,85 @@
+div.span3.thumbnail
+	h5
+		i.icon-wrench
+		| Settings
+
+	div(style="text-align: center; padding-right: 4px; padding-left: 4px; padding-top: 4px")
+		div.localsettings
+			div.expando
+				div.input-prepend
+					span.generate-name.add-on(style="width:21px", title="Public name", rel='tooltip')
+						i.icon-user
+					input#username(type='text', value='', disabled)
+			div.expando.set-team(style="display:none")
+				div.input-prepend
+					span.add-on(style="width:21px", title="Teams", rel='tooltip')
+						i.icon-group
+					select.input.teams
+						option(value="") Individual
+			div.expando.reset-score(style="display:none")
+				div.input-prepend
+					span.add-on(style="width:21px", title="Reset my score", rel='tooltip')
+						i.icon-trash
+					button.btn.input.score-reset Reset My Score 
+			
+			div.expando.relinquish-command(style="display:none")
+				div.input-prepend
+					span.add-on(style="width:21px", title="Relinquish dominance over this room", rel='tooltip')
+						i.icon-eye-close
+					button.btn.input.lose-command Relinquish Command
+
+			label.checkbox
+				input.movingwindow(type="checkbox")
+				| Points earned in last 20 questions
+			
+			label.checkbox
+				input.adhd(type="checkbox")
+				| Enable distraction free mode
+
+			div.microwave
+				label.checkbox
+					input.livechat(type="checkbox", checked)
+					| Show chat messages while typing
+
+			label.checkbox
+				input.sounds(type="checkbox")
+				| Play sound on successful buzz
+
+
+			div.lockvote(style="display:none;white-space:nowrap;")
+				label.checkbox
+					input.lock(type="checkbox")
+					| Lock settings <span class='electorate'>0/1 votes</span>
+					i(style="padding-left: 5px").icon-unlock.status_icon
+		hr
+		div.globalsettings
+			
+			div.expando
+				div.input-prepend
+					span.add-on(style="width:21px", title="Read speed", rel='tooltip')
+						i.icon-step-forward
+					input.speed(type="range", value="200", min="60", max="600")
+			div.expando
+				div.input-prepend
+					span.add-on(style="width:21px", title="Difficulty/Category", rel='tooltip')
+						i.icon-briefcase
+					select.padd-on.difficulties(style="width: 60px; border-right: 0")
+					select.input.categories(style="border-left: 0")
+
+			div.custom-category(style="display:none")
+
+			label.checkbox
+				input.showbonus(type="checkbox")
+				| Show bonus questions
+			label.checkbox
+				input.multibuzz(type="checkbox", checked)
+				| Allow players to buzz multiple times
+			label.checkbox
+				input.allowskip(type="checkbox", checked)
+				| Allow players to skip questions
+			label.checkbox(style="display: none")
+				input.allowpause(type="checkbox", checked)
+				| Allow players to pause questions
+			
+			div.request-access
+				button.btn.btn-large <i class="icon-cog"></i>&nbsp; Request Access
