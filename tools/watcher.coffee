@@ -206,7 +206,7 @@ updateCache = (force_update = false) ->
 			compile_server()
 			scheduledUpdate = null
 			# clean up things
-			# fs.unlink 'client/jade/_compiled.js'
+			fs.unlink 'client/jade/_compiled.js'
 
 
 	fs.readFile 'client/protobowl.appcache', 'utf8', (err, data) ->
