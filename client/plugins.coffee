@@ -179,17 +179,59 @@ do ->
 			$('body').fireworks(25)
 		, time_delta
 
+	# 4:20pm 4/20
+	dt = new Date()
+	dt.setHours(12 + 4)
+	dt.setMinutes(20)
+	dt.setSeconds(0)
+	dt.setMonth(3)
+	dt.setDate(20)
+	time_delta = dt - Date.now()
+	
+	if time_delta < 2147483647 and time_delta > 0
+		setTimeout ->
+			protobot_write 'pass the weed, man'
+		, time_delta
 
-do ->
+
+check_holiday = ->
 	now = new Date()
+	# lets see what day it is
 	if now.getDate() in [24, 25] and now.getMonth() is 11
 		$('body').addClass 'christmas'
 	
 	# superbowl is first sunday of february
-	if now.getMonth() is 1 and now.getDay() is 0 and now.getDate() <= 7
+	else if now.getMonth() is 1 and now.getDay() is 0 and now.getDate() <= 7
 		$('a.brand strong').text('Super')
+	# earth day, man
+	else if now.getMonth() is 3 and now.getDate() is 22
+		$('body').addClass('earthday')
+		$('a.brand .motto').text "growing one thing and growing it well"
+
+	else if now.getMonth() is 7 and now.getDate() is 28
+		$('a.brand .motto').text "on August 28, 2012, protobowl was first <a href='http://hsquizbowl.org/forums/viewtopic.php?f=123&t=13478'>announced</a>"
+	# another arguable protobowl birthday
+	else if now.getMonth() is 5 and now.getDate() is 30
+		$('a.brand .motto').text "protobowl's precursor, <a href='https://github.com/polarcuke/its-ac-attack'>its-ac-attack</a> was started June 30, 2012"
+	# arguable protobowl birthday
+	else if now.getMonth() is 6 and now.getDate() is 20
+		$('a.brand .motto').text "the first line of protobowl code was written July 20, 2012"
+	# april fools
+	else if now.getMonth() is 3 and now.getDate() is 1
+		$('a.brand').html('<u><b>Quizbowl DB</b></u> <em style="font-size:small">Welcome to Quizbowl DB, the best way to get better at quizbowl!</em>')
+		$('body').addClass('aprilfools')
+	else
+		tomorrow = new Date
+		tomorrow.setDate(now.getDate() + 1)
+		tomorrow.setHours(0)
+		tomorrow.setMinutes(0)
+		tomorrow.setSeconds(0)
+		setTimeout check_holiday, Math.max(100, tomorrow - Date.now())
 
 
+
+
+check_holiday()
 
 unless console?
 	window.console = {

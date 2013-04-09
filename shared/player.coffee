@@ -832,7 +832,7 @@ class QuizPlayer
 
 	# underscore means it's not a publically accessibl emethod
 	_apotheify: ->
-		unless @authorized 'moderator'
+		unless @moderator
 			@verb 'is now an administrator of this room'
 			@admin_name = @name
 			# @room.admins.push(@id)
@@ -841,7 +841,7 @@ class QuizPlayer
 	
 
 	cincinnatus: ->
-		if @id in @room.admins
+		if @moderator
 			@verb 'is no longer an administrator of this room'
 			# @room.admins = (id for id in @room.admins when id isnt @id)
 			@moderator = false
