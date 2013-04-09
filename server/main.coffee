@@ -10,27 +10,29 @@ http = require 'http'
 url = require 'url'
 os = require 'os'
 util = require 'util'
+crypto = require 'crypto'
+namer = require '../shared/names'
 
 rooms = {}
 {QuizRoom} = require '../shared/room'
 {QuizPlayer} = require '../shared/player'
 {checkAnswer} = require '../shared/checker'
 
-namer = require '../shared/names'
-uptime_begin = +new Date
-message_count = 0
 
-# app = express()
-# server = http.Server(app)
-
-
+server = http.Server()
 io = require('socket.io').listen(server)
+
+
+server.on 'request', (req, res) ->
+	res.writeHead 301, {
+		'Location': 'http://localhost:5555/'
+	}
+	res.end()
 
 io.configure 'production', ->
 	io.set "log level", 0
 	io.set "browser client minification", true
 	io.set "browser client gzip", true
-	# io.set 'flash policy port', 0 # nodejitsu does like not other ports
 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
@@ -39,7 +41,6 @@ io.configure 'development', ->
 	io.set "browser client minification", false
 	io.set "browser client gzip", false
 	io.set 'flash policy port', 0
-	
 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
@@ -57,7 +58,8 @@ codename = namer.generateName()
 
 console.log "hello from protobowl v4, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
 
-crypto = require 'crypto'
+uptime_begin = +new Date
+message_count = 0
 
 # simple helper function that hashes things
 sha1 = (text) ->
@@ -75,12 +77,10 @@ Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
 MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
-
-
 track_time = (start_time, label) ->
 	duration = Date.now() - start_time
-	if (duration > 0 and gammasave) or duration >= 42
-		log 'track_time', duration + 'ms ' + label
+	# if (duration > 0 and gammasave) or duration >= 42
+	# 	log 'track_time', duration + 'ms ' + label
 
 log = (action, obj) ->
 	req = http.request log_config, ->
@@ -488,8 +488,8 @@ process_queue = ->
 	track_time t_start, 'argmin_queue'
 	return unless min_room
 
-	if !gammasave
-		return if Date.now() - min_time  < 1000 * 60 * 3
+	# if !gammasave
+	# 	return if Date.now() - min_time  < 1000 * 60 * 3
 
 	room = rooms[min_room]
 
@@ -523,19 +523,6 @@ check_performance = ->
 
 setInterval check_performance, 762
 
-reaped = {
-	name: "__reaped",
-	users: 0,
-	rooms: 0,
-	seen: 0,
-	correct: 0,
-	guesses: 0,
-	interrupts: 0,
-	time_spent: 0,
-	early: 0,
-	last_action: +new Date
-}
-
 clearInactive = ->
 	t_start = Date.now()
 	# the maximum size a room can be
@@ -565,15 +552,6 @@ clearInactive = ->
 			id: u.id,
 			name: u.name
 		}
-		reaped.users++
-		reaped.seen += u.seen
-		reaped.guesses += u.guesses
-		reaped.early += u.early
-		reaped.interrupts += u.interrupts
-		reaped.correct += u.correct
-		reaped.time_spent += u.time_spent
-		reaped.last_action = +new Date
-
 		u.room.delete_user u.id
 
 		# u.room.users[u.id] = null
@@ -626,7 +604,7 @@ if remote.archiveRoom
 
 
 
-port = process.env.PORT || 5555
+port = process.env.PORT || 5566
 
 remote.ready ->
 	server.listen port, ->

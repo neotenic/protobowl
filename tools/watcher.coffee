@@ -171,7 +171,11 @@ updateCache = (force_update = false) ->
 					}		
 					compileCoffee()			
 
-	saveFiles = ->
+	saveFiles = ->		
+		# clean up the jade stuff
+		fs.unlink 'client/jade/_compiled.js', (err) ->
+			throw err if err
+
 		# its something like a unitard
 		unihash = sha1((i.hash for i in source_list).join(''))
 		if unihash is timehash and force_update is false
@@ -206,8 +210,6 @@ updateCache = (force_update = false) ->
 			compile_server()
 			scheduledUpdate = null
 			# clean up things
-			fs.unlink 'client/jade/_compiled.js'
-
 
 	fs.readFile 'client/protobowl.appcache', 'utf8', (err, data) ->
 		cache_text = data
@@ -239,7 +241,7 @@ fs.watch "client/less", watcher
 console.log 'watching lib'
 fs.watch "client/lib", watcher
 console.log 'watching jade'
-fs.watch "server/room.jade", ->
-	console.log 'forcing update'
-	do_update(true)
+# fs.watch "server/room.jade", ->
+# 	console.log 'forcing update'
+# 	do_update(true)
 
