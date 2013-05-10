@@ -288,7 +288,7 @@ class SocketQuizPlayer extends QuizPlayer
 					t_start = Date.now()
 					if @banned and @room.serverTime() < @banned
 						@ban()
-					else if @__rate_limited and @room.serverTime() < @__rate_limited and @id[0] != '_' and app.settings.env isnt 'development'
+					else if @__rate_limited and @room.serverTime() < @__rate_limited and @id[0] != '_'
 						@throttle()
 					else
 						try
@@ -357,7 +357,7 @@ user_count_log = (message, room_name) ->
 	metrics.message = message
 	log 'user_count', metrics
 	
-	if Date.now() > last_message + 1000 * 60 * 10 and metrics.avg_latency > 250 and app.settings.env is 'production'
+	if Date.now() > last_message + 1000 * 60 * 10 and metrics.avg_latency > 250
 		last_message = Date.now()
 		remote?.notifyBen? 'Detected Increased Latency', "THE WAG IN HERE IS TOO DAMN HIGH #{metrics.avg_latency} ± #{metrics.std_latency}\n\n#{util.inspect(metrics)}"
 
@@ -371,7 +371,7 @@ load_room = (name, callback) ->
 	
 	timeout = setTimeout ->
 		handle_response null
-	, 1000 * 10
+	, 1000 * 6
 
 	handle_response = (data) ->	
 		clearTimeout timeout
@@ -478,8 +478,10 @@ io.sockets.on 'connection', (sock) ->
 			sock.join room_name
 			user.add_socket sock
 
+			real_ip = sock.handshake?.address?.address
+			forward_ip = sock.handshake?.headers?["x-forwarded-for"]
 
-			sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user, muwave: user.muwave }
+			sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user, muwave: user.muwave, ip: (forward_ip || real_ip) }
 			room.sync(4) # tell errybody that there's a new person at the partaay
 
 			# # detect if the server had been recently restarted

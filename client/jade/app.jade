@@ -22,7 +22,7 @@ html(lang="en")
 						i.icon-circle-arrow-right
 					a.brand(href="/")
 						strong Proto
-						| Bowl 
+						| bowl 
 						em.motto.hidden-phone(style="font-size: small")
 							| doing one thing and doing it acceptably well
 						
@@ -67,6 +67,7 @@ html(lang="en")
 									button.btn.btn-info.nextbtn(title="Shortcut: n key", rel='tooltip', disabled, style="display:none")
 										| Next
 									| 
+
 									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip', disabled) 
 										span.pause
 											i.icon-pause.visible-phone(style="margin-right:0")
@@ -74,10 +75,14 @@ html(lang="en")
 										span.resume(style="display:none")
 											i.icon-play.visible-phone(style="margin-right:0")
 											span.hidden-phone Resume
-									| 
+									
+								
+									
 									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip', disabled)
 										i.icon-bell.icon-white
 										| Buzz
+
+
 								form.expando.chat_form(style="display:none")
 									div.input-prepend
 										span.add-on.textbar-submit
@@ -129,7 +134,15 @@ html(lang="en")
 							| If you wait a little bit, Protobowl will keep on trying to connect using different
 							| transports until it finds something that works.
 
+
+					div#whale(style="display: none")
+						span.pull-left.status 135 bookmarks
+						form.form-search.pull-right
+							input.input-large.search-query(type="text", placeholder="Search")
+
 					div#bookmarks
+
+
 
 					noscript
 						h4 Please Enable Javascript
@@ -373,6 +386,11 @@ html(lang="en")
 				"static": !{JSON.stringify(static)},
 				"build": !{JSON.stringify(build)}
 			}
+
+		if development
+			script
+				protobowl_config.development = true;
+				protobowl_config.dev_port = #{dev_port};
 		
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));

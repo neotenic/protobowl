@@ -18,6 +18,12 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 		readout.width($('#history').width()).slideToggle "normal", ->
 			readout.width 'auto'
 
+
+$("#whale input").keydown (e) ->
+	if e.keyCode is 27
+		$("#whale input").val('')
+
+
 actionMode = ''
 setActionMode = (mode) ->
 	if mode != actionMode and actionMode

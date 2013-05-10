@@ -1,5 +1,9 @@
 /*! Socket.IO.js build:0.9.11, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
+// NOTE THAT THIS WILL LEAD TO COMPILE ERRORS OTHERWISE
+
+// https://github.com/LearnBoost/socket.io-client/issues/497
+
 var io = ('undefined' === typeof module ? {} : module.exports);
 (function() {
 
@@ -104,7 +108,7 @@ var io = ('undefined' === typeof module ? {} : module.exports);
     return socket.of(uri.path.length > 1 ? uri.path : '');
   };
 
-})('object' === typeof module ? module.exports : (this.io = {}), this);
+})('object' === typeof module ? module.exports : io, this);
 /**
  * socket.io
  * Copyright(c) 2011 LearnBoost <dev@learnboost.com>

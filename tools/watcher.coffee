@@ -4,11 +4,39 @@ wrench = require 'wrench'
 util = require 'util'
 jade = require 'jade'
 crypto = require 'crypto'
+ws = require('websocket')
+http = require 'http'
 
-send_update = -> null
-exports.watch = (fn) -> send_update = fn
+dev_port = 5577
+
+server = http.createServer (req, res) ->
+	res.writeHead 404
+	res.end()
+
+server.listen dev_port, ->
+	console.log 'server is listening on ' + dev_port
+
+updater = new ws.server {
+	httpServer: server,
+	autoAcceptConnections: true
+}
+
+connections = []
+
+updater.on 'connect', (connection) ->
+	connections.push connection
+
+	connection.on 'close', ->
+		connections = (c for c in connections when c isnt connection)
+	
+	# connection.sendUTF('rawr im a dinosaur')
 
 
+send_update = -> 
+	for c in connections
+		c.sendUTF Date.now().toString()
+		
+# exports.watch = (fn) -> send_update = fn
 
 less = require 'less'
 	
@@ -152,6 +180,7 @@ updateCache = (force_update = false) ->
 			}
 			if folder is 'dev'
 				opts.development = true
+				opts.dev_port = dev_port
 
 
 			for key, val of basis

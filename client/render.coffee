@@ -779,8 +779,14 @@ changeQuestion = ->
 	#remove the old crap when it's really old (and turdy)
 	$('#history .bundle').slice(cutoff).find('.annotations').slideUp 'normal', -> 
 			$(this).remove()
-	$('#history .bundle').slice(cutoff).not('.bookmarked').slideUp 'normal', -> 
+
+	$('#history .bundle').slice(cutoff).slideUp 'normal', -> 
+		if $(this).is('.bookmarked')
+			# move it over to special space
+			$("#bookmarks").prepend $(this).slideDown()
+		else
 			$(this).remove()
+
 	old = $('#history .bundle').first()
 	
 	$('.bundle').removeClass 'active'

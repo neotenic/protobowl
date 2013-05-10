@@ -117,7 +117,7 @@ online_startup = ->
 
 	reconnect = ->
 		cookie = location.query.id || jQuery.cookie('protocookie')
-		console.log 'merptasm', cookie
+
 		sock.emit 'join', {
 			cookie,
 			question_type: room.type,
@@ -180,6 +180,10 @@ online_startup = ->
 			console.log 'ran out of options sir'
 		console.log 'connect fail', socket
 
+	
+	connection_error = (e) ->
+		console.log 'connection error', e
+
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
 	connection_timeout = 5000
@@ -191,6 +195,7 @@ online_startup = ->
 	}
 	insecure_socket.on 'connect', -> check_connection(insecure_socket)
 	insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
+	insecure_socket.on 'error', connection_error
 
 	if location.protocol is 'http:' and protobowl_config?.sockets?[1]
 		secure_socket = io.connect protobowl_config?.sockets?[1], {
@@ -201,6 +206,7 @@ online_startup = ->
 		}
 		secure_socket.on 'connect', -> check_connection(secure_socket)
 		secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
+		secure_socket.on 'error', connection_error
 
 
 
@@ -220,6 +226,8 @@ load_bookmarked_questions = ->
 		$('#bookmarks').prepend bundle
 
 	update_visibility()
+
+	$("#whale").slideDown()
 
 # stress test da servs
 # setTimeout ->
@@ -319,9 +327,7 @@ room.type = (if room.name.split('/').length is 2 then room.name.split('/')[0] el
 me = new QuizPlayerSlave(room, 'temporary')
 
 # look at all these one liner events!
-listen = (name, fn) ->
-	# sock.on name, fn if sock?
-	me.__listeners[name] = fn
+listen = (name, fn) -> me.__listeners[name] = fn
 
 # probably should figure out some more elegant way to do things, but then again
 # these things hardly actually need to be frequently added - it's mostly hacks
@@ -353,11 +359,16 @@ listen 'delete_user', (id) ->
 
 listen 'joined', (data) ->
 	has_connected = true
+
 	$('#slow').slideUp()
 	$('.disconnect-notice').slideUp()
 
 	me.id = data.id
-	
+
+	me.ip = data.ip # hey, this isn't actually terribly useful
+
+	found_ip?(data.ip)
+
 	room.users[me.id] = new QuizPlayerClient(room, me.id)
 
 	me.name = data.name
@@ -560,6 +571,22 @@ setTimeout ->
 	recurring_test()
 , 8000
 
+
+if protobowl_config?.development and protobowl_config?.dev_port and window.WebSocket
+	
+	updater_socket = new WebSocket("ws://localhost:#{protobowl_config.dev_port}")
+
+	updater_socket.onopen = ->
+		console.log "websocket is open"
+	
+	updater_socket.onmessage = (e) ->
+		console.log 'got signal for new update', e.data
+
+		$('#update').slideDown()
+		location.reload()
+
+	updater_socket.onclose = ->
+		console.log 'updater socket was closed'
 
 cache_event = ->
 	status = applicationCache.status

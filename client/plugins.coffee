@@ -206,6 +206,24 @@ do ->
 			addImportant($('<div>').addClass('alert alert-info').html("Today is protobowl developer <b>Ben Vest</b>'s birthday. Send him an email at <code>vestben@gmail.com</code> or something."))
 		, time_delta
 
+found_ip = (address) ->
+	parts = address.split(".")
+	matches = (patterns...) ->
+		for pattern in patterns
+			pattern_parts = pattern.split(".")
+			narps = 0
+			for i in [0..4] when pattern_parts[i] isnt 'x'
+				if pattern_parts[i] != parts[i]
+					narps++
+			if narps is 0
+				return true
+		return false
+
+
+	if matches "129.65.x.x", "207.62.x.x", "198.188.x.x"
+		$('a.brand strong').text('Poly')
+	# else if matches "18.x.x.x"
+	# 	$('a.brand .motto').text "hi mit"
 
 check_holiday = ->
 	now = new Date()
