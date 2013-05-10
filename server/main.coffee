@@ -23,6 +23,8 @@ server = http.Server()
 io = require('socket.io').listen(server)
 
 
+log_config = { host: 'localhost', port: 18228 }
+
 server.on 'request', (req, res) ->
 	res.writeHead 301, {
 		'Location': 'http://localhost:5555/'
@@ -43,9 +45,6 @@ io.configure 'development', ->
 	io.set 'flash policy port', 0
 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
-
-journal_config = { host: 'localhost', port: 15865 }
-log_config = { host: 'localhost', port: 18228 }
 
 
 exports.new_update = (err) ->
@@ -369,17 +368,31 @@ load_room = (name, callback) ->
 	if rooms[name] # its really nice and simple if you have it cached
 		return callback rooms[name], false
 	t_start = Date.now()
-	room = new SocketQuizRoom(name) 
-	rooms[name] = room
+	
+	timeout = setTimeout ->
+		handle_response null
+	, 1000 * 10
+
+	handle_response = (data) ->	
+		clearTimeout timeout
+
+		room = new SocketQuizRoom(name) 
+		rooms[name] = room
+
+		if data and data.users and data.name
+			room.deserialize data
+			callback room, false, Date.now() - t_start
+		else
+			callback room, true, Date.now() - t_start
+
 	if remote.loadRoom
-		remote.loadRoom name, (data) ->		
-			if data and data.users and data.name
-				room.deserialize data
-				callback room, false
-			else
-				callback room, true
+		remote.loadRoom name, handle_response
+
 	else
-		callback room, true
+		handle_response null
+		# room = new SocketQuizRoom(name) 
+		# rooms[name] = room
+		# callback room, true
 	track_time t_start, "load_room(#{name})"
 
 io.sockets.on 'connection', (sock) ->
@@ -412,7 +425,10 @@ io.sockets.on 'connection', (sock) ->
 		publicID = sha1(cookie + room_name + '')
 		# get the room
 
-		load_room room_name, (room, is_new) ->
+		load_room room_name, (room, is_new, load_elapsed) ->
+			if load_elapsed > 3 * 1000
+				sock.emit 'log', verb: 'The database state server is taking unusually long to look up a room. If this happens often, you may want to contact the protobowl developers. '
+
 			room.type = question_type if is_new
 
 			if is_ninja
@@ -537,7 +553,7 @@ clearInactive = ->
 		delete journal_queue[name]
 		delete rooms[name]
 		remote.removeRoom?(name)
-		reaped.rooms++
+		# reaped.rooms++
 
 	reap_user = (u) ->
 		log 'reap_user', {

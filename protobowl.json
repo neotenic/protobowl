@@ -1,0 +1,10 @@
+{
+	"deploy": {
+		"static": "http://neotenic.github.io/",
+		"sockets": ["http://protobowl.nodejitsu.com/"]
+	},
+	"dev": {
+		"static_port": 5555,
+		"socket_port": 5566	
+	}
+}

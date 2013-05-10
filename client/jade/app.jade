@@ -1,18 +1,18 @@
 doctype 5
 html(lang="en")
 	head
-		title Protobowl 
+		if development
+			title Protobowl (dev)
+		else
+			title Protobowl 
+
 		meta(charset="utf8")
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		meta(name="keywords", content="protobowl,quizbowl,application,reader,academic,multiplayer,practice")
 		meta(name="description", "A real time multiplayer quizbowl application")
 		style
 			.navbar, .sidebar, .actionbar, #team_modal, .modal-footer, .modal-header { display: none; }
-			
-		if development
-			link(rel='stylesheet', href='/protobowl.dev.css')
-		else
-			link(rel='stylesheet', href='/protobowl.css')
+		link(rel='stylesheet', href='#{build}protobowl.css')
 
 	body
 		div.navbar.navbar-top
@@ -20,17 +20,14 @@ html(lang="en")
 				div.container
 					a.show-sidebar(href="#")
 						i.icon-circle-arrow-right
-					a.brand(href="/#{type}")
+					a.brand(href="/")
 						strong Proto
 						| Bowl 
 						em.motto.hidden-phone(style="font-size: small")
 							| doing one thing and doing it acceptably well
 						
 					div.pull-right.hidden-offline
-						if type
-							a.btn.btn-primary.new-room(href="/new/#{type}") New Room
-						else
-							a.btn.btn-primary.new-room(href="/new") New Room
+						a.btn.btn-primary.new-room(href="/new") New Room
 						
 					ul.nav.pull-right.hidden-phone
 						li
@@ -119,7 +116,6 @@ html(lang="en")
 						div.bundle.active
 							div.sticky
 							div.annotations
-					div#bookmarks
 
 					div#slow.well(style="display: none")
 						p
@@ -132,6 +128,8 @@ html(lang="en")
 						p
 							| If you wait a little bit, Protobowl will keep on trying to connect using different
 							| transports until it finds something that works.
+
+					div#bookmarks
 
 					noscript
 						h4 Please Enable Javascript
@@ -350,7 +348,6 @@ html(lang="en")
 				button.btn.btn-primary#make_button Create Team
 
 			
-		script(src="/socket.io/socket.io.js")
 		script(type="text/javascript")
 			var _gaq = _gaq || [];
 			_gaq.push(['_setAccount', 'UA-34434821-1']);
@@ -368,13 +365,19 @@ html(lang="en")
 					document.getElementById('error_log').innerHTML += e.toString()
 				}
 			}
+
+		script
+			protobowl_html_build = "#{new Date}";
+			protobowl_config = {
+				"sockets": !{JSON.stringify(sockets)},
+				"static": !{JSON.stringify(static)},
+				"build": !{JSON.stringify(build)}
+			}
 		
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
-		if development
-			script(src="/app.dev.js")
-		else
-			script(src="/app.js")
+		
+		script(src="#{build}app.js")
 
 		script(type="text/javascript")
 			(function() {

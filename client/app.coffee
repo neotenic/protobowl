@@ -1,3 +1,5 @@
+#= require ./lib/socket.io.js
+
 #= require ./lib/modernizr.js
 #= require ./lib/bootstrap.js
 #= require ./lib/bootbox.js
@@ -26,6 +28,19 @@ do ->
 		t = new Date protobowl_app_build
 		# todo: add padding to minute so it looks less weird
 		$('#version').text "#{t.getMonth()+1}/#{t.getDate()}/#{t.getFullYear() % 100} #{t.getHours()}:#{(t.getMinutes()/100).toFixed(2).slice(2)}"
+
+	try
+		js_time = new Date protobowl_app_build
+		html_time = new Date protobowl_html_build
+		time_delta = Math.abs(js_time - html_time)
+		# console.log time_delta, protobowl_app_build, protobowl_html_build
+		if time_delta >= 60 * 60 # it shouldnt ever take more than a minute to compile
+			line = $('<div>').addClass 'alert alert-info'
+			line.append $("<div>").append("<b>Version mismatch!</b> It appears that you are running HTML generated for a different version of protobowl. This could happen if you loaded this page before a server update has fully propagated. This will most likely not impact your protobowl experience. ")
+			line.insertAfter("#history")
+
+
+
 
 
 # asynchronously load the other code which doesn't need to be there on startup necessarily
@@ -102,7 +117,7 @@ online_startup = ->
 
 	reconnect = ->
 		cookie = location.query.id || jQuery.cookie('protocookie')
-
+		console.log 'merptasm', cookie
 		sock.emit 'join', {
 			cookie,
 			question_type: room.type,
@@ -169,27 +184,21 @@ online_startup = ->
 	# so try to connect to both!
 	connection_timeout = 5000
 
-	insecure_socket = io.connect location.hostname, {
+
+	insecure_socket = io.connect protobowl_config?.sockets?[0] || location.hostname, {
 		"connect timeout": connection_timeout,
 		"force new connection": true
 	}
 	insecure_socket.on 'connect', -> check_connection(insecure_socket)
 	insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
 
-	if location.protocol is 'http:'
-		if location.hostname is 'localhost'
-			secure_socket = io.connect 'localhost', {
-				"port": 1337,
-				"connect timeout": connection_timeout,
-				"force new connection": true
-			}
-		else
-			secure_socket = io.connect 'https://protobowl.nodejitsu.com/', {
-				"port": 443,
-				"connect timeout": connection_timeout,
-				"force new connection": true,
-				"secure": true
-			}
+	if location.protocol is 'http:' and protobowl_config?.sockets?[1]
+		secure_socket = io.connect protobowl_config?.sockets?[1], {
+			"port": 443,
+			"connect timeout": connection_timeout,
+			"force new connection": true,
+			"secure": true
+		}
 		secure_socket.on 'connect', -> check_connection(secure_socket)
 		secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
 
@@ -600,15 +609,16 @@ do -> # isolate variables from globals
 			applicationCache.addEventListener name, cache_event, false
 
 
-if io?
+if (('onLine' of navigator) and navigator.onLine is false) or !io?
+	offline_startup()
+else
 	online_startup()
 	setTimeout ->
 		$('#slow').slideDown() if !has_connected
 	, 1000 * 3
 
 	setTimeout initialize_offline, 3000
-else
-	offline_startup()
+	
 
 $("#load_error").remove() # no problems, mam, everything's a-ok
 
