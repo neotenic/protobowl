@@ -784,6 +784,9 @@ changeQuestion = ->
 		if $(this).is('.bookmarked')
 			# move it over to special space
 			$("#bookmarks").prepend $(this).slideDown()
+			
+			if $('#bookmarks .bundle').length
+				$("#whale").slideDown()
 		else
 			$(this).remove()
 
@@ -967,31 +970,32 @@ create_bundle = (info) ->
 
 	breadcrumb.append $('<li>').addClass('pull-right').append(star)
 
-	field = (name, value) ->
+	field = (name) ->
 		breadcrumb.find('li:not(.pull-right)').last().append $('<span>').addClass('divider').text('/')
-		if value
-			name += ": " + value
+		# if value
+		# 	name += ": " + value
 		el = $('<li>').text(name).appendTo(breadcrumb)
-		if value
-			el.addClass('hidden-phone')
-		else
-			el.addClass('visible-phone')
+		# if value
+		# 	el.addClass('hidden-phone')
+		# else
+		# 	el.addClass('visible-phone')
 
-	field info.year + ' ' + info.difficulty + ' ' + info.category
+	# field info.year + ' ' + info.difficulty + ' ' + info.category
 	
-	field 'Room', info.name if /stalker/.test(room.name)
-	field 'Category', info.category
-	field 'Difficulty', info.difficulty
 	if info.tournament and info.year
-		field 'Tournament', info.year + ' ' + info.tournament
+		field info.year + ' ' + info.tournament
 	else if info.year
-		field 'Year', info.year
+		field info.year
 	else if info.tournament
-		field 'Tournament', info.tournament
+		field info.tournament
+	
+	field info.difficulty
+	field info.category
+
 
 	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone hidden-offline').text('/')
 
-	breadcrumb.append $('<li>').addClass('clickable hidden-phone hidden-offline').text('Report').click (e) ->
+	breadcrumb.append $('<li>').addClass('clickable hidden-phone hidden-offline').text('Edit').click (e) ->
 		unless bundle.find('.report-form').length > 0
 			create_report_form(info).insertBefore(bundle.find(".annotations")).hide().slideDown()
 		e.stopPropagation()

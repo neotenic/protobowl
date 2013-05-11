@@ -207,6 +207,7 @@ do ->
 		, time_delta
 
 found_ip = (address) ->
+	return unless address?.split
 	parts = address.split(".")
 	matches = (patterns...) ->
 		for pattern in patterns

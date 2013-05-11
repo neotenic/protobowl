@@ -1,6 +1,7 @@
 {
 	"deploy": {
-		"static": "http://neotenic.github.io/",
+		"static": "//neotenic.github.io/",
+		"origin": "/min/",
 		"sockets": ["http://protobowl.nodejitsu.com/"]
 	},
 	"dev": {

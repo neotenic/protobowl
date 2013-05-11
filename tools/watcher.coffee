@@ -35,7 +35,7 @@ updater.on 'connect', (connection) ->
 send_update = -> 
 	for c in connections
 		c.sendUTF Date.now().toString()
-		
+
 # exports.watch = (fn) -> send_update = fn
 
 less = require 'less'
@@ -115,9 +115,11 @@ updateCache = (force_update = false) ->
 		recursive_build 'server', 'build/server', ->
 			recursive_build 'shared', 'build/shared', ->
 				recursive_build 'static', 'build/static', ->
+
 					beginCompile()
 
 	beginCompile = ->
+
 		fs.mkdir 'build/static/min', ->
 			fs.mkdir 'build/static/dev', ->
 				console.log 'compiling stylesheets'
@@ -174,39 +176,49 @@ updateCache = (force_update = false) ->
 		
 		ext = (original, newstuff) -> 
 
-		helper = (fn, folder, filename, basis) ->
-			opts = {
-				development: false
-			}
-			if folder is 'dev'
-				opts.development = true
-				opts.dev_port = dev_port
+
+		
+		fs.readFile jadePath, 'utf8', (err, data) ->
+
+			helper = (fn, folder, filename, basis, offline) ->
+				opts = {
+					development: false
+				}
+				if folder is 'dev'
+					opts.development = true
+					opts.dev_port = dev_port
+
+				if offline
+					opts.offline = true
+				else
+					opts.offline = false
+
+				for key, val of basis
+					opts[key] = val
+				
+				opts.build = opts.static + folder + '/'
+
+				error = null
+				
+				try
+					code = fn(opts)
+				catch e
+					error = e
+
+				source_list.push {
+					hash: sha1(data),
+					code: code,
+					err: error,
+					file: folder + '/' + filename
+				}
 
 
-			for key, val of basis
-				opts[key] = val
-			
-			opts.build = opts.static + folder + '/'
+			throw err if err
 
-			error = null
-			
-			try
-				code = fn(opts)
-			catch e
-				error = e
-
-			source_list.push {
-				hash: sha1(code),
-				code: code,
-				err: error,
-				file: folder + '/' + filename
-			}
-
-		if file is "app"
-			fs.readFile jadePath, 'utf8', (err, data) ->
-				throw err if err
+			if file in ["app", "cacher"]
 				local = {
 					"static": "http://localhost:#{settings.dev.static_port}/",
+					"origin": "http://localhost:#{settings.dev.static_port}/",
 					"sockets": ["http://localhost:#{settings.dev.socket_port}/"]
 				}
 				remote = settings.deploy
@@ -214,30 +226,39 @@ updateCache = (force_update = false) ->
 				
 				helper fn, "dev", "#{file}.html", remote
 				helper fn, "dev", "#{file}.local.html", local
+				
+				if file is 'app'
+					helper fn, "dev", "offline.html", remote, true
+					helper fn, "dev", "offline.local.html", local, true
 
 				fn = jade.compile(data, { pretty: false, filename: jadePath, compileDebug: true })
 
 				helper fn, "min", "#{file}.html", remote
 				helper fn, "min", "#{file}.local.html", local
+
+				if file is 'app'
+					helper fn, "min", "offline.html", remote, true
+					helper fn, "min", "offline.local.html", local, true
 				
 				# jade_src += "//file: #{jadePath}\n\nvar #{file} = " + fn.toString() + "\n\n\n\n"
 				compileJade()
+			
+			else
 
-		else
-			fs.readFile jadePath, 'utf8', (err, data) ->
-				throw err if err
 				fn = jade.compile(data, {
 						pretty: false,
 						filename: jadePath,
-						compileDebug: true,
+						compileDebug: false,
 						client: true
 					})
-				jade_src += "//file: #{jadePath}\n\nvar #{file} = " + fn.toString() + "\n\n\n\n"
+				jade_src += "//file: #{jadePath}\n\njade.#{file} = " + fn.toString() + "\n\n\n\n"
 				compileJade()
 
 
 	file_list = ['app', 'offline', 'auth']
 	
+	script_srcs = ''
+
 	compileCoffee = ->
 		file = file_list.shift()
 		if !file
@@ -258,9 +279,13 @@ updateCache = (force_update = false) ->
 			outfile = "min/#{file}.js"
 			
 			snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
+				if file is 'app'
+					code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n"
+				else
+					code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n#{js}\n"
 				source_list.push {
 					hash: sha1(js + ''),
-					code: "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n", 
+					code: code_contents, 
 					err: err, 
 					file: outfile
 				}		
@@ -281,7 +306,7 @@ updateCache = (force_update = false) ->
 			return
 		error_message = ''
 			
-		console.log 'saving files'
+		console.log 'saving files and updating manifest'
 		for i in source_list
 			error_message += "File: #{i.file}\n#{i.err}\n\n" if i.err
 		if error_message
@@ -293,12 +318,20 @@ updateCache = (force_update = false) ->
 			for i in source_list
 				# ensure that the target directories exist
 
-					fs.writeFile 'build/static/' + i.file, i.code, 'utf8', (err) ->
-						throw err if err
-						saved_count++
-						if saved_count is source_list.length
-							writeManifest(unihash)
+				fs.writeFile 'build/static/' + i.file, i.code, 'utf8', (err) ->
+					throw err if err
+					saved_count++
+					if saved_count is source_list.length
+						writeManifest(unihash)
+						copyCache()
 
+	copyCache = ->
+		wrench.rmdirRecursive 'build/static/cache', (err) ->
+			fs.mkdirSync 'build/static/cache'
+			wrench.copyDirRecursive 'build/static/font', 'build/static/cache/font', -> 1
+			wrench.copyDirRecursive 'build/static/min', 'build/static/cache/min', -> 1
+			wrench.copyDirRecursive 'build/static/img', 'build/static/cache/img', -> 1
+			wrench.copyDirRecursive 'build/static/sound', 'build/static/cache/sound', -> 1
 
 	writeManifest = (hash) ->
 		data = cache_text.replace(/INSERT_DATE.*?\r?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")

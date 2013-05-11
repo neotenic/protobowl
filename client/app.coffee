@@ -5,7 +5,6 @@
 #= require ./lib/bootbox.js
 #= require ./lib/time.coffee
 #= require ./lib/jquery.mobile.custom.js
-#= require ./lib/jquery.tablesort.js
 
 #= require ./jade/runtime.js
 #= require ./jade/_compiled.js
@@ -15,7 +14,6 @@
 #= require render.coffee
 #= require ../shared/player.coffee
 #= require ../shared/room.coffee
-#= require ../shared/c2r.coffee
 #= require buttons.coffee
 
 
@@ -40,13 +38,11 @@ do ->
 			line.insertAfter("#history")
 
 
-
-
-
 # asynchronously load the other code which doesn't need to be there on startup necessarily
-initialize_offline = (cb) ->	
+initialize_offline = (cb) ->
+	return cb() if protobowl_offline_build?
 	$.ajax {
-		url: '/offline.js',
+		url: (protobowl_config?.build || '/') + 'offline.js',
 		cache: true,
 		dataType: 'script',
 		success: cb
@@ -62,7 +58,6 @@ offline_startup = ->
 		
 		room.sync(4)
 		me.verb 'joined the room'
-
 
 		initialize_fallback() if initialize_fallback?
 
@@ -225,9 +220,14 @@ load_bookmarked_questions = ->
 		bundle.find('.readout').hide()
 		$('#bookmarks').prepend bundle
 
-	update_visibility()
+	cutoff = 10
 
-	$("#whale").slideDown()
+	$('#bookmarks .bundle').slice(cutoff).hide()
+
+	update_visibility()
+	
+	if $('#bookmarks .bundle').length
+		$("#whale").show()
 
 # stress test da servs
 # setTimeout ->
@@ -572,9 +572,8 @@ setTimeout ->
 , 8000
 
 
-if protobowl_config?.development and protobowl_config?.dev_port and window.WebSocket
-	
-	updater_socket = new WebSocket("ws://localhost:#{protobowl_config.dev_port}")
+connect_updater = ->
+	updater_socket = new WebSocket("ws://localhost:#{protobowl_config.dev_port || 5577}")
 
 	updater_socket.onopen = ->
 		console.log "websocket is open"
@@ -586,58 +585,66 @@ if protobowl_config?.development and protobowl_config?.dev_port and window.WebSo
 		location.reload()
 
 	updater_socket.onclose = ->
-		console.log 'updater socket was closed'
+		# console.log 'updater socket was closed'
+		setTimeout connect_updater, 1000
 
-cache_event = ->
-	status = applicationCache.status
-	switch applicationCache.status
-		when applicationCache.UPDATEREADY
-			$('#cachestatus').text 'Updated'
-			#applicationCache.swapCache()
-			$('#update').slideDown()		
-			if localStorage.auto_reload is "yay" or $('#update').data('force') is true
-				setTimeout ->
-					location.reload()
-				, 200 + Math.random() * 1000
-			else
-				setTimeout ->
-					bootbox.alert "Your current version of Protobowl is obsolete, this page will be automatically reloaded in 10 seconds."
-					setTimeout ->
-						location.reload()
-					, 1000 * 10
-				, 1000 * 60 * 5
-			applicationCache.swapCache()
-		when applicationCache.UNCACHED
-			$('#cachestatus').text 'Uncached'
-		when applicationCache.OBSOLETE
-			$('#cachestatus').text 'Obsolete'
-		when applicationCache.IDLE
-			$('#cachestatus').text 'Cached'
-		when applicationCache.DOWNLOADING
-			$('#cachestatus').text 'Downloading'
-		when applicationCache.CHECKING
-			$('#cachestatus').text 'Checking'
 
-do -> # isolate variables from globals
 
-	# listen for hiddens
-	if document.hidden? then hidden = 'hidden'; event = 'visibilitychange'
-	else if document.mozHidden? then hidden = 'mozHidden'; event = 'mozvisibilitychange'
-	else if document.msHidden? then hidden = 'msHidden'; event = 'msvisibilitychange'
-	else if document.webkitHidden? then hidden = 'webkitHidden'; event = 'webkitvisibilitychange'
+if (protobowl_config?.development and protobowl_config?.dev_port || location.hostname == "localhost") and window.WebSocket
+	connect_updater()
+
+# cache_event = ->
+# 	status = applicationCache.status
+# 	switch applicationCache.status
+# 		when applicationCache.UPDATEREADY
+# 			$('#cachestatus').text 'Updated'
+# 			#applicationCache.swapCache()
+# 			$('#update').slideDown()		
+# 			if localStorage.auto_reload is "yay" or $('#update').data('force') is true
+# 				setTimeout ->
+# 					location.reload()
+# 				, 200 + Math.random() * 1000
+# 			else
+# 				setTimeout ->
+# 					bootbox.alert "Your current version of Protobowl is obsolete, this page will be automatically reloaded in 10 seconds."
+# 					setTimeout ->
+# 						location.reload()
+# 					, 1000 * 10
+# 				, 1000 * 60 * 5
+# 			applicationCache.swapCache()
+# 		when applicationCache.UNCACHED
+# 			$('#cachestatus').text 'Uncached'
+# 		when applicationCache.OBSOLETE
+# 			$('#cachestatus').text 'Obsolete'
+# 		when applicationCache.IDLE
+# 			$('#cachestatus').text 'Cached'
+# 		when applicationCache.DOWNLOADING
+# 			$('#cachestatus').text 'Downloading'
+# 		when applicationCache.CHECKING
+# 			$('#cachestatus').text 'Checking'
+
+# do -> # isolate variables from globals
+
+# 	# listen for hiddens
+# 	if document.hidden? then hidden = 'hidden'; event = 'visibilitychange'
+# 	else if document.mozHidden? then hidden = 'mozHidden'; event = 'mozvisibilitychange'
+# 	else if document.msHidden? then hidden = 'msHidden'; event = 'msvisibilitychange'
+# 	else if document.webkitHidden? then hidden = 'webkitHidden'; event = 'webkitvisibilitychange'
 	
-	if hidden
-		document.addEventListener event, ->
-			me.set_idle document[hidden] unless me.muwave
-		, false
+# 	if hidden
+# 		document.addEventListener event, ->
+# 			me.set_idle document[hidden] unless me.muwave
+# 		, false
 
-	if window.applicationCache
-		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
-			applicationCache.addEventListener name, cache_event, false
+# 	if window.applicationCache
+# 		for name in ['cached', 'checking', 'downloading', 'error', 'noupdate', 'obsolete', 'progress', 'updateready']
+# 			applicationCache.addEventListener name, cache_event, false
 
 
-if (('onLine' of navigator) and navigator.onLine is false) or !io?
+if (('onLine' of navigator) and navigator.onLine is false) or !io? or protobowl_config?.offline
+	
 	offline_startup()
+
 else
 	online_startup()
 	setTimeout ->

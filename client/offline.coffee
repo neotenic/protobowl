@@ -3,6 +3,7 @@
 #= require ./lib/chatbot.js
 #= require ./lib/unidecode.coffee
 #= require ./lib/profanity.coffee
+#= require ./lib/idbstore.js
 
 #= require ../shared/names.coffee
 #= require ../shared/removeDiacritics.js
