@@ -60,9 +60,11 @@ offline_startup = ->
 		if localStorage.hasOwnProperty("room-" + room.name)
 			try
 				tmp = JSON.parse(localStorage["room-" + room.name])
-				me_id = tmp.me_id
-				console.log tmp
-				room.deserialize tmp
+				if tmp.me_id isnt 'temporary'
+					me_id = tmp.me_id
+					room.deserialize tmp
+				else
+					tmp = null
 
 		me.__listeners.joined {
 			id: me_id,
@@ -197,8 +199,10 @@ online_startup = ->
 	num_failures = 0
 	connection_error = (e) ->
 		num_failures++
-		
-		console.log 'connection error', num_failures, valid_attempts, e
+		if num_failures is valid_attempts
+			# everything has failed, life is a failure
+			offline_startup()
+			# console.log 'connection error', num_failures, valid_attempts, e
 
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
@@ -393,6 +397,7 @@ listen 'delete_user', (id) ->
 	renderUsers()
 
 listen 'joined', (data) ->
+	console.log data
 	has_connected = true
 
 	$('#slow').slideUp()
