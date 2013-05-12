@@ -904,9 +904,15 @@
         .remove()
     }
 
-    $.support.transition && $parent.hasClass('fade') ?
-      $parent.on($.support.transition.end, removeElement) :
-      removeElement()
+    if($.support.transition && $parent.hasClass('fade')){
+      $parent.on($.support.transition.end, removeElement)
+    }else{
+      $parent.slideUp("normal", function(){
+        removeElement()
+      })
+      
+    }
+      
   }
 
 

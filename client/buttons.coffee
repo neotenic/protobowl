@@ -13,7 +13,7 @@ $('.generate-name').click ->
 		$('#username').keyup().focus()
 
 jQuery('.bundle .breadcrumb').live 'click', ->
-	unless $(this).is jQuery('.bundle .breadcrumb').first()
+	unless $(this).is jQuery('#history .bundle .breadcrumb').first()
 		readout = $(this).parent().find('.readout')
 		readout.width($('#history').width()).slideToggle "normal", ->
 			readout.width 'auto'
@@ -98,7 +98,9 @@ rate_limit_check = ->
 	recent_actions.push current_time
 	if rate_limited
 		rate_limit_ceiling = current_time + 5000
-		createAlert $('.bundle.active'), 'Rate Limited', "You been rate limited for doing too many things in the past five seconds. "
+		createAlert('Rate Limited', "You been rate limited for doing too many things in the past five seconds. ")
+			.addClass('alert-error')
+			.insertAfter(".bundle.active .annotations")
 	return rate_limited
 
 

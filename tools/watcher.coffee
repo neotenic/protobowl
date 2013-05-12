@@ -29,6 +29,9 @@ updater.on 'connect', (connection) ->
 	connection.on 'close', ->
 		connections = (c for c in connections when c isnt connection)
 	
+	connection.on 'message', (message) ->
+		if message.utf8Data == 'recompile'
+			buildApplication(true)
 	# connection.sendUTF('rawr im a dinosaur')
 
 
@@ -119,14 +122,15 @@ path = require 'path'
 
 
 
-buildApplication = (target = null) ->
+buildApplication = (force_update = false) ->
 	source_list = []
 	compile_date = new Date
 	timehash = ''
 	cache_text = ''
-	settings = JSON.parse(fs.readFileSync('protobowl.json', 'utf8'))
+	settings_text = fs.readFileSync('protobowl.json', 'utf8')
+	settings = JSON.parse(settings_text)
 
-	target = settings.target unless target
+	target = settings.target
 	
 	opt = settings[target]
 
@@ -232,7 +236,7 @@ buildApplication = (target = null) ->
 				compileJade()
 
 
-	file_list = ['app', 'offline', 'auth']
+	file_list = ['app', 'offline', 'auth', 'cache']
 	
 	script_srcs = ''
 
@@ -264,8 +268,8 @@ buildApplication = (target = null) ->
 			throw err if err
 
 		# its something like a unitard
-		unihash = sha1((i.hash for i in source_list).join('') + sha1(cache_text) + self_hash)
-		if unihash is timehash# and force_update is false
+		unihash = sha1((i.hash for i in source_list).join('') + sha1(cache_text) + self_hash + sha1(settings_text))
+		if unihash is timehash and force_update is false
 			console.log 'files not modified'
 			# compile_server()
 			scheduledUpdate = null

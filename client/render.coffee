@@ -929,7 +929,10 @@ create_report_form = (info) ->
 		info.describe = describe
 		me.report_question info
 		
-		createAlert div.parent(), 'Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.'
+		createAlert('Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.')
+			.addClass('alert-success')
+			.insertAfter(div.parent().find('.annotations'))
+
 		div.slideUp 'normal', ->
 			$(this).remove()
 

@@ -5,3 +5,7 @@ html(lang="en", manifest="offline.appcache")
 		meta(charset="utf8")
 	body
 		p This isn't meant for human eyes
+
+		span#cache_status(style="font-family: monospace") Not Loaded
+		script(src="#{static}cache.js")
+

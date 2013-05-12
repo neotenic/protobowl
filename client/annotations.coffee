@@ -1,6 +1,5 @@
-createAlert = (bundle, title, message) ->
-	div = $("<div>").addClass("alert alert-success")
-		.insertAfter(bundle.find(".annotations")).hide()
+createAlert = (title, message, delay = 5000) ->
+	div = $("<div>").addClass("alert").hide()
 	div.append $("<button>", {
 			"data-dismiss": "alert",
 			"type": "button"
@@ -10,12 +9,15 @@ createAlert = (bundle, title, message) ->
 	div.append $("<strong>").text(title)
 	div.append " "
 	div.append message
-	div.slideDown()
+	setTimeout ->
+		div.slideDown()
+	, 10
 	setTimeout ->
 		div.slideUp().queue ->
 			$(this).dequeue()
 			$(this).remove()
-	, 5000
+	, delay
+	return div
 	
 		
 addAnnotation = (el, name = sync?.name) ->
@@ -292,7 +294,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					if magic_number > 0
 						if old_score < magic_number and updated_score >= magic_number
 							$('body').fireworks(magic_number / magic_multiple * 10)
-							createAlert ruling.parents('.bundle'), 'Congratulations', "You have over #{magic_number} points! Here's some fireworks."
+							createAlert('Congratulations', "You have over #{magic_number} points! Here's some fireworks.")
+								.addClass('alert-success')
+								.insertAfter(ruling.parents('.bundle').find('.annotations'))
 				checkScoreUpdate()
 		else
 			decision = "wrong"
@@ -303,7 +307,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			if user is me.id and me.id of room.users
 				old_score = me.score()
 				if old_score < -100 # just a little way of saying "you suck"
-					createAlert ruling.parents('.bundle'), 'you suck', 'like seriously you really really suck. you are a turd.'
+					createAlert('you suck', 'like seriously you really really suck. you are a turd.')
+						.addClass('alert-info')
+						.insertAfter(ruling.parents('.bundle').find('.annotations'))
 
 		ruling.fadeIn().css('display', 'inline')
 
@@ -311,7 +317,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 		qid = room.qid
 		ruling.click ->
 			me.report_answer {guess: text, answer: answer, ruling: decision, qid}
-			createAlert ruling.parents('.bundle'), 'Reported Answer', "You have successfully told me that my algorithm sucks. Thanks, I'll fix it eventually. "
+			createAlert('Reported Answer', "You have successfully told me that my algorithm sucks. Thanks, I'll fix it eventually. ")
+				.addClass('alert-success')
+				.insertAfter(ruling.parents('.bundle').find('.annotations'))
 			# I've been informed that this green box might make you feel bad and that I should change the wording so that it doesn't induce a throbbing pang of guilt in your gut. But the truth is that I really do appreciate flagging this stuff, it helps improve this product and with moar data, I can do science with it.
 
 			# $('#review .review-judgement')

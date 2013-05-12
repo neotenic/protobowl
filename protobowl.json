@@ -21,9 +21,7 @@
 		"development": true,
 
 		"static": "http://localhost:5555/",
-		"build": "",
-		"cache": "cache/",
-		"origin": "",
+		"origin": "/",
 		"sockets": ["http://localhost:5566/"]
 	},
 	"target": "debug"

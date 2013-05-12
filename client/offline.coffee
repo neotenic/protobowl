@@ -14,6 +14,79 @@
 #= require ../shared/sample.coffee
 
 
+
+cache_frame = null
+cache_listeners = []
+
+cache_status = (status) ->
+	if status isnt 'Error'
+		$("#cachestatus").text status
+	
+	if status in ['Updated', 'Error']
+		for cb in cache_listeners
+			try
+				cb(status == 'Error') 
+		cache_listeners = []
+
+	if status is 'Updated'
+		render('update').insertAfter('.buttonbar').hide().slideDown()
+
+		if protobowl_config?.development
+			location.reload()
+
+
+cache_update = (cb) ->
+	cache_listeners.push cb if cb
+	if cache_frame
+		cache_frame.postMessage 'CacheUpdate', '*'
+	else
+		console.error 'no cache window'
+
+initialize_cache = ->
+	window.addEventListener "message", (evt) ->
+		if typeof evt.data is 'string' and evt.data.slice(0, 12) == "CacheStatus:"
+			cache_status evt.data.slice(12)
+	
+	frame = document.createElement('iframe')
+	$(frame)
+		.hide()
+		.attr('src', (protobowl_config?.origin || '/') + 'cacher.html')
+		.appendTo('body')
+
+	cache_frame = frame.contentWindow
+
+initialize_cache() if applicationCache?
+
+updater_socket = null
+
+connect_updater = ->
+	updater_socket = new WebSocket("ws://localhost:#{protobowl_config.dev_port || 5577}")
+
+	updater_socket.onopen = ->
+		$('.show-updater').fadeIn()
+		console.log "updater websocket connection is open"
+	
+	updater_socket.onmessage = (e) ->
+		console.log 'got signal for new update', e.data
+
+		cache_update (error) ->
+			if error
+				createAlert("Update Failure!", "Some part of the application update process has failed. This might happen if the static file server is not running. ")
+					.addClass('alert-error')
+					.insertAfter('.buttonbar')
+			
+	updater_socket.onclose = ->
+		# console.log 'updater socket was closed'
+		$('.show-updater').fadeOut()
+		setTimeout connect_updater, 1000
+
+
+
+if (protobowl_config?.development and protobowl_config?.dev_port || location.hostname == "localhost") and window.WebSocket
+	connect_updater()
+
+
+
 fallback_notice = ->
 	line = $('<div>').addClass 'alert alert-success'
 	line.append $('<p>').append("You are connected to the <span class='label label-success'>semi-decentralized fallback</span> protocol. ")
@@ -123,20 +196,20 @@ count_cache = null
 
 load_questions = (cb) ->
 	if offline_questions.length is 0
-		$.ajax('/sample.txt').done (text) ->
-			try
-				offline_questions = (jQuery.parseJSON(line) for line in text.split('\n') when line)
-				for question in offline_questions
-					question._inc = Math.random()
-					question.type = 'qb'
+		# $.ajax('/sample.txt').done (text) ->
+		# 	try
+		# 		offline_questions = (jQuery.parseJSON(line) for line in text.split('\n') when line)
+		# 		for question in offline_questions
+		# 			question._inc = Math.random()
+		# 			question.type = 'qb'
 					
-				recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
-					count_cache = layers
-					setTimeout cb, 100		
-			catch err
-				console.log 'error loading questions', err
-				count_cache = {}
-				setTimeout cb, 100
+		# 		recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
+		# 			count_cache = layers
+		# 			setTimeout cb, 100		
+		# 	catch err
+		# 		console.log 'error loading questions', err
+		# 		count_cache = {}
+		# 		setTimeout cb, 100
 
 	else
 		setTimeout cb, 100
