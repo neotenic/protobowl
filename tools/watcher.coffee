@@ -99,6 +99,12 @@ sha1 = (text) ->
 
 
 
+# updates to the watcher also trigger updates to the thing
+self_hash = ''
+fs.readFile path.resolve(__dirname, 'watcher.coffee'), 'UTF-8', (err, data) ->
+	self_hash = sha1(data)
+
+
 
 scheduledUpdate = null
 path = require 'path'
@@ -209,7 +215,7 @@ buildApplication = (target = null) ->
 
 				run_jade "#{file}.html", { offline: false }
 				if file is 'app'
-					run_jade 'offline.html', { offline: true, build: opt.cache }
+					run_jade 'offline.html', { offline: true }
 				
 				compileJade()
 			
@@ -258,7 +264,7 @@ buildApplication = (target = null) ->
 			throw err if err
 
 		# its something like a unitard
-		unihash = sha1((i.hash for i in source_list).join('') + sha1(cache_text))
+		unihash = sha1((i.hash for i in source_list).join('') + sha1(cache_text) + self_hash)
 		if unihash is timehash# and force_update is false
 			console.log 'files not modified'
 			# compile_server()
@@ -285,21 +291,32 @@ buildApplication = (target = null) ->
 						copyCache(unihash)
 
 	copyCache = (hash) ->
-		wrench.rmdirRecursive "build/#{target}/cache", ->
-			wrench.copyDirRecursive "build/#{target}", "build/_#{target}", ->
-				fs.rename "build/_#{target}", "build/#{target}/cache", ->
-					fs.unlinkSync "build/#{target}/cache/offline.appcache"
-					files = []
-					blacklist = ["robots.txt", "offline.appcache"]
-					for f in wrench.readdirSyncRecursive "build/#{target}/cache"
-						try
-							if fs.statSync("build/#{target}/cache/#{f}").isFile() 
-								if !/html$/.test(f) and f not in blacklist
-									files.push opt.cache + f
-								else
-									fs.unlink "build/#{target}/cache/#{f}", -> 1
+		files = []
+		blacklist = ["robots.txt", "offline.appcache"]
+		for f in wrench.readdirSyncRecursive "build/#{target}"
+			try
+				if fs.statSync("build/#{target}/#{f}").isFile() 
+					if !/html$/.test(f) and f not in blacklist
+						files.push opt.static + f
+					# else
+					# 	fs.unlink "build/#{target}/#{f}", -> 1
 
-					writeManifest(hash, files)
+		writeManifest(hash, files)
+		# wrench.rmdirRecursive "build/#{target}/cache", ->
+		# 	wrench.copyDirRecursive "build/#{target}", "build/_#{target}", ->
+		# 		fs.rename "build/_#{target}", "build/#{target}/cache", ->
+		# 			fs.unlinkSync "build/#{target}/cache/offline.appcache"
+		# 			files = []
+		# 			blacklist = ["robots.txt", "offline.appcache"]
+		# 			for f in wrench.readdirSyncRecursive "build/#{target}/cache"
+		# 				try
+		# 					if fs.statSync("build/#{target}/cache/#{f}").isFile() 
+		# 						if !/html$/.test(f) and f not in blacklist
+		# 							files.push opt.cache + f
+		# 						else
+		# 							fs.unlink "build/#{target}/cache/#{f}", -> 1
+
+		# 			writeManifest(hash, files)
 
 
 
