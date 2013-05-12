@@ -118,7 +118,6 @@ buildApplication = (target = null) ->
 	compile_date = new Date
 	timehash = ''
 	cache_text = ''
-
 	settings = JSON.parse(fs.readFileSync('protobowl.json', 'utf8'))
 
 	target = settings.target unless target
@@ -135,7 +134,8 @@ buildApplication = (target = null) ->
 
 	beginCompile = ->
 		fs.mkdir "build/#{target}", ->
-			wrench.copyDirRecursive 'static', 'build/' + target, ->
+			# wrench.copyDirRecursive 'static', 'build/' + target, ->
+			recursive_build 'client/static', 'build/' + target, ->
 				console.log 'compiling stylesheets'
 				compileLess()
 
@@ -184,12 +184,6 @@ buildApplication = (target = null) ->
 			throw err if err
 
 			if file in ["app", "cacher"]
-				# local = {
-				# 	"static": "http://localhost:#{settings.dev.static_port}/",
-				# 	"origin": "http://localhost:#{settings.dev.static_port}/",
-				# 	"sockets": ["http://localhost:#{settings.dev.socket_port}/"]
-				# }
-				# remote = settings.deploy
 
 				fn = jade.compile data, {
 					pretty: opt.jade_pretty,
@@ -215,7 +209,7 @@ buildApplication = (target = null) ->
 
 				run_jade "#{file}.html", { offline: false }
 				if file is 'app'
-					run_jade 'offline.html', { offline: true }
+					run_jade 'offline.html', { offline: true, build: opt.cache }
 				
 				compileJade()
 			
@@ -264,7 +258,7 @@ buildApplication = (target = null) ->
 			throw err if err
 
 		# its something like a unitard
-		unihash = sha1((i.hash for i in source_list).join(''))
+		unihash = sha1((i.hash for i in source_list).join('') + sha1(cache_text))
 		if unihash is timehash# and force_update is false
 			console.log 'files not modified'
 			# compile_server()
@@ -288,31 +282,34 @@ buildApplication = (target = null) ->
 					throw err if err
 					saved_count++
 					if saved_count is source_list.length
-						writeManifest(unihash)
-						copyCache()
+						copyCache(unihash)
 
-	copyCache = ->
-		d = (name) -> "build/#{target}/#{name}"
-		copy = (name) ->
-			wrench.copyDirRecursive d(name), "build/#{target}/cache/#{name}", -> 1
+	copyCache = (hash) ->
+		wrench.rmdirRecursive "build/#{target}/cache", ->
+			wrench.copyDirRecursive "build/#{target}", "build/_#{target}", ->
+				fs.rename "build/_#{target}", "build/#{target}/cache", ->
+					fs.unlinkSync "build/#{target}/cache/offline.appcache"
+					files = []
+					blacklist = ["robots.txt", "offline.appcache"]
+					for f in wrench.readdirSyncRecursive "build/#{target}/cache"
+						try
+							if fs.statSync("build/#{target}/cache/#{f}").isFile() 
+								if !/html$/.test(f) and f not in blacklist
+									files.push opt.cache + f
+								else
+									fs.unlink "build/#{target}/cache/#{f}", -> 1
 
-		wrench.rmdirRecursive d('cache'), (err) ->
-			fs.mkdirSync d 'cache'
-			copy folder for folder in ['font', 'img', 'sound']
+					writeManifest(hash, files)
 
-			# now copy over the files that are just kind of lying there
-			fs.readdir "build/#{target}", (err, files) ->
-				for file in files
-					stat = fs.statSync "build/#{target}/#{file}"
 
-					if stat.isFile()
-						fs.createReadStream("build/#{target}/#{file}")
-						.pipe fs.createWriteStream("build/#{target}/cache/#{file}")
 
-	writeManifest = (hash) ->
+	writeManifest = (hash, files) ->
 		data = cache_text.replace(/INSERT_DATE.*?\r?\n/, 'INSERT_DATE '+compile_date + " # #{hash}\n")
+		data = data.replace(/# INSERT_FILES/, "# START_FILES #\n#{files.join('\n')}\n# END_FILES #\n")
 		fs.writeFile "build/#{target}/offline.appcache", data, 'utf8', (err) ->
 			throw err if err
+
+
 			send_update()
 			# compile_server()
 			scheduledUpdate = null

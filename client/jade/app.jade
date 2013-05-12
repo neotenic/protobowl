@@ -34,8 +34,20 @@ html(lang="en")
 							else
 								| doing one thing and doing it acceptably well
 						
-					div.pull-right.hidden-offline
-						a.btn.btn-primary.new-room(href="/new") New Room
+					div.pull-right
+						div.btn-group
+							a.btn.btn-primary.new-room(href="/new") New Room
+							button.btn.btn-primary.dropdown-toggle(data-toggle="dropdown")
+								span.caret
+							ul.dropdown-menu(style="left: -35px")
+								li
+									a(tabindex="-1", href="/lobby") Lobby
+								li
+									a(tabindex="-1", href="/hsquizbowl") HSQuizbowl
+								li
+									a(tabindex="-1", href="/msquizbowl") MSQuizbowl
+								//- li.divider
+												
 						
 					ul.nav.pull-right.hidden-phone
 						li
@@ -345,7 +357,7 @@ html(lang="en")
 									td#sync_offset ? 
 								tr
 									th build date
-									td#version ?
+									td#version #{new Date}
 								tr
 									td
 										a#disconnect(href="#disconnect", style="display: none") Disconnect

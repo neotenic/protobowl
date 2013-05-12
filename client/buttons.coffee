@@ -19,6 +19,14 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 			readout.width 'auto'
 
 
+$('.new-room').click (e) ->
+	if !connected()
+		e.preventDefault()
+		e.stopPropagation()
+		location.href = generatePage()
+		# console.log 'client taking over'
+
+
 $("#whale input").keydown (e) ->
 	if e.keyCode is 27
 		$("#whale input").val('')

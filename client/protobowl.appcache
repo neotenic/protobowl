@@ -2,24 +2,13 @@ CACHE MANIFEST
 # INSERT_DATE (this is an automated directive)
 
 CACHE:
-/favicon.ico
-/protobowl.css
-/app.js
-/offline.js
-/sample.txt
-/sound/ding.wav
-/font/fontawesome-webfont.ttf
-/font/fontawesome-webfont.svg
-/font/fontawesome-webfont.woff
-/img/btn_donate_SM.gif
+# INSERT_FILES
+
 //ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 
 
 NETWORK:
-/socket.io
-//www.google-analytics.com/
-/stalkermode
 *
 
 FALLBACK:
-/ offline
+/ offline.html

@@ -206,6 +206,8 @@ do ->
 			addImportant($('<div>').addClass('alert alert-info').html("Today is protobowl developer <b>Ben Vest</b>'s birthday. Send him an email at <code>vestben@gmail.com</code> or something."))
 		, time_delta
 
+'useless'
+
 found_ip = (address) ->
 	return unless address?.split
 	parts = address.split(".")
@@ -223,6 +225,7 @@ found_ip = (address) ->
 
 	if matches "129.65.x.x", "207.62.x.x", "198.188.x.x"
 		$('a.brand strong').text('Poly')
+
 	# else if matches "18.x.x.x"
 	# 	$('a.brand .motto').text "hi mit"
 
