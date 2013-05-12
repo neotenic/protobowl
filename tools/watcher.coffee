@@ -103,7 +103,17 @@ sha1 = (text) ->
 scheduledUpdate = null
 path = require 'path'
 
-updateCache = (force_update = false) ->
+# this is the new compilation procedure
+# generate the folder structure and compile server components (straight coffee -> js compilation)
+# compile the stylesheets 
+# compile the HTML (jade -> html, js)
+# compile the coffeescript and concatenate files
+# compute hashes, save to disk
+# compilation parameters: local, remote, debug, release
+
+
+
+buildApplication = (target = null) ->
 	source_list = []
 	compile_date = new Date
 	timehash = ''
@@ -111,23 +121,27 @@ updateCache = (force_update = false) ->
 
 	settings = JSON.parse(fs.readFileSync('protobowl.json', 'utf8'))
 
+	target = settings.target unless target
+	
+	opt = settings[target]
+
+	console.log "Compiling for `#{target}` @ #{compile_date}"
+
+
 	compileServer = ->
 		recursive_build 'server', 'build/server', ->
 			recursive_build 'shared', 'build/shared', ->
-				recursive_build 'static', 'build/static', ->
-
-					beginCompile()
+				beginCompile()
 
 	beginCompile = ->
-
-		fs.mkdir 'build/static/min', ->
-			fs.mkdir 'build/static/dev', ->
+		fs.mkdir "build/#{target}", ->
+			wrench.copyDirRecursive 'static', 'build/' + target, ->
 				console.log 'compiling stylesheets'
 				compileLess()
 
 	compileLess = ->
-
 		lessPath = 'client/less/protobowl.less'
+
 		fs.readFile lessPath, 'utf8', (err, data) ->
 			throw err if err
 
@@ -137,22 +151,13 @@ updateCache = (force_update = false) ->
 			})
 
 			parser.parse data, (err, tree) ->
-				css = tree?.toCSS { compress: false }
+				css = tree?.toCSS { compress: opt.less_compress }
 
 				source_list.push {
 					hash: sha1(css + ''),
-					code: "/* protobowl_css_build_date: #{compile_date} (dev) */\n#{css}",
+					code: "/* protobowl_css_build_date: #{compile_date} */\n#{css}",
 					err: err,
-					file: "dev/protobowl.css"
-				}
-
-				css = tree?.toCSS { compress: true }
-
-				source_list.push {
-					hash: sha1(css + ''),
-					code: "/* protobowl_css_build_date: #{compile_date}*/\n#{css}",
-					err: err,
-					file: "min/protobowl.css"
+					file: "protobowl.css"
 				}
 
 				console.log 'compiling templates'
@@ -174,84 +179,56 @@ updateCache = (force_update = false) ->
 		
 		jadePath = "client/jade/#{file}.jade"
 		
-		ext = (original, newstuff) -> 
-
-
-		
 		fs.readFile jadePath, 'utf8', (err, data) ->
-
-			helper = (fn, folder, filename, basis, offline) ->
-				opts = {
-					development: false
-				}
-				if folder is 'dev'
-					opts.development = true
-					opts.dev_port = dev_port
-
-				if offline
-					opts.offline = true
-				else
-					opts.offline = false
-
-				for key, val of basis
-					opts[key] = val
-				
-				opts.build = opts.static + folder + '/'
-
-				error = null
-				
-				try
-					code = fn(opts)
-				catch e
-					error = e
-
-				source_list.push {
-					hash: sha1(data),
-					code: code,
-					err: error,
-					file: folder + '/' + filename
-				}
-
 
 			throw err if err
 
 			if file in ["app", "cacher"]
-				local = {
-					"static": "http://localhost:#{settings.dev.static_port}/",
-					"origin": "http://localhost:#{settings.dev.static_port}/",
-					"sockets": ["http://localhost:#{settings.dev.socket_port}/"]
+				# local = {
+				# 	"static": "http://localhost:#{settings.dev.static_port}/",
+				# 	"origin": "http://localhost:#{settings.dev.static_port}/",
+				# 	"sockets": ["http://localhost:#{settings.dev.socket_port}/"]
+				# }
+				# remote = settings.deploy
+
+				fn = jade.compile data, {
+					pretty: opt.jade_pretty,
+					filename: jadePath,
+					compileDebug: opt.jade_debug
 				}
-				remote = settings.deploy
-				fn = jade.compile(data, { pretty: true, filename: jadePath, compileDebug: true })
-				
-				helper fn, "dev", "#{file}.html", remote
-				helper fn, "dev", "#{file}.local.html", local
-				
+
+				run_jade = (filename, options = {}) ->
+					p = {}
+					p[key] = val for key, val of opt
+					p[key] = val for key, val of options
+					try
+						code = fn(p)
+					catch e
+						error = e
+
+					source_list.push {
+						hash: sha1(data)
+						code: code
+						err: error
+						file: filename
+					}
+
+				run_jade "#{file}.html", { offline: false }
 				if file is 'app'
-					helper fn, "dev", "offline.html", remote, true
-					helper fn, "dev", "offline.local.html", local, true
-
-				fn = jade.compile(data, { pretty: false, filename: jadePath, compileDebug: true })
-
-				helper fn, "min", "#{file}.html", remote
-				helper fn, "min", "#{file}.local.html", local
-
-				if file is 'app'
-					helper fn, "min", "offline.html", remote, true
-					helper fn, "min", "offline.local.html", local, true
+					run_jade 'offline.html', { offline: true }
 				
-				# jade_src += "//file: #{jadePath}\n\nvar #{file} = " + fn.toString() + "\n\n\n\n"
 				compileJade()
 			
 			else
-
-				fn = jade.compile(data, {
-						pretty: false,
-						filename: jadePath,
-						compileDebug: false,
-						client: true
-					})
+				fn = jade.compile data, {
+					pretty: opt.jade_pretty,
+					filename: jadePath,
+					compileDebug: opt.jade_debug,
+					client: true
+				}
+				
 				jade_src += "//file: #{jadePath}\n\njade.#{file} = " + fn.toString() + "\n\n\n\n"
+
 				compileJade()
 
 
@@ -261,35 +238,25 @@ updateCache = (force_update = false) ->
 
 	compileCoffee = ->
 		file = file_list.shift()
+
 		if !file
-			# console.log 'saving files'
 			return saveFiles() 
 
-		snockets.getConcatenation "client/#{file}.coffee", minify: false, (err, js) ->
-			
-			outfile = "dev/#{file}.js" 
+		snockets.getConcatenation "client/#{file}.coffee", minify: opt.js_minify, (err, js) ->
+			code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n#{js}\n"
+
+			if opt.js_wrap and file is 'app'
+				code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n"
 
 			source_list.push {
-				hash: sha1(js + ''),
-				code: "protobowl_#{file}_build = '#{compile_date}'; //dev\n\n#{js}\n", 
-				err: err, 
-				file: outfile
+				hash: sha1(js + '')
+				code:  code_contents 
+				err: err
+				file: "#{file}.js" 
 			}
+
+			compileCoffee()	
 			
-			outfile = "min/#{file}.js"
-			
-			snockets.getConcatenation "client/#{file}.coffee", minify: true, (err, js) ->
-				if file is 'app'
-					code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n"
-				else
-					code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n#{js}\n"
-				source_list.push {
-					hash: sha1(js + ''),
-					code: code_contents, 
-					err: err, 
-					file: outfile
-				}		
-				compileCoffee()	
 
 	saveFiles = ->		
 		# clean up the jade stuff
@@ -298,7 +265,7 @@ updateCache = (force_update = false) ->
 
 		# its something like a unitard
 		unihash = sha1((i.hash for i in source_list).join(''))
-		if unihash is timehash and force_update is false
+		if unihash is timehash# and force_update is false
 			console.log 'files not modified'
 			# compile_server()
 			scheduledUpdate = null
@@ -317,8 +284,7 @@ updateCache = (force_update = false) ->
 			saved_count = 0
 			for i in source_list
 				# ensure that the target directories exist
-
-				fs.writeFile 'build/static/' + i.file, i.code, 'utf8', (err) ->
+				fs.writeFile "build/#{target}/#{i.file}", i.code, 'utf8', (err) ->
 					throw err if err
 					saved_count++
 					if saved_count is source_list.length
@@ -326,16 +292,26 @@ updateCache = (force_update = false) ->
 						copyCache()
 
 	copyCache = ->
-		wrench.rmdirRecursive 'build/static/cache', (err) ->
-			fs.mkdirSync 'build/static/cache'
-			wrench.copyDirRecursive 'build/static/font', 'build/static/cache/font', -> 1
-			wrench.copyDirRecursive 'build/static/min', 'build/static/cache/min', -> 1
-			wrench.copyDirRecursive 'build/static/img', 'build/static/cache/img', -> 1
-			wrench.copyDirRecursive 'build/static/sound', 'build/static/cache/sound', -> 1
+		d = (name) -> "build/#{target}/#{name}"
+		copy = (name) ->
+			wrench.copyDirRecursive d(name), "build/#{target}/cache/#{name}", -> 1
+
+		wrench.rmdirRecursive d('cache'), (err) ->
+			fs.mkdirSync d 'cache'
+			copy folder for folder in ['font', 'img', 'sound']
+
+			# now copy over the files that are just kind of lying there
+			fs.readdir "build/#{target}", (err, files) ->
+				for file in files
+					stat = fs.statSync "build/#{target}/#{file}"
+
+					if stat.isFile()
+						fs.createReadStream("build/#{target}/#{file}")
+						.pipe fs.createWriteStream("build/#{target}/cache/#{file}")
 
 	writeManifest = (hash) ->
-		data = cache_text.replace(/INSERT_DATE.*?\r?\n/, 'INSERT_DATE '+(new Date).toString() + " # #{hash}\n")
-		fs.writeFile 'build/static/offline.appcache', data, 'utf8', (err) ->
+		data = cache_text.replace(/INSERT_DATE.*?\r?\n/, 'INSERT_DATE '+compile_date + " # #{hash}\n")
+		fs.writeFile "build/#{target}/offline.appcache", data, 'utf8', (err) ->
 			throw err if err
 			send_update()
 			# compile_server()
@@ -347,7 +323,7 @@ updateCache = (force_update = false) ->
 	fs.readFile 'client/protobowl.appcache', 'utf8', (err, data) ->
 		cache_text = data
 
-		fs.readFile 'build/static/offline.appcache', 'utf8', (err, data) ->
+		fs.readFile "build/#{target}/offline.appcache", 'utf8', (err, data) ->
 			timehash = data?.match(/INSERT_DATE (.*?)\n/)?[1]?.split(" # ")?[1]
 			
 			console.log 'compiling server components'
@@ -355,11 +331,11 @@ updateCache = (force_update = false) ->
 			# compileLess()
 		
 
-do_update = (force) ->
-	unless scheduledUpdate
-		scheduledUpdate = setTimeout ->
-			updateCache(force)
-		, 100	
+do_update = ->
+	return if scheduledUpdate
+	scheduledUpdate = setTimeout ->
+		buildApplication()
+	, 100	
 
 watcher = (event, filename) ->
 	return if filename in ["_compiled.js"] or /tmp$/.test(filename)
@@ -380,4 +356,6 @@ fs.watch "client/jade", watcher
 fs.watch "protobowl.json", force_watch
 fs.watch "server", watcher
 
-updateCache()
+fs.watch "protobowl.json", watcher
+
+do_update()

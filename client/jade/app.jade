@@ -25,6 +25,9 @@ html(lang="en")
 					a.brand(href="/")
 						strong Proto
 						| bowl 
+						if development
+							span.label.label-important ALPHA
+							| 
 						em.motto.hidden-phone(style="font-size: small")
 							if offline
 								| doing one thing and doing it without internet
@@ -396,7 +399,6 @@ html(lang="en")
 		if development
 			script
 				protobowl_config.development = true;
-				protobowl_config.dev_port = #{dev_port};
 		
 		if offline
 			script

@@ -1,11 +1,29 @@
 {
-	"deploy": {
-		"static": "//neotenic.github.io/",
-		"origin": "/min/",
-		"sockets": ["http://protobowl.nodejitsu.com/"]
+	"release": {
+		"less_compress": true,
+		"jade_pretty": false,
+		"jade_debug": false,
+		"js_minify": true,
+		"js_wrap": true,
+		"development": false,
+
+		"static": "http://localhost:5555/",
+		"build": "",
+		"origin": "",
+		"sockets": ["http://localhost:5566/"]
 	},
-	"dev": {
-		"static_port": 5555,
-		"socket_port": 5566	
-	}
+	"debug": {
+		"less_compress": false,
+		"jade_pretty": true,
+		"jade_debug": true,
+		"js_minify": false,
+		"js_wrap": false,
+		"development": true,
+
+		"static": "http://localhost:5555/",
+		"build": "",
+		"origin": "",
+		"sockets": ["http://localhost:5566/"]
+	},
+	"target": "debug"
 }

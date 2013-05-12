@@ -1,7 +1,7 @@
 # Here's a basic static file server
 # Really, we'd use something like S3 or Apache
 
-console.log 'hello world from simple static server v1'
+console.log 'hello world from simple static server v2'
 
 express = require 'express'
 http = require 'http'
@@ -17,17 +17,14 @@ app.engine 'html', (path, options, callback) ->
 	fs.readFile path, 'utf8', callback
 app.set("view options", {layout: false})
 app.set("views", "")
-app.use express.static('static')
+app.use express.static('debug')
 # app.use express.favicon('static/img/favicon.ico')
 
 app.get '/', (req, res) -> res.redirect '/lobby'
 
 app.get '/:name', (req, res) -> 
-	if 'dev' of req.query
-		res.render 'static/dev/app.local.html'
-	else	
-		res.render 'static/min/app.local.html'
-
+	res.render 'debug/app.html'
+	
 
 server.listen 5555, ->
 	console.log "main listening on port 5555"
