@@ -86,6 +86,35 @@ if (protobowl_config?.development and protobowl_config?.dev_port || location.hos
 	connect_updater()
 
 
+recent_rooms = ->
+	rooms = []
+	for i in [0...localStorage.length]
+		try
+			key = localStorage.key(i)
+			if key.slice(0, 5) == "room-"
+				rooms.push JSON.parse(localStorage[key])
+	rooms = rooms.sort (b, a) -> a.archive_time - b.archive_time
+	blacklist = ['lobby', 'msquizbowl', 'hsquizbowl']
+	rooms = (room.name for room in rooms when room.name not in blacklist)
+	if rooms.length > 0
+		$('.recent-rooms').append $("<li>").addClass('divider')
+		for i in [0...rooms.length]
+			name = rooms[i]
+			if i < 3
+				$('.recent-rooms').append $('<li>').append($('<a>').text(name.replace(/-/g, ' ')).attr('href', '/' + name))
+			else
+				delete localStorage['room-' + name]
+
+
+
+setTimeout recent_rooms, 500
+
+# this is kind of a hack for the new static architecture
+# which doesn't exactly support generating page names
+# for somewhat obvious reasons
+if location.pathname is '/new'
+	location.href = generatePage()
+
 
 fallback_notice = ->
 	line = $('<div>').addClass 'alert alert-success'

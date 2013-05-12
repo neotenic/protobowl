@@ -19,11 +19,11 @@ jQuery('.bundle .breadcrumb').live 'click', ->
 			readout.width 'auto'
 
 
-$('.new-room').click (e) ->
-	if !connected()
-		e.preventDefault()
-		e.stopPropagation()
-		location.href = generatePage()
+$('.new-room').mouseover (e) ->
+	if generatePage?
+		# e.preventDefault()
+		# e.stopPropagation()
+		$('.new-room').attr 'href', generatePage()
 		# console.log 'client taking over'
 
 
