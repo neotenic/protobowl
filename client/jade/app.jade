@@ -76,6 +76,9 @@ html(lang="en")
 				p 
 					| I implore you to contact <a href="mailto:info@protobowl.com">info@protobowl.com</a> with any and all questions, 
 					| comments or concerns, preferably those which relate to Protobowl.
+				if offline
+					p 
+						| (though you probably can't email me now if you're actually offline, but that's totally okay because I'll wait until you get back online)
 			div.modal-footer
 				a.btn.btn-primary(href="#", data-dismiss="modal") Close
 		
@@ -355,14 +358,15 @@ html(lang="en")
 						table.table.headless
 							tbody
 								tr
-									th latency
-									td#latency ?
-								tr
-									th sync offset
-									td#sync_offset ? 
-								tr
 									th build date
 									td#version #{new Date}
+								tr.hidden-offline
+									th latency
+									td#latency ?
+								tr.hidden-offline
+									th sync offset
+									td#sync_offset ? 
+								
 								tr
 									td
 										a#disconnect(href="#disconnect", style="display: none") Disconnect
@@ -405,10 +409,12 @@ html(lang="en")
 				}
 			}
 
+
 		script
 			protobowl_html_build = "#{new Date}";
 			protobowl_config = {
 				"sockets": !{JSON.stringify(sockets)},
+				"samples": !{JSON.stringify(samples)},
 				"static": !{JSON.stringify(static)},
 				"origin": !{JSON.stringify(origin)}
 			}

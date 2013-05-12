@@ -121,7 +121,7 @@ renderUpdate = ->
 		else
 			$('.reset-score').slideUp()
 
-		if me.authorized('moderator')
+		if me.authorized('moderator') and !me.authorized('admin')
 			$('.relinquish-command').slideDown()
 		else
 			$('.relinquish-command').slideUp()

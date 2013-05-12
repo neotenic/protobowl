@@ -55,11 +55,25 @@ initialize_offline = (cb = ->) ->
 
 offline_startup = ->
 	initialize_offline ->
+		me_id = 'offline'
+
+		if localStorage.hasOwnProperty("room-" + room.name)
+			try
+				tmp = JSON.parse(localStorage["room-" + room.name])
+				me_id = tmp.me_id
+				console.log tmp
+				room.deserialize tmp
+
 		me.__listeners.joined {
-			id: 'offline',
+			id: me_id,
 			name: 'offline user'
 		}
-		
+
+		if tmp?.users
+			try
+				for user in tmp.users when user.id is me_id
+					me.deserialize user
+
 		room.sync(4)
 		me.verb 'joined the room'
 
@@ -179,9 +193,12 @@ online_startup = ->
 			console.log 'ran out of options sir'
 		console.log 'connect fail', socket
 
-	
+	valid_attempts = 0
+	num_failures = 0
 	connection_error = (e) ->
-		console.log 'connection error', e
+		num_failures++
+		
+		console.log 'connection error', num_failures, valid_attempts, e
 
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
@@ -192,6 +209,7 @@ online_startup = ->
 		"connect timeout": connection_timeout,
 		"force new connection": true
 	}
+	valid_attempts++
 	insecure_socket.on 'connect', -> check_connection(insecure_socket)
 	insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
 	insecure_socket.on 'error', connection_error
@@ -203,6 +221,7 @@ online_startup = ->
 			"force new connection": true,
 			"secure": true
 		}
+		valid_attempts++
 		secure_socket.on 'connect', -> check_connection(secure_socket)
 		secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
 		secure_socket.on 'error', connection_error
@@ -327,6 +346,14 @@ class QuizRoomSlave extends QuizRoom
 			get_question @type, @difficulty, category, (question) =>
 				cb(question || error_question)
 
+	deserialize: (data) ->
+		blacklist = ['users', 'attempt', 'generating_question', 'acl']
+		for attr, val of data when attr not in blacklist
+			@[attr] = val
+		# for user in data.users
+		# 	u = new SocketQuizPlayer(@, user.id)
+		# 	@users[user.id] = u
+		# 	u.deserialize(user)
 
 room = new QuizRoomSlave(location.pathname.replace(/^\/*/g, '').toLowerCase() || 'temporary')
 room.type = (if room.name.split('/').length is 2 then room.name.split('/')[0] else 'qb')
@@ -519,6 +546,12 @@ compute_sync_offset = ->
 	# console.log 'sec iter', below
 	$('#sync_offset').text(room.sync_offset.toFixed(1) + '±' + StDev(below).toFixed(1) + ' (' + sync_offsets.length + ')')
 
+
+$(window).unload ->
+	tmp = room.serialize()
+	tmp.me_id = me.id
+	tmp.archive_time = Date.now()
+	localStorage['room-' + room.name] = JSON.stringify(tmp)
 
 page_birthday = Date.now()
 

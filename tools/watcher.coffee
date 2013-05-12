@@ -327,6 +327,7 @@ buildApplication = (force_update = false) ->
 	writeManifest = (hash, files) ->
 		data = cache_text.replace(/INSERT_DATE.*?\r?\n/, 'INSERT_DATE '+compile_date + " # #{hash}\n")
 		data = data.replace(/# INSERT_FILES/, "# START_FILES #\n#{files.join('\n')}\n# END_FILES #\n")
+		data = data.replace(/# INSERT_SAMPLES/, "# START_SAMPLES #\n#{opt.samples.join('\n')}\n# END_SAMPLES #\n")
 		fs.writeFile "build/#{target}/offline.appcache", data, 'utf8', (err) ->
 			throw err if err
 

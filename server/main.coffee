@@ -250,6 +250,8 @@ class SocketQuizPlayer extends QuizPlayer
 			@room._ip_ban[ip] = { strikes: 0, banished: @room.serverTime() + duration }
 		@ban(duration)
 
+	rate_limit: -> false
+
 	ip: ->
 		ips = []
 		for sock_id in @sockets

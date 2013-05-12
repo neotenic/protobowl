@@ -194,8 +194,28 @@ initializePubNub = ->
 offline_questions = []
 count_cache = null
 
+
+load_sample = (index, cb = ->) ->
+	$.ajax {
+		url: protobowl_config.samples[index],
+		cache: true,
+		dataType: 'script',
+		success: ->
+			for question in QUESTION_DB[index]
+				question._inc = Math.random()
+				question.type = 'qb'
+				offline_questions.push question
+			recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
+				count_cache = layers
+				cb()
+
+	}
+
+
 load_questions = (cb) ->
 	if offline_questions.length is 0
+		load_sample 0, ->
+			setTimeout cb, 100
 		# $.ajax('/sample.txt').done (text) ->
 		# 	try
 		# 		offline_questions = (jQuery.parseJSON(line) for line in text.split('\n') when line)

@@ -206,7 +206,6 @@ do ->
 			addImportant($('<div>').addClass('alert alert-info').html("Today is protobowl developer <b>Ben Vest</b>'s birthday. Send him an email at <code>vestben@gmail.com</code> or something."))
 		, time_delta
 
-'useless'
 
 found_ip = (address) ->
 	return unless address?.split
