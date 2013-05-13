@@ -7,6 +7,8 @@ remote.initialize_remote()
 
 fs = require 'fs'
 http = require 'http'
+https = require 'https'
+querystring = require 'querystring'
 url = require 'url'
 os = require 'os'
 util = require 'util'
@@ -188,6 +190,14 @@ class SocketQuizPlayer extends QuizPlayer
 		remote.handle_report data if remote.handle_report
 		log 'report_question', data
 
+	tag_question: (data) ->
+		mongoose = require 'mongoose'
+		remote.Question.findById mongoose.Types.ObjectId(data.id), (err, doc) ->
+			return if err
+			doc.tags = data.tags
+			doc.save()
+
+
 	report_answer: (data) ->
 		return unless data
 		data.room = @room.name
@@ -263,6 +273,26 @@ class SocketQuizPlayer extends QuizPlayer
 		return ips
 
 	_password: -> remote?.passcode(this)
+
+	link: (assertion) ->
+		# console.log 'verifying assertion', assertion
+		req = https.request host: "verifier.login.persona.org", path: "/verify", method: "POST", (res) =>
+			body = ''
+			res.on 'data', (chunk) -> body += chunk
+			res.on 'end', =>
+				try
+					response = JSON.parse(body)
+					# console.log response
+					@emit 'verify', response
+					# if response?.status is 'okay'
+		
+		audience = "http://localhost:5555"
+		data = querystring.stringify assertion: assertion, audience: audience
+		req.setHeader 'Content-Type', 'application/x-www-form-urlencoded'
+		req.setHeader 'Content-Length', data.length
+		req.write data
+		req.end()
+
 
 	update: -> io.sockets.emit 'force_application_update', Date.now()
 

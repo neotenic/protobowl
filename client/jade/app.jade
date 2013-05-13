@@ -37,6 +37,8 @@ html(lang="en")
 						em.motto.hidden-phone(style="font-size: small")
 							if offline
 								| doing one thing and doing it without internet
+							else if development
+								| doing one thing and not necessarily doing it acceptably well quite yet
 							else
 								| doing one thing and doing it acceptably well
 						
@@ -58,7 +60,7 @@ html(lang="en")
 							li
 								a.show-updater(href="javascript:updater_socket.send('recompile');createAlert('Compiling', 'There is magic being done in the background as this application is going to emerge from its silky cocoon in a few seconds as a beautiful butterfly or something.').insertBefore('.buttonbar')", style="display:none") 
 									| Recompile
-					if auth
+					if auth && !offline
 						ul.nav.pull-right#userinfo(role="navigation", style="display: none")
 							li#signin(style="display:none")
 								a(href="#signin")
@@ -70,19 +72,23 @@ html(lang="en")
 									b.caret
 
 								ul.dropdown-menu(role="menu")
+									//- li
+									//- 	a(href="#") Profile
+									//- li
+									//- 	a(href="#") Stats
+									//- li.divider
+									//- li
+									//- 	a(href="#") Keybindings
+									//- li.divider
+									//- li
+									//- 	a(href="#") Settings
 									li
-										a(href="#") Profile
-									li
-										a(href="#") Stats
+										a(href="#about", data-toggle="modal") About
 									li.divider
 									li
-										a(href="#") Keybindings
-									li.divider
-									li
-										a(href="#") Settings
-									li.divider
-									li
-										a(href="#logout") Logout
+										a(href="#logout") 
+											i.icon-signout
+											| Logout
 					else
 						ul.nav.pull-right.hidden-phone
 							li
@@ -195,8 +201,6 @@ html(lang="en")
 							input.input-large.search-query(type="text", placeholder="Search")
 
 					div#bookmarks
-
-
 
 
 					noscript
@@ -436,27 +440,15 @@ html(lang="en")
 
 		script
 			protobowl_html_build = "#{new Date}";
-			protobowl_config = {
-				"sockets": !{JSON.stringify(sockets)},
-				"samples": !{JSON.stringify(samples)},
-				"static": !{JSON.stringify(static)},
-				"origin": !{JSON.stringify(origin)}
-			}
+			protobowl_config = !{JSON.stringify(locals)};
 
-		if development
-			script
-				protobowl_config.development = true;
-		
-		if offline
-			script
-				protobowl_config.offline = true;
 
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
 		
 		script(src="#{static}app.js")
 
-		if auth
+		if auth && !offline
 			script(src="https://login.persona.org/include.js")
 
 		script(type="text/javascript")

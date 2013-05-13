@@ -462,7 +462,7 @@ verbAnnotation = ({user, verb, time, notify}) ->
 		$('.bundle .ruling').tooltip('destroy')
 	, 100
 	
-	verbclass = "verb-#{user}-#{verb.split(' ').slice(0, 2).join('-')}"
+	verbclass = "verb-#{user}-#{verb.replace(/[^a-z]/ig, ' ').split(' ').slice(0, 2).join('-')}"
 
 	line = $('<p>').addClass 'log annoying'
 	line.addClass(verbclass)

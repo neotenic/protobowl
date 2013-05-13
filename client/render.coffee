@@ -774,6 +774,7 @@ createBundle = ->
 		difficulty: room.info.difficulty, 
 		category: room.info.category, 
 		tournament: room.info.tournament,
+		tags: room.info.tags,
 		bookmarked: is_bookmarked(room.qid),
 		round: room.info.round,
 		num: room.info.num,
@@ -1010,6 +1011,10 @@ create_bundle = (info) ->
 	
 	field info.difficulty
 	field info.category
+
+	if info.tags
+		field tag for tag in info.tags
+
 
 
 	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone hidden-offline').text('/')

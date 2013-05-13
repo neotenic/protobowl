@@ -62,6 +62,10 @@ class QuizPlayer
 		@__recent_actions = []
 		@__rate_limited = 0
 
+	link: (name) ->
+		@room.log 'QuizPlayer.link(name) not implemented'
+
+
 	emit: (name, data) ->
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
 
@@ -821,16 +825,12 @@ class QuizPlayer
 
 
 	# for when the db is wrong
-	report_question: ->
-		@verb "did something unimplemented (report question)"
-
+	report_question: -> @verb "QuizPlayer::report_question({id, tags}) not implemented"
+	tag_question: -> @verb "QuizPlayer::tag_question({id, tags}) not implemented"
 	# for when people think my algorith sucks
-	report_answer: ->
-		@verb "did something unimplemented (report answer)"
-
+	report_answer: -> @verb "QuizPlayer::report_answer(data) not implemented"
 	# well, that's kind of self explanatory
-	check_public: ->
-		@verb "did something unimplemented (check public)"
+	check_public: -> @verb "QuizPlayer::check_public() not implemented"
 
 	# underscore means it's not a publically accessibl emethod
 	_apotheify: ->

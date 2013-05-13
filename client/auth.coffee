@@ -1,19 +1,35 @@
 #= require ./lib/modernizr.js
 #= require ./lib/bootstrap.js
 
-$(document).ready ->
-	console.log 'starting persona', navigator.id
+assertion = null
 
+$(document).ready ->
+	console.log 'persona init', navigator.id
 	navigator?.id?.watch {
-		onlogin: (assertion) ->
-			console.log assertion
+		onlogin: (ass) -> # this is a rather unfortunate variable name
+			console.log 'on loggin'
+			assertion = ass
+			if connected() and has_connected
+				me.link assertion
+
 		onlogout: ->
+			console.log 'logging out'
 			$("#userinfo").fadeOut 'normal', ->
 				$("#signin").show()
-				$("#userinfo").hide()
+				$("#user").hide()
 				$("#userinfo").fadeIn()
 	}
 
+logged_in = (data) ->
+	if data?.status isnt 'okay'
+		navigator?.id?.logout()
+	else
+		if $("#user").is(":hidden")
+			$("#userinfo").fadeOut 'normal', ->
+				$("#signin").hide()
+				$('.user-name').text(data.email)
+				$("#user").show()
+				$("#userinfo").fadeIn()
 
 $("a[href='#signin']").click (e) ->
 	console.log 'login'
@@ -25,5 +41,3 @@ $("a[href='#logout']").click (e) ->
 	navigator?.id?.logout()
 	e.preventDefault()
 
-
-magical_ponies = 4

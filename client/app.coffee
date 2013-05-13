@@ -387,6 +387,8 @@ listen 'throttle', (data) ->
 		.addClass('alert-error')
 		.insertAfter(".bundle.active .annotations")
 
+listen 'verify', (data) -> logged_in? data
+
 listen 'rename_user', ({old_id, new_id}) ->
 	if me.id is old_id
 		me.id = new_id
@@ -442,6 +444,9 @@ listen 'joined', (data) ->
 
 	$('#username').val me.name
 	$('#username').disable false
+
+	if assertion? and assertion and connected()
+		me.link assertion
 
 
 	setTimeout load_bookmarked_questions, 100
