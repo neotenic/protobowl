@@ -9,12 +9,15 @@
 #= require ./jade/runtime.js
 #= require ./jade/_compiled.js
 
-#= require plugins.coffee
-#= require annotations.coffee
-#= require render.coffee
+#= require ./auth.coffee
+
 #= require ../shared/player.coffee
 #= require ../shared/room.coffee
-#= require buttons.coffee
+
+#= require ./plugins.coffee
+#= require ./annotations.coffee
+#= require ./render.coffee
+#= require ./buttons.coffee
 
 
 do ->
@@ -397,7 +400,7 @@ listen 'delete_user', (id) ->
 	renderUsers()
 
 listen 'joined', (data) ->
-	console.log data
+	# console.log data
 	has_connected = true
 
 	$('#slow').slideUp()

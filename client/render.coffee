@@ -648,7 +648,7 @@ renderUsers = ->
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
 	else if room.users[me.id]
-		$('.singleuser .stats table').replaceWith(createStatSheet(room.users[me.id], !!$('.singleuser').data('full')))
+		$('.singleuser .stats').empty().append(createStatSheet(room.users[me.id], !!$('.singleuser').data('full')))
 		if $('.singleuser').is(':hidden')
 			$('.leaderboard').slideUp()
 			$('.singleuser').slideDown()
@@ -694,33 +694,46 @@ createStatSheet = (entity, full) ->
 		return createUserStatSheet(entity, full)
 
 createUserStatSheet = (user, full) ->
-	table = $('<table>').addClass('table headless')
-	body = $('<tbody>').appendTo(table)
+	table = $('<div>').addClass('pseudotable')
+	# body = $('<tbody>').appendTo(table)
 	row = (name, val) ->
-		$('<tr>')
-			.appendTo(body)
-			.append($("<th>").text(name))
-			.append($("<td>").addClass("value").append(val))
+		$('<div>')
+			.addClass('pseudorow')
+			.appendTo(table)
+			.append($("<span>").addClass("left").text(name))
+			.append($("<span>").addClass("right").append(val))
 	
+	fullrow = (args...) -> row(args...).addClass('full').toggle(full)
+
+	mini = (title, data) -> " <span class='mini-stat' title='#{title}'> / #{data}</span>"
+
 	row	"Score", $('<span>').addClass('badge').text(get_score(user))
-	row	"Correct", "#{user.correct} <span class='mini-stat' title='Guesses'>/ #{user.streak} / #{user.streak_record}</span>"
+	row	"Correct", user.correct + mini("Current Streak", user.streak) + mini("Streak Record", user.streak_record)
+
 	# row "Streak",  "#{user.streak} <span style='color:gray' title='Streak record'>/ #{user.streak_record}</span>"
 	# if full
 	# 	row "Record", user.streak_record
 	if room.interrupts
-		row "Interrupts", "#{user.interrupts} <span class='mini-stat' title='Neg Streak'>/ #{user.negstreak} / #{user.negstreak_record}</span>"
+		# row "Interrupts", "#{user.interrupts} <span class='mini-stat' title='Neg Streak'>/ #{user.negstreak} / #{user.negstreak_record}</span>"
 
-		row "Early", user.early if full
+		row	"Interrupts", user.interrupts + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
+
+		fullrow "Early", user.early
 	# if full or !room.interrupts
 	# 	row "Incorrect", user.guesses - user.correct  
 	# row "Guesses", user.guesses 
-	row "Seen", "#{user.seen} <span class='mini-stat' title='Guesses'>/ #{user.guesses}</span>"
+	# row "Seen", "#{user.seen} <span class='mini-stat' title='Guesses'>/ #{user.guesses}</span>"
+	# row	"Guesses", user.guesses + mini("Seen", user.seen)
+	row	"Seen", user.seen + mini("Guesses", user.guesses)
+
 	row "Team", user.team if user.team
+	
 	if user.admin_name
 		row "Auth", user.admin_name
-	row "ID", user.id.slice(0, 10) if full
-	if full
-		row "Last Seen", "<span style='font-size:x-small'>#{formatRelativeTime(user.last_action)}</span>"
+
+	fullrow "ID", user.id.slice(0, 10)
+	
+	fullrow "Last Seen", "<span style='font-size:x-small'>#{formatRelativeTime(user.last_action)}</span>"
 	
 	if full and user.id isnt me.id and me.authorized('moderator')
 		line = $('<span>')
@@ -879,7 +892,7 @@ create_report_form = (info) ->
 	rtype = $('<div>').addClass('control-group').appendTo(form)
 	rtype.append $("<label>").addClass('control-label').text('Description')
 	controls = $("<div>").addClass('controls').appendTo rtype
-	for option in ["Wrong category", "Wrong details", "Broken question"]
+	for option in ["Wrong category", "Broken question"]
 		controls.append $("<label>")
 			.addClass("radio")
 			.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))

@@ -12,7 +12,8 @@ html(lang="en")
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 		meta(name="keywords", content="protobowl,quizbowl,application,reader,academic,multiplayer,practice")
 		meta(name="description", "A real time multiplayer quizbowl application")
-		
+		meta(http-equiv="X-UA-Compatible", content="IE=Edge")
+
 		style
 			.navbar, .sidebar, .actionbar, #team_modal, .modal-footer, .modal-header { display: none; }
 		
@@ -51,17 +52,42 @@ html(lang="en")
 									a(tabindex="-1", href="/hsquizbowl") HSQuizbowl
 								li
 									a(tabindex="-1", href="/msquizbowl") MSQuizbowl
-								//- li.divider
-												
-						
-					ul.nav.pull-right.hidden-phone
-						if development
+
+					if development
+						ul.nav.pull-right
 							li
-								a.show-updater(href="javascript:updater_socket.send('recompile')", style="display:none") 
+								a.show-updater(href="javascript:updater_socket.send('recompile');createAlert('Compiling', 'There is magic being done in the background as this application is going to emerge from its silky cocoon in a few seconds as a beautiful butterfly or something.').insertBefore('.buttonbar')", style="display:none") 
 									| Recompile
-						li
-							a(href="#", data-toggle="modal", href="#about") About
-		
+					if auth
+						ul.nav.pull-right#userinfo(role="navigation", style="display: none")
+							li#signin(style="display:none")
+								a(href="#signin")
+									i.icon-signin
+									| Sign In
+							li.dropdown#user(style="display:none")
+								a.dropdown-toggle(href="#", role="button", data-toggle="dropdown")
+									span.user-name Nobody
+									b.caret
+
+								ul.dropdown-menu(role="menu")
+									li
+										a(href="#") Profile
+									li
+										a(href="#") Stats
+									li.divider
+									li
+										a(href="#") Keybindings
+									li.divider
+									li
+										a(href="#") Settings
+									li.divider
+									li
+										a(href="#logout") Logout
+					else
+						ul.nav.pull-right.hidden-phone
+							li
+								a(href="#", data-toggle="modal", href="#about") About
+			
 		div.modal.hide.fade#about
 			div.modal-header
 				button.close(type="button", data-dismiss="modal") ×
@@ -224,6 +250,22 @@ html(lang="en")
 										th(style="padding-left: 0") Negs
 								tbody
 									
+					div.span3(style="margin: 0")
+						div.span3.thumbnail
+							h5
+								i.icon-user
+								| Single Player 
+							div.pseudotable
+								div.pseudorow
+									span.left Score
+									span.right
+										span.badge 10
+
+								div.pseudorow
+									span.left Correct
+									span.right
+										| 1
+										span.mini-stat / 1 / 1
 
 					div.span3.singleuser(style="display:none; margin: 0")
 						div.span3.thumbnail
@@ -232,7 +274,6 @@ html(lang="en")
 								| Single Player 
 								span.label.label-important.offline-badge(style="display:none") Offline
 							div.stats
-								table
 
 					div.span3.foreveralone(style="margin: 0;display:none")
 						div.span3.thumbnail
@@ -431,6 +472,9 @@ html(lang="en")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
 		
 		script(src="#{static}app.js")
+
+		if auth
+			script(src="https://login.persona.org/include.js")
 
 		script(type="text/javascript")
 			(function() {

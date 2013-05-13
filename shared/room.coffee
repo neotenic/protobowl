@@ -213,6 +213,7 @@ class QuizRoom
 				tournament: question.tournament, 
 				num: question.num, 
 				year: question.year, 
+				tags: question.tags,
 				round: question.round
 			}
 			@question = question.question

@@ -228,6 +228,28 @@ body {
 	}
 }
 
+
+.pseudotable .pseudorow {
+	&:first-child {
+		border-top: none;
+	}
+	border-top: 1px solid #dddddd;
+	line-height: 20px;
+	vertical-align: top;
+	padding: 8px;
+	.left, .right {
+
+	}
+	.left {
+		font-weight: bold;
+		text-align: left;
+	}
+	.right {
+		text-align: right;
+		float: right;
+	}
+}
+
 .chat_form, .guess_form, .prompt_form {
 	.input-prepend {
 		display: block;
@@ -564,6 +586,10 @@ input[type=range] {
 	border-top: 0;
 	border-top-right-radius: 0;
 	border-top-left-radius: 0;
+
+	[class^="icon-"] {
+		margin-right: 7px;
+	}
 }
 
 @media (min-width: 767px) {
