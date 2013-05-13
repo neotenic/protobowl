@@ -238,10 +238,15 @@ class QuizRoom
 			@timing = ((+syllables(word) || 0) + 1 for word in @question.split(" "))
 
 			@set_speed @rate #do the math with speeds
+			
+			has_early = @question.indexOf('*') > 5
 
 			for id, user of @users
 				user.times_buzzed = 0
-				user.seen++ if user.active()
+				if user.active()
+					user.seen++
+					user.earlyseen++ if has_early
+
 				user.history.push user.score()
 				user.history = user.history.slice(-30)
 			

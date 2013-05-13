@@ -555,9 +555,11 @@ $('body').click (e) ->
 		$('.popover').remove()
 
 $('.singleuser').click ->
-	$('.singleuser .stats .full').slideToggle()
+	mode = !$('.singleuser').data('full')
+	$('.singleuser').data 'full', mode
+	$('.singleuser .stats .full').slideToggle(mode)
 	# $('.singleuser .stats').slideUp().queue ->
-	# 	$('.singleuser').data 'full', !$('.singleuser').data('full')
+	# 	
 	# 	renderUsers()
 	# 	$(this).dequeue().slideDown()
 

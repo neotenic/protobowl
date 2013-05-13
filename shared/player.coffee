@@ -12,7 +12,9 @@ class QuizPlayer
 		@guesses = 0
 		@interrupts = 0
 		@early = 0
-		@seen = 0		
+		@earlyseen = 0
+		@seen = 0
+
 		@correct = 0
 		
 		@streak = 0
@@ -119,7 +121,7 @@ class QuizPlayer
 
 	reset_score: ->
 		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
-		@negstreak_record = @negstreak = @streak_record = @streak = @seen = @interrupts = @guesses = @correct = @early = 0
+		@negstreak_record = @negstreak = @streak_record = @streak = @earlyseen = @seen = @interrupts = @guesses = @correct = @early = 0
 		@history = []
 		@sync(true)
 

@@ -718,7 +718,7 @@ createUserStatSheet = (user, full) ->
 
 		row	"Interrupts", user.interrupts + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
 
-		fullrow "Early", user.early
+		fullrow "Early", user.early + mini("Powermarked Seen", user.earlyseen)
 	# if full or !room.interrupts
 	# 	row "Incorrect", user.guesses - user.correct  
 	# row "Guesses", user.guesses 
@@ -742,16 +742,19 @@ createUserStatSheet = (user, full) ->
 	return table
 
 createTeamStatSheet = (team, full) ->
-	table = $('<table>').addClass('table headless')
-	body = $('<tbody>').appendTo(table)
+	# table = $('<table>').addClass('table headless')
+	table = $('<div>').addClass('pseudotable')
+	# body = $('<tbody>').appendTo(table)
 	row = (name, val) ->
-		$('<tr>')
-			.appendTo(body)
-			.append($("<th>").text(name))
-			.append($("<td>").addClass("value").append(val))
+		$('<div>')
+			.addClass('pseudorow')
+			.appendTo(table)
+			.append($("<span>").addClass("left").text(name))
+			.append($("<span>").addClass("right").append(val))
 	
 	row	"Score", $('<span>').addClass('badge').text(get_score(team))
 	row	"Correct", Sum(user.correct for user in team.members)
+	
 	if room.interrupts
 		row "Interrupts", Sum(user.interrupts for user in team.members)
 		row "Early", Sum(user.early for user in team.members) if full
