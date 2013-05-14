@@ -1,0 +1,17 @@
+<script src="https://login.persona.org/include.js"></script>
+<script>
+navigator.id.watch({
+	onlogin: function(ass){
+		console.log('logged in', ass)
+	},
+	onlogout: function(){
+		console.log('logged out')
+	},
+	onmatch: function(e){
+		console.log('onmatch', e)
+	},
+	onready: function(e){
+		console.log('ready',e)
+	}
+})
+</script>

@@ -1,13 +1,12 @@
 #= require ./lib/socket.io.js
-
 #= require ./lib/modernizr.js
+#= require ./jade/runtime.js
+#= require ./jade/_compiled.js
+
 #= require ./lib/bootstrap.js
 #= require ./lib/bootbox.js
 #= require ./lib/time.coffee
 #= require ./lib/jquery.mobile.custom.js
-
-#= require ./jade/runtime.js
-#= require ./jade/_compiled.js
 
 #= require ./auth.coffee
 

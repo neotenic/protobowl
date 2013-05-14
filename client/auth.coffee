@@ -14,6 +14,8 @@ $(document).ready ->
 
 		onlogout: ->
 			console.log 'logging out'
+			sock.disconnect()
+			sock.socket.reconnect()
 			$("#userinfo").fadeOut 'normal', ->
 				$("#signin").show()
 				$("#user").hide()

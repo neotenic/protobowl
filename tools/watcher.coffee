@@ -4,7 +4,7 @@ wrench = require 'wrench'
 util = require 'util'
 jade = require 'jade'
 crypto = require 'crypto'
-ws = require('websocket')
+ws = require 'websocket'
 http = require 'http'
 
 dev_port = 5577
