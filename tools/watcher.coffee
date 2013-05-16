@@ -6,12 +6,22 @@ jade = require 'jade'
 crypto = require 'crypto'
 ws = require 'websocket'
 http = require 'http'
+less = require 'less'
+Snockets = require 'snockets'
+CoffeeScript = require 'coffee-script'
+UglifyJS = require 'uglify-js'
+SourceMap = require 'source-map'
+express = require 'express'
+
 
 dev_port = 5577
 
-server = http.createServer (req, res) ->
-	res.writeHead 404
-	res.end()
+
+app = express()
+
+app.use express.static(path.dirname(__dirname))
+
+server = http.Server(app)
 
 server.listen dev_port, ->
 	console.log 'server is listening on ' + dev_port
@@ -41,10 +51,7 @@ send_update = ->
 
 # exports.watch = (fn) -> send_update = fn
 
-less = require 'less'
-	
-Snockets = require 'snockets'
-CoffeeScript = require 'coffee-script'
+
 
 Snockets.compilers.coffee = 
 	match: /\.js$/
@@ -121,6 +128,8 @@ path = require 'path'
 # compilation parameters: local, remote, debug, release
 
 
+CoffeeHashCache = {}
+
 
 buildApplication = (force_update = false) ->
 	source_list = []
@@ -183,7 +192,8 @@ buildApplication = (force_update = false) ->
 			fs.writeFile 'client/jade/_compiled.js', jade_src, 'utf8', (err) ->
 				throw err if err
 				console.log 'compiling application code'
-				compileCoffee()
+				# compileCoffee()
+				compileCoffee2()
 				
 			return
 		
@@ -239,6 +249,141 @@ buildApplication = (force_update = false) ->
 	file_list = ['app', 'offline', 'auth', 'cache']
 	
 	script_srcs = ''
+
+	# warning! this isn't a particularly clean and pretty mess of code
+	
+	compileCoffee2 = ->
+		file = file_list.shift()
+		if !file
+			return saveFiles() 
+
+		data = fs.readFileSync "client/#{file}.coffee", 'utf8'
+		lines = data.split /\r?\n/
+		libraries = []
+		pre_include = []
+		post_include = []
+
+		for i in [0...lines.length]
+				line = lines[i]
+				if line.slice(0, 11) is "#= library "
+					inc = line.slice(11).split("#")[0]
+					libraries.push inc
+
+				if line.slice(0, 11) is "#= include "
+					inc = line.slice(11).split("#")[0]
+					if i < lines.length / 2
+							pre_include.push inc
+					else
+							post_include.push inc
+
+		if opt.source_maps
+			main = libraries.concat(pre_include, ["./#{file}.coffee"], post_include)
+			
+			# console.log 'dependencies', main
+			nodes = []
+			for dep in main
+				# console.time("compile")
+				rel = path.join("client", dep)
+				console.log 'processing ', dep, rel
+				data = fs.readFileSync path.resolve("client", dep), "utf8"
+				if path.extname(dep) is '.coffee'
+					# console.log 'coffee', dep
+					hash = sha1(data + '_smapz')
+					if hash of CoffeeHashCache
+						output = CoffeeHashCache[hash]
+					else
+						output = CoffeeScript.compile data, {
+							sourceMap: true,
+							bare: true,
+							generatedFile: path.basename(dep) + '.map',
+							sourceFiles: [rel],
+							filename: rel
+						}
+						CoffeeHashCache[hash] = output
+
+					{js, sourceMap, v3SourceMap} = output
+					# console.timeEnd("compile")
+					# console.time("parsemap")
+					consumer = new SourceMap.SourceMapConsumer(v3SourceMap)
+					node = SourceMap.SourceNode.fromStringWithSourceMap(js, consumer)
+					nodes.push node
+					# console.timeEnd("parsemap")
+				else
+					# console.log 'js', dep
+					# console.time("parsemap")
+					# consumer = new SourceMap.SourceMapConsumer(v3SourceMap)
+					# node = SourceMap.SourceNode.fromStringWithSourceMap(js, consumer)
+					node = new SourceMap.SourceNode(1, 1, rel, data)
+					# node.setSourceContent(dep, data)
+					nodes.push node
+					# console.timeEnd("parsemap")
+				# console.log data
+			# console.log main
+			# console.time('concat')
+			combined = new SourceMap.SourceNode(null, null, null, nodes)
+			combined.prepend "//@ sourceMappingURL=#{file}.map\n"
+
+			outname = "#{file}.js"
+			out = combined.toStringWithSourceMap { 
+				file: outname, 
+				sourceRoot: "http://localhost:#{dev_port}/"
+			}
+
+			source_list.push {
+				hash: sha1(js),
+				code: out.code,
+				file: outname
+			}
+
+			source_list.push {
+				hash: sha1(out.map.toString()),
+				code: out.map.toString(),
+				file: "#{file}.map"
+			}
+		else if file is "app"
+			main = [].concat(pre_include, ["./#{file}.coffee"], post_include)
+			mainscripts = ""
+			for dep in main
+				rel = path.join("client", dep)
+				console.log 'processing ', dep, rel
+				data = fs.readFileSync path.resolve("client", dep), "utf8"
+				if path.extname(dep) is '.coffee'
+					hash = sha1(data + '_mangle')
+					if hash of CoffeeHashCache
+						output = CoffeeHashCache[hash]
+					else
+						output = CoffeeScript.compile data, {
+							bare: true,
+							filename: rel
+						}
+						CoffeeHashCache[hash] = output
+					mainscripts += output + "\n" 
+				else
+					mainscripts += output + "\n"
+
+		else if file isnt "offline"
+			main = [].concat(pre_include, ["./#{file}.coffee"], post_include)
+			mainscripts = ""
+			for dep in main
+				rel = path.join("client", dep)
+				console.log 'processing ', dep, rel
+				data = fs.readFileSync path.resolve("client", dep), "utf8"
+				if path.extname(dep) is '.coffee'
+					hash = sha1(data + '_mangle')
+					if hash of CoffeeHashCache
+						output = CoffeeHashCache[hash]
+					else
+						output = CoffeeScript.compile data, {
+							bare: true,
+							filename: rel
+						}
+						CoffeeHashCache[hash] = output
+					mainscripts += output + "\n" 
+				else
+					mainscripts += output + "\n"
+				
+		compileCoffee2()
+
 
 	compileCoffee = ->
 		file = file_list.shift()

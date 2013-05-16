@@ -18,6 +18,22 @@
 #= require ./render.coffee
 #= require ./buttons.coffee
 
+#= library ./lib/socket.io.js
+#= library ./lib/modernizr.js
+#= library ./jade/runtime.js
+#= library ./jade/_compiled.js
+
+#= include ./lib/bootstrap.js
+#= include ./lib/time.coffee
+#= include ./lib/jquery.mobile.custom.js
+#= include ./auth.coffee
+#= include ../shared/player.coffee
+#= include ../shared/room.coffee
+#= include ./plugins.coffee
+#= include ./annotations.coffee
+#= include ./render.coffee
+#= include ./buttons.coffee
+
 
 do ->
 	if 'anachron' of location.query

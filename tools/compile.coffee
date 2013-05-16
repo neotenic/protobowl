@@ -29,10 +29,10 @@ for filename in ['test.coffee', 'test2.coffee']
 	compressor = UglifyJS.Compressor {
 
 	}
-	compressed_ast = toplevel.transform(compressor)
-	compressed_ast.figure_out_scope()
-	compressed_ast.compute_char_frequency()
-	compressed_ast.mangle_names()
+	# toplevel = toplevel.transform(compressor)
+	toplevel.figure_out_scope()
+	toplevel.compute_char_frequency()
+	toplevel.mangle_names()
 	source_map = UglifyJS.SourceMap {
 		file: filename + '.min.js',
 		root: '',
@@ -40,9 +40,10 @@ for filename in ['test.coffee', 'test2.coffee']
 	}
 	stream = UglifyJS.OutputStream {
 		source_map: source_map,
-		beautify: false
+		beautify: true,
+		comments: true
 	}
-	compressed_ast.print(stream)
+	toplevel.print(stream)
 	console.log 
 
 	# result = UglifyJS.minify js, {

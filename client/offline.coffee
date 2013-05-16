@@ -13,6 +13,20 @@
 #= require ../shared/checker.coffee
 #= require ../shared/sample.coffee
 
+#= include ./lib/html5slider.js
+#= include ./lib/sha1.js
+#= include ./lib/chatbot.js
+#= include ./lib/unidecode.js
+#= include ./lib/profanity.coffee
+#= include ./lib/idbstore.js
+
+#= include ../shared/names.coffee
+#= include ../shared/removeDiacritics.js
+#= include ../shared/levenshtein.js
+#= include ../shared/porter.js
+#= include ../shared/syllable.coffee
+#= include ../shared/checker.coffee
+#= include ../shared/sample.coffee
 
 
 cache_frame = null

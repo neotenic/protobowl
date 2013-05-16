@@ -18,6 +18,8 @@
 		"jade_debug": true,
 		"js_minify": false,
 		"js_wrap": false,
+
+		"source_maps": true,
 		"development": true,
 		"auth": true, 
 		
