@@ -251,7 +251,59 @@ buildApplication = (force_update = false) ->
 	script_srcs = ''
 
 	# warning! this isn't a particularly clean and pretty mess of code
-	
+	compileMangled = ->
+		compile_blocks = []
+
+		for file in ["app", "offline"]		
+			data = fs.readFileSync "client/#{file}.coffee", 'utf8'
+			lines = data.split /\r?\n/
+			libraries = []
+			pre_include = []
+			post_include = []
+
+			for i in [0...lines.length]
+				line = lines[i]
+				if line.slice(0, 11) is "#= library "
+					inc = line.slice(11).split("#")[0]
+					libraries.push inc
+
+				if line.slice(0, 11) is "#= include "
+					inc = line.slice(11).split("#")[0]
+					if i < lines.length / 2
+							pre_include.push inc
+					else
+							post_include.push inc
+			
+			compile_blocks.push libraries
+			compile_blocks.push [].concat(pre_include, ["./#{file}.coffee"], post_include)
+
+		post_blocks = for block in compile_blocks
+			concatted = ''
+			for dep in block
+				rel = path.join("client", dep)
+				data = fs.readFileSync path.resolve("client", dep), "utf8"
+				if path.extname(dep) is '.coffee'
+					hash = sha1(data + '_mang')
+					if hash of CoffeeHashCache
+						output = CoffeeHashCache[hash]
+					else
+						output = CoffeeScript.compile data, {
+							bare: true,
+							filename: rel
+						}
+						CoffeeHashCache[hash] = output
+					concatted += output + '\n'
+				else
+					concatted += data + '\n'
+			
+			concatted
+		channels = [[], []]
+		for i in [0...post_blocks.length]
+			channels[i % channels.length].push post_blocks[i]
+		separator = '/*%$SEP$%*/'
+		for channel in channels
+			channel.join('\n\n'+separator+'\n\n')
+
 	compileCoffee2 = ->
 		file = file_list.shift()
 		if !file
@@ -284,7 +336,7 @@ buildApplication = (force_update = false) ->
 			for dep in main
 				# console.time("compile")
 				rel = path.join("client", dep)
-				console.log 'processing ', dep, rel
+				console.log 'processing ', rel
 				data = fs.readFileSync path.resolve("client", dep), "utf8"
 				if path.extname(dep) is '.coffee'
 					# console.log 'coffee', dep
@@ -340,7 +392,7 @@ buildApplication = (force_update = false) ->
 				code: out.map.toString(),
 				file: "#{file}.map"
 			}
-		else if file is "app"
+		else
 			main = [].concat(pre_include, ["./#{file}.coffee"], post_include)
 			mainscripts = ""
 			for dep in main
@@ -348,28 +400,7 @@ buildApplication = (force_update = false) ->
 				console.log 'processing ', dep, rel
 				data = fs.readFileSync path.resolve("client", dep), "utf8"
 				if path.extname(dep) is '.coffee'
-					hash = sha1(data + '_mangle')
-					if hash of CoffeeHashCache
-						output = CoffeeHashCache[hash]
-					else
-						output = CoffeeScript.compile data, {
-							bare: true,
-							filename: rel
-						}
-						CoffeeHashCache[hash] = output
-					mainscripts += output + "\n" 
-				else
-					mainscripts += output + "\n"
-
-		else if file isnt "offline"
-			main = [].concat(pre_include, ["./#{file}.coffee"], post_include)
-			mainscripts = ""
-			for dep in main
-				rel = path.join("client", dep)
-				console.log 'processing ', dep, rel
-				data = fs.readFileSync path.resolve("client", dep), "utf8"
-				if path.extname(dep) is '.coffee'
-					hash = sha1(data + '_mangle')
+					hash = sha1(data + '_simple')
 					if hash of CoffeeHashCache
 						output = CoffeeHashCache[hash]
 					else

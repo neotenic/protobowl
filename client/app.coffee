@@ -1,4 +1,4 @@
-#= require ./lib/socket.io.js
+#= require ./lib/socket.io.min.js
 #= require ./lib/modernizr.js
 #= require ./jade/runtime.js
 #= require ./jade/_compiled.js
