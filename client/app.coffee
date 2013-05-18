@@ -1,28 +1,8 @@
-#= require ./lib/socket.io.min.js
-#= require ./lib/modernizr.js
-#= require ./jade/runtime.js
-#= require ./jade/_compiled.js
-
-#= require ./lib/bootstrap.js
-#= require ./lib/bootbox.js
-#= require ./lib/time.coffee
-#= require ./lib/jquery.mobile.custom.js
-
-#= require ./auth.coffee
-
-#= require ../shared/player.coffee
-#= require ../shared/room.coffee
-
-#= require ./plugins.coffee
-#= require ./annotations.coffee
-#= require ./render.coffee
-#= require ./buttons.coffee
-
 #= library ./lib/socket.io.js
-#= library ./lib/modernizr.js
 #= library ./jade/runtime.js
 #= library ./jade/_compiled.js
 
+#= include ./lib/modernizr.js
 #= include ./lib/bootstrap.js
 #= include ./lib/time.coffee
 #= include ./lib/jquery.mobile.custom.js
@@ -141,13 +121,11 @@ disconnect_notice = ->
 	renderTimer() # update the offline badge
 
 
-
 # this is the slightly overcomplicated system 
 has_connected = false
 sock = null
 
 online_startup = ->
-
 	reconnect = ->
 		cookie = location.query.id || jQuery.cookie('protocookie')
 

@@ -246,15 +246,16 @@ buildApplication = (force_update = false) ->
 				compileJade()
 
 
-	file_list = ['app', 'offline', 'auth', 'cache']
+	# file_list = ['app', 'offline', 'auth', 'cache']
 	
 	script_srcs = ''
 
 	# warning! this isn't a particularly clean and pretty mess of code
-	compileMangled = ->
+	compileMangledSync = ->
+		console.log "parsing includes"
 		compile_blocks = []
-
-		for file in ["app", "offline"]		
+		block_names = ["app", "offline"]
+		for file in block_names
 			data = fs.readFileSync "client/#{file}.coffee", 'utf8'
 			lines = data.split /\r?\n/
 			libraries = []
@@ -274,12 +275,14 @@ buildApplication = (force_update = false) ->
 					else
 							post_include.push inc
 			
-			compile_blocks.push libraries
-			compile_blocks.push [].concat(pre_include, ["./#{file}.coffee"], post_include)
+			compile_blocks.push { type: 'lib', file: file, files: libraries }
+			compile_blocks.push { type: 'code', file: file, files: [].concat(pre_include, ["./#{file}.coffee"], post_include) }
 
-		post_blocks = for block in compile_blocks
+		console.log "compiling coffeescript"
+		
+		for block in compile_blocks
 			concatted = ''
-			for dep in block
+			for dep in block.files
 				rel = path.join("client", dep)
 				data = fs.readFileSync path.resolve("client", dep), "utf8"
 				if path.extname(dep) is '.coffee'
@@ -295,20 +298,87 @@ buildApplication = (force_update = false) ->
 					concatted += output + '\n'
 				else
 					concatted += data + '\n'
+			# console.log concatted.length
+			block.code = concatted
+		
+		parts = []
+		
+		for block in compile_blocks
+			if block.type is 'code'
+				parts.push block.code
+
+		# separator = '\n/*SEP\nARA\nTOR*/\n'
+		separator = 'window.WATCHER_SEPARATOR(42)'
+		console.log 'mangling code'
+		input = '(function(){\n;'+separator+';\n\n' + parts.join('\n\n;'+separator+';\n\n') + '\n\n;'+separator+';\n})()'
+		# source_list.push {
+		# 	hash: sha1(input),
+		# 	code: input,
+		# 	file: 'input.js'
+		# }
+		toplevel = UglifyJS.parse input
+		toplevel.figure_out_scope()
+		toplevel.compute_char_frequency()
+		toplevel.mangle_names()
+		stream = UglifyJS.OutputStream {
+			beautify: true,
+			comments: true
+		}
+		toplevel.print(stream)
+		everything = stream.toString()
+		# console.log stream.toString()
+		# source_list.push {
+		# 	hash: sha1(code),
+		# 	code: everything,
+		# 	file: 'all.js'
+		# }
+		blockparts = everything.split(separator).slice(1, -1)
+		
+		console.log 'merging code blocks', blockparts.length
+
+		for block in compile_blocks
+			if block.type is 'code'
+				block.code = blockparts.shift()
+
+		for file in block_names
+			code = ''
+			for block in compile_blocks when block.type is 'lib' and block.file is file
+				code += block.code
+			code += "\n\n/*BEGIN CODE SEGMENT #{file}*/\n\n"
+			for block in compile_blocks when block.type is 'code' and block.file is file
+				code += block.code
 			
-			concatted
-		channels = [[], []]
-		for i in [0...post_blocks.length]
-			channels[i % channels.length].push post_blocks[i]
-		separator = '/*%$SEP$%*/'
-		for channel in channels
-			channel.join('\n\n'+separator+'\n\n')
+			if opt.js_minify
+				console.log "final minification step"
+				minified = UglifyJS.minify code, {
+					fromString: true
+				}
+
+				source_list.push {
+					hash: sha1(code),
+					code: minified.code,
+					file: file + '.js'
+				}
+			else
+				source_list.push {
+					hash: sha1(code),
+					code: code,
+					file: file + '.js'
+				}
 
 	compileCoffee2 = ->
-		file = file_list.shift()
-		if !file
-			return saveFiles() 
+		compileCoffeeSync(file) for file in ['auth', 'cache']
+		
+		if opt.mangle_vars
+			if opt.source_maps
+				console.log "WARNING: Source maps are not generated when mangle is enabled"
+			compileMangledSync() 
 
+		else
+			compileCoffeeSync(file) for file in ['app', 'offline'] 
+		saveFiles()
+
+	compileCoffeeSync = (file) ->
 		data = fs.readFileSync "client/#{file}.coffee", 'utf8'
 		lines = data.split /\r?\n/
 		libraries = []
@@ -380,6 +450,9 @@ buildApplication = (force_update = false) ->
 				file: outname, 
 				sourceRoot: "http://localhost:#{dev_port}/"
 			}
+			
+			if opt.js_minify
+				console.log "WARNING: Option JS Minify does not work when source maps are enabled"
 
 			source_list.push {
 				hash: sha1(js),
@@ -393,11 +466,11 @@ buildApplication = (force_update = false) ->
 				file: "#{file}.map"
 			}
 		else
-			main = [].concat(pre_include, ["./#{file}.coffee"], post_include)
+			main = libraries.concat(pre_include, ["./#{file}.coffee"], post_include)
 			mainscripts = ""
 			for dep in main
 				rel = path.join("client", dep)
-				console.log 'processing ', dep, rel
+				console.log 'processing ', rel
 				data = fs.readFileSync path.resolve("client", dep), "utf8"
 				if path.extname(dep) is '.coffee'
 					hash = sha1(data + '_simple')
@@ -411,9 +484,26 @@ buildApplication = (force_update = false) ->
 						CoffeeHashCache[hash] = output
 					mainscripts += output + "\n" 
 				else
-					mainscripts += output + "\n"
+					mainscripts += data + "\n"
+
+			if opt.js_minify
+				console.log "final minification step"
+				minified = UglifyJS.minify mainscripts, {
+					fromString: true
+				}
+
+				source_list.push {
+					hash: sha1(minified.code),
+					code: minified.code,
+					file: file + '.js'
+				}
+			else
+				source_list.push {
+					hash: sha1(mainscripts),
+					code: mainscripts,
+					file: "#{file}.js"
+				}
 				
-		compileCoffee2()
 
 
 	compileCoffee = ->

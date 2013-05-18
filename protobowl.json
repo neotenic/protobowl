@@ -16,10 +16,11 @@
 		"less_compress": false,
 		"jade_pretty": true,
 		"jade_debug": true,
-		"js_minify": false,
-		"js_wrap": false,
 
-		"source_maps": true,
+		"source_maps": false,
+		"mangle_vars": false,
+		"js_minify": false,
+
 		"development": true,
 		"auth": true, 
 		

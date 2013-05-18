@@ -1,18 +1,3 @@
-#= require ./lib/html5slider.js
-#= require ./lib/sha1.js
-#= require ./lib/chatbot.js
-#= require ./lib/unidecode.coffee
-#= require ./lib/profanity.coffee
-#= require ./lib/idbstore.js
-
-#= require ../shared/names.coffee
-#= require ../shared/removeDiacritics.js
-#= require ../shared/levenshtein.js
-#= require ../shared/porter.js
-#= require ../shared/syllable.js
-#= require ../shared/checker.coffee
-#= require ../shared/sample.coffee
-
 #= include ./lib/html5slider.js
 #= include ./lib/sha1.js
 #= include ./lib/chatbot.js
