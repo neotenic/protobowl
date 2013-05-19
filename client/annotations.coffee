@@ -345,6 +345,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	else
 		line = $('<p>').attr('id', id).addClass('chat annoying')
 		line.append $('<span>').addClass('author').append(userSpan(user).attr('title', formatTime(time)))
+		line.append $('<span>').addClass('timecolon').append(" (#{formatTime(time)}): ")
 		line.append document.createTextNode ' '
 		$('<span>')
 			.addClass('comment')

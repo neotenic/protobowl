@@ -356,13 +356,13 @@ buildApplication = (force_update = false) ->
 
 				source_list.push {
 					hash: sha1(code),
-					code: minified.code,
+					code: "protobowl_#{file}_build = '#{compile_date}';\n\n" + minified.code,
 					file: file + '.js'
 				}
 			else
 				source_list.push {
 					hash: sha1(code),
-					code: code,
+					code: "protobowl_#{file}_build = '#{compile_date}';\n\n" + code,
 					file: file + '.js'
 				}
 
@@ -443,7 +443,11 @@ buildApplication = (force_update = false) ->
 			# console.log main
 			# console.time('concat')
 			combined = new SourceMap.SourceNode(null, null, null, nodes)
-			combined.prepend "//@ sourceMappingURL=#{file}.map\n"
+			
+			combined.prepend "protobowl_#{file}_build = '#{compile_date}';\n\n"
+
+			combined.prepend "//@ sourceMappingURL=#{file}.map\n\n"
+
 
 			outname = "#{file}.js"
 			out = combined.toStringWithSourceMap { 
@@ -467,7 +471,7 @@ buildApplication = (force_update = false) ->
 			}
 		else
 			main = libraries.concat(pre_include, ["./#{file}.coffee"], post_include)
-			mainscripts = ""
+			mainscripts = ''
 			for dep in main
 				rel = path.join("client", dep)
 				console.log 'processing ', rel
@@ -494,13 +498,13 @@ buildApplication = (force_update = false) ->
 
 				source_list.push {
 					hash: sha1(minified.code),
-					code: minified.code,
+					code: "protobowl_#{file}_build = '#{compile_date}';\n\n" + minified.code,
 					file: file + '.js'
 				}
 			else
 				source_list.push {
 					hash: sha1(mainscripts),
-					code: mainscripts,
+					code: "protobowl_#{file}_build = '#{compile_date}';\n\n" + mainscripts,
 					file: "#{file}.js"
 				}
 				

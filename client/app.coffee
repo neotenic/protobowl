@@ -1,4 +1,4 @@
-#= library ./lib/socket.io.js
+#= library ./lib/socket.io.min.js
 #= library ./jade/runtime.js
 #= library ./jade/_compiled.js
 
@@ -6,10 +6,13 @@
 #= include ./lib/bootstrap.js
 #= include ./lib/time.coffee
 #= include ./lib/jquery.mobile.custom.js
+#= include ./lib/bootbox.js
+#= include ./plugins.coffee
+
 #= include ./auth.coffee
 #= include ../shared/player.coffee
 #= include ../shared/room.coffee
-#= include ./plugins.coffee
+
 #= include ./annotations.coffee
 #= include ./render.coffee
 #= include ./buttons.coffee
@@ -125,12 +128,21 @@ disconnect_notice = ->
 has_connected = false
 sock = null
 
+
 online_startup = ->
 	reconnect = ->
 		cookie = location.query.id || jQuery.cookie('protocookie')
+		authcookie = jQuery.cookie('protoauth')
+		if !cookie
+			dict = ''
+			# generate a cookie for when it doesn't already exist
+			cookie = 'PB4CL' + (Math.random().toString(36).slice(2, 6) for i in [0..8]).join('')
+			# save it, because yeah, why not
+			jQuery.cookie('protocookie', cookie)
 
 		sock.emit 'join', {
 			cookie,
+			auth: authcookie,
 			question_type: room.type,
 			room_name: room.name,
 			# old_socket: localStorage.old_socket,
@@ -380,7 +392,10 @@ listen 'throttle', (data) ->
 		.addClass('alert-error')
 		.insertAfter(".bundle.active .annotations")
 
-listen 'verify', (data) -> logged_in? data
+listen 'verify', (data) -> 
+	if data.cookie
+		jQuery.cookie 'protoauth', data.cookie
+	logged_in? data
 
 listen 'rename_user', ({old_id, new_id}) ->
 	if me.id is old_id
@@ -395,7 +410,8 @@ listen 'delete_user', (id) ->
 	renderUsers()
 
 listen 'joined', (data) ->
-	# console.log data
+	console.log data.auth
+
 	has_connected = true
 
 	$('#slow').slideUp()
@@ -438,7 +454,8 @@ listen 'joined', (data) ->
 	$('#username').val me.name
 	$('#username').disable false
 
-	if assertion? and assertion and connected()
+	if assertion? and assertion
+		console.log 'link 1'
 		me.link assertion
 
 

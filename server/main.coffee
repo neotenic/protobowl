@@ -154,7 +154,7 @@ class SocketQuizRoom extends QuizRoom
 			delete @users[id]
 			
 		@emit 'rename_user', {old_id: id, new_id: new_id}
-		@sync(1)
+		@sync(2)
 
 	deserialize: (data) ->
 		blacklist = ['users', 'attempt', 'generating_question', 'acl']
@@ -275,7 +275,7 @@ class SocketQuizPlayer extends QuizPlayer
 	_password: -> remote?.passcode(this)
 
 	link: (assertion) ->
-		# console.log 'verifying assertion', assertion
+		console.log 'verifying assertion', assertion
 		req = https.request host: "verifier.login.persona.org", path: "/verify", method: "POST", (res) =>
 			body = ''
 			res.on 'data', (chunk) -> body += chunk
@@ -283,7 +283,10 @@ class SocketQuizPlayer extends QuizPlayer
 				try
 					response = JSON.parse(body)
 					# console.log response
+					response.cookie = remote.secure_cookie {email: response.email, time: Date.now()}
+
 					@emit 'verify', response
+					# @room.merge_user @id, sha1(response.email)
 					# if response?.status is 'okay'
 		
 		audience = "http://localhost:5555"
@@ -444,7 +447,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'perf', (noop, cb) -> cb os.freemem()
 
-	sock.on 'join', ({cookie, room_name, question_type, old_socket, version, custom_id, muwave}) ->
+	sock.on 'join', ({auth, cookie, room_name, question_type, old_socket, version, custom_id, muwave}) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
 			return
@@ -454,9 +457,16 @@ io.sockets.on 'connection', (sock) ->
 			sock.disconnect()
 			return
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
-		publicID = sha1(cookie + room_name + '')
+		protoauth = remote.parse_cookie(auth)
+		console.log "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+		console.log auth, protoauth
+		console.log "################################"
+		if protoauth
+			publicID = sha1(protoauth.email)
+		else
+			publicID = sha1(cookie + room_name + '')
+		
 		# get the room
-
 		load_room room_name, (room, is_new, load_elapsed) ->
 			if load_elapsed > 3 * 1000
 				sock.emit 'log', verb: 'The database state server is taking unusually long to look up a room. If this happens often, you may want to contact the protobowl developers. '
@@ -513,8 +523,12 @@ io.sockets.on 'connection', (sock) ->
 			real_ip = sock.handshake?.address?.address
 			forward_ip = sock.handshake?.headers?["x-forwarded-for"]
 
-			sock.emit 'joined', { id: user.id, name: user.name, existing: existing_user, muwave: user.muwave, ip: (forward_ip || real_ip) }
+			sock.emit 'joined', { auth: protoauth, id: user.id, name: user.name, existing: existing_user, muwave: user.muwave, ip: (forward_ip || real_ip) }
 			room.sync(4) # tell errybody that there's a new person at the partaay
+			if !cookie
+				sock.emit 'log', verb: "Warning: This session lacks a protocookie. The session state may not be preserved and may be inadvertently shared with others. "
+			if !auth
+				sock.emit 'log', verb: "TODO: Remove this warning, because its totes okay not to be logged in while in production "
 
 			# # detect if the server had been recently restarted
 			if new Date - uptime_begin < 1000 * 60 * 2

@@ -17,7 +17,7 @@
 		"jade_pretty": true,
 		"jade_debug": true,
 
-		"source_maps": false,
+		"source_maps": true,
 		"mangle_vars": false,
 		"js_minify": false,
 

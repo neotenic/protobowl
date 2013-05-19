@@ -55,11 +55,7 @@ html(lang="en")
 								li
 									a(tabindex="-1", href="/msquizbowl") MSQuizbowl
 
-					if development
-						ul.nav.pull-right
-							li
-								a.show-updater(href="javascript:updater_socket.send('recompile');createAlert('Compiling', 'There is magic being done in the background as this application is going to emerge from its silky cocoon in a few seconds as a beautiful butterfly or something.').insertBefore('.buttonbar')", style="display:none") 
-									| Recompile
+
 					if auth && !offline
 						ul.nav.pull-right#userinfo(role="navigation", style="display: none")
 							li#signin(style="display:none")
@@ -225,6 +221,16 @@ html(lang="en")
 						pre#error_log
 
 				div.span3.sidebar
+					if development
+						div.span3.thumbnail
+							button.btn.btn-small.pull-right.show-updater.recompile-btn(disabled) 
+								| Recompile
+							h5(style="margin-top: 3px")
+								i.icon-code
+								| Development
+							
+
+
 					div.span3.thumbnail.timer-widget
 						h5.span3
 							span.label.label-warning.pause(style="display:none") Paused
@@ -242,7 +248,6 @@ html(lang="en")
 
 					div.span3.topic(style="display:none; margin: 0")
 						div.span3.thumbnail
-							| Yo Wassup Dawg
 
 					div.span3.leaderboard(style="display:none; margin: 0")
 						div.span3.thumbnail
@@ -450,6 +455,13 @@ html(lang="en")
 
 		if auth && !offline
 			script(src="https://login.persona.org/include.js")
+
+		if development
+			script
+				$(".recompile-btn").click(function(){
+					updater_socket.send('recompile');
+					createAlert('Compiling', 'There is magic being done in the background as this application is going to emerge from its silky cocoon in a few seconds as a beautiful butterfly or something.').insertBefore('.buttonbar')
+				});
 
 		script(type="text/javascript")
 			(function() {

@@ -72,3 +72,19 @@ exports.handle_report = handle_report
 # exports.Question = question
 
 exports.ready = (fn) -> fn()
+
+
+generate_hmac = (cookie_base) -> 
+	cookie_secret = "change me"
+	sha1(cookie_secret + sha1(sha1(cookie_base) + sha1(cookie_secret)))
+
+exports.secure_cookie = (data) ->
+	cookie_base = encodeURIComponent(JSON.stringify(data))
+	return generate_hmac(cookie_base) + "&" + cookie_base
+
+exports.parse_cookie = (string) ->
+	try
+		[pseudo_hmac, cookie_base] = string.split("&")
+		if generate_hmac(cookie_base) is pseudo_hmac
+			return JSON.parse(decodeURIComponent(cookie_base))
+	return null

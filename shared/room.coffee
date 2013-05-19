@@ -415,6 +415,8 @@ class QuizRoom
 	buzz: (user, fn) -> #todo, remove the callback and replace it with a sync listener
 		team_buzzed = 0
 
+		return false unless user of @users
+
 		for id, member of @users when (member.team || id) is (@users[user].team || user)
             team_buzzed += member.times_buzzed
             

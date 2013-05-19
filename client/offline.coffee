@@ -62,7 +62,8 @@ connect_updater = ->
 	updater_socket = new WebSocket("ws://localhost:#{protobowl_config.dev_port || 5577}")
 
 	updater_socket.onopen = ->
-		$('.show-updater').fadeIn()
+		# $('.show-updater').fadeIn()
+		$('.show-updater').disable(false)
 		console.log "updater websocket connection is open"
 	
 	updater_socket.onmessage = (e) ->
@@ -76,7 +77,7 @@ connect_updater = ->
 			
 	updater_socket.onclose = ->
 		# console.log 'updater socket was closed'
-		$('.show-updater').fadeOut()
+		$('.show-updater').disable()
 		setTimeout connect_updater, 1000
 
 
