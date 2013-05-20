@@ -44,6 +44,7 @@ do ->
 # http://plugins.jquery.com/node/1387
 # 
 # Rewritten in CoffeeScript by Bodacious on 23rd June 2011 for http://urtv.co.uk
+
 jQuery.cookie = (name, value, options) ->
 	if typeof value != 'undefined'
 		options = options || {}

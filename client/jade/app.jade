@@ -48,6 +48,10 @@ html(lang="en")
 							button.btn.btn-primary.dropdown-toggle(data-toggle="dropdown")
 								span.caret
 							ul.dropdown-menu.pull-right.recent-rooms
+								
+								li.show-auth
+									a(tabindex="-1", href="/private") Private Room
+								li.show-auth.divider
 								li
 									a(tabindex="-1", href="/lobby") Lobby
 								li
@@ -85,6 +89,8 @@ html(lang="en")
 										a(href="#logout") 
 											i.icon-signout
 											| Logout
+								li#aboutlink(style="display: none")
+									a(href="#", data-toggle="modal", href="#about") About
 					else
 						ul.nav.pull-right.hidden-phone
 							li

@@ -458,14 +458,18 @@ io.sockets.on 'connection', (sock) ->
 			return
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
 		protoauth = remote.parse_cookie(auth)
-		console.log "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
-		console.log auth, protoauth
-		console.log "################################"
 		if protoauth
 			publicID = sha1(protoauth.email)
 		else
 			publicID = sha1(cookie + room_name + '')
-		
+
+		if room_name is "private"
+			unless protoauth
+				sock.emit 'log', verb: 'You may not access this private room without first logging in.'
+				sock.disconnect()
+				return
+			room_name = publicID
+
 		# get the room
 		load_room room_name, (room, is_new, load_elapsed) ->
 			if load_elapsed > 3 * 1000

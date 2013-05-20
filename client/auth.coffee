@@ -2,55 +2,77 @@
 #= include ./lib/bootstrap.js
 
 assertion = null
+auth = null
 
-$(document).ready ->
-	auth = null
+auth_cookie = (new_cookie) ->
+	if new_cookie
+		jQuery.cookie 'protoauth', new_cookie
+	else if typeof new_cookie isnt 'undefined'
+		jQuery.cookie 'protoauth', null
+	
 	try
 		[pseudo_hmac, cookie_base] = jQuery.cookie('protoauth').split('&')
 		auth = JSON.parse(decodeURIComponent(cookie_base))
-	
-	console.log 'persona init', auth
+	catch e
+		auth = null
 
-	navigator?.id?.watch {
-		loggedInUser: auth?.email,
-		onlogin: (ass) -> # this is a rather unfortunate variable name
-			console.log 'on loggin'
-			assertion = ass
-			if connected() and has_connected
-				console.log 'link 2'
-				me.link assertion
+	$("body").toggleClass "authenticated", !!auth
 
-		onlogout: ->
-			console.log 'logging out'
-			assertion = null
-			# sock.disconnect()
-			# sock.socket.reconnect()
-			$("#userinfo").fadeOut 'normal', ->
+	if $("#userinfo").is(":hidden") or !!auth == $("#user").is(":hidden")
+		# if auth is different from presented state
+		$("#userinfo").fadeOut 'normal', ->
+			if auth
+				$("#signin").hide()
+				$('.user-name').text(auth.email)
+				$("#user").show()
+				$("#userinfo").fadeIn()
+			else
 				$("#signin").show()
 				$("#user").hide()
 				$("#userinfo").fadeIn()
 
+auth_cookie()
+
+$(document).ready ->
+	
+	console.log 'persona init', auth
+	# persona_ready = false
+	navigator?.id?.watch {
+		loggedInUser: auth?.email,
+		onlogin: (ass) -> # this is a rather unfortunate variable name
+			assertion = ass
+			if connected() and has_connected
+				# console.log 'link 2'
+				me.link assertion
+
+		onlogout: ->
+			assertion = null
+			auth_cookie null
+
+			sock.socket.disconnect()
+			sock.socket.reconnect()
+
 		onready: ->
+			# persona_ready = true
+			# $("#aboutlink").hide()
 			console.log 'now ready'
-			unless assertion
-				$("#userinfo").fadeOut 'normal', ->
-					$("#signin").show()
-					$("#user").hide()
-					$("#userinfo").fadeIn()
+			
 	}
+	# setTimeout ->
+	# 	unless persona_ready
+	# 		$("#aboutlink").fadeIn()
+	# , 4 * 1000
 
 logged_in = (data) ->
-	assertion = null
+	assertion = null	
 	if data?.status isnt 'okay'
 		navigator?.id?.logout()
 	else
-		console.log 'logged in', data
-		if $("#user").is(":hidden")
-			$("#userinfo").fadeOut 'normal', ->
-				$("#signin").hide()
-				$('.user-name').text(data.email)
-				$("#user").show()
-				$("#userinfo").fadeIn()
+		auth_cookie? data.cookie
+		sock.socket.disconnect()
+		sock.socket.reconnect()
+
+
 
 $("a[href='#signin']").click (e) ->
 	console.log 'login'

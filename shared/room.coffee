@@ -49,6 +49,7 @@ class QuizRoom
 		@sync_offset = 0 # always zero for master installations
 		@start_offset = 0 # to compensate for latency, etc.
 		
+		@seen = 0
 		@end_time = 0
 		@begin_time = 0
 		@question = ''
@@ -241,8 +242,13 @@ class QuizRoom
 			
 			has_early = @question.indexOf('*') > 5
 
+			# increment the number of questions this room has seen
+			@seen++
+
 			for id, user of @users
+				# reset the number of times the user is allowed to buzz for this question
 				user.times_buzzed = 0
+				
 				if user.active()
 					user.seen++
 					user.earlyseen++ if has_early
