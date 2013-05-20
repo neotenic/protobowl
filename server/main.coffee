@@ -165,7 +165,6 @@ class SocketQuizRoom extends QuizRoom
 			@users[user.id] = u
 			u.deserialize(user)
 
-
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
 		super(room, id)
@@ -311,7 +310,7 @@ class SocketQuizPlayer extends QuizPlayer
 		sock.on 'disconnect', =>
 			@sockets = (s for s in @sockets when (s isnt sock.id and io.sockets.socket(s)))
 			if @sockets.length is 0
-				@disconnect()
+				@disconnected()
 				@room.journal()
 				user_count_log 'disconnected ' + @id + '-' + @name, @room.name
 		
@@ -355,6 +354,9 @@ class SocketQuizPlayer extends QuizPlayer
 		user_count_log 'connected ' + @id + '-' + @name + " (#{ip})", @room.name
 		track_time add_start, "QuizPlayer::add_socket for #{@room.name}/#{@id}"
 
+	disconnect_all: ->
+		for sock in @sockets
+			io.sockets.socket(sock).disconnect()
 
 	emit: (name, data) ->
 		for sock in @sockets
@@ -467,7 +469,7 @@ io.sockets.on 'connection', (sock) ->
 		if room_name is "private"
 			unless protoauth
 				sock.emit 'log', verb: 'You may not access this private room without first logging in.'
-				sock.disconnect()
+				sock.disconnected()
 				return
 			room_name = "private/"+publicID
 
@@ -628,10 +630,6 @@ clearInactive = ->
 			name: u.name
 		}
 		u.room.delete_user u.id
-
-		# u.room.users[u.id] = null
-		# delete u.room.users[u.id]
-
 
 	for room_name, room of rooms
 		user_pool = (user for id, user of room.users)

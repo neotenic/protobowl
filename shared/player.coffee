@@ -426,7 +426,10 @@ class QuizPlayer
 		# this is basically verb, but directed back at only the user
 		@emit 'log', { user: @id, verb: action, time: @room.serverTime(), notify: true }
 
-	disconnect: ->
+	disconnect_all: ->
+		@room.log "QuizPlayer::disconnect_all() not implemented"
+
+	disconnected: ->
 		@touch()
 		if @sockets.length is 0
 			seconds = (@room.serverTime() - @last_session) / 1000
@@ -583,6 +586,8 @@ class QuizPlayer
 
 
 	accelerate_cleanup: ->
+		# warning! weird things happen sometimes because this doesn't
+		# ensure first that all the sockets are closed
 		if @score() <= 20
 			@room.delete_user @id
 

@@ -132,7 +132,11 @@ sock = null
 online_startup = ->
 	reconnect = ->
 		cookie = location.query.id || jQuery.cookie('protocookie')
-		authcookie = jQuery.cookie('protoauth')
+		authcookie = null
+		
+		if protobowl_config?.auth
+			authcookie = jQuery.cookie('protoauth')
+
 		if !cookie
 			dict = ''
 			# generate a cookie for when it doesn't already exist
