@@ -95,7 +95,7 @@ recent_rooms = ->
 				rooms.push JSON.parse(localStorage[key])
 	rooms = rooms.sort (b, a) -> a.archive_time - b.archive_time
 	blacklist = ['lobby', 'msquizbowl', 'hsquizbowl']
-	rooms = (room.name for room in rooms when room.name not in blacklist)
+	rooms = (room.name for room in rooms when room.name not in blacklist and !/^private/.test(room.name))
 	if rooms.length > 0
 		$('.recent-rooms').append $("<li>").addClass('divider')
 		for i in [0...rooms.length]

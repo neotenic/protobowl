@@ -140,6 +140,16 @@ online_startup = ->
 			# save it, because yeah, why not
 			jQuery.cookie('protocookie', cookie)
 
+		# you might ask why auth and cookie are both sent and more deeply
+		# why there are two separate state cookies, well the answer is that 
+		# the auth cookie is server generated (i.e. hmac verified) whereas the
+		# normal state cookie is a client-generated random string which is taken
+		# unverified
+
+		# if for some reason the auth cookie fails verification, the server needs
+		# to fall back on the unverified state cookie to save some kind of convoluted
+		# close-socket-retry mechanism
+
 		sock.emit 'join', {
 			cookie,
 			auth: authcookie,
@@ -148,7 +158,7 @@ online_startup = ->
 			# old_socket: localStorage.old_socket,
 			muwave: 'muwave' of location.query,
 			custom_id: location.query.id,
-			version: 6
+			version: 7
 		}
 
 		$('.disconnect-notice, .doom-notice').slideUp()
@@ -174,7 +184,9 @@ online_startup = ->
 			else
 				verbAnnotation {verb: "established a connection to the server"}
 	
-		sock.on 'disconnect', disconnect_notice
+		sock.on 'disconnect', ->
+			unless sock.hide_disconnect
+				disconnect_notice()
 
 		for name, fn of me.__listeners
 			sock.on name, fn
@@ -417,9 +429,7 @@ listen 'joined', (data) ->
 
 	$('#slow').slideUp()
 	$('.disconnect-notice').slideUp()
-
 	me.id = data.id
-
 	me.ip = data.ip # hey, this isn't actually terribly useful
 
 	found_ip?(data.ip)
@@ -429,11 +439,12 @@ listen 'joined', (data) ->
 	me.name = data.name
 
 	if me.id[0] != '_' and me.id isnt 'temporary'
+		uid_name = 'username' + (auth?.email || '')
 		try
-			if localStorage.username
+			if localStorage[uid_name]
 				if !data.existing
 					setTimeout ->
-						me.name = localStorage.username
+						me.name = localStorage[uid_name]
 						me.set_name me.name
 						$('#username').val me.name
 					, 137 # for some reason there's this odd bug where
@@ -442,7 +453,7 @@ listen 'joined', (data) ->
 					# and moreover, I think the fine structure constant
 					# is an appropriate metaphor for that non-understanding
 			else
-				localStorage.username = data.name
+				localStorage[uid_name] = data.name
 
 	if data.muwave and data.muwave <= 34
 		unless window.WebSocket

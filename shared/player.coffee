@@ -39,7 +39,7 @@ class QuizPlayer
 		@team = ''
 		@banned = 0
 
-		# @auth = 0
+		@auth = null
 		@moderator = false
 
 		# @demoted = 0
@@ -581,6 +581,10 @@ class QuizPlayer
 			@room.unfreeze()
 		@room.sync()
 
+
+	accelerate_cleanup: ->
+		if @score() <= 20
+			@room.delete_user @id
 
 	##############################################################
 	# Here are the things which are global settings

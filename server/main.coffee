@@ -451,7 +451,8 @@ io.sockets.on 'connection', (sock) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
 			return
-		if !version or version < 6 or !room_name
+		if !version or version < 7 or !room_name
+			sock.emit 'log', verb: 'YOU ARE RUNNING AN OUTDATED AND INCOMPATIBLE VERSION OF PROTOBOWL.'
 			sock.emit 'force_application_update', Date.now()
 			sock.emit 'application_update', Date.now()
 			sock.disconnect()
@@ -468,12 +469,15 @@ io.sockets.on 'connection', (sock) ->
 				sock.emit 'log', verb: 'You may not access this private room without first logging in.'
 				sock.disconnect()
 				return
-			room_name = publicID
+			room_name = "private/"+publicID
 
 		# get the room
+		slow_load = setTimeout ->
+			sock.emit 'log', verb: 'The database state server is taking unusually long to look up a room. This can happen when the statekeeper database is inaccessible. Please contact the Protobowl administrators or developers to resolve this issue. '
+		, 1000 * 3
+
 		load_room room_name, (room, is_new, load_elapsed) ->
-			if load_elapsed > 3 * 1000
-				sock.emit 'log', verb: 'The database state server is taking unusually long to look up a room. If this happens often, you may want to contact the protobowl developers. '
+			clearTimeout slow_load
 
 			room.type = question_type if is_new
 
@@ -504,6 +508,8 @@ io.sockets.on 'connection', (sock) ->
 
 			user = room.users[publicID]
 			user.name = 'secret ninja' if is_ninja
+			user.auth = true if protoauth
+
 			try
 				if muwave
 					user.muwave = 100
@@ -531,8 +537,9 @@ io.sockets.on 'connection', (sock) ->
 			room.sync(4) # tell errybody that there's a new person at the partaay
 			if !cookie
 				sock.emit 'log', verb: "Warning: This session lacks a protocookie. The session state may not be preserved and may be inadvertently shared with others. "
-			if !auth
-				sock.emit 'log', verb: "TODO: Remove this warning, because its totes okay not to be logged in while in production "
+
+			# if !auth
+			# 	sock.emit 'log', verb: "TODO: Remove this warning, because its totes okay not to be logged in while in production "
 
 			# # detect if the server had been recently restarted
 			if new Date - uptime_begin < 1000 * 60 * 2

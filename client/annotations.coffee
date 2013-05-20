@@ -92,7 +92,10 @@ userSpan = (user, global) ->
 	else if room.users[user]?.authorized('moderator')
 
 		scope.prepend "<i class='icon-star-empty user-prefix'></i>"	
-	
+	else if room.users[user]?.auth
+		
+		scope.prepend "<i class='icon-key user-prefix'></i>"	
+
 	scope
 
 

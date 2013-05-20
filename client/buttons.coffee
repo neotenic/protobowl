@@ -5,7 +5,8 @@ $('#username').keyup (e) ->
 	name = $(this).val()
 	if name.length > 0
 		me.set_name name
-		localStorage.username = name
+		uid_name = 'username' + (auth?.email || '')
+		localStorage[uid_name] = name
 
 $('.generate-name').click ->
 	if generateName?

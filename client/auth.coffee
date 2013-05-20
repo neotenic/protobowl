@@ -34,53 +34,48 @@ auth_cookie = (new_cookie) ->
 auth_cookie()
 
 $(document).ready ->
-	
-	console.log 'persona init', auth
-	# persona_ready = false
 	navigator?.id?.watch {
 		loggedInUser: auth?.email,
 		onlogin: (ass) -> # this is a rather unfortunate variable name
 			assertion = ass
 			if connected() and has_connected
-				# console.log 'link 2'
 				me.link assertion
 
 		onlogout: ->
 			assertion = null
-			auth_cookie null
-
-			sock.socket.disconnect()
-			sock.socket.reconnect()
+			if auth
+				verbAnnotation {verb: "logging out of the current authenticated session"}
+			auth_cookie(null)
+			switch_socket()
 
 		onready: ->
-			# persona_ready = true
-			# $("#aboutlink").hide()
 			console.log 'now ready'
 			
 	}
-	# setTimeout ->
-	# 	unless persona_ready
-	# 		$("#aboutlink").fadeIn()
-	# , 4 * 1000
-
 logged_in = (data) ->
 	assertion = null	
 	if data?.status isnt 'okay'
 		navigator?.id?.logout()
 	else
+		unless auth
+			me.accelerate_cleanup()
+		verbAnnotation {verb: "logging in and beginning a new authenticated session"}
 		auth_cookie? data.cookie
-		sock.socket.disconnect()
-		sock.socket.reconnect()
+		switch_socket()
 
+switch_socket = ->
+	sock.hide_disconnect = true
+	sock.socket.disconnect()
+	room.users = {}
+	sock.socket.reconnect()
+	sock.hide_disconnect = false
 
 
 $("a[href='#signin']").click (e) ->
-	console.log 'login'
 	navigator?.id?.request()
 	e.preventDefault()
 
 $("a[href='#logout']").click (e) ->
-	console.log 'logout'
 	navigator?.id?.logout()
 	e.preventDefault()
 
