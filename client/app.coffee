@@ -257,36 +257,6 @@ online_startup = ->
 
 
 
-bookmarks_loaded = false
-load_bookmarked_questions = ->
-	return if bookmarks_loaded
-	bookmarks_loaded = true
-
-	bookmarks = []
-	try
-		bookmarks = JSON.parse(localStorage.bookmarks)
-	for question in bookmarks || []
-		continue if question.qid is room.qid
-		bundle = create_bundle(question)
-		bundle.find('.readout').hide()
-		$('#bookmarks').prepend bundle
-
-	cutoff = 10
-
-	$('#bookmarks .bundle').slice(cutoff).hide()
-
-	update_visibility()
-	
-	if $('#bookmarks .bundle').length
-		$("#whale").show()
-
-	setTimeout initialize_offline, 100
-
-# stress test da servs
-# setTimeout ->
-# 	location.href = "/#{Math.random().toString().slice(3)}"
-# , 1000
-
 connected = -> sock? and sock.socket.connected
 
 class QuizPlayerClient extends QuizPlayer
@@ -423,10 +393,7 @@ listen 'delete_user', (id) ->
 	renderUsers()
 
 listen 'joined', (data) ->
-	# console.log data.auth
-
 	if assertion? and assertion
-		console.log 'link 1'
 		me.link assertion
 
 	has_connected = true
@@ -473,6 +440,30 @@ listen 'joined', (data) ->
 
 	setTimeout load_bookmarked_questions, 100
 
+bookmarks_loaded = false
+load_bookmarked_questions = ->
+	return if bookmarks_loaded
+	bookmarks_loaded = true
+
+	bookmarks = []
+	try
+		bookmarks = JSON.parse(localStorage.bookmarks)
+	for question in bookmarks || []
+		continue if question.qid is room.qid
+		bundle = create_bundle(question)
+		bundle.find('.readout').hide()
+		$('#bookmarks').prepend bundle
+
+	cutoff = 10
+
+	$('#bookmarks .bundle').slice(cutoff).hide()
+
+	update_visibility()
+	
+	if $('#bookmarks .bundle').length
+		$("#whale").show()
+
+	setTimeout initialize_offline, 100
 
 sync_offsets = []
 latency_log = []

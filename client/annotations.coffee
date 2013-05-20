@@ -90,11 +90,11 @@ userSpan = (user, global) ->
 			scope.prepend "<i class='icon-bullhorn user-prefix'></i>"
 	
 	else if room.users[user]?.authorized('moderator')
-
 		scope.prepend "<i class='icon-star-empty user-prefix'></i>"	
-	else if room.users[user]?.auth
-		
-		scope.prepend "<i class='icon-key user-prefix'></i>"	
+	else if room.users[user]?.prefs?.distraction
+		scope.prepend "<i class='icon-eye-close user-prefix'></i>"	
+	else if room.users[user]?.auth		
+		scope.prepend "<i class='icon-key user-prefix'></i>"
 
 	scope
 
