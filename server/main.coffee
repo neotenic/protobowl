@@ -218,10 +218,6 @@ class SocketQuizPlayer extends QuizPlayer
 				for uid, udat of rooms[check_name].users
 					output[check_name]++ if udat.active()
 
-				# lets do some shameless promotion
-				if check_name is 'msquizbowl' and output[check_name] is 0
-					output[check_name]++
-
 
 		for name in remote.get_types()
 			check_name = name + '/lobby'

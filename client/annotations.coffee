@@ -46,57 +46,47 @@ addImportant = (el) ->
 	return el
 
 
-userSpan = (user, global) ->
-	prefix = ''
-	text = ''
+userSpan = (id, global) ->
+	user = room?.users[id]
 
-	if user.slice(0, 2) == "__"
-		text = prefix + user.slice(2).replace(/_/g, ' ')
-	else
-		text = prefix + (room.users[user]?.name || "[name missing]")
-	
-	
-	special = ''
-	if room.users[user]?.authorized('moderator')
-		special = 'admin'
-
-	hash = 'userhash-' + special + '-' + escape(text).toLowerCase().replace(/[^a-z0-9]/g, '')
-	
-	if global
-		scope = $(".user-#{user}:not(.#{hash})").attr('class', '')
-	else
-		scope = $('<span>')
-
-	scope
-		.addClass(hash)
-		.addClass('user-'+user)
-		.data('id', user)
+	span = $(document.createElement('span'))
+		.addClass("user-#{id}")
+		.data('id', id)
 		.addClass('username')
-		.text(text)
-
-	if room.users[user]?._suffix
-		scope.append ' '
-		scope.append $('<span style="color: rgb(150, 150, 150)">').text(room.users[user]._suffix)
 		
+	if id.slice(0, 2) == "__"
+		span.text(id.slice(2).replace(/_/g, ' '))
+	else
+		span.text(user?.name || "[name missing]")
 	
-	if room.users[user]?.banned and room.serverTime() < room.users[user]?.banned
-		scope.prepend "<i class='icon-ban-circle user-prefix'></i>"
-				
-	if user.slice(0, 2) == "__"
+	icon = (name) -> span.prepend "<i class='icon-#{name} user-prefix'></i>"
 
-		if /ninja/.test user
-			scope.prepend "<i class='icon-magic user-prefix'></i>"	
+	if id.slice(0, 2) is '__'
+		if /ninja/.test id
+			icon 'magic'
 		else
-			scope.prepend "<i class='icon-bullhorn user-prefix'></i>"
-	
-	else if room.users[user]?.authorized('moderator')
-		scope.prepend "<i class='icon-star-empty user-prefix'></i>"	
-	else if room.users[user]?.prefs?.distraction
-		scope.prepend "<i class='icon-eye-close user-prefix'></i>"	
-	else if room.users[user]?.auth		
-		scope.prepend "<i class='icon-key user-prefix'></i>"
+			icon 'bullhorn'
+	else if user?.authorized('moderator')
+		icon 'star-empty'
+	else if user?.prefs?.distraction
+		icon 'eye-close'
+	else if user?.auth
+		icon 'key'
 
-	scope
+
+	if user?._suffix
+		span.append ' '
+		span.append $('<span style="color: rgb(150, 150, 150)">').text(user._suffix)
+		
+
+	hash = 'userhash-'+encodeURIComponent(span.html()).replace(/[^a-z0-9]/g, '')
+
+	if global
+		$(".user-#{id}:not(.#{hash})").replaceWith ->
+			span.clone()
+
+	return span
+
 
 
 render_admin_panel = (el) ->
