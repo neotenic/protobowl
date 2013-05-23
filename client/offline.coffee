@@ -13,6 +13,40 @@
 #= include ../shared/checker.coffee
 #= include ../shared/sample.coffee
 
+Questions = new IDBStore {
+	dbVersion: 3,
+	storeName: 'questions',
+	keyPath: 'id',
+	autoIncrement: false,
+	indexes: [
+		{ name: 'tags', keyPath: 'tags', unique: false, multiEntry: true },
+		{ name: 'type', keyPath: 'type', unique: false },
+		{ name: 'category', keyPath: 'category', unique: false },
+		{ name: 'difficulty', keyPath: 'difficulty', unique: false },
+		{ name: 'seen', keyPath: 'seen', unique: false },
+		{ name: 'inc_random', keyPath: 'inc_random', unique: false },
+		{ name: 'year', keyPath: 'year', unique: false },
+		{ name: 'tournament', keyPath: 'tournament', unique: false },
+		{ name: 'answer', keyPath: 'answer', unique: false },
+		{ name: 'bookmarked', keyPath: 'bookmarked', unique: false }
+	],
+	onStoreReady: ->
+		console.log 'store is ready for bidnezz'
+}
+
+handle_db_error = (e) ->
+	console.error e
+
+save_question = (question) ->
+	Questions.get question.id, (e) ->
+		return unless typeof e is 'undefined'
+		console.log 'saving question'
+		Questions.put question, (f) ->
+			console.log 'saved question', f
+		, handle_db_error
+	, handle_db_error
+
+# save_question({id: room.qid, question: room.question, category: room.info.category, tournament: room.info.tournament, year: room.info.year, difficulty: room.info.difficulty})
 
 cache_frame = null
 cache_listeners = []
@@ -245,20 +279,6 @@ load_questions = (cb) ->
 	if offline_questions.length is 0
 		load_sample 0, ->
 			setTimeout cb, 100
-		# $.ajax('/sample.txt').done (text) ->
-		# 	try
-		# 		offline_questions = (jQuery.parseJSON(line) for line in text.split('\n') when line)
-		# 		for question in offline_questions
-		# 			question._inc = Math.random()
-		# 			question.type = 'qb'
-					
-		# 		recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
-		# 			count_cache = layers
-		# 			setTimeout cb, 100		
-		# 	catch err
-		# 		console.log 'error loading questions', err
-		# 		count_cache = {}
-		# 		setTimeout cb, 100
 
 	else
 		setTimeout cb, 100

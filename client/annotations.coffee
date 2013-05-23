@@ -49,10 +49,7 @@ addImportant = (el) ->
 userSpan = (id, global) ->
 	user = room?.users[id]
 
-	span = $(document.createElement('span'))
-		.addClass("user-#{id}")
-		.data('id', id)
-		.addClass('username')
+	span = $(document.createElement('span')).data('id', id)
 		
 	if id.slice(0, 2) == "__"
 		span.text(id.slice(2).replace(/_/g, ' '))
@@ -71,7 +68,8 @@ userSpan = (id, global) ->
 	else if user?.prefs?.distraction
 		icon 'eye-close'
 	else if user?.auth
-		icon 'key'
+		# icon 'key'
+		span.addClass 'auth'
 
 
 	if user?._suffix
@@ -79,7 +77,9 @@ userSpan = (id, global) ->
 		span.append $('<span style="color: rgb(150, 150, 150)">').text(user._suffix)
 		
 
-	hash = 'userhash-'+encodeURIComponent(span.html()).replace(/[^a-z0-9]/g, '')
+	hash = 'userhash-'+encodeURIComponent(span.attr('class') + span.html()).replace(/[^a-z0-9]/g, '')
+	
+	span.addClass("username user-#{id}")
 
 	if global
 		$(".user-#{id}:not(.#{hash})").replaceWith ->

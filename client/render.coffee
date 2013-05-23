@@ -186,6 +186,14 @@ renderPartial = ->
 		info = $('#history .bundle:first').data('info')
 		if info?.generated_time != room?.generated_time or room?.question != info?.question
 			changeQuestion()
+			save_question? {
+				id: room.qid, 
+				question: room.question, 
+				category: room.info.category, 
+				tournament: room.info.tournament, 
+				year: room.info.year, 
+				difficulty: room.info.difficulty
+			}
 	
 	updateTextPosition()
 

@@ -429,18 +429,23 @@ input[type=range] {
 	opacity: 0.8;
 }
 
+.username {
+	&.auth {
+		color: #2D8334;
+	}
+	.user-prefix {
+		color: rgb(37, 158, 26);
+		padding-right: 5px;
+	}
 
-.user-prefix {
-	color: rgb(37, 158, 26);
-	padding-right: 5px;
+	.user-prefix.icon-key {
+		color: #C0A61C;
+	}
+	.user-prefix.icon-ban-circle {
+		color: #c83025;
+	}	
 }
 
-.user-prefix.icon-key {
-	color: #C0A61C;
-}
-.user-prefix.icon-ban-circle {
-	color: #c83025;
-}
 
 .annotations {
 	word-wrap: break-word;
