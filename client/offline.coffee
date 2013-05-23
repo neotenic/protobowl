@@ -34,6 +34,30 @@ Questions = new IDBStore {
 		console.log 'store is ready for bidnezz'
 }
 
+
+update_question_cache = ->
+	Questions.get room.qid, (question) ->
+		if typeof question is 'undefined'
+			question = {
+				id: room.qid,
+				question: room.question, 
+				category: room.info.category, 
+				tournament: room.info.tournament, 
+				year: room.info.year, 
+				seen: 1,
+				difficulty: room.info.difficulty
+			}
+			Questions.put question, (f) ->
+				console.log 'saved question', f
+			, handle_db_error
+		else
+			question.seen++
+			Questions.put question, (f) ->
+				console.log 'updated question', f
+			, handle_db_error
+	, handle_db_error
+	
+
 handle_db_error = (e) ->
 	console.error e
 
