@@ -27,7 +27,7 @@
 		"static": "http://localhost:5555/",
 		"origin": "/",
 		"sockets": ["http://localhost:5566/","http://localhost:5566/"],
-		"samples": ["//protobowl.googlecode.com/git/qb-0.js"]
+		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
 	"target": "debug"
 }

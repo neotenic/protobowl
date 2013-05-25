@@ -3,10 +3,8 @@ CACHE MANIFEST
 
 CACHE:
 # INSERT_FILES
-# INSERT_SAMPLES
 
 //ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
-//protobowl.googlecode.com/git/qb-0.js
 
 NETWORK:
 *

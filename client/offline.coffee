@@ -283,6 +283,16 @@ count_cache = null
 
 
 load_sample = (index, cb = ->) ->
+	expanded = []
+	for sample in protobowl_config.samples
+		shorthand_regex = /\{(\d+)\-(\d+)\}/
+		shorthand = sample.match(shorthand_regex)
+		if shorthand
+			for i in [+shorthand[1]..+shorthand[2]]
+				expanded.push sample.replace(shorthand_regex, i)
+		else
+			expanded.push sample
+	console.log expanded
 	$.ajax {
 		url: protobowl_config.samples[index],
 		cache: true,
