@@ -47,7 +47,7 @@ initialize_offline = (cb = ->) ->
 	return cb() if initialize_offline.initialized
 	initialize_offline.initialized = true
 	$.ajax {
-		url: (protobowl_config?.build || '/') + 'offline.js',
+		url: (protobowl_config?.static || '/') + 'offline.js',
 		cache: true,
 		dataType: 'script',
 		success: cb
@@ -321,7 +321,6 @@ class QuizRoomSlave extends QuizRoom
 		super(name)
 
 	load_questions: (cb) ->
-		console.log 'try to load questions'
 		if load_questions?
 			load_questions cb
 		else

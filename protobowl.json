@@ -3,14 +3,18 @@
 		"less_compress": true,
 		"jade_pretty": false,
 		"jade_debug": false,
-		"js_minify": true,
-		"js_wrap": true,
-		"development": false,
 
-		"static": "http://localhost:5555/",
-		"build": "",
-		"origin": "",
-		"sockets": ["http://localhost:5566/"]
+		"source_maps": false,
+		"mangle_vars": false,
+		"js_minify": true,
+
+		"development": false,
+		"auth": true, 
+		
+		"static": "http://localhost/Dropbox/Projects/protobowl/build/release/",
+		"origin": "/",
+		"sockets": ["http://localhost:5566/","http://localhost:5566/"],
+		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
 	"debug": {
 		"less_compress": false,
@@ -29,5 +33,5 @@
 		"sockets": ["http://localhost:5566/","http://localhost:5566/"],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
-	"target": "debug"
+	"target": "release"
 }

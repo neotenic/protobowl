@@ -78,7 +78,8 @@ import_external = ->
 					expanded.push sample.replace(shorthand_regex, i)
 			else
 				expanded.push sample
-		localStorage.sample_urls = JSON.stringify(fisher_yates(expanded))
+		
+		localStorage.sample_urls = JSON.stringify(expanded[i] for i in fisher_yates(expanded.length))
 	
 	# each question packet has 1000
 	samples = JSON.parse(localStorage.sample_urls)
@@ -110,10 +111,10 @@ load_sample = (url, cb = ->) ->
 	}
 
 import_batch = ->
-	for key, val of QUESTION_DB
-		for i in [0..20]
+	for i in [0..10]
+		for key, val of QUESTION_DB
 			question = val.shift()
-			return unless question
+			continue unless question
 			import_question {
 				qid: question._id.$oid,
 				answer: question.answer,
@@ -129,8 +130,8 @@ import_batch = ->
 				type: question.type,
 				year: question.year
 			}
-		break
-	setTimeout import_batch, 2000
+			break
+	setTimeout import_batch, 1000
 
 
 
