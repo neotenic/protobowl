@@ -36,7 +36,7 @@ Questions = new IDBStore {
 	],
 	onStoreReady: ->
 		Questions.ready = true
-		console.log 'store is ready for bidnezz'
+		# console.log 'store is ready for bidnezz'
 		dispose_retrieval_queue()
 		
 		import_legacy_bookmarks()
@@ -46,9 +46,6 @@ Questions = new IDBStore {
 			$("#whale input").keyup()
 
 			setTimeout check_import_external, 1000
-
-			# recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
-			# 	console.log layers
 }
 
 
@@ -104,13 +101,12 @@ import_question = (question) ->
 
 load_sample = (url, cb = ->) ->
 	$.ajax {
-		url: url, #protobowl_config.samples[index],
+		url: url,
 		cache: true,
 		dataType: 'script',
 		success: ->
 			console.log 'importing samples from url', url
 			import_batch()
-
 	}
 
 import_batch = ->
@@ -139,7 +135,7 @@ import_batch = ->
 
 
 $(window).resize ->
-	$("#bookmarks").css('min-height', $(window).height())
+	$("#bookmarks").css('min-height', $(window).height() - 70)
 
 update_question_cache = (question)->
 	if typeof question is 'undefined'
@@ -170,7 +166,8 @@ update_question_cache = (question)->
 		question.difficulty = room.info.difficulty
 
 		Questions.put question, (f) ->
-			console.log 'updated question', f
+			# console.log 'updated question', f
+			return
 		, handle_db_error
 
 

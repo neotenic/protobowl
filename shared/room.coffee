@@ -226,7 +226,7 @@ class QuizRoom
 				.replace(/\<\w\w\>/g, '')
 				.replace(/\[\w\w\]/g, '')
 
-			@qid = question?._id?.toString() || 'question_id'
+			@qid = question?._id?.toString() || question?.qid || question?.id || 'question_id'
 			
 			@begin_time = @time() + @start_offset
 

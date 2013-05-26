@@ -186,7 +186,7 @@ renderPartial = ->
 		info = $('#history .bundle:first').data('info')
 		if info?.generated_time != room?.generated_time or room?.question != info?.question
 			changeQuestion()
-			
+
 			find_question room.qid, (question) ->
 				update_question_cache(question)
 			# update_question_cache?()
@@ -1051,33 +1051,32 @@ update_visibility = ->
 
 
 
-
 # complicated reciprocal cipher for sake of being a complicated reciprocal cipher
-alphanum_xor = (input) ->
-	alpha = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-	throw 'non-even count' if alpha.length % 2 != 0
+# alphanum_xor = (input) ->
+# 	alpha = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+# 	throw 'non-even count' if alpha.length % 2 != 0
 
-	num_cycle = [141,592,653,589,793,238,462,643,383,279,502,884,197,169,399,375,105,820,974,944,592]
-	counter = 0
-	num = input.length
+# 	num_cycle = [141,592,653,589,793,238,462,643,383,279,502,884,197,169,399,375,105,820,974,944,592]
+# 	counter = 0
+# 	num = input.length
 
-	permutation_cycle = (index) -> 
-		narwhal = [alpha[0]]
-		for i in [1...alpha.length]
-			j = (index % (i + 1))
-			narwhal[i] = narwhal[j]
-			narwhal[j] = alpha[i]
-		return narwhal
+# 	permutation_cycle = (index) -> 
+# 		narwhal = [alpha[0]]
+# 		for i in [1...alpha.length]
+# 			j = (index % (i + 1))
+# 			narwhal[i] = narwhal[j]
+# 			narwhal[j] = alpha[i]
+# 		return narwhal
 
-	mod = for letter in input.split('')
-		counter++
-		num += num_cycle[counter % num_cycle.length]
-		if alpha.indexOf(letter) == -1
-			letter
-		else
-			tmp_dict = permutation_cycle(num).join('')
-			tmp_dict[(tmp_dict.indexOf(letter) + tmp_dict.length * 1.5) % tmp_dict.length]
-	return mod.join('')
+# 	mod = for letter in input.split('')
+# 		counter++
+# 		num += num_cycle[counter % num_cycle.length]
+# 		if alpha.indexOf(letter) == -1
+# 			letter
+# 		else
+# 			tmp_dict = permutation_cycle(num).join('')
+# 			tmp_dict[(tmp_dict.indexOf(letter) + tmp_dict.length * 1.5) % tmp_dict.length]
+# 	return mod.join('')
 
 
 reader_children = null

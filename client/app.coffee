@@ -15,7 +15,7 @@
 
 #= include ./annotations.coffee
 #= include ./render.coffee
-#= include ./buttons.coffee
+#= include ./bindings.coffee
 
 
 do ->
@@ -629,13 +629,13 @@ find_question = (qid, callback) ->
 		
 
 set_bookmark = (qid, state) ->
-	console.log 'setting book', qid, state
+	# console.log 'setting book', qid, state
 	find_question qid, (question) ->
 		# console.log 'setting bookmark', qid, question, state
 		if question
 			question.bookmarked = state
 			Questions.put question, (e) ->
-				console.log 'updated bookmarked state'
+				# console.log 'updated bookmarked state'
 				check_bookmark qid
 				update_storage_stats?()
 			, handle_db_error
