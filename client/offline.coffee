@@ -14,7 +14,7 @@
 #= include ../shared/sample.coffee
 
 Questions = new IDBStore {
-	dbVersion: 7,
+	dbVersion: 19,
 	storeName: 'questions',
 	keyPath: 'qid',
 	autoIncrement: false,
@@ -30,8 +30,9 @@ Questions = new IDBStore {
 		{ name: 'answer', keyPath: 'answer', unique: false },
 		{ name: 'bookmarked', keyPath: 'bookmarked', unique: false },
 		{ name: 'add_time', keyPath: 'add_time', unique: false },
-		{ name: 'type_difficulty_category', keyPath: ['type', 'difficulty', 'category']}
-		{ name: 'type_difficulty', keyPath: ['type', 'difficulty']}
+		{ name: 'type_difficulty_category_inc', keyPath: ['type', 'difficulty', 'category', 'inc_random']},
+		{ name: 'type_difficulty_category', keyPath: ['type', 'difficulty', 'category']},
+		{ name: 'type_difficulty', keyPath: ['type', 'difficulty'] }
 	],
 	onStoreReady: ->
 		Questions.ready = true
@@ -46,8 +47,11 @@ Questions = new IDBStore {
 
 			setTimeout check_import_external, 1000
 
-
+			# recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
+			# 	console.log layers
 }
+
+
 
 fisher_yates = (i) ->
 	return [] if i is 0
@@ -524,37 +528,105 @@ count_cache = null
 # 		setTimeout cb, 100
 
 
+
+count_questions = ->
+	layers = {}
+	Questions.query (items) ->
+		for [type, difficulty, category] in items
+			layers[type] = {} unless layers[type]
+			layers[type][difficulty] = {} unless layers[type][difficulty]
+			layers[type][difficulty][category] = {} unless layers[type][difficulty][category]
+	, {
+		index: 'type_difficulty_category',
+		filterDuplicates: true
+	}
+
+loading_questions = false
+load_questions = (cb) ->
+	if count_cache
+		setTimeout cb, 100
+	else if loading_questions
+		setTimeout ->
+			load_questions cb
+		, 100
+	else
+		loading_questions = true
+		# fraud a wait until the db is ready
+		find_question 'morptasm', ->
+			console.log "SDFJSDFJSODFIOSDJFOIJF"
+			recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
+				count_cache = layers
+				cb()
+
+
 recursive_counts = (attributes, criterion, cb) ->
-	criterion_filter = (criterion) ->
-		matches = []
-		for question in offline_questions
-			failures = 0
-			for attr, val of criterion
-				failures++ if question[attr] isnt val
-			if failures is 0
-				matches.push question
-		return matches
+	# criterion_filter = (criterion) ->
+	# 	matches = []
+	# 	for question in offline_questions
+	# 		failures = 0
+	# 		for attr, val of criterion
+	# 			failures++ if question[attr] isnt val
+	# 		if failures is 0
+	# 			matches.push question
+	# 	return matches
 
 	criterion_count = (criterion, callback) ->
-		console.log criterion
-		callback null, criterion_filter(criterion).length
-		# Questions.count callback, {
-		# 	index: 'tdc',
-		# 	keyRange: Questions.makeKeyRange {
-		# 		lower: [criterion.qb, criterion.]
-		# 	}
-		# }
+		level = Object.keys(criterion).length
+		if level is 0
+			Questions.count (count) ->
+				callback null, count
+		else if level is 1
+			Questions.count (count) ->
+				callback null, count
+			, {
+				index: 'type',
+				keyRange: Questions.makeKeyRange { lower: criterion.type, upper: criterion.type }
+			}
+		else
+			# console.log [criterion.type, criterion.difficulty, criterion.category]
+			# callback null, criterion_filter(criterion).length
+			Questions.count (count) ->
+				callback null, count
+			, {
+				index:  ['type', 'difficulty', 'category'].slice(0, level).join('_'),
+				keyRange: Questions.makeKeyRange {
+					lower: [criterion.type, criterion.difficulty, criterion.category].slice(0, level)
+					upper: [criterion.type, criterion.difficulty, criterion.category].slice(0, level)
+				}
+			}
 		# Questions.count(function(e){console.log(e)}, {index: 'tdc', keyRange: Questions.makeKeyRange({lower: ['qb','HS','Science'], upper: ['qb','HS','Science']})})
 
 	criterion_distinct = (attribute, criterion, callback) ->
-		attr_map = {}
-		for question in criterion_filter(criterion)
-			attr_map[question[attribute]] = 1
-		callback null, (x for x of attr_map)
+		level = Object.keys(criterion).length
+
+		console.log 'distinct', attribute, criterion, level
+		if level is 0
+			Questions.query (items) ->
+				callback null, (item[attribute] for item in items)
+			, {
+				index: 'type'
+				filterDuplicates: true
+			}
+		else
+			Questions.query (items) ->
+				# console.log 'got distinct', items, (item[attribute] for item in items)
+				callback null, (item[attribute] for item in items)
+			, {
+				index: ['type', 'difficulty', 'category'].slice(0, level + 1).join('_'),
+				filterDuplicates: true,
+				keyRange: Questions.makeKeyRange {
+					lower: [criterion.type, criterion.difficulty, criterion.category].slice(0, level)
+				}
+			}
+		# attr_map = {}
+		# for question in criterion_filter(criterion)
+		# 	attr_map[question[attribute]] = 1
+		# callback null, (x for x of attr_map)
 
 	attribute = attributes.shift()
 	inner_attribute = attributes[0]
 	criterion_distinct attribute, criterion, (err, list) ->
+		throw err if err
 		# console.log attribute, list
 		layer = {}
 		next_slice = ->
@@ -565,6 +637,7 @@ recursive_counts = (attributes, criterion, cb) ->
 				# console.log 'counting', attribute, item
 				criterion[attribute] = item
 				criterion_count criterion, (err, count) ->
+					throw err if err
 					layer[item] = {count}
 					if attributes.length > 0
 						recursive_counts attributes.slice(0), clone_shallow(criterion), (inner) ->
@@ -598,16 +671,23 @@ count_questions = (type, difficulty, category, cb) ->
 	cb(count_sum)
 
 get_question = (type, difficulty, category, cb) ->
+	console.log 'trying to get question'
 	if count_cache == null
 		setTimeout ->
 			get_question type, difficulty, category, cb
 		, 100
 		return
-	unless typeof offline_questions[0] is 'object'
-		setTimeout ->
-			cb null, [], []
-		, 10
-		return 
+
+	console.log 'loaded count cache'
+
+	# unless typeof offline_questions[0] is 'object'
+	# 	setTimeout ->
+	# 		cb null, [], []
+	# 	, 10
+	# 	return
+
+
+
 	# TODO: be smarter about the sampling, permute difficulty and categories to find respective likelihoods
 	if count_cache[type]
 		if !difficulty
@@ -618,15 +698,22 @@ get_question = (type, difficulty, category, cb) ->
 			sampler = new AliasMethod(category)
 			category = sampler.next()
 		
-
+		console.log 'qyering for', difficulty, category, type
 		Questions.iterate (item, cursor, tranny) ->
-			return unless item
-			if item.difficulty is difficulty and item.category is categories and item.type is type
-				tranny.abort()
-				cb question, get_difficulties(type), get_categories(type)
+			console.log 'got item woo', item
+			# return unless item
+			item.seen++
+			item.inc_random += Math.random() + 1
+			Questions.put item
+
+			tranny.abort()
+			cb item, get_difficulties(type), get_categories(type)
 		, {
-			index: 'inc_random',
+			index: 'type_difficulty_category_inc',
 			order: 'ASC',
+			keyRange: Questions.makeKeyRange {
+				lower: [type, difficulty, category, 0]
+			}
 			onEnd: ->
 				cb null, get_difficulties(type), get_categories(type)
 			onError: (err) ->
@@ -665,3 +752,4 @@ get_parameters = (type, difficulty, cb) ->
 		, 100
 		return
 	cb get_difficulties(type), get_categories(type, difficulty)
+	console.log 'got parameters and stuff', get_difficulties(type), get_categories(type, difficulty)

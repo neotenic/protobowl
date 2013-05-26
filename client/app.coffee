@@ -77,7 +77,7 @@ offline_startup = ->
 				for user in tmp.users when user.id is me_id
 					me.deserialize user
 
-		room.sync(4)
+		room.sync(5)
 		me.verb 'joined the room'
 
 		initialize_fallback() if initialize_fallback?
@@ -321,6 +321,7 @@ class QuizRoomSlave extends QuizRoom
 		super(name)
 
 	load_questions: (cb) ->
+		console.log 'try to load questions'
 		if load_questions?
 			load_questions cb
 		else
@@ -331,7 +332,9 @@ class QuizRoomSlave extends QuizRoom
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
 
 	get_parameters: (type, difficulty, cb) ->
+		console.log 'tryign to get parameters'
 		@load_questions ->
+			console.log 'getting params'
 			get_parameters(type, difficulty, cb)
 
 	count_questions: (type, difficulty, category, cb) ->

@@ -723,11 +723,21 @@
      * @return {Boolean} Whether both index definitions are identical
      */
     indexComplies: function (actual, expected) {
+
       var complies = ['keyPath', 'unique', 'multiEntry'].every(function (key) {
         // IE10 returns undefined for no multiEntry
         if (key == 'multiEntry' && actual[key] === undefined && expected[key] === false) {
           return true;
         }
+        // indexeddb supports an array for the keypath
+        if(key == 'keyPath' && typeof expected[key] == 'object'){
+          if(expected[key].length != actual[key].length) return false;
+          for(var i = 0; i < actual[key].length; i++){
+            if(expected[key][i] != actual[key][i]) return false;
+          }
+          return true;
+        }
+
         return expected[key] == actual[key];
       });
       return complies;
