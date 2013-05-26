@@ -811,7 +811,12 @@
         var cursor = event.target.result;
         if (cursor) {
           onItem(cursor.value, cursor, cursorTransaction);
-          cursor['continue']();
+          try {
+            cursor['continue']();  
+          }catch(err){
+            
+          }
+          
         } else {
           hasSuccess = true;
         }

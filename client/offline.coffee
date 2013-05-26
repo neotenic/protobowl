@@ -63,6 +63,14 @@ fisher_yates = (i) ->
 
 
 check_import_external = ->
+	Questions.count (unread) ->
+		console.log 'counted unread questions', unread
+		if unread < 500
+			import_external()
+			
+	, { keyRange: Questions.makeKeyRange({upper: 0}), index: 'seen' }
+
+import_external = ->
 	unless localStorage.sample_urls
 		expanded = []
 		for sample in protobowl_config.samples
@@ -74,18 +82,13 @@ check_import_external = ->
 			else
 				expanded.push sample
 		localStorage.sample_urls = JSON.stringify(fisher_yates(expanded))
-
-	Questions.count (unread) ->
-		console.log 'counted unread questions', unread
-		if unread < 500
-			# each question packet has 1000
-			samples = JSON.parse(localStorage.sample_urls)
-			url = samples.shift()
-			localStorage.sample_urls = JSON.stringify(samples)
-			if url
-				load_sample url
-			
-	, { keyRange: Questions.makeKeyRange({upper: 0}), index: 'seen' }
+	
+	# each question packet has 1000
+	samples = JSON.parse(localStorage.sample_urls)
+	url = samples.shift()
+	localStorage.sample_urls = JSON.stringify(samples)
+	if url
+		load_sample url
 
 
 import_question = (question) ->
