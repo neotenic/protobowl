@@ -568,9 +568,25 @@ input[type=range] {
 	}
 }
 
+.emboldinator {
+	margin-bottom: 0;
+
+	.bold {
+		font-weight: bold;
+	}
+
+	li > a {
+		border: 1px solid  #AFCBE2;
+	}
+	li > a:hover {
+		background: #AFCBE2;
+	}
+}
+
 .bundle.active {
 	.answer { visibility: hidden; }
 	.unread { visibility: hidden; }
+	.edit-button { display: none; }
 }
 
 .bundle.active.semi {
@@ -584,6 +600,9 @@ input[type=range] {
 	.answer {
 		display: inline !important;
 		visibility: visible !important;
+	}
+	.edit-button {
+		display: inline;
 	}
 }
 

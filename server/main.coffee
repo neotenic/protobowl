@@ -196,6 +196,14 @@ class SocketQuizPlayer extends QuizPlayer
 			doc.tags = data.tags
 			doc.save()
 
+	change_bold: (data) ->
+		mongoose = require 'mongoose'
+		remote.Question.findById mongoose.Types.ObjectId(data.id), (err, doc) ->
+			return if err
+			if data.answer.replace(/[^a-z]/ig, '') is doc.answer.replace(/[^a-z]/ig, '')
+				doc.answer = data.answer
+				doc.save()
+
 
 	report_answer: (data) ->
 		return unless data

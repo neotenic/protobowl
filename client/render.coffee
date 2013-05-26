@@ -869,13 +869,13 @@ create_report_form = (info) ->
 	.html("&times;")
 	.addClass("close")
 
-	div.append $("<h4>").text "Report Question"
+	# div.append $("<h4>").text "Change Question"
 	form = $("<form>")
 	form.addClass('form-horizontal').appendTo div
 	rtype = $('<div>').addClass('control-group').appendTo(form)
 	rtype.append $("<label>").addClass('control-label').text('Description')
 	controls = $("<div>").addClass('controls').appendTo rtype
-	for option in ["Wrong category", "Broken question"]
+	for option in ["Wrong category", "Incorrectly bolded", "Change tags", "Broken question"]
 		controls.append $("<label>")
 			.addClass("radio")
 			.append($("<input type=radio name=description>").val(option.split(" ")[1].toLowerCase()))
@@ -888,19 +888,114 @@ create_report_form = (info) ->
 	form.find(":radio").change ->
 		if form.find(":radio:checked").val() is 'category'
 			ctype.slideDown()
+			$(cat_list).trigger('change')
 		else
 			ctype.slideUp()
+
+		if form.find(":radio:checked").val() is 'bolded'
+			answer.slideDown()
+			submit_btn.disable(invalid_answerline())
+		else
+			answer.slideUp()
+
+		if form.find(":radio:checked").val() is 'question'
+			comment.slideDown()
 			submit_btn.disable(false)
-	
+		else
+			comment.slideUp()
+
+		if form.find(":radio:checked").val() is 'tags'
+			tags.slideDown()
+			submit_btn.disable(false)
+		else
+			tags.slideUp()
+
+	tags = $('<div>').addClass('control-group').appendTo(form).hide()
+	tags.append $("<label>").addClass('control-label').text('Tags')
+
+	taglist = $('<select>')
+	tags.append $("<div>").addClass('controls').append taglist	
+	tagdb = {
+		"Science": ["Biology", "Chemistry", "Physics", "Math", "Geology", "Astronomy"],
+		"History": ["American", "Ancient", "European", "World"],
+		"Fine Arts": ["Art", "Music", "Other"],
+		"Literature": ["American", "European", "Language Arts", "World"],
+		"Social Science": ["Anthropology", "Economics", "Geography", "Psychology"]
+	}
+	taglist.append new Option('None', '')
+
+	taglist.append new Option(cat) for cat in (tagdb[info.category] || [])
+	# $(cat_list).change ->	
+
+
 	ctype = $('<div>').addClass('control-group').appendTo(form)
 	ctype.append $("<label>").addClass('control-label').text('Category')
+
+	comment = $('<div>').addClass('control-group').appendTo(form).hide()
+	comment.append $("<label>").addClass('control-label').text('Comment')
+	ragequit = $("<input type=text>").attr('placeholder', 'What needs to be fixed')
+	comment.append $("<div>").addClass('controls').append(ragequit)
+
+	answer = $('<div>').addClass('control-group').appendTo(form).hide()
+	answer.append $("<label>").addClass('control-label').text('Answer')
+	navver = $("<ul>").addClass("nav nav-pills emboldinator")
+
+	answer.append $("<div>").addClass('controls').append navver
+
+	segments = info.answer
+		.replace(/\[/g, ' [ ')
+		.replace(/\]/g, ' ] ')
+		.replace(/\( /g, '(')
+		.replace(/\ \)/g, ')')
+		.replace(/([\{\}])/g, ' $1 ')
+		.replace(/\ \ /g, ' ')
+		.split(' ')
+	cur_mode = false
+	parsed = []
+	for seg in segments
+		if seg is '{'
+			cur_mode = true 
+		else if seg is '}'
+			cur_mode = false 
+		else if seg
+			parsed.push [cur_mode, seg]
+	invalid_answerline = ->
+		line = reconstruct_answerline() 
+		return true if line is info.answer
+		return true if line.indexOf('{') is -1
+
+		return false
+	reconstruct_answerline = ->
+		return navver.find('li a').map( -> 
+					if $(this).hasClass('bold')
+						return "{#{$(this).text()}}"
+					else
+						return $(this).text()
+				).toArray().join(' ').replace(/\} \{/g, ' ')
+
+	for [mode, text] in parsed
+		console.log mode, text
+		$("<a>")
+			.toggleClass('bold', mode)
+			.appendTo($("<li>").appendTo(navver))
+			.text(text)
+			.attr('href', '#')
+			.click ->
+				$(this).toggleClass('bold')
+				
+				line = reconstruct_answerline()
+				console.log line, info.answer
+				submit_btn.disable invalid_answerline()
+
+				return false
+
 	cat_list = $('<select>')
 	ctype.append $("<div>").addClass('controls').append cat_list
 	
-	controls.find('input:radio')[0].checked = true
 
 	cat_list.append new Option(cat) for cat in room.categories
 	$(cat_list).change ->
+		# console.log 'got soul', (cat_list.val() is info.category)
 		submit_btn.disable(cat_list.val() is info.category)
 
 	cat_list.val(info.category)
@@ -920,10 +1015,21 @@ create_report_form = (info) ->
 
 	$(form).submit ->
 		describe = form.find(":radio:checked").val()
-		if describe is 'category'
-			info.fixed_category = cat_list.val()
-		info.describe = describe
-		me.report_question info
+		if describe is 'bolded'
+			# this is such an epidemic that we'll just push things straight to the db
+			me.change_bold { id: info.qid, answer: reconstruct_answerline() }
+		else if describe is 'tags'
+			# console.log info.qid
+			if $(taglist).val() is ''
+				me.tag_question { id: info.qid, tags: [] }
+			else
+				me.tag_question { id: info.qid, tags: [$(taglist).val()] }	
+		else
+
+			if describe is 'category'
+				info.fixed_category = cat_list.val()
+			info.describe = describe
+			me.report_question info
 		
 		createAlert('Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.')
 			.addClass('alert-success')
@@ -933,6 +1039,10 @@ create_report_form = (info) ->
 			$(this).remove()
 
 		return false
+
+	controls.find('input:radio')[0].checked = true
+	# controls.find("input:radio").change()
+
 	return div
 
 # word_archive = 'a,at,one,this,ideas,method,divided,thirteen,developed,government,mercenaries,observations,phenomenology,counterexample,epistemological'.split(',')
@@ -1004,9 +1114,9 @@ create_bundle = (info) ->
 
 
 
-	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone hidden-offline').text('/')
+	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone hidden-offline edit-button').text('/')
 
-	breadcrumb.append $('<li>').addClass('clickable hidden-phone hidden-offline').text('Edit').click (e) ->
+	breadcrumb.append $('<li>').addClass('clickable hidden-phone hidden-offline edit-button').text('Edit').click (e) ->
 		unless bundle.find('.report-form').length > 0
 			create_report_form(info).insertBefore(bundle.find(".annotations")).hide().slideDown()
 		e.stopPropagation()

@@ -836,6 +836,7 @@ class QuizPlayer
 	# for when the db is wrong
 	report_question: -> @verb "QuizPlayer::report_question({id, tags}) not implemented"
 	tag_question: -> @verb "QuizPlayer::tag_question({id, tags}) not implemented"
+	change_bold: ->  @verb "QuizPlayer::change_bold({id, answer}) not implemented"
 	# for when people think my algorith sucks
 	report_answer: -> @verb "QuizPlayer::report_answer(data) not implemented"
 	# well, that's kind of self explanatory

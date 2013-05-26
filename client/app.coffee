@@ -639,7 +639,7 @@ set_bookmark = (qid, state) ->
 				update_storage_stats?()
 			, handle_db_error
 		else
-			console.log 'question not found', qid
+			console.log 'question not found (set bookmark)', qid
 
 
 check_bookmark = (qid) ->
@@ -652,8 +652,11 @@ check_bookmark = (qid) ->
 			bundle.find('.bookmark')
 				.toggleClass('icon-star-empty', !bookmarked)
 				.toggleClass('icon-star', !!bookmarked)
-		else
-			console.log 'question not found', qid
+		# who really cares otherwise, because if the question
+		# isnt in the database, then it certainly wont be 
+		# bookmarked
+		# else
+		# 	console.log 'question not found', qid
 	
 
 render = (name, params = {}) ->
