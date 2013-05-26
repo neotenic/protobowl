@@ -186,7 +186,10 @@ renderPartial = ->
 		info = $('#history .bundle:first').data('info')
 		if info?.generated_time != room?.generated_time or room?.question != info?.question
 			changeQuestion()
-			update_question_cache?()
+			
+			find_question room.qid, (question) ->
+				update_question_cache(question)
+			# update_question_cache?()
 	
 	updateTextPosition()
 

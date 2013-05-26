@@ -14,7 +14,7 @@
 #= include ../shared/sample.coffee
 
 Questions = new IDBStore {
-	dbVersion: 5,
+	dbVersion: 7,
 	storeName: 'questions',
 	keyPath: 'qid',
 	autoIncrement: false,
@@ -30,6 +30,8 @@ Questions = new IDBStore {
 		{ name: 'answer', keyPath: 'answer', unique: false },
 		{ name: 'bookmarked', keyPath: 'bookmarked', unique: false },
 		{ name: 'add_time', keyPath: 'add_time', unique: false },
+		{ name: 'type_difficulty_category', keyPath: ['type', 'difficulty', 'category']}
+		{ name: 'type_difficulty', keyPath: ['type', 'difficulty']}
 	],
 	onStoreReady: ->
 		Questions.ready = true
@@ -41,39 +43,129 @@ Questions = new IDBStore {
 		update_storage_stats ->
 			$("#whale").fadeIn()
 			$("#whale input").keyup()
+
+			setTimeout check_import_external, 1000
+
+
 }
+
+fisher_yates = (i) ->
+	return [] if i is 0
+	arr = [0...i]
+	while --i
+		j = Math.floor(Math.random() * (i+1))
+		[arr[i], arr[j]] = [arr[j], arr[i]] 
+	arr
+
+
+check_import_external = ->
+	unless localStorage.sample_urls
+		expanded = []
+		for sample in protobowl_config.samples
+			shorthand_regex = /\{(\d+)\-(\d+)\}/
+			shorthand = sample.match(shorthand_regex)
+			if shorthand
+				for i in [+shorthand[1]..+shorthand[2]]
+					expanded.push sample.replace(shorthand_regex, i)
+			else
+				expanded.push sample
+		localStorage.sample_urls = JSON.stringify(fisher_yates(expanded))
+
+	Questions.count (unread) ->
+		console.log 'counted unread questions', unread
+		if unread < 500
+			# each question packet has 1000
+			samples = JSON.parse(localStorage.sample_urls)
+			url = samples.shift()
+			localStorage.sample_urls = JSON.stringify(samples)
+			if url
+				load_sample url
+			
+	, { keyRange: Questions.makeKeyRange({upper: 0}), index: 'seen' }
+
+
+import_question = (question) ->
+	Questions.get question.qid, (e) ->
+		return unless typeof e is 'undefined'
+		# console.log 'saving question', question.qid
+		Questions.put question, (f) ->
+			# console.log 'saved question', f
+			return
+		, handle_db_error
+	, handle_db_error
+
+
+load_sample = (url, cb = ->) ->
+	$.ajax {
+		url: url, #protobowl_config.samples[index],
+		cache: true,
+		dataType: 'script',
+		success: ->
+			console.log 'importing samples from url', url
+			import_batch()
+
+	}
+
+import_batch = ->
+	for key, val of QUESTION_DB
+		for i in [0..20]
+			question = val.shift()
+			return unless question
+			import_question {
+				qid: question._id.$oid,
+				answer: question.answer,
+				category: question.category,
+				difficulty: question.difficulty,
+				inc_random: Math.random(),
+				seen: 0,
+				bookmarked: ((Date.now() - 1000000000000) / 1e17),
+				num: question.num,
+				question: question.question,
+				round: question.round,
+				tournament: question.tournament,
+				type: question.type,
+				year: question.year
+			}
+		break
+	setTimeout import_batch, 2000
+
 
 
 $(window).resize ->
 	$("#bookmarks").css('min-height', $(window).height())
 
-update_question_cache = ->
-	Questions.get room.qid, (question) ->
-		if typeof question is 'undefined'
-			question = {
-				qid: room.qid,
-				question: room.question, 
-				answer: room.answer,
-				category: room.info.category, 
-				round: room.info.round,
-				tournament: room.info.tournament, 
-				year: room.info.year, 
-				seen: 1,
-				difficulty: room.info.difficulty,
-				inc_random: Math.random(),
-				add_time: Date.now(),
-				bookmarked: ((Date.now() - 1000000000000) / 1e17)
-			}
-			Questions.put question, (f) ->
-				console.log 'saved question', f
-			, handle_db_error
-		else
-			question.seen++
-			Questions.put question, (f) ->
-				console.log 'updated question', f
-			, handle_db_error
-	, handle_db_error
-	
+update_question_cache = (question)->
+	if typeof question is 'undefined'
+		question = {
+			qid: room.qid,
+			question: room.question, 
+			answer: room.answer,
+			category: room.info.category, 
+			round: room.info.round,
+			tournament: room.info.tournament, 
+			year: room.info.year, 
+			seen: 1,
+			difficulty: room.info.difficulty,
+			inc_random: 1 + Math.random(),
+			add_time: Date.now(),
+			bookmarked: ((Date.now() - 1000000000000) / 1e17)
+		}
+		Questions.put question, (f) ->
+			console.log 'saved question', f
+		, handle_db_error
+	else
+		question.seen++
+		question.inc_random += (1 + Math.random())
+		
+		question.question = room.question
+		question.category = room.info.category
+		question.round = room.info.round
+		question.difficulty = room.info.difficulty
+
+		Questions.put question, (f) ->
+			console.log 'updated question', f
+		, handle_db_error
+
 
 handle_db_error = (e) ->
 	console.error e
@@ -160,7 +252,7 @@ $("#whale input").keyup (e) ->
 			finish_query()
 		else
 			# console.log item
-			is_match = JSON.stringify(item).match(query) and room.qid isnt item.qid
+			is_match = JSON.stringify(item).match(query) and room.qid isnt item.qid and room.answer isnt item.answer
 			if is_match
 				match_count++
 			if $("#bookmarks .qid-#{item.qid}").length
@@ -423,40 +515,13 @@ offline_questions = []
 count_cache = null
 
 
-load_sample = (index, cb = ->) ->
-	expanded = []
-	for sample in protobowl_config.samples
-		shorthand_regex = /\{(\d+)\-(\d+)\}/
-		shorthand = sample.match(shorthand_regex)
-		if shorthand
-			for i in [+shorthand[1]..+shorthand[2]]
-				expanded.push sample.replace(shorthand_regex, i)
-		else
-			expanded.push sample
-	console.log expanded
-	$.ajax {
-		url: protobowl_config.samples[index],
-		cache: true,
-		dataType: 'script',
-		success: ->
-			for question in QUESTION_DB[index]
-				question._inc = Math.random()
-				question.type = 'qb'
-				offline_questions.push question
-			recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
-				count_cache = layers
-				cb()
+# load_questions = (cb) ->
+# 	if offline_questions.length is 0
+# 		load_sample 0, ->
+# 			setTimeout cb, 100
 
-	}
-
-
-load_questions = (cb) ->
-	if offline_questions.length is 0
-		load_sample 0, ->
-			setTimeout cb, 100
-
-	else
-		setTimeout cb, 100
+# 	else
+# 		setTimeout cb, 100
 
 
 recursive_counts = (attributes, criterion, cb) ->
@@ -471,7 +536,15 @@ recursive_counts = (attributes, criterion, cb) ->
 		return matches
 
 	criterion_count = (criterion, callback) ->
+		console.log criterion
 		callback null, criterion_filter(criterion).length
+		# Questions.count callback, {
+		# 	index: 'tdc',
+		# 	keyRange: Questions.makeKeyRange {
+		# 		lower: [criterion.qb, criterion.]
+		# 	}
+		# }
+		# Questions.count(function(e){console.log(e)}, {index: 'tdc', keyRange: Questions.makeKeyRange({lower: ['qb','HS','Science'], upper: ['qb','HS','Science']})})
 
 	criterion_distinct = (attribute, criterion, callback) ->
 		attr_map = {}
@@ -545,18 +618,31 @@ get_question = (type, difficulty, category, cb) ->
 			sampler = new AliasMethod(category)
 			category = sampler.next()
 		
-		question_bank = offline_questions.sort((a, b) -> a._inc - b._inc)
-		question = null
-		for candidate in question_bank
-			if candidate.difficulty is difficulty and candidate.category is category and candidate.type is type
-				question = candidate
-				break
-		if question
-			question._inc += Math.random() + 1
-			
-		setTimeout ->
-			cb question, get_difficulties(type), get_categories(type)
-		, 10
+
+		Questions.iterate (item, cursor, tranny) ->
+			return unless item
+			if item.difficulty is difficulty and item.category is categories and item.type is type
+				tranny.abort()
+				cb question, get_difficulties(type), get_categories(type)
+		, {
+			index: 'inc_random',
+			order: 'ASC',
+			onEnd: ->
+				cb null, get_difficulties(type), get_categories(type)
+			onError: (err) ->
+		}
+
+		# question_bank = offline_questions.sort((a, b) -> a._inc - b._inc)
+		# question = null
+		# for candidate in question_bank
+		# 	if candidate.difficulty is difficulty and candidate.category is category and candidate.type is type
+		# 		question = candidate
+		# 		break
+		# if question
+		# 	question._inc += Math.random() + 1
+		# setTimeout ->
+		# 	cb question, get_difficulties(type), get_categories(type)
+		# , 10
 	else
 		setTimeout ->
 			cb null, get_difficulties(type), get_categories(type)
