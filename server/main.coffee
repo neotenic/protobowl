@@ -461,6 +461,8 @@ io.sockets.on 'connection', (sock) ->
 			publicID = sha1(protoauth.email)
 		else
 			publicID = sha1(cookie + room_name + '')
+			if auth
+				sock.emit 'log', verb: 'Warning: Authorization token was rejected by server'
 
 		if room_name is "private"
 			unless protoauth

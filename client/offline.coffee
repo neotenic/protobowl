@@ -78,7 +78,7 @@ import_external = ->
 					expanded.push sample.replace(shorthand_regex, i)
 			else
 				expanded.push sample
-		
+
 		localStorage.sample_urls = JSON.stringify(expanded[i] for i in fisher_yates(expanded.length))
 	
 	# each question packet has 1000
@@ -155,7 +155,8 @@ update_question_cache = (question)->
 			bookmarked: ((Date.now() - 1000000000000) / 1e17)
 		}
 		Questions.put question, (f) ->
-			console.log 'saved question', f
+			# console.log 'saved question', f
+			return
 		, handle_db_error
 	else
 		question.seen++
@@ -180,7 +181,8 @@ save_question = (question) ->
 	# 	return unless typeof e is 'undefined'
 	# 	console.log 'saving question'
 	Questions.put question, (f) ->
-		console.log 'saved question', f
+		# console.log 'saved question', f
+		return
 	, handle_db_error
 	# , handle_db_error
 

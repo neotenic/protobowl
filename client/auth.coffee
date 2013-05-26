@@ -8,7 +8,7 @@ auth_cookie = (new_cookie) ->
 	if new_cookie
 		jQuery.cookie 'protoauth', new_cookie
 	else if typeof new_cookie isnt 'undefined'
-		jQuery.cookie 'protoauth', null
+		jQuery.cookie 'protoauth', ''
 	
 	try
 		[pseudo_hmac, cookie_base] = jQuery.cookie('protoauth').split('&')
@@ -55,7 +55,10 @@ $(document).ready ->
 logged_in = (data) ->
 	assertion = null	
 	if data?.status isnt 'okay'
+		verbAnnotation verb: "server rejected login request: #{data?.reason}"
 		navigator?.id?.logout()
+		# console.log data
+		
 	else
 		unless auth
 			me.accelerate_cleanup()

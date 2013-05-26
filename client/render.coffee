@@ -968,7 +968,7 @@ create_bundle = (info) ->
 				set_bookmark info.qid, ((Date.now() - 1000000000000) / 1e17)
 			else
 				set_bookmark info.qid, 1 + ((Date.now() - 1000000000000) / 1e17)
-			console.log 'changing stuff'
+			# console.log 'changing stuff'
 
 	# star.toggleClass 'icon-star-empty', !info.bookmarked
 	# star.toggleClass 'icon-star', info.bookmarked
