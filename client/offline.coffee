@@ -35,6 +35,9 @@ Questions = new IDBStore {
 		Questions.ready = true
 		console.log 'store is ready for bidnezz'
 		dispose_retrieval_queue()
+		
+		import_legacy_bookmarks()
+
 		update_storage_stats ->
 			$("#whale").fadeIn()
 			$("#whale input").keyup()
@@ -75,14 +78,26 @@ update_question_cache = ->
 handle_db_error = (e) ->
 	console.error e
 
-# save_question = (question) ->
-# 	Questions.get question.qid, (e) ->
-# 		return unless typeof e is 'undefined'
-# 		console.log 'saving question'
-# 		Questions.put question, (f) ->
-# 			console.log 'saved question', f
-# 		, handle_db_error
-# 	, handle_db_error
+save_question = (question) ->
+	# Questions.get question.qid, (e) ->
+	# 	return unless typeof e is 'undefined'
+	# 	console.log 'saving question'
+	Questions.put question, (f) ->
+		console.log 'saved question', f
+	, handle_db_error
+	# , handle_db_error
+
+
+# this piece of code will be deprecated the moment it's released
+# and therefore could be removed shortly afterwards
+import_legacy_bookmarks = ->
+	bookmarks = []
+	try
+		bookmarks = JSON.parse(localStorage.bookmarks)
+	for question in bookmarks || []
+		question.bookmarked = 1 + ((Date.now() - 1000000000000) / 1e17)
+		save_question question
+	delete localStorage.bookmarks
 
 
 # bookmarks_loaded = false
@@ -90,14 +105,14 @@ handle_db_error = (e) ->
 # 	return if bookmarks_loaded
 # 	bookmarks_loaded = true
 
-# 	bookmarks = []
-# 	try
-# 		bookmarks = JSON.parse(localStorage.bookmarks)
-# 	for question in bookmarks || []
-# 		continue if question.qid is room.qid
-# 		bundle = create_bundle(question)
-# 		bundle.find('.readout').hide()
-# 		$('#bookmarks').prepend bundle
+	bookmarks = []
+	try
+		bookmarks = JSON.parse(localStorage.bookmarks)
+	for question in bookmarks || []
+		continue if question.qid is room.qid
+		bundle = create_bundle(question)
+		bundle.find('.readout').hide()
+		$('#bookmarks').prepend bundle
 
 # 	cutoff = 10
 
@@ -112,7 +127,7 @@ $("#whale input").keydown (e) ->
 
 $("#whale input").keyup (e) ->
 	return unless Questions.ready
-	query = new RegExp(RegExp.quote($("#whale input").val()), 'i')
+	query = new RegExp($("#whale input").val().split(/\ ?\,\ ?/).map(RegExp.quote).join('.*'), 'i')
 	MAX_RESULTS = 10
 	match_count = 0
 	query_string = $("#whale input").val()
@@ -122,9 +137,17 @@ $("#whale input").keyup (e) ->
 	last_cursor = $("<span>").addClass('booktop').prependTo("#bookmarks")
 	finish_query = ->
 		last_cursor.nextAll('.bundle').slideUp()
+		last_cursor.nextAll('.bundle').find('.readout').slideUp()
+
 		# do some cleanup so that the number of crap things is never too much
 		if $("#bookmarks .bundle:hidden").length > 2 * MAX_RESULTS
 			$("#bookmarks .bundle:hidden").slice(-MAX_RESULTS).remove()
+
+		setTimeout ->
+			if $("#bookmarks .bundle:visible").length < 5
+				$("#bookmarks .bundle:visible:not(:first) .readout").slideUp()
+				$("#bookmarks .bundle:visible:first .readout").slideDown()
+		, 1000
 
 
 	Questions.iterate (item, cursor, tranny) ->
@@ -144,7 +167,9 @@ $("#whale input").keyup (e) ->
 				if is_match
 					last_cursor = $("#bookmarks .qid-#{item.qid}").insertAfter(last_cursor).slideDown()
 				else
+					$("#bookmarks .qid-#{item.qid} .readout").slideUp()
 					$("#bookmarks .qid-#{item.qid}").slideUp()
+
 			else
 				if is_match
 					bundle = create_bundle(item)
@@ -160,13 +185,6 @@ $("#whale input").keyup (e) ->
 		onError: (err) ->
 
 	}
-
-	# for question in $("#bookmarks .bundle")
-	# 	if !$(question).html().match(query)
-	# 		$(question).addClass('no-match')
-	# 	else
-	# 		$(question).removeClass('no-match')
-
 
 
 update_storage_stats = (cb) ->
