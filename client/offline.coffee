@@ -14,9 +14,9 @@
 #= include ../shared/sample.coffee
 
 Questions = new IDBStore {
-	dbVersion: 3,
+	dbVersion: 5,
 	storeName: 'questions',
-	keyPath: 'id',
+	keyPath: 'qid',
 	autoIncrement: false,
 	indexes: [
 		{ name: 'tags', keyPath: 'tags', unique: false, multiEntry: true },
@@ -28,24 +28,38 @@ Questions = new IDBStore {
 		{ name: 'year', keyPath: 'year', unique: false },
 		{ name: 'tournament', keyPath: 'tournament', unique: false },
 		{ name: 'answer', keyPath: 'answer', unique: false },
-		{ name: 'bookmarked', keyPath: 'bookmarked', unique: false }
+		{ name: 'bookmarked', keyPath: 'bookmarked', unique: false },
+		{ name: 'add_time', keyPath: 'add_time', unique: false },
 	],
 	onStoreReady: ->
+		Questions.ready = true
 		console.log 'store is ready for bidnezz'
+		dispose_retrieval_queue()
+		update_storage_stats ->
+			$("#whale").fadeIn()
+			$("#whale input").keyup()
 }
 
+
+$(window).resize ->
+	$("#bookmarks").css('min-height', $(window).height())
 
 update_question_cache = ->
 	Questions.get room.qid, (question) ->
 		if typeof question is 'undefined'
 			question = {
-				id: room.qid,
+				qid: room.qid,
 				question: room.question, 
+				answer: room.answer,
 				category: room.info.category, 
+				round: room.info.round,
 				tournament: room.info.tournament, 
 				year: room.info.year, 
 				seen: 1,
-				difficulty: room.info.difficulty
+				difficulty: room.info.difficulty,
+				inc_random: Math.random(),
+				add_time: Date.now(),
+				bookmarked: ((Date.now() - 1000000000000) / 1e17)
 			}
 			Questions.put question, (f) ->
 				console.log 'saved question', f
@@ -61,14 +75,123 @@ update_question_cache = ->
 handle_db_error = (e) ->
 	console.error e
 
-save_question = (question) ->
-	Questions.get question.id, (e) ->
-		return unless typeof e is 'undefined'
-		console.log 'saving question'
-		Questions.put question, (f) ->
-			console.log 'saved question', f
-		, handle_db_error
-	, handle_db_error
+# save_question = (question) ->
+# 	Questions.get question.qid, (e) ->
+# 		return unless typeof e is 'undefined'
+# 		console.log 'saving question'
+# 		Questions.put question, (f) ->
+# 			console.log 'saved question', f
+# 		, handle_db_error
+# 	, handle_db_error
+
+
+# bookmarks_loaded = false
+# load_bookmarked_questions = ->
+# 	return if bookmarks_loaded
+# 	bookmarks_loaded = true
+
+# 	bookmarks = []
+# 	try
+# 		bookmarks = JSON.parse(localStorage.bookmarks)
+# 	for question in bookmarks || []
+# 		continue if question.qid is room.qid
+# 		bundle = create_bundle(question)
+# 		bundle.find('.readout').hide()
+# 		$('#bookmarks').prepend bundle
+
+# 	cutoff = 10
+
+# 	$('#bookmarks .bundle').slice(cutoff).hide()
+
+# 	update_visibility()
+	
+
+$("#whale input").keydown (e) ->
+	if e.keyCode is 27
+		$("#whale input").val('')
+
+$("#whale input").keyup (e) ->
+	return unless Questions.ready
+	query = new RegExp(RegExp.quote($("#whale input").val()), 'i')
+	MAX_RESULTS = 10
+	match_count = 0
+	query_string = $("#whale input").val()
+	
+	$("#bookmarks .booktop").remove()
+
+	last_cursor = $("<span>").addClass('booktop').prependTo("#bookmarks")
+	finish_query = ->
+		last_cursor.nextAll('.bundle').slideUp()
+		# do some cleanup so that the number of crap things is never too much
+		if $("#bookmarks .bundle:hidden").length > 2 * MAX_RESULTS
+			$("#bookmarks .bundle:hidden").slice(-MAX_RESULTS).remove()
+
+
+	Questions.iterate (item, cursor, tranny) ->
+		return unless item
+		if $("#whale input").val() isnt query_string
+			tranny.abort()
+			finish_query()
+		else if match_count >= MAX_RESULTS
+			tranny.abort()
+			finish_query()
+		else
+			# console.log item
+			is_match = JSON.stringify(item).match(query) and room.qid isnt item.qid
+			if is_match
+				match_count++
+			if $("#bookmarks .qid-#{item.qid}").length
+				if is_match
+					last_cursor = $("#bookmarks .qid-#{item.qid}").insertAfter(last_cursor).slideDown()
+				else
+					$("#bookmarks .qid-#{item.qid}").slideUp()
+			else
+				if is_match
+					bundle = create_bundle(item)
+					bundle.find('.readout').hide()
+					last_cursor = bundle.hide().insertAfter(last_cursor).slideDown()
+					update_visibility()
+
+	, {
+		index: 'bookmarked',
+		order: 'DESC',
+		onEnd: ->
+			finish_query()
+		onError: (err) ->
+
+	}
+
+	# for question in $("#bookmarks .bundle")
+	# 	if !$(question).html().match(query)
+	# 		$(question).addClass('no-match')
+	# 	else
+	# 		$(question).removeClass('no-match')
+
+
+
+update_storage_stats = (cb) ->
+	return unless Questions.ready
+
+	Questions.count (total_count) ->
+		Questions.count (bookmark_count) ->
+			$('#whale .status').text "#{bookmark_count} bookmarks"
+			$('#whale .status').attr 'title', "#{total_count} searchable questions"
+			cb?()
+
+		, { keyRange: Questions.makeKeyRange({lower: 1}), index: 'bookmarked' }
+	
+
+dispose_retrieval_queue = ->
+	return unless Questions.ready
+	tranny = retrieval_queue.shift()
+	# console.log 'tranny', tranny
+	return unless tranny
+	[qid, cb] = tranny
+	Questions.get qid, cb, handle_db_error
+	if retrieval_queue.length
+		dispose_retrieval_queue()
+
+# setTimeout load_bookmarked_questions, 100
 
 # save_question({id: room.qid, question: room.question, category: room.info.category, tournament: room.info.tournament, year: room.info.year, difficulty: room.info.difficulty})
 

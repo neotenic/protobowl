@@ -776,7 +776,7 @@ createBundle = ->
 		category: room.info.category, 
 		tournament: room.info.tournament,
 		tags: room.info.tags,
-		bookmarked: is_bookmarked(room.qid),
+		# bookmarked: is_bookmarked?(room.qid),
 		round: room.info.round,
 		num: room.info.num,
 		qid: room.qid,
@@ -854,31 +854,6 @@ changeQuestion = ->
 	update_visibility()
 
 
-
-
-toggle_bookmark = (info, state) ->
-	me.bookmark { id: info.qid, value: state}
-	bookmarks = []
-	try
-		bookmarks = JSON.parse(localStorage.bookmarks)
-
-	# remove bookmark; even if being set on to reload data
-	bookmarks = (b for b in bookmarks when b.qid isnt info.qid)
-
-	
-	if state is true
-		# create bookmark
-		bookmarks.push info
-
-	localStorage.bookmarks = JSON.stringify(bookmarks)
-
-is_bookmarked = (qid) ->
-	bookmarks = []
-	try
-		bookmarks = JSON.parse(localStorage.bookmarks)
-	for b in bookmarks
-		return true if b.qid is qid
-	return false
 
 
 create_report_form = (info) ->
@@ -977,18 +952,26 @@ create_bundle = (info) ->
 		.click (e) ->
 			e.stopPropagation()
 			e.preventDefault()
-			info.bookmarked = !info.bookmarked
-			bundle.toggleClass 'bookmarked', info.bookmarked
+			# info.bookmarked = !info.bookmarked
+			# bundle.toggleClass 'bookmarked', info.bookmarked
 			
-			$(".qid-#{info.qid} .bookmark")
-				.toggleClass('icon-star-empty', !info.bookmarked)
-				.toggleClass('icon-star', info.bookmarked)
+			# $(".qid-#{info.qid} .bookmark")
+			# 	.toggleClass('icon-star-empty', !info.bookmarked)
+			# 	.toggleClass('icon-star', info.bookmarked)
 			
-			toggle_bookmark info, info.bookmarked
+			# toggle_bookmark info, info.bookmarked
+			
+			if bundle.hasClass('bookmarked')
+				set_bookmark info.qid, ((Date.now() - 1000000000000) / 1e17)
+			else
+				set_bookmark info.qid, 1 + ((Date.now() - 1000000000000) / 1e17)
+			console.log 'changing stuff'
 
-	star.toggleClass 'icon-star-empty', !info.bookmarked
-	star.toggleClass 'icon-star', info.bookmarked
-
+	# star.toggleClass 'icon-star-empty', !info.bookmarked
+	# star.toggleClass 'icon-star', info.bookmarked
+	
+	check_bookmark? info.qid
+	star.addClass 'icon-star-empty'
 	breadcrumb.append $('<li>').addClass('pull-right').append(star)
 
 	field = (name) ->

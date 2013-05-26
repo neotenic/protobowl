@@ -438,32 +438,11 @@ listen 'joined', (data) ->
 	$('#username').disable false
 
 
-	setTimeout load_bookmarked_questions, 100
-
-bookmarks_loaded = false
-load_bookmarked_questions = ->
-	return if bookmarks_loaded
-	bookmarks_loaded = true
-
-	bookmarks = []
-	try
-		bookmarks = JSON.parse(localStorage.bookmarks)
-	for question in bookmarks || []
-		continue if question.qid is room.qid
-		bundle = create_bundle(question)
-		bundle.find('.readout').hide()
-		$('#bookmarks').prepend bundle
-
-	cutoff = 10
-
-	$('#bookmarks .bundle').slice(cutoff).hide()
-
-	update_visibility()
-	
-	if $('#bookmarks .bundle').length
-		$("#whale").show()
-
+	# setTimeout load_bookmarked_questions, 100
 	setTimeout initialize_offline, 100
+
+
+
 
 sync_offsets = []
 latency_log = []
@@ -638,6 +617,42 @@ setTimeout ->
 	recurring_test()
 , 8000
 
+retrieval_queue = []
+find_question = (qid, callback) ->
+	# this is a database method which 
+	retrieval_queue.push [qid, callback]
+	# console.log retrieval_queue
+	dispose_retrieval_queue?()
+		
+
+set_bookmark = (qid, state) ->
+	console.log 'setting book', qid, state
+	find_question qid, (question) ->
+		# console.log 'setting bookmark', qid, question, state
+		if question
+			question.bookmarked = state
+			Questions.put question, (e) ->
+				console.log 'updated bookmarked state'
+				check_bookmark qid
+				update_storage_stats?()
+			, handle_db_error
+		else
+			console.log 'question not found', qid
+
+
+check_bookmark = (qid) ->
+	find_question qid, (question) ->
+		# console.log 'checking bookmark', qid, question
+		if question
+			bookmarked = Math.round(question.bookmarked)
+			bundle = $(".qid-#{qid}")
+				.toggleClass('bookmarked', !!bookmarked)
+			bundle.find('.bookmark')
+				.toggleClass('icon-star-empty', !bookmarked)
+				.toggleClass('icon-star', !!bookmarked)
+		else
+			console.log 'question not found', qid
+	
 
 render = (name, params = {}) ->
 	el = document.getElementById('_' + name)

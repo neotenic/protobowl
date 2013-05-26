@@ -28,20 +28,6 @@ $('.new-room').mouseover (e) ->
 		# console.log 'client taking over'
 
 
-$("#whale input").keydown (e) ->
-	if e.keyCode is 27
-		$("#whale input").val('')
-
-$("#whale input").keyup (e) ->
-	query = new RegExp(RegExp.quote($("#whale input").val()), 'i')
-	for question in $("#bookmarks .bundle")
-		if !$(question).html().match(query)
-			$(question).addClass('no-match')
-		else
-			$(question).removeClass('no-match')
-
-
-
 actionMode = ''
 setActionMode = (mode) ->
 	if mode != actionMode and actionMode

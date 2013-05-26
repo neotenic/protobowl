@@ -600,8 +600,6 @@ buildApplication = (force_update = false) ->
 		# data = data.replace(/# INSERT_SAMPLES/, "# START_SAMPLES #\n#{opt.samples.join('\n')}\n# END_SAMPLES #\n")
 		fs.writeFile "build/#{target}/offline.appcache", data, 'utf8', (err) ->
 			throw err if err
-
-
 			send_update()
 			# compile_server()
 			scheduledUpdate = null
