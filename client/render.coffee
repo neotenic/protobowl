@@ -925,13 +925,10 @@ create_report_form = (info) ->
 	answer.append $("<div>").addClass('controls').append navver
 
 	segments = info.answer
-		.replace(/\[/g, ' [ ')
-		.replace(/\]/g, ' ] ')
-		.replace(/\( /g, '(')
-		.replace(/\ \)/g, ')')
-		.replace(/([\{\}])/g, ' $1 ')
-		.replace(/\ \ /g, ' ')
-		.split(' ')
+		.replace(/([\{\}\[\]\(\)\-])/g, '`$1`')
+		.replace(/\ +/g, ' ` ')
+		.replace(/\ +/g, ' ')
+		.split('`')
 	cur_mode = false
 	parsed = []
 	for seg in segments
@@ -943,6 +940,7 @@ create_report_form = (info) ->
 			parsed.push [cur_mode, seg]
 	invalid_answerline = ->
 		line = reconstruct_answerline() 
+		console.log line
 		return true if line is info.answer
 		return true if line.indexOf('{') is -1
 
@@ -950,26 +948,52 @@ create_report_form = (info) ->
 	reconstruct_answerline = ->
 		return navver.find('li a').map( -> 
 					if $(this).hasClass('bold')
-						return "{#{$(this).text()}}"
+						raw = $(this).text()
+						before = raw.match(/^\s*/)[0]
+						after = raw.match(/\s*$/)[0]
+						return "#{before}{#{raw.trim()}}#{after}"
 					else
 						return $(this).text()
-				).toArray().join(' ').replace(/\} \{/g, ' ')
+				)
+				.toArray()
+				.join('~')
+				.replace(/~/g, '')
+				.replace(/\s+/g, ' ')
+				.replace(/\}\s*\{/g, ' ')
+				.replace(/\s([\]\)])/g, '$1')
+				.replace(/([\[\(])\s/g, '$1')
+				# .replace(/~([\{\}\[\]\(\)])~/g, '$1')
+				# .replace(/\} \{/g, ' ')
+				# .replace(/\[ /g, '[')
+				# .replace(/\ \]/g, ']')
 
 	for [mode, text] in parsed
 		# console.log mode, text
-		$("<a>")
+		
+		link = $("<a>")
 			.toggleClass('bold', mode)
 			.appendTo($("<li>").appendTo(navver))
 			.text(text)
 			.attr('href', '#')
-			.click ->
-				$(this).toggleClass('bold')
-				
-				line = reconstruct_answerline()
-				# console.log line, info.answer
-				submit_btn.disable invalid_answerline()
 
-				return false
+		if text.trim() in ['[', ']', ';', ',', '(', ')', '"', '', '”', '“', '-']
+			if text in [' ']
+				link.hide()
+			link
+				.removeClass('bold')
+				.addClass('unboldable')
+				.click ->
+					return false
+		else
+			link
+				.click ->
+					$(this).toggleClass('bold')
+					
+					line = reconstruct_answerline()
+					# console.log line, info.answer
+					submit_btn.disable invalid_answerline()
+
+					return false
 
 	cat_list = $('<select>')
 	ctype.append $("<div>").addClass('controls').append cat_list

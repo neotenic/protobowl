@@ -49,7 +49,8 @@ testing = [
 	["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "The Dark Knight"],
 	['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "itching"],
 	["Georgia Tech [do not accept or prompt on just Georgia]", "Georgia"],
-	["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"]
+	["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
+	["Redskins [accept Washington before mention; accept Redskins at any time]", "Redskins"]
 ]
 
 tokenize_line = (answer) ->
@@ -84,7 +85,7 @@ tokenize_line = (answer) ->
 	for group in completed.reverse()
 		prefix_words = ["do","not","accept","or","prompt", "on", "just", "don't"]
 		# ,"on", "either", "underlined", "portion", "equivalents", "equivalent", "word", "forms", "like", "any", "other", "in", "order"
-		suffix_words = ["is", "read", "stated", "mentioned"]
+		suffix_words = ["is", "read", "stated", "mentioned", "at", "any", "time"]
 		splitters = ["before", "after", "during", "while", "until"]
 		prefix = []
 		for [bold, token] in group # find all the words which belong as a prefix
@@ -118,15 +119,21 @@ tokenize_line = (answer) ->
 		[prefix, front, preposition, back, suffix]
 
 fuzzy_search = (needle, haystack) ->
+	# console.log needle, haystack
 	return haystack.toLowerCase().indexOf(needle.toLowerCase())	!= -1
 
 
 check_answer = (tokens, text) ->
+	judgements = []
+	index = 0
 	for [prefix, front, preposition, back, suffix] in tokens
+		index++
 		bold_match = []
 		unbold_match = []
 		bold_miss = []
 		unbold_miss = []
+		bolded = []
+		unbold = []
 		# evaluate errything
 		for [bold, token] in front
 			match = fuzzy_search(token, text)
@@ -134,21 +141,54 @@ check_answer = (tokens, text) ->
 			unbold_match.push token if match and !bold
 			unbold_miss.push token if !match and !bold
 			bold_miss.push token if !match and bold
-		if bold_match > 0
-			if bold_miss > 0
-				# prompt
+			bolded.push token if bold
+			unbold.push token if !bold
+		
+		matchiness = bold_match.length + unbold_match.length + (0.002 / (index + 20))
+
+		level = 0 # 0 = reject, 1 = prompt, 2 = accept		
+		
+		if bold_match.length > 0
+			if bold_miss.length > 0
+				level = 1
 			else
-				# match
+				level = 2
+		else
+			if bolded.length is 0 and unbold_match.length > 0
+				level = 2
+			else if unbold_match.length > unbold.length / 2 # more than half of the unbolds
+				level = 1
+			else
+				level = 0
 
-		console.log bold_match, unbold_match, bold_miss
+		console.log bold_match, unbold_match, bold_miss, text
+
+		if 'not' in prefix
+			0 # noop can not handle these things
+		else if 'prompt' in prefix
+			if level is 2
+				judgements.push [matchiness, 'prompt']
+			else
+				judgements.push [matchiness, 'reject']
+		else
+			if level is 2
+				judgements.push [matchiness, 'accept']
+			else if level is 1
+				judgements.push [matchiness, 'prompt']
+			else
+				judgements.push [matchiness, 'reject']
+
 	
+	sorted = judgements.sort ([a], [b]) -> b - a
 
-
-		# console.log prefix, front, preposition, back, suffix
+	[matchiness, judgement] = sorted[0]
+	console.log judgement, sorted
 
 setTimeout ->
+	console.time('checking answer')
 	for [line, guesses...] in testing
 		tokens = tokenize_line(line)
 		for guess in guesses
 			check_answer tokens, guess
+	console.timeEnd('checking answer')
 , 1000
