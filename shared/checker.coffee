@@ -204,7 +204,8 @@ do ->
 			else
 				responses.push advancedCompare(inputText, p, questionWords)
 				responses.push rawCompare compare, p
-		
+
+
 		for r in responses
 			return true if r is true
 
@@ -216,10 +217,14 @@ do ->
 
 	safeCheckAnswer = (compare, answer, question) ->
 		try
+			
+			console.time('check answer')
 			return checkAnswer(compare, answer, question)
+			console.timeEnd('check answer')
 		catch error
 			log "ERROR", error
 			return false
+
 	stopnames = splitWords stopnames
 
 	if exports?
