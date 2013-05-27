@@ -37,18 +37,19 @@
 # ["Works Progress Administration", "WPA"]
 
 testing = [
-	"The {Persistence} of {Memory}",
-	"The {Scream} [or {Skrik}; accept The {Cry}]",
-	"The {Daily} Show with Jon Stewart",
-	"{Cleveland Browns} [accept either]",
-	"{Oakland Athletics} [accept either underlined portion; accept A's]",
-	"The Lord of the Rings: The Return of the King",
-	"Yellow (accept Yellow Sarong before Sarong is mentioned)",
-	"Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]",
-	"Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]",
-	"{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]",
-	'{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)',
-	"Georgia Tech [do not accept or prompt on just Georgia]"
+	["The {Persistence} of {Memory}", "persistance"],
+	["The {Scream} [or {Skrik}; accept The {Cry}]", "Cry"],
+	["The {Daily} Show with Jon Stewart", "Daily Show"],
+	["{Cleveland Browns} [accept either]", "Brown"],
+	["{Oakland Athletics} [accept either underlined portion; accept A's]", "Oakland"],
+	["The Lord of the Rings: The Return of the King", "LOTR"],
+	["Yellow (accept Yellow Sarong before Sarong is mentioned)", "Yelow"],
+	["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "Bioshock 2"],
+	["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "Los Angeles"],
+	["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "The Dark Knight"],
+	['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "itching"],
+	["Georgia Tech [do not accept or prompt on just Georgia]", "Georgia"],
+	["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"]
 ]
 
 tokenize_line = (answer) ->
@@ -81,9 +82,9 @@ tokenize_line = (answer) ->
 
 	# parse statements in reverse order for situations like accept either
 	for group in completed.reverse()
-		prefix_words = ["do","not","accept","or","prompt", "on", "just"]
+		prefix_words = ["do","not","accept","or","prompt", "on", "just", "don't"]
 		# ,"on", "either", "underlined", "portion", "equivalents", "equivalent", "word", "forms", "like", "any", "other", "in", "order"
-		# suffix_words = ["before", "after", "mentioned", "mention", "it", "is", "read", "during", "the", "first", "last", "sentence", "until", "while"]
+		suffix_words = ["is", "read", "stated", "mentioned"]
 		splitters = ["before", "after", "during", "while", "until"]
 		prefix = []
 		for [bold, token] in group # find all the words which belong as a prefix
@@ -91,6 +92,16 @@ tokenize_line = (answer) ->
 				prefix.push token
 			else
 				break
+		# find the suffix
+		suffix = []
+		for i in [group.length...0]
+			[bold, token] = group[i - 1]
+			if token in suffix_words
+				suffix.push token
+			else
+				break
+		suffix.reverse()
+
 		front = [] 
 		back = []
 		preposition = null
@@ -99,34 +110,45 @@ tokenize_line = (answer) ->
 				back.push [bold, token]
 			else if token in splitters and bold is false
 				preposition = token
-			else if token in prefix
+			else if token in prefix or token in suffix
 				0 #noop
 			else
 				front.push [bold, token]
 
-		console.log prefix, front, preposition, back
-		# group.reverse()
-		# for [bold, token] in group # find all the words which belong as a suffix
-		# 	if token in suffix_words
-		# 		suffix.push token
-		# 	else
-		# 		break
-		# suffix.reverse() # since its found in reverse, reverse it again
-		# group.reverse() #undo the first reversal
-		# infix  = []
-		# for [bold, token] in group
-		# 	if token not in suffix and token not in prefix
-		# 		infix.push [bold, token]
+		[prefix, front, preposition, back, suffix]
 
-		# console.log prefix.join(' '), suffix.join(' '), infix
-			
+fuzzy_search = (needle, haystack) ->
+	return haystack.toLowerCase().indexOf(needle.toLowerCase())	!= -1
 
 
+check_answer = (tokens, text) ->
+	for [prefix, front, preposition, back, suffix] in tokens
+		bold_match = []
+		unbold_match = []
+		bold_miss = []
+		unbold_miss = []
+		# evaluate errything
+		for [bold, token] in front
+			match = fuzzy_search(token, text)
+			bold_match.push token if match and bold
+			unbold_match.push token if match and !bold
+			unbold_miss.push token if !match and !bold
+			bold_miss.push token if !match and bold
+		if bold_match > 0
+			if bold_miss > 0
+				# prompt
+			else
+				# match
 
-
+		console.log bold_match, unbold_match, bold_miss
 	
 
+
+		# console.log prefix, front, preposition, back, suffix
+
 setTimeout ->
-	for line in testing
-		tokenize_line line
+	for [line, guesses...] in testing
+		tokens = tokenize_line(line)
+		for guess in guesses
+			check_answer tokens, guess
 , 1000

@@ -292,7 +292,10 @@ update_storage_stats = (cb) ->
 
 	Questions.count (total_count) ->
 		Questions.count (bookmark_count) ->
-			$('#whale .status').text "#{bookmark_count} bookmarks"
+			if bookmark_count
+				$('#whale .status').text "#{bookmark_count} bookmarks"
+			else
+				$('#whale .status').text ""
 			$('#whale .status').attr 'title', "#{total_count} searchable questions"
 			cb?()
 
@@ -675,14 +678,14 @@ count_questions = (type, difficulty, category, cb) ->
 	cb(count_sum)
 
 get_question = (type, difficulty, category, cb) ->
-	console.log 'trying to get question'
+	# console.log 'trying to get question'
 	if count_cache == null
 		setTimeout ->
 			get_question type, difficulty, category, cb
 		, 100
 		return
 
-	console.log 'loaded count cache'
+	# console.log 'loaded count cache'
 
 	# unless typeof offline_questions[0] is 'object'
 	# 	setTimeout ->
@@ -702,9 +705,9 @@ get_question = (type, difficulty, category, cb) ->
 			sampler = new AliasMethod(category)
 			category = sampler.next()
 		
-		console.log 'qyering for', difficulty, category, type
+		# console.log 'qyering for', difficulty, category, type
 		Questions.iterate (item, cursor, tranny) ->
-			console.log 'got item woo', item
+			# console.log 'got item woo', item
 			# return unless item
 			item.seen++
 			item.inc_random += Math.random() + 1

@@ -234,6 +234,9 @@ protobot_write = (message) ->
 chat = (text, done) ->
 	text = text.slice(0, 1000)
 
+	if room.name in ['lobby', 'b']
+		text = text.slice(0, 140)
+		
 	if text.length < 15 and /lonely/i.test(text) and /re |m /i.test(text) and !/you/i.test(text) and !protobot_engaged
 		protobot_engaged = true
 		protobot_last = $('.chat_input').data('input_session')

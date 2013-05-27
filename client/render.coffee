@@ -205,7 +205,7 @@ renderTimer = ->
 		
 	time = Math.max(room.begin_time, room.time())
 
-	if connected()
+	if connected() or sock.hide_disconnect
 		$('.offline-badge').capQueue().fadeOut()
 	else
 		$('.offline-badge').capQueue().fadeIn()
@@ -624,30 +624,11 @@ renderUsers = ->
 			.append(' ')
 			.append(msg)
 
-	# cts = $('<span>').css('position', 'relative').html(" (<b>click</b> to show)").hide().appendTo ellipsis
-	# ellipsis.mouseenter ->
-	# 	msg.animate {
-	# 		left: '+=' + ellipsis.width()
-	# 	}, ->
-	# 		msg.hide()
-	# 		cts.show().css('left', "-#{ellipsis.width()}px").animate {
-	# 			left: '0'
-	# 		}
-	# ellipsis.mouseleave ->
-	# 	cts.animate {
-	# 		left: '-=' + ellipsis.width()
-	# 	}, ->
-	# 		cts.hide()
-	# 		msg.show().css('left', "#{ellipsis.width()}px").animate {
-	# 			left: '0'
-	# 		}
-
-
 
 	#console.timeEnd('draw board')
 	# this if clause is ~5msecs
 	# console.log entities, room.users, me.id
-	if user_count > 1 and connected()
+	if user_count > 1 and (connected() or sock.hide_disconnect)
 		if $('.leaderboard').is(':hidden')
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()
@@ -920,7 +901,8 @@ create_report_form = (info) ->
 		"History": ["American", "Ancient", "European", "World"],
 		"Fine Arts": ["Art", "Music", "Other"],
 		"Literature": ["American", "European", "Language Arts", "World"],
-		"Social Science": ["Anthropology", "Economics", "Geography", "Psychology"]
+		"Social Science": ["Anthropology", "Economics", "Geography", "Psychology"],
+		"Trash": ["Film", "Sports", "Games", "TV", "Music"]
 	}
 	taglist.append new Option('None', '')
 
@@ -974,7 +956,7 @@ create_report_form = (info) ->
 				).toArray().join(' ').replace(/\} \{/g, ' ')
 
 	for [mode, text] in parsed
-		console.log mode, text
+		# console.log mode, text
 		$("<a>")
 			.toggleClass('bold', mode)
 			.appendTo($("<li>").appendTo(navver))
@@ -984,7 +966,7 @@ create_report_form = (info) ->
 				$(this).toggleClass('bold')
 				
 				line = reconstruct_answerline()
-				console.log line, info.answer
+				# console.log line, info.answer
 				submit_btn.disable invalid_answerline()
 
 				return false
