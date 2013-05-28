@@ -66,7 +66,7 @@ tokenize_line = (answer) ->
 		[prefix, front, preposition, back, suffix]
 
 fuzzy_search = (needle, haystack) ->
-	console.log needle, haystack
+	# console.log needle, haystack
 	if removeDiacritics?
 		remove_diacritics = removeDiacritics 
 	else

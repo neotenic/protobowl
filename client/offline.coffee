@@ -559,7 +559,6 @@ load_questions = (cb) ->
 		loading_questions = true
 		# fraud a wait until the db is ready
 		find_question 'morptasm', ->
-			console.log "SDFJSDFJSODFIOSDJFOIJF"
 			recursive_counts ['type', 'difficulty', 'category'], {}, (layers) ->
 				count_cache = layers
 				cb()
@@ -605,7 +604,7 @@ recursive_counts = (attributes, criterion, cb) ->
 	criterion_distinct = (attribute, criterion, callback) ->
 		level = Object.keys(criterion).length
 
-		console.log 'distinct', attribute, criterion, level
+		# console.log 'distinct', attribute, criterion, level
 		if level is 0
 			Questions.query (items) ->
 				callback null, (item[attribute] for item in items)
