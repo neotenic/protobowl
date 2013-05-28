@@ -231,7 +231,14 @@ $("#whale input").keydown (e) ->
 
 $("#whale input").keyup (e) ->
 	return unless Questions.ready
-	query = new RegExp($("#whale input").val().split(/\ ?\,\ ?/).map(RegExp.quote).join('.*'), 'i')
+	box = $("#whale input")
+	query = new RegExp(box.val().split(/\ ?\,\ ?/).map(RegExp.quote).join('.*'), 'i')
+	
+	if box.data('paginate-query') isnt box.val()
+		box.data('paginate-num', 1)
+		box.data('paginate-keys', [])
+		box.data('paginate-query', box.val())
+
 	MAX_RESULTS = 10
 	match_count = 0
 	query_string = $("#whale input").val()
@@ -241,7 +248,7 @@ $("#whale input").keyup (e) ->
 		$(this).remove()
 
 	last_cursor = $("<span>").addClass('booktop').prependTo("#bookmarks")
-	finish_query = ->
+	finish_query = (paginate = false) ->
 		last_cursor.nextAll('.bundle').slideUp()
 		last_cursor.nextAll('.bundle').find('.readout').slideUp()
 
@@ -254,8 +261,42 @@ $("#whale input").keyup (e) ->
 				$("#bookmarks .bundle:visible:not(:first) .readout").slideUp()
 				$("#bookmarks .bundle:visible:first .readout").slideDown()
 		, 1000
+		
+		$('#bookmarks .pager').slideUp 'fast', ->
+			$(this).remove()
 
+		pager = $("<ul>").addClass('pager')
+		prevlink = $("<a href='#'>&larr; Previous</a>").click ->
+			return false if $(this).parent().hasClass('disabled')
+			box.data('paginate-num', page_num - 1)
+			$("#whale input").keyup()
+			return false
 
+		pager.append($("<li class='previous'>").toggleClass('disabled', !box.data('paginate-keys')[page_num-2]).append(prevlink))
+		pager.append($("<li>").addClass('page-num').text("Page #{page_num}"))
+		nextlink = $("<a href='#'>Next &rarr;</a>").click ->
+			return false if $(this).parent().hasClass('disabled')
+			box.data('paginate-num', page_num + 1)
+			$("#whale input").keyup()
+			return false
+		pager.append($("<li class='next'>").toggleClass('disabled', !box.data('paginate-keys')[page_num]).append(nextlink))
+		$("#bookmarks").append(pager.hide())
+		pager.fadeIn()
+
+	page_num = box.data('paginate-num')
+	search_options = {
+		index: 'search_order',
+		order: 'DESC'
+		onEnd: ->
+			finish_query()
+			console.log 'query is over'
+		onError: (err) ->
+	}
+	if box.data('paginate-num') > 1
+		search_options.keyRange = Questions.makeKeyRange {
+			upper: box.data('paginate-keys')[box.data('paginate-num') - 1]
+		}
+		# console.log search_options.keyRange, 'asdfoasdjfioajsdfoijasdf'
 	Questions.iterate (item, cursor, tranny) ->
 		return unless item
 		if $("#whale input").val() isnt query_string
@@ -263,12 +304,10 @@ $("#whale input").keyup (e) ->
 			finish_query()
 		else if match_count >= MAX_RESULTS
 			tranny.abort()
+			box.data('paginate-keys')[page_num] = [item.bookmarked, item.modified]
 			finish_query()
-			pager = $("<ul>").addClass('pager')
-			pager.append($("<li class='previous'>").toggleClass('disabled', true).append($("<a href='#'>&larr; Previous</a>")))
-			pager.append($("<li class='next'>").append($("<a href='#'>Next &rarr;</a>")))
-			$("#bookmarks").append(pager.hide())
-			pager.fadeIn()
+
+			
 		else
 			# console.log item
 			is_match = JSON.stringify(item).match(query) and room.qid isnt item.qid and room.answer isnt item.answer
@@ -288,14 +327,7 @@ $("#whale input").keyup (e) ->
 					last_cursor = bundle.hide().insertAfter(last_cursor).slideDown()
 					update_visibility()
 
-	, {
-		index: 'bookmarked',
-		order: 'DESC',
-		onEnd: ->
-			finish_query()
-		onError: (err) ->
-
-	}
+	, search_options
 
 
 update_storage_stats = (cb) ->
