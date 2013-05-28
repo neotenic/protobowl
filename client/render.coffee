@@ -205,7 +205,7 @@ renderTimer = ->
 		
 	time = Math.max(room.begin_time, room.time())
 
-	if connected() or sock.hide_disconnect
+	if connected() or sock?.hide_disconnect
 		$('.offline-badge').capQueue().fadeOut()
 	else
 		$('.offline-badge').capQueue().fadeIn()
@@ -628,7 +628,7 @@ renderUsers = ->
 	#console.timeEnd('draw board')
 	# this if clause is ~5msecs
 	# console.log entities, room.users, me.id
-	if user_count > 1 and (connected() or sock.hide_disconnect)
+	if user_count > 1 and (connected() or sock?.hide_disconnect)
 		if $('.leaderboard').is(':hidden')
 			$('.leaderboard').slideDown()
 			$('.singleuser').slideUp()

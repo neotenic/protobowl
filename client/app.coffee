@@ -189,7 +189,7 @@ online_startup = ->
 				verbAnnotation {verb: "established a connection to the server"}
 	
 		sock.on 'disconnect', ->
-			unless sock.hide_disconnect
+			unless sock?.hide_disconnect
 				disconnect_notice()
 
 		for name, fn of me.__listeners
