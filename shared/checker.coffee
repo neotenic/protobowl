@@ -218,9 +218,7 @@ do ->
 	safeCheckAnswer = (compare, answer, question) ->
 		try
 			
-			console.time('check answer')
 			return checkAnswer(compare, answer, question)
-			console.timeEnd('check answer')
 		catch error
 			log "ERROR", error
 			return false

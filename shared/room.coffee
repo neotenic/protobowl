@@ -361,7 +361,7 @@ class QuizRoom
 				@attempt.done = false
 				@attempt.realTime = @serverTime()
 				@attempt.start = @time()
-				@attempt.text = ''
+				@attempt.text = @attempt.text.trim() + ' '
 				@attempt.duration = @prompt_duration
 
 				@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @billMahrer, =>

@@ -152,7 +152,7 @@ renderUpdate = ->
 		if room.attempt.prompt
 			if actionMode isnt 'prompt'
 				setActionMode 'prompt' 
-				$('.prompt_input').val('').focus()
+				$('.prompt_input').val(room.attempt.text).focus()
 		else
 			setActionMode 'guess' if actionMode isnt 'guess'
 

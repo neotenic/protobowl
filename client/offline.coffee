@@ -10,7 +10,6 @@
 #= include ../shared/levenshtein.js
 #= include ../shared/porter.js
 #= include ../shared/syllable.coffee
-#= include ../shared/checker.coffee
 #= include ../shared/checker2.coffee
 #= include ../shared/sample.coffee
 

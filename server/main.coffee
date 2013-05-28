@@ -18,7 +18,7 @@ namer = require '../shared/names'
 rooms = {}
 {QuizRoom} = require '../shared/room'
 {QuizPlayer} = require '../shared/player'
-{checkAnswer} = require '../shared/checker'
+{checkAnswer} = require '../shared/checker2'
 
 
 server = http.Server()
