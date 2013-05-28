@@ -2,7 +2,8 @@ doctype 5
 html(lang="en")
 	head
 		title STALKERMODE
-		link(rel="stylesheet", href="/protobowl.css")
+		link(rel="stylesheet", href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css")
+		
 		style
 			.offline {
 				color: #BBB;
@@ -124,18 +125,6 @@ html(lang="en")
 
 			p #{mem} #{os_text}
 
-			if gammasave
-				p
-					a(href="/stalkermode/gamma-off") Disable High Frequency Saving
-
-				h3 WARNING! HIGH FREQUENCY SAVE ENABLED 
-					mixin time(gammasave)
-			else
-				p
-					a(href="/stalkermode/hulk-smash") Enable High Frequency Saving
-
-
-
 			- var online = 0, active_users = 0, points = 0, room_num = 0, online_rooms = 0, active_rooms = 0, time_spent = 0, total_users = 0, muwave_online = 0, muwave_users = 0
 			each room, room_name in rooms
 				- room_num++
@@ -179,7 +168,6 @@ html(lang="en")
 			hr
 
 			ul
-				mixin display_user(reaped)
 				- var sorted_names = Object.keys(rooms).sort(function(b,a){return weight_room(rooms[a]) - weight_room(rooms[b])})
 				each room_name in sorted_names
 					- var room = rooms[room_name]

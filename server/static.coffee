@@ -26,7 +26,9 @@ app.get '/', (req, res) -> res.redirect '/lobby'
 
 app.get '/:name', (req, res) -> 
 	res.render 'debug/app.html'
-	
+
+app.get '/:channel/:name', (req, res) -> 
+	res.render 'debug/app.html'
 
 server.listen 5555, ->
 	console.log "main listening on port 5555"

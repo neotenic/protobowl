@@ -127,7 +127,7 @@ disconnect_notice = ->
 # this is the slightly overcomplicated system 
 has_connected = false
 sock = null
-
+socket_pair_index = 0
 
 online_startup = ->
 	reconnect = ->
@@ -136,6 +136,13 @@ online_startup = ->
 		
 		if protobowl_config?.auth
 			authcookie = jQuery.cookie('protoauth')
+		
+		if 'ninja' of location.query
+			xhr = new XMLHttpRequest()
+			xhr.open 'get', protobowl_config.sockets[0][0] + 'stalkermode/ninjacode', false
+			xhr.send()
+			authcookie = xhr.responseText
+
 
 		if !cookie
 			dict = ''
@@ -179,6 +186,8 @@ online_startup = ->
 		if sock
 			sock.removeAllListeners()
 		
+		if socket_pair_index > 0
+			addImportant($("<div>").html('<strong>Warning</strong> You are not connected to the primary socket server. The primary server may be broken at this time, however, if it gets fixed, users may be stranded on different rooms.').addClass('alert'))
 		sock = socket
 		if sock is secure_socket
 			verbAnnotation {verb: "established a connection to the secure server"}
@@ -225,15 +234,26 @@ online_startup = ->
 		num_failures++
 		if num_failures is valid_attempts
 			# everything has failed, life is a failure
-			offline_startup()
+			
+			if protobowl_config?.sockets?.length > socket_pair_index + 1
+				# protobowl_config?.sockets.shift()
+				socket_pair_index++
+				online_startup()
+			else
+				console.log 'errythings failed capn'
+				offline_startup()
+				
 			# console.log 'connection error', num_failures, valid_attempts, e
 
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
 	connection_timeout = 5000
+	
+	socket_pair = protobowl_config?.sockets[socket_pair_index]
 
+	[insecure_url, secure_url] = socket_pair
 
-	insecure_socket = io.connect protobowl_config?.sockets?[0] || location.hostname, {
+	insecure_socket = io.connect insecure_url || location.hostname, {
 		"connect timeout": connection_timeout,
 		"force new connection": true
 	}
@@ -242,8 +262,8 @@ online_startup = ->
 	insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
 	insecure_socket.on 'error', connection_error
 
-	if location.protocol is 'http:' and protobowl_config?.sockets?[1]
-		secure_socket = io.connect protobowl_config?.sockets?[1], {
+	if location.protocol is 'http:' and secure_url
+		secure_socket = io.connect secure_url, {
 			"port": 443,
 			"connect timeout": connection_timeout,
 			"force new connection": true,

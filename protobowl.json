@@ -13,7 +13,7 @@
 		
 		"static": "http://localhost/Dropbox/Projects/protobowl/build/release/",
 		"origin": "/",
-		"sockets": ["http://localhost:5566/","http://localhost:5566/"],
+		"sockets": [["http://localhost:5566/","http://localhost:5566/"]],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
 	"debug": {
@@ -30,7 +30,7 @@
 		
 		"static": "/",
 		"origin": "/",
-		"sockets": ["http://localhost:5566/","http://localhost:5566/"],
+		"sockets": [["http://localhost:5566/","http://localhost:5566/"]],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
 	"target": "debug"

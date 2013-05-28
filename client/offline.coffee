@@ -43,10 +43,15 @@ Questions = new IDBStore {
 		
 		import_legacy_bookmarks()
 
-		update_storage_stats ->
-			$("#whale").fadeIn()
-			$("#whale input").keyup()
-
+		update_storage_stats (total) ->
+			if total > 20
+				$("#whale").fadeIn()
+				$("#whale input").keyup()
+			else
+				setTimeout ->
+					$("#whale").fadeIn()
+					$("#whale input").keyup()
+				, 1000 * 10
 			setTimeout check_import_external, 1000
 }
 
@@ -340,7 +345,7 @@ update_storage_stats = (cb) ->
 			else
 				$('#whale .status').text ""
 			$('#whale .status').attr 'title', "#{total_count} searchable questions"
-			cb?()
+			cb?(total_count)
 
 		, { keyRange: Questions.makeKeyRange({lower: 1}), index: 'bookmarked' }
 	
@@ -801,4 +806,4 @@ get_parameters = (type, difficulty, cb) ->
 		, 100
 		return
 	cb get_difficulties(type), get_categories(type, difficulty)
-	console.log 'got parameters and stuff', get_difficulties(type), get_categories(type, difficulty)
+	# console.log 'got parameters and stuff', get_difficulties(type), get_categories(type, difficulty)
