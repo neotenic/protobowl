@@ -628,11 +628,12 @@ find_question = (qid, callback) ->
 		
 
 set_bookmark = (qid, state) ->
-	# console.log 'setting book', qid, state
+	console.log 'setting book', qid, state
 	find_question qid, (question) ->
 		# console.log 'setting bookmark', qid, question, state
 		if question
 			question.bookmarked = state
+			question.modified = Date.now()
 			Questions.put question, (e) ->
 				# console.log 'updated bookmarked state'
 				check_bookmark qid
@@ -646,9 +647,12 @@ check_bookmark = (qid) ->
 	find_question qid, (question) ->
 		# console.log 'checking bookmark', qid, question
 		if question
-			bookmarked = Math.round(question.bookmarked)
+			bookmarked = question.bookmarked
 			bundle = $(".qid-#{qid}")
 				.toggleClass('bookmarked', !!bookmarked)
+				.toggleClass('bookmark-2', bookmarked is 2)
+				.toggleClass('bookmark-3', bookmarked is 3)
+				.toggleClass('bookmark-4', bookmarked >= 4)
 			bundle.find('.bookmark')
 				.toggleClass('icon-star-empty', !bookmarked)
 				.toggleClass('icon-star', !!bookmarked)

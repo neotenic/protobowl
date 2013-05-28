@@ -29,7 +29,9 @@ Questions = new IDBStore {
 		{ name: 'tournament', keyPath: 'tournament', unique: false },
 		{ name: 'answer', keyPath: 'answer', unique: false },
 		{ name: 'bookmarked', keyPath: 'bookmarked', unique: false },
+		{ name: 'modified', keyPath: 'modified', unique: false },
 		{ name: 'add_time', keyPath: 'add_time', unique: false },
+		{ name: 'search_order', keyPath: ['bookmarked', 'modified']},
 		{ name: 'type_difficulty_category_inc', keyPath: ['type', 'difficulty', 'category', 'inc_random']},
 		{ name: 'type_difficulty_category', keyPath: ['type', 'difficulty', 'category']},
 		{ name: 'type_difficulty', keyPath: ['type', 'difficulty'] }
@@ -122,7 +124,8 @@ import_batch = ->
 				difficulty: question.difficulty,
 				inc_random: Math.random(),
 				seen: 0,
-				bookmarked: ((Date.now() - 1000000000000) / 1e17),
+				bookmarked: 0,
+				modified: Date.now(),
 				num: question.num,
 				question: question.question,
 				round: question.round,
@@ -152,7 +155,8 @@ update_question_cache = (question)->
 			difficulty: room.info.difficulty,
 			inc_random: 1 + Math.random(),
 			add_time: Date.now(),
-			bookmarked: ((Date.now() - 1000000000000) / 1e17)
+			bookmarked: 0,
+			modified: Date.now()
 		}
 		Questions.put question, (f) ->
 			# console.log 'saved question', f
@@ -194,7 +198,8 @@ import_legacy_bookmarks = ->
 	try
 		bookmarks = JSON.parse(localStorage.bookmarks)
 	for question in bookmarks || []
-		question.bookmarked = 1 + ((Date.now() - 1000000000000) / 1e17)
+		question.bookmarked = 1
+		question.modified = Date.now()
 		save_question question
 	delete localStorage.bookmarks
 
@@ -232,6 +237,8 @@ $("#whale input").keyup (e) ->
 	query_string = $("#whale input").val()
 	
 	$("#bookmarks .booktop").remove()
+	$('#bookmarks .pager').slideUp 'fast', ->
+		$(this).remove()
 
 	last_cursor = $("<span>").addClass('booktop').prependTo("#bookmarks")
 	finish_query = ->
@@ -257,6 +264,11 @@ $("#whale input").keyup (e) ->
 		else if match_count >= MAX_RESULTS
 			tranny.abort()
 			finish_query()
+			pager = $("<ul>").addClass('pager')
+			pager.append($("<li class='previous'>").toggleClass('disabled', true).append($("<a href='#'>&larr; Previous</a>")))
+			pager.append($("<li class='next'>").append($("<a href='#'>Next &rarr;</a>")))
+			$("#bookmarks").append(pager.hide())
+			pager.fadeIn()
 		else
 			# console.log item
 			is_match = JSON.stringify(item).match(query) and room.qid isnt item.qid and room.answer isnt item.answer

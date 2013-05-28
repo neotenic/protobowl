@@ -1080,10 +1080,13 @@ create_bundle = (info) ->
 			
 			# toggle_bookmark info, info.bookmarked
 			
-			if bundle.hasClass('bookmarked')
-				set_bookmark info.qid, ((Date.now() - 1000000000000) / 1e17)
+			if e.shiftKey
+				find_question info.qid, (snapshot) ->
+					set_bookmark info.qid, snapshot.bookmarked + 1
+			else if bundle.hasClass('bookmarked')
+				set_bookmark info.qid, 0
 			else
-				set_bookmark info.qid, 1 + ((Date.now() - 1000000000000) / 1e17)
+				set_bookmark info.qid, 1
 			# console.log 'changing stuff'
 
 	# star.toggleClass 'icon-star-empty', !info.bookmarked
