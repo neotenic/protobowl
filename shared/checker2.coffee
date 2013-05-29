@@ -109,7 +109,7 @@ fuzzy_search = (needle, haystack) ->
 
 
 check_answer = (tokens, text) ->
-	stopwords = "derp rofl lmao lawl lole lol the on of is a in on that have for at so it do or de y by any and".split(' ')
+	stopwords = "to the that on of is a in on that have for at so it do or de y by any and his her my by him she battle".split(' ')
 
 	judgements = []
 	index = 0
@@ -124,12 +124,13 @@ check_answer = (tokens, text) ->
 		# evaluate errything
 		for [bold, token] in front
 			match = fuzzy_search(token, text)
+			trivial = token.toLowerCase() in stopwords
 			bold_match.push token if match and bold
-			unbold_match.push token if match and !bold
-			unbold_miss.push token if !match and !bold
+			unbold_match.push token if match and !bold and !trivial
+			unbold_miss.push token if !match and !bold and !trivial
 			bold_miss.push token if !match and bold
 			bolded.push token if bold
-			unbold.push token if !bold
+			unbold.push token if !bold and !trivial
 		
 		matchiness = bold_match.length + unbold_match.length #+ (0.002 / (index + 20))
 
@@ -212,7 +213,8 @@ setTimeout ->
 		["Works Progress Administration", "WPA"]
 		["{Blu-ray discs}", "blu ray disk"]
 		["{Dinosaur Comics} [prompt on {qwantz.com}]", "hi"],
-		["U.S. Presidential election of {1896}", "1896", "1876"]
+		["U.S. Presidential election of {1896}", "1896", "1876"],
+		["Battle of {Actium}", "battle of"]
 	]
 	for [line, guesses...] in testing
 
