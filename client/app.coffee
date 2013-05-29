@@ -351,9 +351,7 @@ class QuizRoomSlave extends QuizRoom
 	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
 
 	get_parameters: (type, difficulty, cb) ->
-		console.log 'tryign to get parameters'
 		@load_questions ->
-			console.log 'getting params'
 			get_parameters(type, difficulty, cb)
 
 	count_questions: (type, difficulty, category, cb) ->

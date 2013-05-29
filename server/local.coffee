@@ -21,18 +21,28 @@ filterQuestions = (diff, cat) ->
 fisher_yates = (i) ->
 	return [] if i is 0
 	arr = [0...i]
-	while --i
+	while --igoo
 		j = Math.floor(Math.random() * (i+1))
 		[arr[i], arr[j]] = [arr[j], arr[i]] 
 	arr
 
+
 initialize_remote = (cb) -> 
 	fs = require 'fs'
-	fs.readFile 'static/sample.txt', 'utf8', (err, data) ->
-		throw err if err
-		questions = (JSON.parse(line) for line in data.split("\n") when line)
-		console.log "parsed #{questions.length} questions"
-		cb() if cb
+	https = require 'https'
+	https.request {
+		hostname: 'googledrive.com',
+		port: 443,
+		path: '/host/0ByNPLvkdItdITjhJN1Q1aThoTFE/sample.txt',
+		method: 'GET',
+		rejectUnauthorized: false
+	}, (res) ->
+		data = ''
+		res.on 'data', (chunk) -> data += chunk
+		res.on 'end', ->
+			questions = (JSON.parse(line) for line in data.split("\n") when line)
+			console.log "parsed #{questions.length} questions"
+			cb() if cb
 
 
 handle_report = (data) -> console.log data

@@ -48,8 +48,8 @@ $(document).ready ->
 			auth_cookie(null)
 			switch_socket()
 
-		onready: ->
-			console.log 'now ready'
+		# onready: ->
+		# 	console.log 'now ready'
 			
 	}
 logged_in = (data) ->

@@ -295,7 +295,7 @@ render_search = ->
 		order: 'DESC'
 		onEnd: ->
 			finish_query()
-			console.log 'query is over'
+			# console.log 'query is over'
 		onError: (err) ->
 	}
 	if box.data('paginate-num') > 1
