@@ -9,11 +9,11 @@
 		"js_minify": true,
 
 		"development": false,
-		"auth": true, 
+		"auth": false, 
+		"cache_breaker": true,
 		
-		"static": "http://localhost/Dropbox/Projects/protobowl/build/release/",
-		"origin": "/",
-		"sockets": [["http://localhost:5566/","http://localhost:5566/"]],
+		"static": "//neotenic.github.io/",
+		"sockets": [["http://dino.xvm.mit.edu:5566/"]],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
 	"debug": {
@@ -27,9 +27,9 @@
 
 		"development": true,
 		"auth": true, 
+		"cache_breaker": false,
 		
 		"static": "/",
-		"origin": "/",
 		"sockets": [["http://localhost:5566/","http://localhost:5566/"]],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},

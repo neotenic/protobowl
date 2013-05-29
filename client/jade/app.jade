@@ -17,7 +17,10 @@ html(lang="en")
 		style
 			.navbar, .sidebar, .actionbar, #team_modal, .modal-footer, .modal-header { display: none; }
 		
-		link(rel='stylesheet', href='#{static}protobowl.css')
+		if cache_breaker
+			link(rel='stylesheet', href='#{static}protobowl.css?#{Date.now()}')
+		else
+			link(rel='stylesheet', href='#{static}protobowl.css')
 
 		//if IE 7
 			link(rel='stylesheet', href='//netdna.bootstrapcdn.com/font-awesome/3.1.1/css/font-awesome-ie7.css')
@@ -457,8 +460,10 @@ html(lang="en")
 
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js")
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
-		
-		script(src="#{static}app.js")
+		if cache_breaker
+			script(src="#{static}app.js?#{Date.now()}")
+		else
+			script(src="#{static}app.js")
 
 		if auth && !offline
 			script(src="https://login.persona.org/include.js")

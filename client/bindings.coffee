@@ -420,7 +420,7 @@ $('body').keydown (e) ->
 			me.guess { text: '', done: true }
 		# console.log e.keyCode
 
-	console.log e.keyCode
+	# console.log e.keyCode
 
 
 $('.speed').change ->

@@ -954,3 +954,21 @@ app.get '/perf-histogram', (req, res) -> res.end util.inspect(perf_hist)
 app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
 app.post '/401', (req, res) -> remote.authenticate(req, res)
+
+app.get '/:channel/:name', (req, res) ->
+	options = url.parse(req.url)
+	options.host = 'protobowl.com'
+	res.writeHead 301, {Location: url.format(options)}
+	res.end()
+
+app.get '/:name', (req, res) ->
+	options = url.parse(req.url)
+	options.host = 'protobowl.com'
+	res.writeHead 301, {Location: url.format(options)}
+	res.end()
+
+app.get '/', (req, res) ->
+	options = url.parse(req.url)
+	options.host = 'protobowl.com'
+	res.writeHead 301, {Location: url.format(options)}
+	res.end()

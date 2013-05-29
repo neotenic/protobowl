@@ -277,7 +277,7 @@ $("#whale input").keyup (e) ->
 			$("#whale input").keyup()
 			return false
 
-		pager.append($("<li class='previous'>").toggleClass('disabled', !box.data('paginate-keys')[page_num-2]).append(prevlink))
+		pager.append($("<li class='previous'>").toggleClass('disabled', !box.data('paginate-keys')[page_num-1]).append(prevlink))
 		pager.append($("<li>").addClass('page-num').text("Page #{page_num}"))
 		nextlink = $("<a href='#'>Next &rarr;</a>").click ->
 			return false if $(this).parent().hasClass('disabled')

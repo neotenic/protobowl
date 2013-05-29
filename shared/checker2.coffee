@@ -13,7 +13,7 @@ tokenize_line = (answer) ->
 			bold = true
 		else if token is '}'
 			bold = false
-		else
+		else if token not in ['-', ':', '=', '&', '%', ';']
 			processed.push [bold, token]
 	
 	buffer = []
@@ -206,6 +206,7 @@ check_answer = (tokens, text) ->
 # 		["Redskins [accept Washington before mention; accept Redskins at any time]", "Redskins"],
 # 		["Jerome David {Salinger}", "Salinger", "JD Salinger", "J.D. Salinger", "Jerome", "David"],
 # 		["Works Progress Administration", "WPA"]
+# 		["{Blu-ray discs}", "blu ray disk"]
 # 	]
 # 	for [line, guesses...] in testing
 
