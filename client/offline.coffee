@@ -130,7 +130,7 @@ import_batch = ->
 				inc_random: Math.random(),
 				seen: 0,
 				bookmarked: 0,
-				modified: Date.now(),
+				modified: Date.now() - 1000 * 60 * 60 * 24 * 365,
 				num: question.num,
 				question: question.question,
 				round: question.round,
