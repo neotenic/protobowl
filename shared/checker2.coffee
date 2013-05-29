@@ -65,6 +65,33 @@ tokenize_line = (answer) ->
 
 		[prefix, front, preposition, back, suffix]
 
+equivalence_map = do ->
+	list = [
+		['zero', 'zeroeth', 'zeroth', '0'],
+		['one', 'first', 'i', '1'],
+		['two', 'second', 'ii', '2'],
+		['three', 'third', 'iii', 'turd', '3'],
+		['four', 'forth', 'fourth', 'iv', '4'],
+		['fifth', 'five', 'v', '5'],
+		['sixth', 'six', 'vi', 'emacs', '6'],
+		['seventh', 'seven', 'vii', '7'],
+		['eight', 'eighth', '8', 'viii', 'iix'],
+		['nine', 'nein', 'ninth', 'ix', '9'],
+		['ten', 'tenth', '10', 'x'],
+		['eleventh', 'eleven', 'xi'],
+		['twelfth', 'twelveth', 'twelve', '12', 'xii'],
+		['thirteenth', 'thirteen', '13', 'xiii'],
+		['fourteenth', 'fourteen', 'ixv'],
+		['fifteenth', 'fifteen', '15', 'xv'],
+		['sixteenth', 'sixteen', '16', 'xvi']
+	]
+	map = {}
+	for group in list
+		for item in group
+			map[item] = group
+	return map
+	
+
 fuzzy_search = (needle, haystack) ->
 	# console.log needle, haystack
 	if removeDiacritics?
@@ -103,13 +130,20 @@ fuzzy_search = (needle, haystack) ->
 		frac = diff / Math.min(xylem.length, stem.length)
 		
 		return true if frac <= ERROR_RATIO
-		
+	
+	if needle of equivalence_map
+		for word in equivalence_map[needle]
+			if " #{haystack} ".indexOf(" #{word} ") isnt -1
+				return true
+
 
 	return false
 
 
 check_answer = (tokens, text) ->
-	stopwords = "to the that on of is a in on that have for at so it do or de y by any and his her my by him she battle".split(' ')
+	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
+
+	stopwords = "as to the that on of is a in on that have for at so it do or de y by any and his her my by him she battle".split(' ')
 
 	judgements = []
 	index = 0
@@ -214,7 +248,8 @@ setTimeout ->
 		["{Blu-ray discs}", "blu ray disk"]
 		["{Dinosaur Comics} [prompt on {qwantz.com}]", "hi"],
 		["U.S. Presidential election of {1896}", "1896", "1876"],
-		["Battle of {Actium}", "battle of"]
+		["Battle of {Actium}", "battle of"],
+		["Pope {Gregory XVI}", "gregory 16"]
 	]
 	for [line, guesses...] in testing
 
