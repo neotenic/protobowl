@@ -46,11 +46,11 @@ Questions = new IDBStore {
 		update_storage_stats (total) ->
 			if total > 20
 				$("#whale").fadeIn()
-				$("#whale input").keyup()
+				render_search()
 			else
 				setTimeout ->
 					$("#whale").fadeIn()
-					$("#whale input").keyup()
+					render_search()
 				, 1000 * 10
 			setTimeout check_import_external, 1000
 }
@@ -230,12 +230,8 @@ import_legacy_bookmarks = ->
 # 	update_visibility()
 	
 
-$("#whale input").keydown (e) ->
-	if e.keyCode is 27
-		$("#whale input").val('')
 
-$("#whale input").keyup (e) ->
-	return unless Questions.ready
+render_search = ->
 	box = $("#whale input")
 	query = new RegExp(box.val().split(/\ ?\,\ ?/).map(RegExp.quote).join('.*'), 'i')
 	
@@ -249,8 +245,8 @@ $("#whale input").keyup (e) ->
 	query_string = $("#whale input").val()
 	
 	$("#bookmarks .booktop").remove()
-	$('#bookmarks .pager').slideUp 'fast', ->
-		$(this).remove()
+	# $('#bookmarks .pager').slideUp 'fast', ->
+	# 	$(this).remove()
 
 	last_cursor = $("<span>").addClass('booktop').prependTo("#bookmarks")
 	finish_query = (paginate = false) ->
@@ -258,23 +254,21 @@ $("#whale input").keyup (e) ->
 		last_cursor.nextAll('.bundle').find('.readout').slideUp()
 
 		# do some cleanup so that the number of crap things is never too much
-		if $("#bookmarks .bundle:hidden").length > 2 * MAX_RESULTS
-			$("#bookmarks .bundle:hidden").slice(-MAX_RESULTS).remove()
+		# if $("#bookmarks .bundle:hidden").length > 2 * MAX_RESULTS
+		# 	$("#bookmarks .bundle:hidden").slice(-MAX_RESULTS).remove()
 
 		setTimeout ->
 			if $("#bookmarks .bundle:visible").length < 5
 				$("#bookmarks .bundle:visible:not(:first) .readout").slideUp()
 				$("#bookmarks .bundle:visible:first .readout").slideDown()
 		, 1000
-		
-		$('#bookmarks .pager').slideUp 'fast', ->
-			$(this).remove()
 
 		pager = $("<ul>").addClass('pager')
 		prevlink = $("<a href='#'>&larr; Previous</a>").click ->
 			return false if $(this).parent().hasClass('disabled')
 			box.data('paginate-num', page_num - 1)
-			$("#whale input").keyup()
+			# $("#bookmarks .bundle").slideUp()
+			render_search()
 			return false
 
 		pager.append($("<li class='previous'>").toggleClass('disabled', !box.data('paginate-keys')[page_num-1]).append(prevlink))
@@ -282,11 +276,18 @@ $("#whale input").keyup (e) ->
 		nextlink = $("<a href='#'>Next &rarr;</a>").click ->
 			return false if $(this).parent().hasClass('disabled')
 			box.data('paginate-num', page_num + 1)
-			$("#whale input").keyup()
+			# $("#bookmarks .bundle").slideUp()
+			render_search()
 			return false
 		pager.append($("<li class='next'>").toggleClass('disabled', !box.data('paginate-keys')[page_num]).append(nextlink))
-		$("#bookmarks").append(pager.hide())
-		pager.fadeIn()
+		
+
+		if $('#bookmarks .pager').length
+			$('#bookmarks .pager').slice(1).remove()
+			$('#bookmarks .pager').replaceWith(pager)
+		else
+			$("#bookmarks").append(pager.hide())
+			pager.fadeIn()
 
 	page_num = box.data('paginate-num')
 	search_options = {
@@ -302,6 +303,7 @@ $("#whale input").keyup (e) ->
 			upper: box.data('paginate-keys')[box.data('paginate-num') - 1]
 		}
 		# console.log search_options.keyRange, 'asdfoasdjfioajsdfoijasdf'
+	$("#bookmarks .matched").removeClass('matched')
 	Questions.iterate (item, cursor, tranny) ->
 		return unless item
 		if $("#whale input").val() isnt query_string
@@ -320,20 +322,46 @@ $("#whale input").keyup (e) ->
 				match_count++
 			if $("#bookmarks .qid-#{item.qid}").length
 				if is_match
-					last_cursor = $("#bookmarks .qid-#{item.qid}").insertAfter(last_cursor).slideDown()
+					last_cursor = $("#bookmarks .qid-#{item.qid}")
+						.insertAfter(last_cursor)
+						.slideDown()
+						.addClass('matched')
 				else
 					$("#bookmarks .qid-#{item.qid} .readout").slideUp()
-					$("#bookmarks .qid-#{item.qid}").slideUp()
+					$("#bookmarks .qid-#{item.qid}").addClass('hiding').slideUp ->
+						$(this).remove()
+
+					$('#bookmarks .pager').slideUp 'fast', ->
+						$(this).remove()
 
 			else
 				if is_match
+					$('#bookmarks .bundle:not(.matched):not(.hiding)').eq(0).addClass('hiding').slideUp ->
+						$(this).remove()
+
 					bundle = create_bundle(item)
 					bundle.find('.readout').hide()
-					last_cursor = bundle.hide().insertAfter(last_cursor).slideDown()
+					last_cursor = bundle
+						.hide()
+						.insertAfter(last_cursor)
+						.slideDown()
+						.addClass('matched')
 					update_visibility()
 
 	, search_options
 
+
+$("#whale input").keydown (e) ->
+	if e.keyCode is 27
+		$("#whale input").val('')
+
+
+$("#whale input").keyup (e) ->
+	return unless Questions.ready
+	text = $("#whale input").val()
+	if $("#whale input").data('last-text') isnt text
+		render_search()
+		$("#whale input").data('last-text', text)
 
 update_storage_stats = (cb) ->
 	return unless Questions.ready
