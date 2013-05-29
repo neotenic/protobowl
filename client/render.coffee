@@ -1037,7 +1037,8 @@ create_report_form = (info) ->
 			info.describe = describe
 			me.report_question info
 		
-		createAlert('Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.')
+		# createAlert('Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.')
+		createAlert('Reported Question', 'Protobowl has a new answer checking algorithm (finally!), it takes into account which words are bolded in the answer line to determine what to accept, prompt or reject. Please hit Edit and revise the bolding.')
 			.addClass('alert-success')
 			.insertAfter(div.parent().find('.annotations'))
 

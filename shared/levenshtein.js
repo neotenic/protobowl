@@ -14,8 +14,8 @@ var levenshtein = (function(){
 	function letter_cost(A, B) {
 		if(A.toLowerCase() == B.toLowerCase()) return 0;
 		
-		if(vowels.indexOf(A.toLowerCase()) != -1) return 0.2;
-		if(parseltongue.indexOf(A.toLowerCase()) != -1) return 0.2;
+		if(vowels.indexOf(A.toLowerCase()) != -1 && vowels.indexOf(B.toLowerCase()) != -1) return 0.2;
+		if(parseltongue.indexOf(A.toLowerCase()) != -1 && parseltongue.indexOf(B.toLowerCase()) != -1) return 0.2;
 
 		var Axy = letter_coord(A), Bxy = letter_coord(B);
 		if(Axy[0] < 0 || Bxy[0] < 0) return 1;
