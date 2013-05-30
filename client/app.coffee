@@ -48,7 +48,7 @@ initialize_offline = (cb = ->) ->
 	initialize_offline.initialized = true
 	$.ajax {
 		url: (protobowl_config?.static || '/') + 'offline.js',
-		cache: true,
+		cache: protobowl_config?.cache_breaker,
 		dataType: 'script',
 		success: cb
 	}
@@ -385,8 +385,8 @@ listen = (name, fn) -> me.__listeners[name] = fn
 # probably should figure out some more elegant way to do things, but then again
 # these things hardly actually need to be frequently added - it's mostly hacks
 listen 'echo', (data, fn) -> fn 'alive'
-# listen 'application_update', -> applicationCache.update() if applicationCache?
-# listen 'force_application_update', -> $('#update').data('force', true); applicationCache.update()
+listen 'application_update', -> cache_update?()
+listen 'force_application_update', -> cache_update?() # there is no longer a functional difference between force and non force
 listen 'impending_doom', -> impending_doom()
 listen 'redirect', (url) -> window.location = url
 listen 'alert', (text) -> window.alert text

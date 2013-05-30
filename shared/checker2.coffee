@@ -2,7 +2,7 @@
 
 tokenize_line = (answer) ->
 	tokens = answer
-		.replace(/([\{\}\[\]\;\-\:\,\&])/g, " $1 ") # wrap all the special delimiting symbols
+		.replace(/([\{\}\[\]\;\-\:\,\&\(\)])/g, " $1 ") # wrap all the special delimiting symbols
 		.replace(/\ +/g, ' ') # condense multiple spaces
 		.trim() # removing leading and trailing spaces
 		.split(' ') # split things up
@@ -258,6 +258,7 @@ check_answer = (tokens, text) ->
 # 		["{ectothermic} [or {poikilothermic}; accept {cold-blooded}, but {inform players} that they {properly should use}", "cold blooded"],
 # 		["{hair} [or {fur}]", "hari"]
 # 		["{rabindrath tagore}", "tagore rabinathat"]
+# 		["One {Hundred} Years of {Solitude} (or {Cien Anos} de {Soledad})", "cien anos de soledad"]
 # 	]
 # 	for [line, guesses...] in testing
 

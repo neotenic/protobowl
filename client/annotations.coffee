@@ -458,7 +458,7 @@ boldAnnotation = ({user, qid, time, answer}) ->
 	line.append userSpan(user).attr('title', formatTime(time))
 	line.append ' changed the answer line to '
 	line.append answer.replace(/\{/g, '<strong>').replace(/\}/g, '</strong>')
-	$(".bundle.qid-#{qid} .annotations").append line.hide()
+	$(".bundle.qid-#{qid} .annotations").prepend line.hide()
 
 	line.slideDown()
 
