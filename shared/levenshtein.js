@@ -2,8 +2,9 @@ var levenshtein = (function(){
 	// this is the standard qwerty keyboard,
 	// we can ignore all those weird dvorak people
 	
-	var qwerty = "1234567890qwertyuiopasdfghjkl;'\\zxcvbnm,./";
-	
+	// var qwerty = "1234567890qwertyuiopasdfghjkl;'\\zxcvbnm,./";
+	var qwerty = "qwertyuiopasdfghjkl;zxcvbnm,./";
+
 	function letter_coord(letter){
 		var index = qwerty.indexOf(letter.toLowerCase())
 		if(index < 0) return [-1, -1];
@@ -49,7 +50,8 @@ var levenshtein = (function(){
 				d[i][j] = Math.min( d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost );
 				
 				if(i > 1 && j > 1 && a.charAt(i - 1) == b.charAt(j-2) && a.charAt(i-2) == b.charAt(j-1)){
-					d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + cost)
+					// transposition
+					d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 0.4)
 				}
 			}
 		}

@@ -9,17 +9,20 @@ tokenize_line = (answer) ->
 	bold = false
 	processed = []
 	for token in tokens # loop to annotate each token with boldness state
+		# console.log token
 		if token is '{'
 			bold = true
 		else if token is '}'
 			bold = false
-		else if token not in ['-', ':', '=', '&', '%', ';']
+		else if token not in ['-', ':', '=', '&', '%']
 			processed.push [bold, token]
 	
+	# console.log processed
+
 	buffer = []
 	completed = []
 	for [bold, token] in processed # loop to split different statements
-		if token.toLowerCase() in ['[', 'or', ';', ']', '(', ')', ',', 'and', 'but']
+		if token.toLowerCase().trim() in ['[', 'or', ';', ']', '(', ')', ',', 'and', 'but']
 			completed.push buffer if buffer.length
 			buffer = []
 		else
@@ -33,7 +36,7 @@ tokenize_line = (answer) ->
 		prefix_words = ["do","not","accept","or","prompt", "on", "just", "don't"]
 		# ,"on", "either", "underlined", "portion", "equivalents", "equivalent", "word", "forms", "like", "any", "other", "in", "order"
 		suffix_words = ["is", "read", "stated", "mentioned", "at", "any", "time"]
-		splitters = ["before", "after", "during", "while", "until"]
+		splitters = ["before", "after", "during", "while", "until", "but"]
 		prefix = []
 		for [bold, token] in group # find all the words which belong as a prefix
 			if token in prefix_words # maybe in the future, ignore bolded words
@@ -93,7 +96,7 @@ equivalence_map = do ->
 	
 
 fuzzy_search = (needle, haystack) ->
-	# console.log needle, haystack
+	console.log needle, haystack
 	if removeDiacritics?
 		remove_diacritics = removeDiacritics 
 	else
@@ -121,7 +124,7 @@ fuzzy_search = (needle, haystack) ->
 		plain = damlev(word, needle)
 		plaid = plain / Math.min(word.length, needle.length)
 		
-		# console.log plaid, word, needle
+		console.log plaid, word, needle
 
 		return true if plaid <= ERROR_RATIO
 		
@@ -183,9 +186,9 @@ check_answer = (tokens, text) ->
 			else
 				level = 0
 				
-		console.log prefix, front, preposition, back, suffix
-		console.log bolded, unbold
-		console.log bold_match, unbold_match, bold_miss, text, level, matchiness
+		# console.log prefix, front, preposition, back, suffix
+		# console.log bolded, unbold
+		# console.log bold_match, unbold_match, bold_miss, text, level, matchiness
 
 		if 'not' in prefix
 			0 # noop can not handle these things
@@ -227,38 +230,40 @@ check_answer = (tokens, text) ->
 
 
 
-# setTimeout ->
-# 	testing = [
-# 		["The {Persistence} of {Memory}", "persistance"],
-# 		["The {Scream} [or {Skrik}; accept The {Cry}]", "Cry"],
-# 		["The {Daily} Show with Jon Stewart", "Daily Show"],
-# 		["{Cleveland Browns} [accept either]", "Brown"],
-# 		["{Oakland Athletics} [accept either underlined portion; accept A's]", "Oakland"],
-# 		["The Lord of the Rings: The Return of the King", "LOTR"],
-# 		["Yellow (accept Yellow Sarong before Sarong is mentioned)", "Yelow"],
-# 		["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "Bioshock 2"],
-# 		["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "Los Angeles"],
-# 		["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "The Dark Knight"],
-# 		['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "iching"],
-# 		["Georgia Tech [do not accept or prompt on just Georgia]", "Georgia"],
-# 		["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
-# 		["Redskins [accept Washington before mention; accept Redskins at any time]", "Redskins"],
-# 		["Jerome David {Salinger}", "Salinger", "JD Salinger", "J.D. Salinger", "Jerome", "David"],
-# 		["Works Progress Administration", "WPA"]
-# 		["{Blu-ray discs}", "blu ray disk"]
-# 		["{Dinosaur Comics} [prompt on {qwantz.com}]", "hi"],
-# 		["U.S. Presidential election of {1896}", "1896", "1876"],
-# 		["Battle of {Actium}", "battle of"],
-# 		["Pope {Gregory XVI}", "gregory 16"]
-# 	]
-# 	for [line, guesses...] in testing
+setTimeout ->
+	testing = [
+		["The {Persistence} of {Memory}", "persistance"],
+		["The {Scream} [or {Skrik}; accept The {Cry}]", "Cry"],
+		["The {Daily} Show with Jon Stewart", "Daily Show"],
+		["{Cleveland Browns} [accept either]", "Brown"],
+		["{Oakland Athletics} [accept either underlined portion; accept A's]", "Oakland"],
+		["The Lord of the Rings: The Return of the King", "LOTR"],
+		["Yellow (accept Yellow Sarong before Sarong is mentioned)", "Yelow"],
+		["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "Bioshock 2"],
+		["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "Los Angeles"],
+		["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "The Dark Knight"],
+		['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "iching"],
+		["Georgia Tech [do not accept or prompt on just Georgia]", "Georgia"],
+		["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
+		["Redskins [accept Washington before mention; accept Redskins at any time]", "Redskins"],
+		["Jerome David {Salinger}", "Salinger", "JD Salinger", "J.D. Salinger", "Jerome", "David"],
+		["Works Progress Administration", "WPA"]
+		["{Blu-ray discs}", "blu ray disk"]
+		["{Dinosaur Comics} [prompt on {qwantz.com}]", "hi"],
+		["U.S. Presidential election of {1896}", "1896", "1876"],
+		["Battle of {Actium}", "battle of"],
+		["Pope {Gregory XVI}", "gregory 16"],
+		["{ectothermic} [or {poikilothermic}; accept {cold-blooded}, but {inform players} that they {properly should use}", "cold blooded"],
+		["{hair} [or {fur}]", "hari"]
+	]
+	for [line, guesses...] in testing
 
-# 		console.time('checking answer')
-# 		tokens = tokenize_line(line)
-# 		for guess in guesses
-# 			console.log line, guess, check_answer tokens, guess
-# 		console.timeEnd('checking answer')
-# , 1000
+		console.time('checking answer')
+		tokens = tokenize_line(line)
+		for guess in guesses
+			console.log line, guess, check_answer tokens, guess
+		console.timeEnd('checking answer')
+, 1000
 
 safeCheckAnswer = (compare, answer, question) ->
 	tokens = tokenize_line(answer)
