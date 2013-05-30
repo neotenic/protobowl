@@ -193,7 +193,7 @@ class QuizPlayer
 
 	nominate: ->
 		@touch()
-		return if @room.escalate > 2
+		return if @room.escalate > @room.acl.unlocked
 
 		if @elect_embargo and @elect_embargo > @room.serverTime()
 			@notify 'can not run for reelection for another ' + Math.ceil((@elect_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'

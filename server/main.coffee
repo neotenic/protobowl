@@ -56,13 +56,6 @@ io.configure 'development', ->
 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
-
-exports.new_update = (err) ->
-	if err
-		io.sockets.emit 'debug', err
-	else
-		io.sockets.emit 'force_application_update', Date.now()
-
 codename = namer.generateName()
 
 console.log "hello from protobowl v4, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
@@ -955,19 +948,7 @@ app.get '/401', (req, res) -> res.render 'auth.jade', {}
 
 app.post '/401', (req, res) -> remote.authenticate(req, res)
 
-app.get '/:channel/:name', (req, res) ->
-	options = url.parse(req.url)
-	options.host = 'protobowl.com'
-	res.writeHead 301, {Location: url.format(options)}
-	res.end()
-
-app.get '/:name', (req, res) ->
-	options = url.parse(req.url)
-	options.host = 'protobowl.com'
-	res.writeHead 301, {Location: url.format(options)}
-	res.end()
-
-app.get '/', (req, res) ->
+app.get '*', (req, res) ->
 	options = url.parse(req.url)
 	options.host = 'protobowl.com'
 	res.writeHead 301, {Location: url.format(options)}

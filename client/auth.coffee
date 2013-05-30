@@ -34,24 +34,25 @@ auth_cookie = (new_cookie) ->
 auth_cookie()
 
 $(document).ready ->
-	navigator?.id?.watch {
-		loggedInUser: auth?.email,
-		onlogin: (ass) -> # this is a rather unfortunate variable name
-			assertion = ass
-			if connected() and has_connected
-				me.link assertion
+	if protobowl_config?.auth
+		navigator?.id?.watch {
+			loggedInUser: auth?.email,
+			onlogin: (ass) -> # this is a rather unfortunate variable name
+				assertion = ass
+				if connected() and has_connected
+					me.link assertion
 
-		onlogout: ->
-			assertion = null
-			if auth
-				verbAnnotation {verb: "logging out of the current authenticated session"}
-			auth_cookie(null)
-			switch_socket()
+			onlogout: ->
+				assertion = null
+				if auth
+					verbAnnotation {verb: "logging out of the current authenticated session"}
+				auth_cookie(null)
+				switch_socket()
 
-		# onready: ->
-		# 	console.log 'now ready'
-			
-	}
+			# onready: ->
+			# 	console.log 'now ready'
+		}
+
 logged_in = (data) ->
 	assertion = null	
 	if data?.status isnt 'okay'

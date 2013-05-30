@@ -386,6 +386,10 @@ $('body').keydown (e) ->
 			skip()
 	else if e.keyCode in [78, 74] # N, J
 		next()
+	else if e.keyCode in [72] # H
+		$("#bookmarks .pager .previous a").click()
+	else if e.keyCode in [76] # L
+		$("#bookmarks .pager .next a").click()
 	else if e.keyCode in [75]
 		# toggle the thing for the most recent question
 		$('.bundle:not(.active):first .readout').slideToggle()
@@ -420,7 +424,8 @@ $('body').keydown (e) ->
 			me.guess { text: '', done: true }
 		# console.log e.keyCode
 
-	# console.log e.keyCode
+	if protobowl_config?.development
+		console.log e.keyCode
 
 
 $('.speed').change ->

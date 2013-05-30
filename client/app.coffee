@@ -377,6 +377,8 @@ room = new QuizRoomSlave(location.pathname.replace(/^\/*/g, '').toLowerCase() ||
 room.type = (if room.name.split('/').length is 2 then room.name.split('/')[0] else 'qb')
 me = new QuizPlayerSlave(room, 'temporary')
 
+document.title = "#{room.name} - Protobowl"
+
 # look at all these one liner events!
 listen = (name, fn) -> me.__listeners[name] = fn
 

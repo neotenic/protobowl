@@ -383,7 +383,7 @@ render_lock = ->
 	
 	$('.request-access button').disable !!me.elect
 
-	$('.globalsettings').toggleClass 'escalate', !(room.escalate > 2)
+	$('.globalsettings').toggleClass 'escalate', !(room.escalate > room.acl.unlocked)
 
 	if me.authorized()
 		# woo ima adminiman
