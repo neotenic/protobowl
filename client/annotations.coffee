@@ -450,6 +450,19 @@ reprimandAnnotation = ({time, trigger, reason}) ->
 
 
 
+boldAnnotation = ({user, qid, time, answer}) ->
+	setTimeout ->
+		$('.bundle .ruling').tooltip('destroy')
+	, 100
+	line = $("<p>").addClass 'log'
+	line.append userSpan(user).attr('title', formatTime(time))
+	line.append ' changed the answer line to '
+	line.append answer.replace(/\{/g, '<strong>').replace(/\}/g, '</strong>')
+	$(".bundle.qid-#{qid} .annotations").append line.hide()
+
+	line.slideDown()
+
+
 verbAnnotation = ({user, verb, time, notify}) ->
 	# destroy the tooltip
 	setTimeout ->

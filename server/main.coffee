@@ -199,11 +199,12 @@ class SocketQuizPlayer extends QuizPlayer
 
 	change_bold: (data) ->
 		mongoose = require 'mongoose'
-		remote.Question.findById mongoose.Types.ObjectId(data.id), (err, doc) ->
+		remote.Question.findById mongoose.Types.ObjectId(data.id), (err, doc) =>
 			return if err
 			if data.answer.replace(/[^a-z]/ig, '') is doc.answer.replace(/[^a-z]/ig, '')
 				doc.answer = data.answer
 				doc.save()
+				@emit 'bold', { user: @id, qid: data.id, time: @room.serverTime(), answer: doc.answer }
 
 
 	report_answer: (data) ->

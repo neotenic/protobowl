@@ -96,7 +96,7 @@ equivalence_map = do ->
 	
 
 fuzzy_search = (needle, haystack) ->
-	console.log needle, haystack
+	# console.log needle, haystack
 	if removeDiacritics?
 		remove_diacritics = removeDiacritics 
 	else
@@ -124,13 +124,16 @@ fuzzy_search = (needle, haystack) ->
 		plain = damlev(word, needle)
 		plaid = plain / Math.min(word.length, needle.length)
 		
-		console.log plaid, word, needle
+		# console.log plaid, word, needle
 
 		return true if plaid <= ERROR_RATIO
 		
 		xylem = stemmer(word)
 		diff = damlev(xylem, stem)
 		frac = diff / Math.min(xylem.length, stem.length)
+
+
+		# console.log frac, word, needle
 		
 		return true if frac <= ERROR_RATIO
 	
@@ -146,7 +149,7 @@ fuzzy_search = (needle, haystack) ->
 check_answer = (tokens, text) ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
 
-	stopwords = "as to the that on of is a in on that have for at so it do or de y by any and his her my by him she battle".split(' ')
+	stopwords = "as to the that on of is a in on that have for at so it do or de la y by any and his her my by him she battle".split(' ')
 
 	judgements = []
 	index = 0
@@ -229,41 +232,41 @@ check_answer = (tokens, text) ->
 	
 
 
+# setTimeout ->
+# 	testing = [
+# 		["The {Persistence} of {Memory}", "persistance"],
+# 		["The {Scream} [or {Skrik}; accept The {Cry}]", "Cry"],
+# 		["The {Daily} Show with Jon Stewart", "Daily Show"],
+# 		["{Cleveland Browns} [accept either]", "Brown"],
+# 		["{Oakland Athletics} [accept either underlined portion; accept A's]", "Oakland"],
+# 		["The Lord of the Rings: The Return of the King", "LOTR"],
+# 		["Yellow (accept Yellow Sarong before Sarong is mentioned)", "Yelow"],
+# 		["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "Bioshock 2"],
+# 		["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "Los Angeles"],
+# 		["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "The Dark Knight"],
+# 		['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "iching"],
+# 		["Georgia Tech [do not accept or prompt on just Georgia]", "Georgia"],
+# 		["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
+# 		["Redskins [accept Washington before mention; accept Redskins at any time]", "Redskins"],
+# 		["Jerome David {Salinger}", "Salinger", "JD Salinger", "J.D. Salinger", "Jerome", "David", "Jerome David"],
+# 		["Works Progress Administration", "WPA"]
+# 		["{Blu-ray discs}", "blu ray disk"]
+# 		["{Dinosaur Comics} [prompt on {qwantz.com}]", "hi"],
+# 		["U.S. Presidential election of {1896}", "1896", "1876"],
+# 		["Battle of {Actium}", "battle of"],
+# 		["Pope {Gregory XVI}", "gregory 16"],
+# 		["{ectothermic} [or {poikilothermic}; accept {cold-blooded}, but {inform players} that they {properly should use}", "cold blooded"],
+# 		["{hair} [or {fur}]", "hari"]
+# 		["{rabindrath tagore}", "tagore rabinathat"]
+# 	]
+# 	for [line, guesses...] in testing
 
-setTimeout ->
-	testing = [
-		["The {Persistence} of {Memory}", "persistance"],
-		["The {Scream} [or {Skrik}; accept The {Cry}]", "Cry"],
-		["The {Daily} Show with Jon Stewart", "Daily Show"],
-		["{Cleveland Browns} [accept either]", "Brown"],
-		["{Oakland Athletics} [accept either underlined portion; accept A's]", "Oakland"],
-		["The Lord of the Rings: The Return of the King", "LOTR"],
-		["Yellow (accept Yellow Sarong before Sarong is mentioned)", "Yelow"],
-		["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "Bioshock 2"],
-		["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "Los Angeles"],
-		["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "The Dark Knight"],
-		['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "iching"],
-		["Georgia Tech [do not accept or prompt on just Georgia]", "Georgia"],
-		["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
-		["Redskins [accept Washington before mention; accept Redskins at any time]", "Redskins"],
-		["Jerome David {Salinger}", "Salinger", "JD Salinger", "J.D. Salinger", "Jerome", "David"],
-		["Works Progress Administration", "WPA"]
-		["{Blu-ray discs}", "blu ray disk"]
-		["{Dinosaur Comics} [prompt on {qwantz.com}]", "hi"],
-		["U.S. Presidential election of {1896}", "1896", "1876"],
-		["Battle of {Actium}", "battle of"],
-		["Pope {Gregory XVI}", "gregory 16"],
-		["{ectothermic} [or {poikilothermic}; accept {cold-blooded}, but {inform players} that they {properly should use}", "cold blooded"],
-		["{hair} [or {fur}]", "hari"]
-	]
-	for [line, guesses...] in testing
-
-		console.time('checking answer')
-		tokens = tokenize_line(line)
-		for guess in guesses
-			console.log line, guess, check_answer tokens, guess
-		console.timeEnd('checking answer')
-, 1000
+# 		console.time('checking answer')
+# 		tokens = tokenize_line(line)
+# 		for guess in guesses
+# 			console.log line, guess, check_answer tokens, guess
+# 		console.timeEnd('checking answer')
+# , 1000
 
 safeCheckAnswer = (compare, answer, question) ->
 	tokens = tokenize_line(answer)

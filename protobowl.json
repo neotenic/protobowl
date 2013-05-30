@@ -5,7 +5,7 @@
 		"jade_debug": false,
 
 		"source_maps": false,
-		"mangle_vars": false,
+		"mangle_vars": true,
 		"js_minify": true,
 
 		"development": false,
