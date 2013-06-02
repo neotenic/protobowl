@@ -909,6 +909,11 @@ app.post '/stalkermode/reports/simple_change/:id', (req, res) ->
 		doc.save()
 		res.end('gots it')
 
+app.post '/stalkermode/reports/set_bold', (req, res) ->
+	mongoose = require 'mongoose'
+	remote.Question.update { answer: req.body.old }, { $set: { answer: req.body.answer, fixed: 1 }}, {multi: true}, (err) ->
+		res.end('merp')
+
 app.post '/stalkermode/reports/report_question/:id', (req, res) ->
 	mongoose = require 'mongoose'
 	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
@@ -935,7 +940,12 @@ app.get '/stalkermode/remaining', (req, res) ->
 app.get '/stalkermode/to_boldly_go', (req, res) ->
 	remote.Question.findOne { fixed: -1 }, (err, doc) ->
 		if !doc
-			remote.Question.findOne { fixed: null }, (err, doc) ->
+			# remote.Question.findOne { fixed: null }, (err, doc) ->
+			# 	res.end JSON.stringify doc
+			# return
+			cats = ["Science", "Fine Arts", "Literature", "Social Science", "History", "Geography", "Religion", "Trash", "Philosophy", "Mythology"]
+			cat = cats[Math.floor(cats.length * Math.random())]
+			remote.Question.find({fixed: null, difficulty: "HS", category: cat}).sort('inc_random').findOne (err, doc) ->
 				res.end JSON.stringify doc
 			return
 

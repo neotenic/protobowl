@@ -184,8 +184,9 @@ script
 		line.appendChild(document.createTextNode(' '))
 		line.appendChild(document.createTextNode(guess));
 		var rul = document.createElement('span');
-		rul.className = 'label ' + (ruling ? 'label-success':'label-warning');
-		rul.innerText = ruling ? 'Correct': 'Wrong';
+		rul.className = 'label ' + (ruling == 'prompt' ? 'label-info' : (ruling ? 'label-success':'label-warning'));
+
+		rul.innerText = ruling == 'prompt' ? 'Prompt': (ruling ? 'Correct': 'Wrong');
 		line.appendChild(document.createTextNode(' '))
 		line.appendChild(rul);
 		line.title = answer;

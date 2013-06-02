@@ -83,11 +83,17 @@ html(lang="en")
 				for (_j = 0, _len1 = parsed.length; _j < _len1; _j++) {
 				_ref = parsed[_j], mode = _ref[0], text = _ref[1];
 				link = $("<a>").toggleClass('bold', mode).appendTo($("<li>").appendTo("#magic")).text(text).attr('href', '#');
+				var q = text.trim().toLowerCase();
+				if(q == "republic" || q == "republica"){
+					link.removeClass('bold')	
+				}
+
 				if ((_ref1 = text.trim()) === '[' || _ref1 === ']' || _ref1 === ';' || _ref1 === ',' || _ref1 === '(' || _ref1 === ')' || _ref1 === '"' || _ref1 === '' || _ref1 === '”' || _ref1 === '“' || _ref1 === '-') {
 				if (text === ' ') link.hide();
 				link.removeClass('bold').addClass('unboldable').click(function() {
 				return false;
 				});
+
 				} else {
 				link.click(function() {
 				var line;
@@ -143,7 +149,13 @@ html(lang="en")
 			$('#submitline').click(function(){
 				$('#container').fadeOut('normal');
 				var parsed = $('#container').data('info')
+				/*
 				$.post('/stalkermode/reports/simple_change/' + parsed._id, {answer: extract_answerline2(), fixed: 1}, function(data, status){
+					console.log(data, status)
+					load_next();
+				})
+				*/
+				$.post('/stalkermode/reports/set_bold', {answer: extract_answerline2(), old: parsed.answer}, function(data, status){
 					console.log(data, status)
 					load_next();
 				})
