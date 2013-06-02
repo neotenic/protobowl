@@ -642,7 +642,7 @@ fs.watch "client/lib", watcher
 fs.watch "client/jade", watcher
 fs.watch "protobowl.json", force_watch
 fs.watch "server", watcher
-
+fs.watch "server/admin", watcher
 fs.watch "protobowl.json", watcher
 
 do_update()

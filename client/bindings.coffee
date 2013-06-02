@@ -372,6 +372,8 @@ $('body').keydown (e) ->
 		e.preventDefault()
 		open_chat("@$> ")
 
+	return if $(document.activeElement).is(':input')
+	
 	return if e.shiftKey or e.ctrlKey or e.metaKey
 
 	if e.keyCode is 32

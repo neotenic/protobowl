@@ -693,6 +693,7 @@ remote.ready ->
 	server.listen port, ->
 		console.log "listening on port", port
 
+app.use express.bodyParser()
 
 # authorization and redirects
 app.use (req, res, next) ->
@@ -907,6 +908,28 @@ app.post '/stalkermode/reports/simple_change/:id', (req, res) ->
 		doc.save()
 		res.end('gots it')
 
+app.post '/stalkermode/reports/report_question/:id', (req, res) ->
+	mongoose = require 'mongoose'
+	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
+		remote.handle_report {
+			type: doc.type,
+			category: doc.category,
+			num: doc.num,
+			tournament: doc.tournament,
+			question: doc.question,
+			answer: doc.answer,
+			difficulty: doc.difficulty,
+			year: doc.year,
+			round: doc.round,
+			qid: doc.id.toString(),
+			comment: "reported from stalkermode"
+		}
+		res.end('merp')
+
+
+app.get '/stalkermode/remaining', (req, res) ->
+	remote.count_unfixed (count) ->
+		res.end count.toString()
 
 app.get '/stalkermode/to_boldly_go', (req, res) ->
 	remote.Question.findOne { fixed: -1 }, (err, doc) ->
@@ -914,6 +937,7 @@ app.get '/stalkermode/to_boldly_go', (req, res) ->
 			remote.Question.findOne { fixed: null }, (err, doc) ->
 				res.end JSON.stringify doc
 			return
+
 		res.end JSON.stringify doc
 
 app.get '/stalkermode/reports/all', (req, res) ->

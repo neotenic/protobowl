@@ -1035,6 +1035,9 @@ create_report_form = (info) ->
 			if describe is 'category'
 				info.fixed_category = cat_list.val()
 			info.describe = describe
+			
+			info.comment = ragequit.val()
+
 			me.report_question info
 		
 		# createAlert('Reported Question', 'You have successfully reported a question. It will be reviewed and the database may be updated to fix the problem. Thanks.')

@@ -1,5 +1,3 @@
-
-
 tokenize_line = (answer) ->
 	tokens = answer
 		.replace(/([\{\}\[\]\;\-\:\,\&\(\)])/g, " $1 ") # wrap all the special delimiting symbols
@@ -112,7 +110,8 @@ fuzzy_search = (needle, haystack) ->
 	else
 		damlev = require('./levenshtein').levenshtein 
 
-	haystack = remove_diacritics(haystack.toLowerCase())
+	haystack = remove_diacritics(haystack)
+		.replace(/([A-Z])\.([A-Z])\./g, '$1$2') # this helps the acronym detector
 	needle = remove_diacritics(needle.toLowerCase())
 
 	return true if haystack.replace(/\s/g, '').indexOf(needle) != -1
@@ -121,6 +120,15 @@ fuzzy_search = (needle, haystack) ->
 	ERROR_RATIO = 0.2 # magic number i pulled out of my ass
 
 	for word in haystack.split(/\s|\-/)
+		if /^[A-Z]+$/.test(word) and 2 <= word.length <= 4
+			# check if it's an acronym
+			if word.toLowerCase().indexOf(needle[0]) isnt -1
+				# console.log 'acronym detector'
+				return true
+
+
+		word = word.toLowerCase()
+
 		plain = damlev(word, needle)
 		plaid = plain / Math.min(word.length, needle.length)
 		
@@ -131,11 +139,13 @@ fuzzy_search = (needle, haystack) ->
 		xylem = stemmer(word)
 		diff = damlev(xylem, stem)
 		frac = diff / Math.min(xylem.length, stem.length)
-
-
 		# console.log frac, word, needle
 		
 		return true if frac <= ERROR_RATIO
+
+		if needle.length > 6 and word.indexOf(needle.slice(0, 4)) is 0
+			# this is for incomplete statements and the ilk
+			return true
 	
 	if needle of equivalence_map
 		for word in equivalence_map[needle]
@@ -258,7 +268,10 @@ check_answer = (tokens, text) ->
 # 		["{ectothermic} [or {poikilothermic}; accept {cold-blooded}, but {inform players} that they {properly should use}", "cold blooded"],
 # 		["{hair} [or {fur}]", "hari"]
 # 		["{rabindrath tagore}", "tagore rabinathat"]
-# 		["One {Hundred} Years of {Solitude} (or {Cien Anos} de {Soledad})", "cien anos de soledad"]
+# 		["One {Hundred} Years of {Solitude} (or {Cien Anos} de {Soledad})", "cien anos de soledad"],
+# 		["{artificial intelligence}", "ai", "AI"]
+# 		["John Davison {Rockefeller}", "JD Rockefeller"]
+# 		["{Environmental Protection Agency}", "EPA"]
 # 	]
 # 	for [line, guesses...] in testing
 

@@ -68,7 +68,7 @@ fisher_yates = (i) ->
 
 check_import_external = ->
 	Questions.count (unread) ->
-		console.log 'counted unread questions', unread
+		# console.log 'counted unread questions', unread
 		if unread < 500
 			import_external()
 			

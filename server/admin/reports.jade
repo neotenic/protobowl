@@ -75,13 +75,15 @@ html(lang="en")
 			each report in reports
 				div.bundle(data-info="#{JSON.stringify(report)}",name="#{report.qid}")
 					ul.breadcrumb
-						li Category: #{report.category}
+						li #{report.category}
 						span.divider /
-						li Difficulty: #{report.difficulty}
+						li #{report.difficulty}
 						span.divider /
-						li Tournament: #{report.tournament}
+						li  #{report.tournament}
 						span.divider /
-						li Type: #{report.describe}
+						li  #{report.describe}
+						span.divider /
+						li #{report.comment}
 						li.answer.pull-right= report.answer
 					div.readout
 						div.well= report.question
