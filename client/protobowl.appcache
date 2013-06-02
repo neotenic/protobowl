@@ -5,6 +5,8 @@ CACHE:
 # INSERT_FILES
 
 //ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
+//netdna.bootstrapcdn.com/font-awesome/3.1.1/css/font-awesome.css
+//netdna.bootstrapcdn.com/font-awesome/3.1.1/font/fontawesome-webfont.woff?v=3.1.0
 
 NETWORK:
 *

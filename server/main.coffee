@@ -203,6 +203,7 @@ class SocketQuizPlayer extends QuizPlayer
 			return if err
 			if data.answer.replace(/[^a-z]/ig, '') is doc.answer.replace(/[^a-z]/ig, '')
 				doc.answer = data.answer
+				doc.fixed = 1
 				doc.save()
 				@emit 'bold', { user: @id, qid: data.id, time: @room.serverTime(), answer: doc.answer }
 

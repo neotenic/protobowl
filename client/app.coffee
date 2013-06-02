@@ -1,4 +1,4 @@
-#= library ./lib/socket.io.min.js
+#= library ./lib/socket.io.js
 #= library ./jade/runtime.js
 #= library ./jade/_compiled.js
 
@@ -252,27 +252,34 @@ online_startup = ->
 	socket_pair = protobowl_config?.sockets[socket_pair_index]
 
 	[insecure_url, secure_url] = socket_pair
+	try
+		valid_attempts++
 
-	insecure_socket = io.connect insecure_url || location.hostname, {
-		"connect timeout": connection_timeout,
-		"force new connection": true
-	}
-	valid_attempts++
-	insecure_socket.on 'connect', -> check_connection(insecure_socket)
-	insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
-	insecure_socket.on 'error', connection_error
+		insecure_socket = io.connect insecure_url || location.hostname, {
+			"connect timeout": connection_timeout,
+			"force new connection": true
+		}
+		insecure_socket.on 'connect', -> check_connection(insecure_socket)
+		insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
+		insecure_socket.on 'error', connection_error
+		
+	catch err
+		connection_error()
 
 	if location.protocol is 'http:' and secure_url
-		secure_socket = io.connect secure_url, {
-			"port": 443,
-			"connect timeout": connection_timeout,
-			"force new connection": true,
-			"secure": true
-		}
-		valid_attempts++
-		secure_socket.on 'connect', -> check_connection(secure_socket)
-		secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
-		secure_socket.on 'error', connection_error
+		try
+			valid_attempts++
+			secure_socket = io.connect secure_url, {
+				"port": 443,
+				"connect timeout": connection_timeout,
+				"force new connection": true,
+				"secure": true
+			}
+			secure_socket.on 'connect', -> check_connection(secure_socket)
+			secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
+			secure_socket.on 'error', connection_error
+		catch err
+			connection_error()
 
 
 

@@ -5,7 +5,7 @@
 		"jade_debug": false,
 
 		"source_maps": false,
-		"mangle_vars": false,
+		"mangle_vars": true,
 		"js_minify": true,
 
 		"development": false,
@@ -30,7 +30,7 @@
 		"cache_breaker": false,
 		
 		"static": "/",
-		"sockets": [["http://localhost:5566/","http://localhost:5566/"]],
+		"sockets": [["http://localhost:5566/"], ["http://192.168.1.100:5566/"]],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
 	"target": "debug"
