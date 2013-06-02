@@ -159,7 +159,7 @@ fuzzy_search = (needle, haystack) ->
 check_answer = (tokens, text) ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
 
-	stopwords = "as to the that on of is a in on that have for at so it do or de la y by any and his her my by him she battle".split(' ')
+	stopwords = "as to the that on of is a in on that have for at so it do or de la le y by any and his her my by him she battle".split(' ')
 
 	judgements = []
 	index = 0

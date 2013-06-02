@@ -595,7 +595,7 @@ process_queue = ->
 
 setInterval process_queue, 1000	
 
-perf_hist = (0 for i in [0..200])
+perf_hist = (0 for i in [0..100])
 
 check_performance = ->
 	t_now = Date.now()

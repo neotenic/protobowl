@@ -42,6 +42,8 @@ updater.on 'connect', (connection) ->
 	connection.on 'message', (message) ->
 		if message.utf8Data == 'recompile'
 			buildApplication(true)
+		else if message.utf8Data == 'release'
+			buildApplication(true, 'release')
 	# connection.sendUTF('rawr im a dinosaur')
 
 
@@ -131,15 +133,18 @@ path = require 'path'
 CoffeeHashCache = {}
 
 
-buildApplication = (force_update = false) ->
+buildApplication = (force_update = false, target_override = false) ->
 	source_list = []
 	compile_date = new Date
 	timehash = ''
 	cache_text = ''
 	settings_text = fs.readFileSync('protobowl.json', 'utf8')
 	settings = JSON.parse(settings_text)
-
-	target = settings.target
+	
+	if target_override
+		target = target_override
+	else
+		target = settings.target
 	
 	opt = settings[target]
 

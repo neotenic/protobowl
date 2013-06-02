@@ -22,6 +22,8 @@ html(lang="en")
 		else
 			link(rel='stylesheet', href='#{static}protobowl.css')
 
+		link(rel="stylesheet", href="//netdna.bootstrapcdn.com/font-awesome/3.1.1/css/font-awesome.css")
+
 		//if IE 7
 			link(rel='stylesheet', href='//netdna.bootstrapcdn.com/font-awesome/3.1.1/css/font-awesome-ie7.css')
 
@@ -234,8 +236,11 @@ html(lang="en")
 				div.span3.sidebar
 					if development
 						div.span3.thumbnail
+							button.btn.btn-small.pull-right.btn-link.show-updater.release-btn(disabled) 
+								| Release
 							button.btn.btn-small.pull-right.show-updater.recompile-btn(disabled) 
-								| Recompile
+								| Build
+
 							h5(style="margin-top: 3px")
 								i.icon-code
 								| Development
@@ -473,6 +478,10 @@ html(lang="en")
 				$(".recompile-btn").click(function(){
 					updater_socket.send('recompile');
 					createAlert('Compiling', 'There is magic being done in the background as this application is going to emerge from its silky cocoon in a few seconds as a beautiful butterfly or something.').insertBefore('.buttonbar')
+				});
+				$(".release-btn").click(function(){
+					updater_socket.send('release');
+					createAlert('Compiling', 'COMPILING FOR RELEASE WOOOP.').insertBefore('.buttonbar')
 				});
 
 		script(type="text/javascript")
