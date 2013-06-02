@@ -46,9 +46,14 @@ do ->
 initialize_offline = (cb = ->) ->
 	return cb() if initialize_offline.initialized
 	initialize_offline.initialized = true
+	url = (protobowl_config?.static || '/') + 'offline.js'
+	
+	if protobowl_config?.cache_breaker
+		url += "?#{(new Date(protobowl_html_build)) - 0}"
+
 	$.ajax {
-		url: (protobowl_config?.static || '/') + 'offline.js',
-		cache: protobowl_config?.cache_breaker,
+		url: url,
+		cache: true,
 		dataType: 'script',
 		success: cb
 	}
