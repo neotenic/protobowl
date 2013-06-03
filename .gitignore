@@ -10,3 +10,4 @@ protobowl.dev.css
 app.dev.js
 offline.appcache
 build/*
+deploy/*

@@ -42,8 +42,8 @@ html(lang="en")
 				li #{user.team || ''} 
 					if user.muwave
 						span.badge.badge-info MICROWAVE
-					if user.room && user.room.admins && user.room.admins.indexOf(user.id) != -1
-						span.badge ADMIN
+					if user.room && user.moderator
+						span.badge MOD
 					if Date.now() < user.banned
 						span.badge.badge-important BANNED
 					b  #{user.name} 

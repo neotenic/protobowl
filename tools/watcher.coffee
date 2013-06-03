@@ -259,7 +259,9 @@ buildApplication = (force_update = false, target_override = false) ->
 	compileMangledSync = ->
 		console.log "parsing includes"
 		compile_blocks = []
+		
 		block_names = ["app", "offline"]
+
 		for file in block_names
 			data = fs.readFileSync "client/#{file}.coffee", 'utf8'
 			lines = data.split /\r?\n/
@@ -373,6 +375,9 @@ buildApplication = (force_update = false, target_override = false) ->
 
 	compileCoffee2 = ->
 		compileCoffeeSync(file) for file in ['auth', 'cache']
+
+		if opt.development
+			compileCoffeeSync(file) for file in ['test']
 		
 		if opt.mangle_vars
 			if opt.source_maps
@@ -514,28 +519,6 @@ buildApplication = (force_update = false, target_override = false) ->
 				}
 				
 
-
-	compileCoffee = ->
-		file = file_list.shift()
-
-		if !file
-			return saveFiles() 
-
-		snockets.getConcatenation "client/#{file}.coffee", minify: opt.js_minify, (err, js) ->
-			code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n#{js}\n"
-
-			if opt.js_wrap and file is 'app'
-				code_contents = "protobowl_#{file}_build = '#{compile_date}';\n\n(function(){#{js}})();\n"
-
-			source_list.push {
-				hash: sha1(js + '')
-				code:  code_contents 
-				err: err
-				file: "#{file}.js" 
-			}
-
-			compileCoffee()	
-			
 
 	saveFiles = ->		
 		# clean up the jade stuff

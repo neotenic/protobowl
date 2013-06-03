@@ -31,7 +31,7 @@ tokenize_line = (answer) ->
 
 	# parse statements in reverse order for situations like accept either
 	for group in completed.reverse()
-		prefix_words = ["do","not","accept","or","prompt", "on", "just", "don't"]
+		prefix_words = ["do","not","accept","or","prompt", "on", "just", "don't", "either"]
 		# ,"on", "either", "underlined", "portion", "equivalents", "equivalent", "word", "forms", "like", "any", "other", "in", "order"
 		suffix_words = ["is", "read", "stated", "mentioned", "at", "any", "time"]
 		splitters = ["before", "after", "during", "while", "until", "but"]
@@ -64,6 +64,7 @@ tokenize_line = (answer) ->
 			else
 				front.push [bold, token]
 
+		# console.log [prefix, front, preposition, back, suffix]
 		[prefix, front, preposition, back, suffix]
 
 equivalence_map = do ->
@@ -84,7 +85,20 @@ equivalence_map = do ->
 		['thirteenth', 'thirteen', '13', 'xiii'],
 		['fourteenth', 'fourteen', 'ixv'],
 		['fifteenth', 'fifteen', '15', 'xv'],
-		['sixteenth', 'sixteen', '16', 'xvi']
+		['sixteenth', 'sixteen', '16', 'xvi'],
+		['seventeenth', 'seventeen', '17', 'xvii'],
+		['twenty', 'xx', '20'],
+		['thirty', 'xxx', '30'],
+		['hundred', 'c', '100'],
+		['robert', 'bob', 'rob'],
+		['william', 'will', 'bill'],
+		['richard', 'rich', 'dick'],
+		['gregory', 'greg'],
+		['christopher', 'chris'],
+		['benjamin', 'ben'],
+		['nicholas', 'nick'],
+		['anthony', 'tony'],
+		['lawrence', 'larry']
 	]
 	map = {}
 	for group in list
@@ -94,7 +108,7 @@ equivalence_map = do ->
 	
 
 fuzzy_search = (needle, haystack) ->
-	console.log needle, haystack
+	# console.log needle, haystack
 	if removeDiacritics?
 		remove_diacritics = removeDiacritics 
 	else
@@ -122,15 +136,18 @@ fuzzy_search = (needle, haystack) ->
 	stem = stemmer(needle)
 	
 	ERROR_RATIO = 0.2 # magic number i pulled out of my ass
+	
+	composite_acronym = ''
+	for word in haystack.split(/\s|\-/)
+		# combine all the capitalesque letters
+		if /^[A-Z]+$/.test(word) and 2 <= word.length <= 4
+			composite_acronym += word
+
+	if 2 <= composite_acronym.length <= 4
+		if composite_acronym.toLowerCase().indexOf(needle[0]) isnt -1
+			return true
 
 	for word in haystack.split(/\s|\-/)
-		if /^[A-Z]+$/.test(word) and 2 <= word.length <= 4
-			# check if it's an acronym
-			if word.toLowerCase().indexOf(needle[0]) isnt -1
-				# console.log 'acronym detector'
-				return true
-
-
 		word = word.toLowerCase()
 
 		plain = damlev(word, needle)
@@ -167,6 +184,9 @@ check_answer = (tokens, text) ->
 
 	judgements = []
 	index = 0
+	mode_either = false
+	cat_tokens = []
+
 	for [prefix, front, preposition, back, suffix] in tokens
 		index++
 		bold_match = []
@@ -185,13 +205,16 @@ check_answer = (tokens, text) ->
 			bold_miss.push token if !match and bold
 			bolded.push token if bold
 			unbold.push token if !bold and !trivial
+			cat_tokens.push token if match
 		
 		matchiness = bold_match.length + unbold_match.length #+ (0.002 / (index + 20))
 
 		level = 0 # 0 = reject, 1 = prompt, 2 = accept		
 		
 		if bold_match.length > 0
-			if bold_miss.length > 0
+			if mode_either
+				level = 2
+			else if bold_miss.length > 0
 				level = 1
 			else
 				level = 2
@@ -206,8 +229,13 @@ check_answer = (tokens, text) ->
 		# console.log prefix, front, preposition, back, suffix
 		# console.log bolded, unbold
 		# console.log bold_match, unbold_match, bold_miss, text, level, matchiness
+		
+		mode_either = false
 
-		if 'not' in prefix
+		if 'either' in prefix
+			# console.log 'either'
+			mode_either = true
+		else if 'not' in prefix
 			0 # noop can not handle these things
 		else if 'prompt' in prefix
 			if level is 2
@@ -236,57 +264,23 @@ check_answer = (tokens, text) ->
 	# console.log jury
 
 	[matchiness, judgement] = jury[0]
+	
 
 	if judgement is 0
 		return 'reject'
 	else if judgement is 1
 		return 'prompt'
 	else if judgement is 2
+		# do not accept answers which are shorter than their clues
+		match_frac = cat_tokens.join(' ').length / text.length
+		
+		if match_frac < 0.6
+			console.warn 'insubstatnial match fraction', match_frac
+			return 'reject'
+
 		return 'accept'
 	
 
-
-# setTimeout ->
-# 	testing = [
-# 		["The {Persistence} of {Memory}", "persistance"],
-# 		["The {Scream} [or {Skrik}; accept The {Cry}]", "Cry"],
-# 		["The {Daily} Show with Jon Stewart", "Daily Show"],
-# 		["{Cleveland Browns} [accept either]", "Brown"],
-# 		["{Oakland Athletics} [accept either underlined portion; accept A's]", "Oakland"],
-# 		["The Lord of the Rings: The Return of the King", "LOTR"],
-# 		["Yellow (accept Yellow Sarong before Sarong is mentioned)", "Yelow"],
-# 		["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "Bioshock 2"],
-# 		["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "Los Angeles"],
-# 		["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "The Dark Knight"],
-# 		['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "iching"],
-# 		["Georgia Tech [do not accept or prompt on just Georgia]", "Georgia"],
-# 		["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
-# 		["Redskins [accept Washington before mention; accept Redskins at any time]", "Redskins"],
-# 		["Jerome David {Salinger}", "Salinger", "JD Salinger", "J.D. Salinger", "Jerome", "David", "Jerome David"],
-# 		["Works Progress Administration", "WPA"]
-# 		["{Blu-ray discs}", "blu ray disk"]
-# 		["{Dinosaur Comics} [prompt on {qwantz.com}]", "hi"],
-# 		["U.S. Presidential election of {1896}", "1896", "1876"],
-# 		["Battle of {Actium}", "battle of"],
-# 		["Pope {Gregory XVI}", "gregory 16"],
-# 		["{ectothermic} [or {poikilothermic}; accept {cold-blooded}, but {inform players} that they {properly should use}", "cold blooded"],
-# 		["{hair} [or {fur}]", "hari"]
-# 		["{rabindrath tagore}", "tagore rabinathat"]
-# 		["One {Hundred} Years of {Solitude} (or {Cien Anos} de {Soledad})", "cien anos de soledad"],
-# 		["{artificial intelligence}", "ai", "AI"]
-# 		["John Davison {Rockefeller}", "JD Rockefeller"]
-# 		["{Environmental Protection Agency}", "EPA"]
-# 		["{Kurt Vonnegut Jr}", "kurt vonnegut jr"],
-# 		["{Kimball O'Hara}", "Kimball OHara", "Kimball O'Hara", "Kimball O Hara"]
-# 	]
-# 	for [line, guesses...] in testing
-
-# 		console.time('checking answer')
-# 		tokens = tokenize_line(line)
-# 		for guess in guesses
-# 			console.log line, guess, check_answer tokens, guess
-# 		console.timeEnd('checking answer')
-# , 1000
 
 safeCheckAnswer = (compare, answer, question) ->
 	try
