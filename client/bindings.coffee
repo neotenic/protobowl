@@ -42,6 +42,11 @@ setActionMode = (mode) ->
 	$(window).resize() #reset expandos
 
 $('.chatbtn').click ->
+	if me.prefs.distraction
+		createAlert('Distraction-Free Mode is Enabled', 'Chat messages and other messages which are not necessarily important have been disabled. Disable this mode from the settings widget in order to send or receive chat messages.')
+			.addClass('alert-error')
+			.insertAfter('.buttonbar')
+		return
 	$('.chat_input').val('')
 	open_chat()
 
