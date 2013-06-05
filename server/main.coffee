@@ -790,7 +790,7 @@ app.post '/stalkermode/the-scene-is-safe', (req, res) ->
 
 
 app.post '/stalkermode/clear_bans/:room', (req, res) ->
-	delete rooms?[req.params.room.replace(/~/g, '/')]?._ip_bans
+	delete rooms?[req.params.room.replace(/~/g, '/')]?._ip_ban
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
 app.post '/stalkermode/anarchy/:room', (req, res) ->

@@ -103,7 +103,8 @@ equivalence_map = do ->
 		['nicholas', 'nick'],
 		['anthony', 'tony'],
 		['lawrence', 'larry'],
-		['v', 'versus', 'vs']
+		['v', 'versus', 'vs'],
+		['log', 'logarithm']
 	]
 	map = {}
 	for group in list

@@ -199,6 +199,7 @@ class QuizPlayer
 		for check in [/ni+gg+e+r/i, /n\s*i\s*g\s*g\s*e\s*r/]
 			if string.match(check)
 				@ban(1000 * 60 * 5)
+				@sync(true)
 				return true
 		return false
 
