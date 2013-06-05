@@ -38,7 +38,11 @@ testing = [
 	['"{Chicago}"', '$ chicago']
 	['{robert jones}', '$ bob jones']
 	['{william clinton}', '$ bill clinton']
-	["the {independence} of {bangladesh} [or the {independence} of {east} pakistan or other equivalents]", "! I WANT TO"]
+	["the {independence} of {bangladesh} [or the {independence} of {east} pakistan or other equivalents]", "! I WANT TO"],
+	["Claude {Monet}", "! Manet"]
+	["the first {G.I. Bill} of Rights", "$ GI Bill"]
+	["{Roots}: The Saga of an American Family", "$ roots"]
+	["{St. Thomas Aquinas}", "Saint Thomas Aquinas"]
 ]
 
 for [line, guesses...] in testing

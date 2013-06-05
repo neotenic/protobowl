@@ -68,6 +68,7 @@ logged_in = (data) ->
 		switch_socket()
 
 switch_socket = ->
+	return unless sock
 	sock.hide_disconnect = true
 	sock.socket.disconnect()
 	room.users = {}

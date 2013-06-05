@@ -49,6 +49,9 @@ class QuizPlayer
 			typing: true
 		}
 
+		if @room.dystopia
+			@prefs.distraction = true
+
 		@lock = false
 
 		# sort of half a setting but not really
@@ -189,6 +192,15 @@ class QuizPlayer
 			reason: reason
 		}
 
+
+	gestapo: (string) ->
+		return unless typeof string is 'string'
+		return unless @room.dystopia
+		for check in [/ni+gg+e+r/i, /n\s*i\s*g\s*g\s*e\s*r/]
+			if string.match(check)
+				@ban(1000 * 60 * 5)
+				return true
+		return false
 
 
 	nominate: ->
@@ -455,6 +467,8 @@ class QuizPlayer
 	guess: (data) -> 
 		@touch()
 		@room.guess @id, data
+		@gestapo data?.text
+
 
 
 	command: (name, args) ->
@@ -479,6 +493,9 @@ class QuizPlayer
 
 		# obviously malformed things are bad
 		return if typeof text != 'string'
+
+		if @gestapo text
+			text = '****'
 
 		# discard chat messages if a radio silence is enforced
 		return unless @authorized @room.mute
@@ -787,6 +804,11 @@ class QuizPlayer
 		@room.topic = topic
 		@room.sync(4)
 
+	set_dystopia: (level) ->
+		@touch()
+		return unless @authorized 'ninja'
+		@room.dystopia = level
+		@room.sync(4)
 
 	##############################################################
 	# Here are the user settings, no auth required
@@ -825,10 +847,18 @@ class QuizPlayer
 
 	set_name: (name) ->
 		@touch()
+		
+		@gestapo(name)
+
 		if (name + '').trim().length > 0
+			name_limit = 140
+			
+			if @room.dystopia
+				name_limit = 30
+
 			@name = name
 				.trim() # remove whitespace
-				.slice(0, 140) # limit to tweet size
+				.slice(0, name_limit) # limit to tweet size
 				.replace(/\u202e|\u2606|\u2605|\u269d/g, '') # get rid of stars, and get rid of unicode rtl chars
 			@sync(true)
 

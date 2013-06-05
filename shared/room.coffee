@@ -75,6 +75,7 @@ class QuizRoom
 		@interrupts = true
 		@semi = false
 		@no_pause = false
+		@dystopia = 0
 		
 		@created = @serverTime()
 

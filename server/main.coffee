@@ -41,6 +41,9 @@ log_config = { host: 'localhost', port: 18228 }
 # 	}
 # 	res.end()
 
+if app.settings.env is 'production' and remote.deploy
+	log_config = remote.deploy.log
+
 io.configure 'production', ->
 	io.set "log level", 0
 	io.set "browser client minification", true
@@ -55,6 +58,7 @@ io.configure 'development', ->
 	io.set 'flash policy port', 0
 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
+
 
 codename = namer.generateName()
 
@@ -960,6 +964,9 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 	return res.render 'reports.jade', { reports: [], categories: [] } unless remote.Report
 	remote.Report.find {describe: req.params.type}, (err, docs) ->
 		res.render 'reports.jade', { reports: docs, categories: remote.get_categories('qb') }
+
+app.get '/lag', (req, res) ->
+	res.render 'lag.jade', { }
 
 app.get '/stalkermode/audacity', (req, res) ->
 	res.render 'audacity.jade', { }

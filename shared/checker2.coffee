@@ -1,6 +1,7 @@
 tokenize_line = (answer) ->
 	tokens = answer
 		.replace(/([\{\}\[\]\;\-\:\,\&\(\)])/g, " $1 ") # wrap all the special delimiting symbols
+		.replace(/\./g, ' ') # remove periods because they're kind of useless
 		.replace(/\ +/g, ' ') # condense multiple spaces
 		.trim() # removing leading and trailing spaces
 		.split(' ') # split things up
@@ -90,6 +91,9 @@ equivalence_map = do ->
 		['twenty', 'xx', '20'],
 		['thirty', 'xxx', '30'],
 		['hundred', 'c', '100'],
+		['dr', 'doctor'],
+		['mr', 'mister']
+		['st', 'saint', 'street']
 		['robert', 'bob', 'rob'],
 		['william', 'will', 'bill'],
 		['richard', 'rich', 'dick'],
@@ -98,7 +102,8 @@ equivalence_map = do ->
 		['benjamin', 'ben'],
 		['nicholas', 'nick'],
 		['anthony', 'tony'],
-		['lawrence', 'larry']
+		['lawrence', 'larry'],
+		['v', 'versus', 'vs']
 	]
 	map = {}
 	for group in list
@@ -109,6 +114,7 @@ equivalence_map = do ->
 
 fuzzy_search = (needle, haystack) ->
 	# console.log needle, haystack
+
 	if removeDiacritics?
 		remove_diacritics = removeDiacritics 
 	else
@@ -135,7 +141,7 @@ fuzzy_search = (needle, haystack) ->
 
 	stem = stemmer(needle)
 	
-	ERROR_RATIO = 0.2 # magic number i pulled out of my ass
+	ERROR_RATIO = 0.25 # magic number i pulled out of my ass
 	
 	composite_acronym = ''
 	for word in haystack.split(/\s|\-/)
@@ -158,6 +164,7 @@ fuzzy_search = (needle, haystack) ->
 		return true if plaid <= ERROR_RATIO
 		
 		xylem = stemmer(word)
+
 		diff = damlev(xylem, stem)
 		frac = diff / Math.min(xylem.length, stem.length)
 		# console.log frac, word, needle
@@ -170,7 +177,7 @@ fuzzy_search = (needle, haystack) ->
 	
 	if needle of equivalence_map
 		for word in equivalence_map[needle]
-			if " #{haystack} ".indexOf(" #{word} ") isnt -1
+			if " #{haystack.toLowerCase()} ".indexOf(" #{word} ") isnt -1
 				return true
 
 
