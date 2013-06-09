@@ -16,7 +16,7 @@ testing = [
 	["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "? Los Angeles"],
 	["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "? The Dark Knight", "Batman"],
 	['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "$ iching"],
-	["Georgia Tech [do not accept or prompt on just Georgia]", "? Georgia"],
+	["{Georgia Tech} [do not accept or prompt on just {Georgia}]", "? Georgia"],
 	["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
 	["Redskins [accept Washington before mention; accept Redskins at any time]", "$ Redskins"],
 	["Jerome David {Salinger}", "$ Salinger", "$ JD Salinger", "$ J.D. Salinger", "! Jerome", "! David", "? Jerome David"],
@@ -42,7 +42,11 @@ testing = [
 	["Claude {Monet}", "! Manet"]
 	["the first {G.I. Bill} of Rights", "$ GI Bill"]
 	["{Roots}: The Saga of an American Family", "$ roots"]
-	["{St. Thomas Aquinas}", "Saint Thomas Aquinas"]
+	["{St. Thomas Aquinas}", "$ Saint Thomas Aquinas"]
+	["{Octavian} [or Caesar {Augustus}; or {Octavius}]", "caesar"]
+	["Georgia {O'Keeffe}", "$ okeefe"],
+	["{geometric} series", "! are you serious"]
+	["{Robert Browning}", "! Bob Yellowing", "! Browning Bananas the Robert", "$ Bob Browning"]
 ]
 
 for [line, guesses...] in testing

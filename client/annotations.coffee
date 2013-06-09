@@ -301,7 +301,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			
 			if user is me.id and me.id of room.users
 				old_score = me.score()
-				if old_score < -100 # just a little way of saying "you suck"
+				if old_score < -50 # just a little way of saying "you suck"
 					createAlert('you suck', 'like seriously you really really suck. you are a turd.')
 						.addClass('alert-info')
 						.insertAfter(ruling.parents('.bundle').find('.annotations'))

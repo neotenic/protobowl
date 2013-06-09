@@ -1,6 +1,7 @@
 tokenize_line = (answer) ->
 	tokens = answer
 		.replace(/([\{\}\[\]\;\-\:\,\&\(\)])/g, " $1 ") # wrap all the special delimiting symbols
+		.replace(/'|"/g, '') # the apostrophes and quotes are useless
 		.replace(/\./g, ' ') # remove periods because they're kind of useless
 		.replace(/\ +/g, ' ') # condense multiple spaces
 		.trim() # removing leading and trailing spaces
@@ -273,19 +274,18 @@ check_answer = (tokens, text) ->
 
 	[matchiness, judgement] = jury[0]
 	
+	# do not accept answers which are shorter than their clues
+	match_frac = cat_tokens.join(' ').length / text.length
+	if match_frac < 0.6
+		# console.warn 'insubstatnial match fraction', match_frac
+		return 'reject'
 
 	if judgement is 0
 		return 'reject'
 	else if judgement is 1
 		return 'prompt'
 	else if judgement is 2
-		# do not accept answers which are shorter than their clues
-		match_frac = cat_tokens.join(' ').length / text.length
 		
-		if match_frac < 0.6
-			console.warn 'insubstatnial match fraction', match_frac
-			return 'reject'
-
 		return 'accept'
 	
 
