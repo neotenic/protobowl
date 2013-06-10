@@ -58,18 +58,17 @@ for [line, guesses...] in testing
 			guess = guess.trim().slice(1).trim()
 
 		result = check_answer tokens, guess
-		
+		mapping = {'accept': '✔', 'reject': '✗', 'prompt': '?'}
 		if command is '$' and result isnt 'accept' # correct
-			console.error line, guess, result
+			console.error mapping[result], line, guess
 		else if command is '?' and result isnt 'prompt' # prompt
-			console.error line, guess, result
+			console.error mapping[result], line, guess
 		else if command is '!' and result isnt 'reject' # reject
-			console.error line, guess, result
+			console.error mapping[result], line, guess
 		else if command in ['$', '!', '?']
-			console.debug line, guess, result
+			console.debug mapping[result], line, guess
 		else
-			console.log line, guess, result
-	# console.timeEnd('checking answer')
+			console.log mapping[result], line, guess
 
 
 updater_socket = new WebSocket("ws://localhost:#{protobowl_config?.dev_port || 5577}")
