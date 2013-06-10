@@ -92,9 +92,10 @@ equivalence_map = do ->
 		['twenty', 'xx', '20'],
 		['thirty', 'xxx', '30'],
 		['hundred', 'c', '100'],
-		['dr', 'doctor'],
+		['dr', 'doctor', 'drive'],
 		['mr', 'mister']
 		['st', 'saint', 'street']
+		['rd', 'road']
 		['robert', 'bob', 'rob'],
 		['william', 'will', 'bill'],
 		['richard', 'rich', 'dick'],
@@ -104,7 +105,8 @@ equivalence_map = do ->
 		['nicholas', 'nick'],
 		['anthony', 'tony'],
 		['lawrence', 'larry'],
-		['v', 'versus', 'vs'],
+		['edward', 'edvard', 'edouard', 'ed']
+		['v', 'versus', 'vs', 'against'],
 		['log', 'logarithm']
 	]
 	map = {}
@@ -133,8 +135,13 @@ fuzzy_search = (needle, haystack) ->
 		damlev = require('./levenshtein').levenshtein 
 
 	haystack = remove_diacritics(haystack)
-		.replace(/([A-Z])\.([A-Z])\./g, '$1$2') # this helps the acronym detector
+		.replace(/([A-Z])\.\s?([A-Z])/g, '$1$2') # this helps the acronym detector
+		.replace(/([A-Z])\.\s?([A-Z])\.?/g, '$1$2') # this helps the acronym detector
 	needle = remove_diacritics(needle.toLowerCase())
+	
+	# console.log haystack
+	if 2 <= haystack.length <= 4 # this is for acronyms
+		haystack = haystack.toUpperCase()
 
 	plainstack = haystack.toLowerCase().replace(/[^a-z]/g, '')
 	plainneedle = needle.replace(/[^a-z]/g, '')
@@ -148,7 +155,7 @@ fuzzy_search = (needle, haystack) ->
 	composite_acronym = ''
 	for word in haystack.split(/\s|\-/)
 		# combine all the capitalesque letters
-		if /^[A-Z]+$/.test(word) and 2 <= word.length <= 4
+		if /^[A-Z]+$/.test(word) and 1 <= word.length <= 4
 			composite_acronym += word
 
 	if 2 <= composite_acronym.length <= 4

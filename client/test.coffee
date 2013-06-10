@@ -22,7 +22,7 @@ testing = [
 	["Jerome David {Salinger}", "$ Salinger", "$ JD Salinger", "$ J.D. Salinger", "! Jerome", "! David", "? Jerome David"],
 	["Works Progress Administration", "$ WPA"]
 	["{Blu-ray discs}", "$ blu ray disk"]
-	["{Dinosaur Comics} [prompt on {qwantz.com}]", "! hi"],
+	["{Dinosaur Comics} [prompt on {qwantz.com}]", "! hi", "dinosaur", "quantz"],
 	["U.S. Presidential election of {1896}", "$ 1896", "! 1876"],
 	["Battle of {Actium}", "! battle of"],
 	["Pope {Gregory XVI}", "$ gregory 16", "! gregory 10 11 12 13 14 15 16 17 18 19 20"],
@@ -32,7 +32,7 @@ testing = [
 	["One {Hundred} Years of {Solitude} (or {Cien Anos} de {Soledad})", "$ cien anos de soledad"],
 	["{artificial intelligence}", "$ ai", "$ AI"]
 	["John Davison {Rockefeller}", "$ JD Rockefeller", "$ Rockefeller"]
-	["{Environmental Protection Agency}", "$ EPA"]
+	["{Environmental Protection Agency}", "$ EPA", "$ Environmental PA", "$ E P A", "$ E.P.A.", "! P.G.A.", "E. P. A."]
 	["{Kurt Vonnegut Jr}", "$ kurt vonnegut jr"],
 	["{Kimball O'Hara}", "$ Kimball OHara", "$ Kimball O'Hara", "$ Kimball O Hara"],
 	['"{Chicago}"', '$ chicago']
