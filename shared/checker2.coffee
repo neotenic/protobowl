@@ -47,7 +47,7 @@ tokenize_line = (answer) ->
 		suffix = []
 		for i in [group.length...0]
 			[bold, token] = group[i - 1]
-			if token in suffix_words
+			if prefix.length > 0 and token in suffix_words
 				suffix.push token
 			else
 				break
@@ -72,30 +72,31 @@ tokenize_line = (answer) ->
 equivalence_map = do ->
 	list = [
 		['zero', 'zeroeth', 'zeroth', '0'],
-		['one', 'first', 'i', '1'],
-		['two', 'second', 'ii', '2'],
-		['three', 'third', 'iii', 'turd', '3'],
-		['four', 'forth', 'fourth', 'iv', '4'],
-		['fifth', 'five', 'v', '5'],
-		['sixth', 'six', 'vi', 'emacs', '6'],
-		['seventh', 'seven', 'vii', '7'],
-		['eight', 'eighth', '8', 'viii', 'iix'],
-		['nine', 'nein', 'ninth', 'ix', '9'],
-		['ten', 'tenth', '10', 'x'],
-		['eleventh', 'eleven', 'xi'],
-		['twelfth', 'twelveth', 'twelve', '12', 'xii'],
-		['thirteenth', 'thirteen', '13', 'xiii'],
-		['fourteenth', 'fourteen', 'ixv'],
-		['fifteenth', 'fifteen', '15', 'xv'],
-		['sixteenth', 'sixteen', '16', 'xvi'],
-		['seventeenth', 'seventeen', '17', 'xvii'],
-		['twenty', 'xx', '20'],
-		['thirty', 'xxx', '30'],
-		['hundred', 'c', '100'],
+		['one', 'first', 'i', '1', '1st'],
+		['two', 'second', 'ii', '2', '2nd'],
+		['three', 'third', 'iii', 'turd', '3', '3rd'],
+		['four', 'forth', 'fourth', 'iv', '4', '4th'],
+		['fifth', 'five', 'v', '5', '5th'],
+		['sixth', 'six', 'vi', 'emacs', '6', '6th'],
+		['seventh', 'seven', 'vii', '7', '7th'],
+		['eight', 'eighth', '8', 'viii', 'iix', '8th'],
+		['nine', 'nein', 'ninth', 'ix', '9', '9th'],
+		['ten', 'tenth', '10', 'x', '10th'],
+		['eleventh', 'eleven', 'xi', '11th'],
+		['twelfth', 'twelveth', 'twelve', '12', 'xii', '12th'],
+		['thirteenth', 'thirteen', '13', 'xiii', '13th'],
+		['fourteenth', 'fourteen', 'ixv', '14th'],
+		['fifteenth', 'fifteen', '15', 'xv', '15th'],
+		['sixteenth', 'sixteen', '16', 'xvi', '16th'],
+		['seventeenth', 'seventeen', '17', 'xvii', '17th'],
+		['twenty', 'xx', '20', '20th'],
+		['thirty', 'xxx', '30', '30th'],
+		['hundred', 'c', '100', '100th'],
 		['dr', 'doctor', 'drive'],
 		['mr', 'mister']
 		['st', 'saint', 'street']
 		['rd', 'road']
+		['albert', 'al']
 		['robert', 'bob', 'rob'],
 		['william', 'will', 'bill'],
 		['richard', 'rich', 'dick'],
@@ -106,6 +107,7 @@ equivalence_map = do ->
 		['anthony', 'tony'],
 		['lawrence', 'larry'],
 		['edward', 'edvard', 'edouard', 'ed']
+		['kim', 'kimball']
 		['v', 'versus', 'vs', 'against'],
 		['log', 'logarithm']
 	]
@@ -136,7 +138,7 @@ fuzzy_search = (needle, haystack) ->
 
 	haystack = remove_diacritics(haystack)
 		.replace(/([A-Z])\.\s?([A-Z])/g, '$1$2') # this helps the acronym detector
-		.replace(/([A-Z])\.\s?([A-Z])\.?/g, '$1$2') # this helps the acronym detector
+		.replace(/([A-Z])\.?\s/g, '$1 ') # this helps the acronym detector
 	needle = remove_diacritics(needle.toLowerCase())
 	
 	# console.log haystack
@@ -145,8 +147,8 @@ fuzzy_search = (needle, haystack) ->
 
 	plainstack = haystack.toLowerCase().replace(/[^a-z]/g, '')
 	plainneedle = needle.replace(/[^a-z]/g, '')
-
-	return true if plainneedle.length >= 4 and plainstack.indexOf(plainneedle) != -1
+	
+	return true if plainneedle.length >= 3 and plainstack.indexOf(plainneedle) != -1
 
 	stem = stemmer(needle)
 	
@@ -164,6 +166,8 @@ fuzzy_search = (needle, haystack) ->
 
 	for word in haystack.split(/\s|\-/)
 		word = word.toLowerCase()
+
+		return true if needle is word
 
 		plain = damlev(word, needle)
 		plaid = plain / Math.min(word.length, needle.length)

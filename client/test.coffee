@@ -10,7 +10,7 @@ testing = [
 	["The {Daily} Show with Jon Stewart", "$ Daily Show"],
 	["{Cleveland Browns} [accept either]", "$ Brown"],
 	["{Oakland Athletics} [accept either underlined portion; accept A's]", "$ Oakland"],
-	["The Lord of the Rings: The Return of the King", "$ LOTR"],
+	["The Lord of the Rings: The {Return of the King}", "? LOTR", "$ ROTK", "$ LOTR: ROTK"],
 	["Yellow (accept Yellow Sarong before Sarong is mentioned)", "$ Yelow"],
 	["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "$ Bioshock 2"],
 	["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "? Los Angeles"],
@@ -33,7 +33,7 @@ testing = [
 	["{artificial intelligence}", "$ ai", "$ AI"]
 	["John Davison {Rockefeller}", "$ JD Rockefeller", "$ Rockefeller"]
 	["{Environmental Protection Agency}", "$ EPA", "$ Environmental PA", "$ E P A", "$ E.P.A.", "! P.G.A.", "E. P. A."]
-	["{Kurt Vonnegut Jr}", "$ kurt vonnegut jr"],
+	["{Kurt Vonnegut Jr.}", "$ kurt vonnegut jr"],
 	["{Kimball O'Hara}", "$ Kimball OHara", "$ Kimball O'Hara", "$ Kimball O Hara"],
 	['"{Chicago}"', '$ chicago']
 	['{robert jones}', '$ bob jones']
@@ -46,7 +46,17 @@ testing = [
 	["{Octavian} [or Caesar {Augustus}; or {Octavius}]", "caesar"]
 	["Georgia {O'Keeffe}", "$ okeefe"],
 	["{geometric} series", "! are you serious"]
-	["{Robert Browning}", "! Bob Yellowing", "! Browning Bananas the Robert", "$ Bob Browning"]
+	["{Robert Browning}", "! Bob Yellowing", "! Browning Bananas the Robert", "$ Bob Browning"],
+	["{Johann Sebastian Bach} [prompt on {Bach}; prompt on {Johann Bach}]", "$ J.S. Bach", "$ JS Bach"],
+	["{Spider}-{Man} [accept {Peter Parker}, either first or last name, before mention]", "$ spiderman"],
+	["{time}", "$ time"]
+	["Günter Wilhelm {Grass}", "$ grass"],
+	["Olympia", "$ olympia"]
+	["Republic of {Honduras}", "$ Honduras"]
+	["{Emily} Jane {Brontë} [prompt on {Brontë}]", "$ Emily Bronte", "? Bronte"]
+	["{Light-Emitting Diode} (prompt on {diode})", "$ LED"],
+	["{Les Miserables} [accept The {Miserable Ones}, accept {Jean Valjean}]", "$ Valjean"]
+	["Beethoven's Symphony No. {9} in D minor [or {Choral} symphony; or {Beethoven's opus} 125]", "$ Beethoven's Ninth"]
 ]
 
 for [line, guesses...] in testing
