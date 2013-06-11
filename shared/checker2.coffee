@@ -94,6 +94,7 @@ equivalence_map = do ->
 		['hundred', 'c', '100', '100th'],
 		['dr', 'doctor', 'drive'],
 		['mr', 'mister']
+		['ms', 'miss', 'mrs']
 		['st', 'saint', 'street']
 		['rd', 'road']
 		['albert', 'al']
@@ -197,7 +198,7 @@ fuzzy_search = (needle, haystack) ->
 	return false
 
 
-check_answer = (tokens, text) ->
+check_answer = (tokens, text, question = '') ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
 
 	stopwords = "as to the that on of o is a in on that have for at so it do or de la le y by any and his her my by him she battle".split(' ')
@@ -207,6 +208,7 @@ check_answer = (tokens, text) ->
 	mode_either = false
 	cat_tokens = []
 
+
 	for [prefix, front, preposition, back, suffix] in tokens
 		index++
 		bold_match = []
@@ -215,6 +217,7 @@ check_answer = (tokens, text) ->
 		unbold_miss = []
 		bolded = []
 		unbold = []
+
 		# evaluate errything
 		for [bold, token] in front
 			match = fuzzy_search(token, text)
@@ -273,6 +276,14 @@ check_answer = (tokens, text) ->
 				judgements.push [matchiness, 0]
 
 	
+	question_match = []
+	question = question.toLowerCase()
+	for word in text.split(/\s/)
+		trivial = word.toLowerCase() in stopwords
+		word = word.toLowerCase()
+		if question.indexOf(word) != -1 and !trivial
+			question_match.push word
+
 	sorted = judgements.sort ([a], [b]) -> b - a
 
 	[matchiness_prime, judgement_prime] = sorted[0]
@@ -286,7 +297,7 @@ check_answer = (tokens, text) ->
 	[matchiness, judgement] = jury[0]
 	
 	# do not accept answers which are shorter than their clues
-	match_frac = cat_tokens.join(' ').length / text.length
+	match_frac = (cat_tokens.join(' ').length + question_match.join(' ').length)/ text.length
 	if match_frac < 0.6
 		# console.warn 'insubstatnial match fraction', match_frac
 		return 'reject'
@@ -304,7 +315,7 @@ check_answer = (tokens, text) ->
 safeCheckAnswer = (compare, answer, question) ->
 	try
 		tokens = tokenize_line(answer)
-		result = check_answer(tokens, compare)
+		result = check_answer(tokens, compare, question)
 		if result is 'accept'
 			return true
 		else if result is 'prompt'
