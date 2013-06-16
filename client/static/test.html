@@ -1,1 +1,52 @@
-<script src="test.js"></script>
+<!doctype html>
+<html>
+<head>
+	<title>Test</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css">
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<style>
+		#magic {
+			text-align: center;
+		}
+		.bold {
+			font-weight: bold;
+		}
+		#magic li a {
+			padding: 20px;
+			float: left;
+			font-size: 200%;
+
+		}
+		li > a {
+			border: 1px solid  #AFCBE2;
+		}
+		li > a:hover {
+			background: #AFCBE2;
+		}
+		.unboldable {
+			background: transparent;	
+			border: none;
+			padding-right: 2px !important;
+			padding-left: 2px !important;
+		}
+		.unboldable:hover {
+			background: transparent !important;
+		}
+		h1 {
+			font-family: "Quicksand";
+		}
+		body {
+			margin-top: 20px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<span id="remaining">unknown</span>
+		<p>
+			<ul id="magic" class="nav nav-pills"></ul>
+		</p>
+	</div>
+	<script src="test.js"></script>
+</body>
+</html>

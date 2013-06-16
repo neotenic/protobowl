@@ -10,3 +10,6 @@ require('./tools/node_modules/coffee-script');
 // protocompile.watch(protobowl_main.new_update);
 
 require('./tools/watcher');
+
+// require('./build/server/main')
+// require('./build/server/static')

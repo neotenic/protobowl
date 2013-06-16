@@ -271,6 +271,12 @@ check_holiday()
 unless console?
 	window.console = {
 		log: -> null,
+		warn: -> null,
+		debug: -> null,
+		time: -> null,
+		timeEnd: -> null,
+		dir: -> null,
+		assert: -> null,
 		trace: -> null,
 		error: -> null
 	}

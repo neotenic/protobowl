@@ -28,6 +28,7 @@ server = http.Server(app)
 app.set 'views', "admin"
 app.set 'view options', layout: false
 app.set 'trust proxy', true
+app.use '/stalkermode', express.static('admin')
 
 # server = http.Server()
 io = require('socket.io').listen(server)
@@ -702,6 +703,10 @@ app.use express.bodyParser()
 
 # authorization and redirects
 app.use (req, res, next) ->
+	res.header("Access-Control-Allow-Origin", "*")
+	res.header("Access-Control-Allow-Methods", "HEAD,GET,PUT,POST,DELETE")
+	res.header("Access-Control-Allow-Headers", "X-Requested-With")
+
 	if remote.authorized and /stalkermode/.test(req.path)
 		remote.authorized req, (allow) ->
 			if allow
@@ -915,7 +920,7 @@ app.post '/stalkermode/reports/simple_change/:id', (req, res) ->
 
 app.post '/stalkermode/reports/set_bold', (req, res) ->
 	mongoose = require 'mongoose'
-	remote.Question.update { answer: req.body.old }, { $set: { answer: req.body.answer, fixed: 1 }}, {multi: true}, (err) ->
+	remote.Question.update { answer: req.body.old }, { $set: { answer: req.body.answer, fixed: req.body.fixed || 1 }}, {multi: true}, (err) ->
 		res.end('merp')
 
 app.post '/stalkermode/reports/report_question/:id', (req, res) ->
@@ -941,6 +946,10 @@ app.get '/stalkermode/remaining', (req, res) ->
 	remote.count_unfixed (count) ->
 		res.end count.toString()
 
+# app.get '/stalkermode/to_meekly_go', (req, res) ->
+# 	remote.Question.findOne { fixed: 42 }, (err, doc) ->
+# 		res.end JSON.stringify doc
+
 app.get '/stalkermode/to_boldly_go', (req, res) ->
 	remote.Question.findOne { fixed: -1 }, (err, doc) ->
 		if !doc
@@ -949,7 +958,7 @@ app.get '/stalkermode/to_boldly_go', (req, res) ->
 			# return
 			cats = ["Science", "Fine Arts", "Literature", "Social Science", "History", "Geography", "Religion", "Trash", "Philosophy", "Mythology"]
 			cat = cats[Math.floor(cats.length * Math.random())]
-			remote.Question.find({fixed: null, difficulty: "HS", category: cat}).sort('inc_random').findOne (err, doc) ->
+			remote.Question.find({fixed: null, type: "qb", category: cat}).sort('inc_random').findOne (err, doc) ->
 				res.end JSON.stringify doc
 			return
 

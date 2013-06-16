@@ -58,7 +58,18 @@ testing = [
 	["{Les Miserables} [accept The {Miserable Ones}, accept {Jean Valjean}]", "$ Valjean"]
 	["Beethoven's Symphony No. {9} in D minor [or {Choral} symphony; or {Beethoven's opus} 125]", "$ Beethoven's Ninth"]
 	["Styx", "$ river styx"]
-	["derivative", "derivative"]
+	["derivative", "$ derivative"]
+	["{Human Immunodeficiency} Virus [do not accept or prompt on “{AIDS};” prompt on “{retrovirus}” until “{TAR}”]", "$ HIV"]
+	["{O. Henry} [or {William Sidney Porter}; prompt on {Porter}] ", "$ o henry", "$ o. henry", "$ ohenry"]
+	["{Inferno} [prompt on The {Divine Comedy}]", "$ Inferno", "? The Divine Comedy", "$ The Divine Comedy Inferno"]
+	["The {Hay Wain}", "$ Haywain"]
+	["Washington {Irving} [or {Jonathan Oldstyle}; or {Geoffrey Crayon}]", "$ irving"]
+	["1984", "$ nineteen eighty-four"]
+	['{bipolar junction} transistor [or {BJT}; prompt on {"transistor"}]', "? transistor", "$ BJT"]
+	["Romance of the {3 Kingdoms} or {sânguó y?nyì}", "$ the three kingdoms"]
+	['{snakes} [or {serpents}; prompt on {nagas}; do not prompt on “{dragons}”]', '$ snake']
+	["{Golgi} apparatus/body/dictyosome/complex", "$ golgi body"]
+	["Publius {Vergilius} Maro", "$ vergil"]
 ]
 
 for [line, guesses...] in testing
@@ -97,3 +108,198 @@ updater_socket.onmessage = (e) ->
 updater_socket.onclose = ->
 	console.log 'updater socket was closed'
 	setTimeout connect_updater, 1000
+
+dave = new XMLHttpRequest()
+dave.open 'get',  '/daveshead.txt', true
+dave.send null
+
+answer_by_answer = {}
+
+canonicalize = (answer) ->
+	removeDiacritics(answer).toLowerCase().replace(/\{|\}/g, '').trim()
+
+dave.onload = ->
+	for line in dave.responseText.split('\n')
+		[answer, guess] = line.split("\t")
+		continue unless answer and guess
+		canon = canonicalize(answer)
+		answer_by_answer[canon] = [] unless canon of answer_by_answer
+		answer_by_answer[canon].push guess
+
+	# load_question()
+
+# question_db = {}
+# meeky_fixy = ->
+# 	console.log 'im getting stuff okee?'
+# 	# $.get "/jun3.questions.json", (data, status) ->
+# 	xhr = new XMLHttpRequest()
+# 	xhr.open 'get', '/jun3.questions.json', true
+# 	xhr.send null
+# 	xhr.onload = ->
+# 		data = xhr.responseText
+# 		console.log 'loaded text'
+# 		for line in data.split('\n') when line
+# 			json = JSON.parse(line)
+# 			question_db[json._id.$oid] = json
+# 		console.log 'loaded db'
+
+# meeky_fixy()
+
+# load_peek = ->
+# 	$.get 'http://localhost:5566/stalkermode/to_meekly_go', (data, status) ->
+# 		json = JSON.parse(data)
+# 		if !json
+# 			console.error "NOTHING LEFT"
+# 			return
+# 		# console.log json, question_db[json._id]
+# 		$.post 'http://localhost:5566/stalkermode/reports/simple_change/'+json._id, {answer: question_db[json._id].answer, fixed: -1}, (data, status) ->
+# 			console.log data, status
+# 			load_peek()
+
+
+what_remains = ->
+	$.get 'http://localhost:5566/stalkermode/remaining', (data, status) ->
+		$('#remaining').text(data);
+	
+
+load_question = ->
+	$.get 'http://localhost:5566/stalkermode/to_boldly_go', (data, status) ->
+		json = JSON.parse(data)
+		if json is null
+			return load_question()
+		original_answer = json.answer
+		json.answer = json.answer.replace(/\[[A-Z][A-Z]\]/, '').replace(/\<[A-Z][A-Z]\>/, '').replace(/\[[A-Z][a-z][A-Z]\]/, '').replace(/\<[A-Z][a-z][A-Z]\>/, '').replace(/\([0-9]+\)\s*$/, '').replace(/\(\{[0-9]+\}\)\s*$/, '').trim()
+		answer = json.answer
+		console.log answer
+		canon = canonicalize(answer)
+
+		tokens = tokenize_line(answer)
+		# console.log tokens
+		render_bold(json)
+		
+		stuff = answer_by_answer[canon]
+		failures = 0
+		[prefix, front, preposition, back, suffix] = tokens[tokens.length - 1]
+		first_group = (text for [bold, text] in front).join(' ')
+		console.log first_group
+
+		if stuff and tokens[0]
+			console.log 'responses', stuff
+			for response in stuff
+				result = safeCheckAnswer(response, reconstruct_answerline(), json.question)
+				continue if result is true
+				continue if response.trim() is ''
+
+				navver.find('li a').each ->
+					needle = $(this).text().trim()
+					if !fuzzy_search(needle, response) and fuzzy_search(needle, first_group)
+						$(this).removeClass('bold')
+
+			for response in stuff
+				result = safeCheckAnswer(response, reconstruct_answerline(), json.question)
+				continue if result is true
+				console.warn("Post Change Failure", result, response, reconstruct_answerline())
+				failures++
+		else
+			console.warn("no such answer thingy exists")
+			failures++
+		
+		if reconstruct_answerline().indexOf(" ") is -1
+			failures = 0
+		# revert everything that is 42 & 21
+		level = 57
+		if failures isnt 0
+			level = 22
+		console.log json.answer, '-->', reconstruct_answerline()
+		if reconstruct_answerline().toLowerCase().replace(/[^a-z]/ig, '') == json.answer.toLowerCase().replace(/[^a-z]/ig, '')
+			new_line = reconstruct_answerline()
+			if new_line.indexOf(" ") is -1 and new_line.indexOf("{") is -1
+				new_line = "{" + new_line + "}" # wrap it in a bold
+
+			$.post 'http://localhost:5566/stalkermode/reports/set_bold', {answer: new_line, old: original_answer, fixed: level}, (data, status) ->
+				console.log(data, status)
+				# load_next();
+				load_question()
+		else
+			console.error 'FATAL ERROR', reconstruct_answerline(), "FROM", json.answer
+	
+# setInterval ->
+# 	what_remains()
+# , 2 * 1000
+
+
+# answer = $('<div>').addClass('control-group').appendTo("#magic")
+# answer.append $("<label>").addClass('control-label').text('Answer')
+navver = $("<ul>").addClass("nav nav-pills emboldinator").appendTo("#magic")
+
+# answer.append $("<div>").addClass('controls').append navver
+reconstruct_answerline = ->
+	return navver.find('li a').map( -> 
+				if $(this).hasClass('bold')
+					raw = $(this).text()
+					before = raw.match(/^\s*/)[0]
+					after = raw.match(/\s*$/)[0]
+					return "#{before}{#{raw.trim()}}#{after}"
+				else
+					return $(this).text()
+			)
+			.toArray()
+			.join('~')
+			.replace(/~/g, '')
+			.replace(/\s+/g, ' ')
+			.replace(/\}\s*\{/g, ' ')
+			.replace(/\s([\]\)])/g, '$1')
+			.replace(/([\[\(])\s/g, '$1')
+			# .replace(/~([\{\}\[\]\(\)])~/g, '$1')
+			# .replace(/\} \{/g, ' ')
+			# .replace(/\[ /g, '[')
+			# .replace(/\ \]/g, ']')
+
+render_bold = (info) ->
+	navver.empty()
+	segments = info.answer
+		.replace(/([\{\}\[\]\(\)\-])/g, '`$1`')
+		.replace(/\ +/g, ' ` ')
+		.replace(/\ +/g, ' ')
+		.split('`')
+	cur_mode = false
+	parsed = []
+	for seg in segments
+		if seg is '{'
+			cur_mode = true 
+		else if seg is '}'
+			cur_mode = false 
+		else if seg
+			parsed.push [cur_mode, seg]
+	invalid_answerline = ->
+		line = reconstruct_answerline() 
+		console.log line
+		return true if line is info.answer
+		return true if line.indexOf('{') is -1
+
+		return false
+
+
+	for [mode, text] in parsed
+		# console.log mode, text
+		
+		link = $("<a>")
+			.toggleClass('bold', mode)
+			.appendTo($("<li>").appendTo(navver))
+			.text(text)
+			.attr('href', '#')
+
+		if text.trim() in ['[', ']', ';', ',', '(', ')', '"', '', '”', '“', '-']
+			if text in [' ']
+				link.hide()
+			link
+				.removeClass('bold')
+				.addClass('unboldable')
+				.click ->
+					return false
+		else
+			link
+				.click ->
+					$(this).toggleClass('bold')
+					line = reconstruct_answerline()
+					return false

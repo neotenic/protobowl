@@ -1,6 +1,6 @@
 tokenize_line = (answer) ->
 	tokens = answer
-		.replace(/([\{\}\[\]\;\-\:\,\&\(\)])/g, " $1 ") # wrap all the special delimiting symbols
+		.replace(/([\{\}\[\]\;\-\:\,\&\(\)\/])/g, " $1 ") # wrap all the special delimiting symbols		
 		.replace(/'|"/g, '') # the apostrophes and quotes are useless
 		.replace(/\./g, ' ') # remove periods because they're kind of useless
 		.replace(/\ +/g, ' ') # condense multiple spaces
@@ -14,7 +14,7 @@ tokenize_line = (answer) ->
 			bold = true
 		else if token is '}'
 			bold = false
-		else if token not in ['-', ':', '=', '&', '%']
+		else if token not in ['-', ':', '=', '&', '%', '/']
 			processed.push [bold, token]
 	
 	# console.log processed
@@ -76,12 +76,12 @@ equivalence_map = do ->
 		['two', 'second', 'ii', '2', '2nd'],
 		['three', 'third', 'iii', 'turd', '3', '3rd'],
 		['four', 'forth', 'fourth', 'iv', '4', '4th'],
-		['fifth', 'five', 'v', '5', '5th'],
+		['fifth', 'five', '5', '5th', 'v', 'versus', 'vs', 'against'],
 		['sixth', 'six', 'vi', 'emacs', '6', '6th'],
 		['seventh', 'seven', 'vii', '7', '7th'],
 		['eight', 'eighth', '8', 'viii', 'iix', '8th'],
 		['nine', 'nein', 'ninth', 'ix', '9', '9th'],
-		['ten', 'tenth', '10', 'x', '10th'],
+		['ten', 'tenth', '10', '10th', 'x', 'by', 'times', 'product', 'multiplied', 'multiply'],
 		['eleventh', 'eleven', 'xi', '11th'],
 		['twelfth', 'twelveth', 'twelve', '12', 'xii', '12th'],
 		['thirteenth', 'thirteen', '13', 'xiii', '13th'],
@@ -109,28 +109,33 @@ equivalence_map = do ->
 		['lawrence', 'larry'],
 		['edward', 'edvard', 'edouard', 'ed']
 		['kim', 'kimball']
-		['v', 'versus', 'vs', 'against'],
+		['vladimir', 'vlad']
 		['log', 'logarithm']
+		['constant', 'number']
 	]
 	map = {}
 	for group in list
 		for item in group
+			console.warn("ITEM ALREADY EXISTS", item) if item of map
 			map[item] = group
 	return map
 	
 
-fuzzy_search = (needle, haystack) ->
-	# console.log needle, haystack
-
-	if removeDiacritics?
-		remove_diacritics = removeDiacritics 
-	else
-		remove_diacritics = require('./removeDiacritics').removeDiacritics
-	
+stemmer_cleanup = (text) ->
 	if PorterStemmer?
 		stemmer = PorterStemmer
 	else
 		stemmer = require('./porter').stemmer
+
+	return stemmer(text).replace(/ph/ig, 'f')
+
+
+
+fuzzy_search = (needle, haystack) ->
+	if removeDiacritics?
+		remove_diacritics = removeDiacritics 
+	else
+		remove_diacritics = require('./removeDiacritics').removeDiacritics
 
 	if levenshtein?
 		damlev = levenshtein
@@ -139,9 +144,11 @@ fuzzy_search = (needle, haystack) ->
 
 	haystack = remove_diacritics(haystack)
 		.replace(/([A-Z])\.\s?([A-Z])/g, '$1$2') # this helps the acronym detector
-		.replace(/([A-Z])\.?\s/g, '$1 ') # this helps the acronym detector
+		.replace(/([A-Za-z])\.?\s/g, '$1 ') # this helps the acronym detector
 	needle = remove_diacritics(needle.toLowerCase())
 	
+	# console.log needle, haystack
+
 	# console.log haystack
 	if 2 <= haystack.length <= 4 # this is for acronyms
 		haystack = haystack.toUpperCase()
@@ -151,7 +158,7 @@ fuzzy_search = (needle, haystack) ->
 	
 	return true if plainneedle.length >= 3 and plainstack.indexOf(plainneedle) != -1
 
-	stem = stemmer(needle)
+	stem = stemmer_cleanup(needle)
 	
 	ERROR_RATIO = 0.25 # magic number i pulled out of my ass
 	
@@ -177,7 +184,7 @@ fuzzy_search = (needle, haystack) ->
 
 		return true if plaid <= ERROR_RATIO
 		
-		xylem = stemmer(word)
+		xylem = stemmer_cleanup(word)
 
 		diff = damlev(xylem, stem)
 		frac = diff / Math.min(xylem.length, stem.length)
@@ -187,6 +194,10 @@ fuzzy_search = (needle, haystack) ->
 
 		if needle.length > 6 and word.indexOf(needle.slice(0, 4)) is 0
 			# this is for incomplete statements and the ilk
+			return true
+
+		if needle.length is 1 and word.indexOf(needle) is 0
+			# this is for combining words
 			return true
 	
 	if needle of equivalence_map
@@ -201,13 +212,27 @@ fuzzy_search = (needle, haystack) ->
 check_answer = (tokens, text, question = '') ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
 
-	stopwords = "as to the that on of o is a in on that have for at so it do or de la le y by any and his her my by him she battle".split(' ')
+	stopwords = "a and any as at battle by can de do for from have her him his in is it l la le my o of on or she so that the this to was y".split(' ')
 
 	judgements = []
 	index = 0
 	mode_either = false
 	cat_tokens = []
 
+	all_tokens = []
+	for [prefix, front, preposition, back, suffix] in tokens
+		for [bold, token] in front
+			all_tokens.push token
+
+	question_match = []
+	question = question.toLowerCase()
+	lower_cat_tokens = (word.toLowerCase() for word in cat_tokens)
+
+	for word in text.split(/\s/)
+		word = word.toLowerCase()
+		continue if !word or word.length <= 2 or word in stopwords or word in lower_cat_tokens
+		if question.indexOf(word) != -1
+			question_match.push word
 
 	for [prefix, front, preposition, back, suffix] in tokens
 		index++
@@ -274,17 +299,10 @@ check_answer = (tokens, text, question = '') ->
 				judgements.push [matchiness, 1]
 			else
 				judgements.push [matchiness, 0]
-
 	
-	question_match = []
-	question = question.toLowerCase()
-	for word in text.split(/\s/)
-		trivial = word.toLowerCase() in stopwords
-		word = word.toLowerCase()
-		if question.indexOf(word) != -1 and !trivial
-			question_match.push word
+	# console.log judgements
 
-	sorted = judgements.sort ([a], [b]) -> b - a
+	sorted = judgements.sort ([_a, a], [_b, b]) -> b - a
 
 	[matchiness_prime, judgement_prime] = sorted[0]
 
@@ -296,18 +314,21 @@ check_answer = (tokens, text, question = '') ->
 
 	[matchiness, judgement] = jury[0]
 	
-	# do not accept answers which are shorter than their clues
-	match_frac = (cat_tokens.join(' ').length + question_match.join(' ').length)/ text.length
-	if match_frac < 0.6
-		# console.warn 'insubstatnial match fraction', match_frac
-		return 'reject'
+	lower_all_tokens = (word.toLowerCase() for word in all_tokens)
+	question_match = (word for word in question_match when word not in lower_all_tokens)
 
+	# do not accept answers which are shorter than their clues
+	match_frac = (cat_tokens.join(' ').length + question_match.join(' ').length) / text.length
+	
+	# console.log cat_tokens, question_match
+
+	if match_frac < 0.6
+		return 'reject'
 	if judgement is 0
 		return 'reject'
-	else if judgement is 1
+	if judgement is 1
 		return 'prompt'
-	else if judgement is 2
-		
+	if judgement is 2
 		return 'accept'
 	
 
