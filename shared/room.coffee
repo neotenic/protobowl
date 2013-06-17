@@ -561,7 +561,8 @@ class QuizRoom
 
 	delete_user: (id) ->
 		return false unless @users[id]
-		@emit 'delete_user', id
+		if id[0] isnt '_'
+			@emit 'delete_user', id
 		@users[id] = null
 		delete @users[id]
 
