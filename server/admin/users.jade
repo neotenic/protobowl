@@ -9,23 +9,24 @@ html(lang="en")
 		mixin duration(millisecs)
 			- var secs = millisecs / 1000
 			if secs > 60 * 60
-				| #{Math.floor(secs / 60 / 60)} hours 
+				| #{Math.floor(secs / 60 / 60)}h 
 			if secs > 60
-				| #{Math.floor(secs / 60) % 60} minutes 
-			| #{Math.floor(secs % 60)} seconds
+				| #{Math.floor(secs / 60) % 60}m 
+			| #{Math.floor(secs % 60)}s
 
 		mixin time(timestamp)
 			- var secs = (new Date - timestamp) / 1000
 			if secs > 60 * 60
-				| #{Math.floor(secs / 60 / 60)} hours 
-			if secs > 60
-				| #{Math.floor(secs / 60) % 60} minutes 
-			| #{Math.floor(secs % 60)} seconds
+				| #{Math.floor(secs / 60 / 60)}h 
+			else if secs > 60
+				| #{Math.floor(secs / 60) % 60}m 
+			else
+				| #{Math.floor(secs % 60)}s 
 			| ago
+
 		div.container
 			h1 STALKERMODE ENGAGED
 			h4 USER VIEW
-
 
 			ul.nav.nav-pills
 				li
@@ -39,7 +40,7 @@ html(lang="en")
 						th score
 						th guesses
 						th correct
-						th interrupts
+						th negs
 						th early
 						th seen
 						th precision
@@ -47,14 +48,17 @@ html(lang="en")
 						th f
 						th time spent
 						th last action
+						th ips
 
 				tbody
 					each room, room_name in rooms
 						each user, id in room.users
 							- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001))
 							tr
-								td= room_name
-								td= user.name
+								td
+									a(href="/stalkermode/room/#{room_name}")= room_name
+								td
+									a(href="/stalkermode/user/#{room_name}/#{user.id}")= user.name
 								td= user.score()
 								td= user.guesses
 								td= user.correct
@@ -64,8 +68,9 @@ html(lang="en")
 								td= precision.toFixed(3)
 								td= recall.toFixed(3)
 								td= (2 * (precision * recall) / (precision + recall + 0.001)).toFixed(3)
-								td(sorttable_customkey="#{user.time_spent}")
+								td(sorttable_customkey="#{user.time_spent}", title="#{user.time_spent}")
 									mixin duration(user.time_spent)
 								td(sorttable_customkey="#{user.last_action}")
 									mixin time(user.last_action)
+								td= user._ips
 

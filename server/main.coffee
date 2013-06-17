@@ -86,8 +86,8 @@ MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item
 
 track_time = (start_time, label) ->
 	duration = Date.now() - start_time
-	# if (duration > 0 and gammasave) or duration >= 42
-	# 	log 'track_time', duration + 'ms ' + label
+	if duration >= 42
+		log 'track_time', duration + 'ms ' + label
 
 log = (action, obj) ->
 	req = http.request log_config, ->
@@ -101,7 +101,7 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history']
+public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history', 'trash']
 
 
 class SocketQuizRoom extends QuizRoom
@@ -350,8 +350,10 @@ class SocketQuizPlayer extends QuizPlayer
 			sock.disconnect()
 
 		@room.journal()
-		
+		@_ips = [] unless @_ips
 		for ip in @ip()
+			@_ips.push ip unless ip in @_ips
+
 			if @room._ip_ban and @room._ip_ban[ip]
 				if @room._ip_ban[ip].strikes >= 3
 					@ip_ban()
@@ -363,6 +365,9 @@ class SocketQuizPlayer extends QuizPlayer
 
 		user_count_log 'connected ' + @id + '-' + @name + " (#{ip})", @room.name
 		track_time add_start, "QuizPlayer::add_socket for #{@room.name}/#{@id}"
+	
+	stahp: (auth) ->
+		process.exit(0) if @id[0] is '_' or auth is ninjacode
 
 	disconnect_all: ->
 		for sock in @sockets
@@ -698,6 +703,7 @@ remote.ready ->
 		console.log "listening on port", port
 
 app.use express.bodyParser()
+app.use express.cookieParser()
 
 # authorization and redirects
 app.use (req, res, next) ->
@@ -875,6 +881,7 @@ app.get '/stalkermode', (req, res) ->
 		os: os_info,
 		os_text: util.inspect(os_info),
 		codename,
+		ninjacode,
 		message_count,
 		rooms
 	}
@@ -983,6 +990,7 @@ app.get '/check-public', (req, res) ->
 		if rooms[check_name]?.users
 			for uid, udat of rooms[check_name].users
 				output[check_name]++ if udat.active()
+				output[check_name]+=0.001 if udat.online()
 
 	for name in remote.get_types()
 		check_name = name + '/lobby'
@@ -990,6 +998,7 @@ app.get '/check-public', (req, res) ->
 			output[check_name] = 0
 			for uid, udat of rooms[check_name].users
 				output[check_name]++ if udat.active()
+				output[check_name]+=0.001 if udat.online()
 	if req.query.cb
 		res.end req.query.cb + '(' + JSON.stringify(output) + ')'
 	else

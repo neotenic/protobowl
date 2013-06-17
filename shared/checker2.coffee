@@ -220,7 +220,7 @@ check_answer = (tokens, text, question = '') ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
 	text = text.replace(/l(ol)+/g, 'lol')
 
-	stopwords = "a and any as at battle war by can de do for from have her him his in is it l la le my o of on or she so that the this to was y lol derp merp haha".split(' ')
+	stopwords = "a and any as at election battle war by can de do for from have her him his in is it l la le my o of on or she so that the this to was y lol derp merp haha".split(' ')
 
 	judgements = []
 	index = 0
