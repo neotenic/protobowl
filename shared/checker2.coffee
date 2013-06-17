@@ -33,7 +33,7 @@ tokenize_line = (answer) ->
 
 	# parse statements in reverse order for situations like accept either
 	for group in completed.reverse()
-		prefix_words = ["do","not","accept","or","prompt", "on", "just", "don't", "either"]
+		prefix_words = ["do","not","accept","or","prompt", "on", "just", "don't", "either", "i", "guess"]
 		# ,"on", "either", "underlined", "portion", "equivalents", "equivalent", "word", "forms", "like", "any", "other", "in", "order"
 		suffix_words = ["is", "read", "stated", "mentioned", "at", "any", "time"]
 		splitters = ["before", "after", "during", "while", "until", "but"]
@@ -101,6 +101,7 @@ equivalence_map = do ->
 		['robert', 'bob', 'rob'],
 		['william', 'will', 'bill'],
 		['richard', 'rich', 'dick'],
+		['jim', 'james']
 		['gregory', 'greg'],
 		['christopher', 'chris'],
 		['benjamin', 'ben'],
@@ -143,8 +144,9 @@ fuzzy_search = (needle, haystack) ->
 		damlev = require('./levenshtein').levenshtein 
 
 	haystack = remove_diacritics(haystack)
-		.replace(/([A-Z])\.\s?([A-Z])/g, '$1$2') # this helps the acronym detector
-		.replace(/([A-Za-z])\.?\s/g, '$1 ') # this helps the acronym detector
+		.replace(/\.\s?/g, ' ')
+		# .replace(/([A-Z])\.\s?([A-Z])/g, '$1$2') # this helps the acronym detector
+		# .replace(/([A-Za-z])\.?\s/g, '$1 ') # this helps the acronym detector
 	needle = remove_diacritics(needle.toLowerCase())
 	
 	# console.log needle, haystack
@@ -168,9 +170,6 @@ fuzzy_search = (needle, haystack) ->
 		if /^[A-Z]+$/.test(word) and 1 <= word.length <= 4
 			composite_acronym += word
 
-	if 2 <= composite_acronym.length <= 4
-		if composite_acronym.toLowerCase().indexOf(needle[0]) isnt -1
-			return true
 
 	for word in haystack.split(/\s|\-/)
 		word = word.toLowerCase()
@@ -188,6 +187,7 @@ fuzzy_search = (needle, haystack) ->
 
 		diff = damlev(xylem, stem)
 		frac = diff / Math.min(xylem.length, stem.length)
+
 		# console.log frac, word, needle
 		
 		return true if frac <= ERROR_RATIO
@@ -200,19 +200,27 @@ fuzzy_search = (needle, haystack) ->
 			# this is for combining words
 			return true
 	
+	# console.log 'merp', needle, haystack
+
 	if needle of equivalence_map
 		for word in equivalence_map[needle]
 			if " #{haystack.toLowerCase()} ".indexOf(" #{word} ") isnt -1
 				return true
 
 
+	if 2 <= composite_acronym.length <= 4
+		# console.log composite_acronym
+		if composite_acronym.toLowerCase().indexOf(needle[0]) isnt -1
+			return 'ACRONYM'
+
 	return false
 
 
 check_answer = (tokens, text, question = '') ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
+	text = text.replace(/l(ol)+/g, 'lol')
 
-	stopwords = "a and any as at battle by can de do for from have her him his in is it l la le my o of on or she so that the this to was y".split(' ')
+	stopwords = "a and any as at battle war by can de do for from have her him his in is it l la le my o of on or she so that the this to was y lol derp merp haha".split(' ')
 
 	judgements = []
 	index = 0
@@ -230,7 +238,10 @@ check_answer = (tokens, text, question = '') ->
 
 	for word in text.split(/\s/)
 		word = word.toLowerCase()
-		continue if !word or word.length <= 2 or word in stopwords or word in lower_cat_tokens
+		if word in stopwords
+			question_match.push word
+			continue
+		continue if !word or word.length <= 2 or word in lower_cat_tokens
 		if question.indexOf(word) != -1
 			question_match.push word
 
@@ -244,8 +255,21 @@ check_answer = (tokens, text, question = '') ->
 		unbold = []
 
 		# evaluate errything
-		for [bold, token] in front
+		acronym_matches = 0
+		text_matches = 0
+		processed = for [bold, token] in front
 			match = fuzzy_search(token, text)
+			if match is 'ACRONYM'
+				acronym_matches++
+			else if match
+				text_matches++
+			[bold, token, match]
+		
+		# console.log processed
+
+		for [bold, token, match] in processed
+			if acronym_matches + text_matches < 2 and match is 'ACRONYM'
+				match = false
 			trivial = token.toLowerCase() in stopwords
 			bold_match.push token if match and bold
 			unbold_match.push token if match and !bold and !trivial
@@ -263,7 +287,11 @@ check_answer = (tokens, text, question = '') ->
 			if mode_either
 				level = 2
 			else if bold_miss.length > 0
-				level = 1
+				# when you play the game of acronyms, you win or you die
+				if acronym_matches > text_matches and acronym_matches + text_matches < 4 
+					level = 0
+				else
+					level = 1
 			else
 				level = 2
 		else

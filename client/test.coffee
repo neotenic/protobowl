@@ -14,7 +14,7 @@ testing = [
 	["Yellow (accept Yellow Sarong before Sarong is mentioned)", "$ Yelow"],
 	["Bioshock 2 [accept Bioshock 2 Multiplayer during the first sentence]", "$ Bioshock 2"],
 	["Brooklyn {Dodgers} [or Los Angeles {Dodgers}; prompt on {Los Angeles}]", "? Los Angeles"],
-	["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "? The Dark Knight", "Batman"],
+	["{Batman} [accept {Bruce Wayne} before mention; prompt on The {Dark Knight} or The {Caped Crusader}]", "? The Dark Knight", "$ Batman"],
 	['{disease} [accept equivalents and accept {itching} until {"Devi Mata"}] (1)', "$ iching"],
 	["{Georgia Tech} [do not accept or prompt on just {Georgia}]", "? Georgia"],
 	["{airplane bombings} [accept {aircraft} for {airplane}; accept other answers {involving} the {detonation} of {explosive substances} on {civilian planes}; accept {trials} for {airplane bombings} until “{assault} a {motorcade}” is read; prompt “{bombings};” do not prompt “{terrorist attacks}”]", "airplame bombing"],
@@ -22,7 +22,7 @@ testing = [
 	["Jerome David {Salinger}", "$ Salinger", "$ JD Salinger", "$ J.D. Salinger", "! Jerome", "! David", "? Jerome David"],
 	["Works Progress Administration", "$ WPA"]
 	["{Blu-ray discs}", "$ blu ray disk"]
-	["{Dinosaur Comics} [prompt on {qwantz.com}]", "! hi", "dinosaur", "quantz"],
+	["{Dinosaur Comics} [prompt on {qwantz.com}]", "! hi", "? dinosaur", "? quantz"],
 	["U.S. Presidential election of {1896}", "$ 1896", "! 1876"],
 	["Battle of {Actium}", "! battle of"],
 	["Pope {Gregory XVI}", "$ gregory 16", "! gregory 10 11 12 13 14 15 16 17 18 19 20"],
@@ -32,7 +32,7 @@ testing = [
 	["One {Hundred} Years of {Solitude} (or {Cien Anos} de {Soledad})", "$ cien anos de soledad"],
 	["{artificial intelligence}", "$ ai", "$ AI"]
 	["John Davison {Rockefeller}", "$ JD Rockefeller", "$ Rockefeller"]
-	["{Environmental Protection Agency}", "$ EPA", "$ Environmental PA", "$ E P A", "$ E.P.A.", "! P.G.A.", "E. P. A."]
+	["{Environmental Protection Agency}", "$ EPA", "$ Environmental PA", "$ E P A", "$ E.P.A.", "! P.G.A.", "$ E. P. A."]
 	["{Kurt Vonnegut Jr.}", "$ kurt vonnegut jr"],
 	["{Kimball O'Hara}", "$ Kimball OHara", "$ Kimball O'Hara", "$ Kimball O Hara"],
 	['"{Chicago}"', '$ chicago']
@@ -43,7 +43,7 @@ testing = [
 	["the first {G.I. Bill} of Rights", "$ GI Bill"]
 	["{Roots}: The Saga of an American Family", "$ roots"]
 	["{St. Thomas Aquinas}", "$ Saint Thomas Aquinas"]
-	["{Octavian} [or Caesar {Augustus}; or {Octavius}]", "caesar"]
+	["{Octavian} [or Caesar {Augustus}; or {Octavius}]", "? caesar"]
 	["Georgia {O'Keeffe}", "$ okeefe"],
 	["{geometric} series", "! are you serious"]
 	["{Robert Browning}", "! Bob Yellowing", "! Browning Bananas the Robert", "$ Bob Browning"],
@@ -70,6 +70,10 @@ testing = [
 	['{snakes} [or {serpents}; prompt on {nagas}; do not prompt on “{dragons}”]', '$ snake']
 	["{Golgi} apparatus/body/dictyosome/complex", "$ golgi body"]
 	["Publius {Vergilius} Maro", "$ vergil"]
+	["{Hall} effect", "$ hall lolololol"]
+	["Pierre {Abélard} or Peter {Abelard} or Petrus {Abaelardus}, I guess", "! dog"]
+	["{Falklands} war (accept {Malvinas} war, do not accept {Battle} of {Falklands}, which was in WWI)", "! war of"]
+	["{World War I}", "$ WWI"]
 ]
 
 for [line, guesses...] in testing

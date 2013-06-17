@@ -196,7 +196,7 @@ class QuizPlayer
 	gestapo: (string) ->
 		return unless typeof string is 'string'
 		return unless @room.dystopia
-		for check in [/ni+gg+e+r/i, /n\s*i\s*g\s*g\s*e\s*r/]
+		for check in [/ni+gg+e+r/i, /n\s*i\s*g\s*g\s*e\s*r/i, /nigga/i]
 			if string.match(check)
 				@ban(1000 * 60 * 5)
 				@sync(true)
