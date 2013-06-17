@@ -101,7 +101,7 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl']
+public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history']
 
 
 class SocketQuizRoom extends QuizRoom
@@ -233,8 +233,6 @@ class SocketQuizPlayer extends QuizPlayer
 			if rooms[check_name]?.users
 				for uid, udat of rooms[check_name].users
 					output[check_name]++ if udat.active()
-
-
 		for name in remote.get_types()
 			check_name = name + '/lobby'
 			if rooms[check_name]?.users
@@ -976,6 +974,26 @@ app.get '/stalkermode/reports/:type', (req, res) ->
 
 app.get '/lag', (req, res) ->
 	res.render 'lag.jade', { }
+
+
+app.get '/check-public', (req, res) ->
+	output = {}
+	for check_name in public_room_list
+		output[check_name] = 0
+		if rooms[check_name]?.users
+			for uid, udat of rooms[check_name].users
+				output[check_name]++ if udat.active()
+
+	for name in remote.get_types()
+		check_name = name + '/lobby'
+		if rooms[check_name]?.users
+			output[check_name] = 0
+			for uid, udat of rooms[check_name].users
+				output[check_name]++ if udat.active()
+	if req.query.cb
+		res.end req.query.cb + '(' + JSON.stringify(output) + ')'
+	else
+		res.end JSON.stringify(output)
 
 app.get '/stalkermode/audacity', (req, res) ->
 	res.render 'audacity.jade', { }
