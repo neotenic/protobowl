@@ -13,7 +13,7 @@
 		"cache_breaker": true,
 		
 		"static": "//neotenic.github.io/",
-		"sockets": [["http://protobowl.nodejitsu.com/", "https://protobowl.nodejitsu.com/"], ["http://dino.xvm.mit.edu:5566/"]],
+		"sockets": [["http://protobowl.nodejitsu.com:80/", "https://protobowl.nodejitsu.com:443/"], ["http://cab.antimatter15.com:443/"], ["http://dino.xvm.mit.edu:5566/"]],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
 	},
 	"debug": {

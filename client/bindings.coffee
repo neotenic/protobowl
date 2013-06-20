@@ -323,7 +323,7 @@ $('.chat_form').submit (e) ->
 $('.guess_input').keyup (e) ->
 	return if e.keyCode is 13
 	me.guess {
-		text: $('.guess_input').val(), 
+		text: $('.guess_input').val().slice(0, 100), 
 		done: false
 	}
 
@@ -331,7 +331,7 @@ $('.guess_input').keyup (e) ->
 $('.guess_form').submit (e) ->
 	setActionMode ''
 	me.guess {
-		text: $('.guess_input').val(), 
+		text: $('.guess_input').val().slice(0, 100), 
 		done: true
 	}
 	e.preventDefault()
@@ -340,7 +340,7 @@ $('.guess_form').submit (e) ->
 $('.prompt_input').keyup (e) ->
 	return if e.keyCode is 13
 	me.guess {
-		text: $('.prompt_input').val(), 
+		text: $('.prompt_input').val().slice(0, 140), 
 		done: false
 	}
 
@@ -348,7 +348,7 @@ $('.prompt_input').keyup (e) ->
 $('.prompt_form').submit (e) ->
 	setActionMode ''
 	me.guess {
-		text: $('.prompt_input').val(), 
+		text: $('.prompt_input').val().slice(0, 140), 
 		done: true
 	}
 	e.preventDefault()

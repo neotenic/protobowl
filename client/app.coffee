@@ -33,10 +33,13 @@ do ->
 		html_time = new Date protobowl_html_build
 		time_delta = Math.abs(js_time - html_time)
 		# console.log time_delta, protobowl_app_build, protobowl_html_build
-		if time_delta >= 60 * 60 # it shouldnt ever take more than a minute to compile
-			line = $('<div>').addClass 'alert alert-info'
-			line.append $("<div>").append("<b>Version mismatch!</b> It appears that you are running HTML generated for a different version of protobowl. This could happen if you loaded this page before a server update has fully propagated. This will most likely not impact your protobowl experience. ")
-			line.insertAfter("#history")
+		
+		# this hardly ever makes a difference
+
+		# if time_delta >= 60 * 60 # it shouldnt ever take more than a minute to compile
+		# 	line = $('<div>').addClass 'alert alert-info'
+		# 	line.append $("<div>").append("<b>Version mismatch!</b> It appears that you are running HTML generated for a different version of protobowl. This could happen if you loaded this page before a server update has fully propagated. This will most likely not impact your protobowl experience. ")
+		# 	line.insertAfter("#history")
 
 
 
@@ -133,8 +136,20 @@ disconnect_notice = ->
 has_connected = false
 sock = null
 socket_pair_index = 0
+connected_url = null
 
 online_startup = ->
+	# so some firewalls block unsecure websockets but allow secure stuff
+	# so try to connect to both!
+	connection_timeout = 5000
+	
+	socket_pair = protobowl_config?.sockets[socket_pair_index]
+
+	[insecure_url, secure_url] = socket_pair
+
+	if 'sock' of location.query
+		insecure_url = location.query.sock
+
 	reconnect = ->
 		cookie = location.query.id || jQuery.cookie('protocookie')
 		authcookie = null
@@ -191,12 +206,13 @@ online_startup = ->
 		if sock
 			sock.removeAllListeners()
 		
-		if socket_pair_index > 0
-			addImportant($("<div>").html('<strong>Warning</strong> You are not connected to the primary socket server. The primary server may be broken at this time, however, if it gets fixed, users may be stranded on different rooms.').addClass('alert'))
+
 		sock = socket
 		if sock is secure_socket
 			verbAnnotation {verb: "established a connection to the secure server"}
+			connected_url = secure_url
 		else
+			connected_url = insecure_url
 			if sock.socket.options.secure
 				verbAnnotation {verb: "established a connection to the server (secure)"}
 			else
@@ -250,13 +266,7 @@ online_startup = ->
 				
 			# console.log 'connection error', num_failures, valid_attempts, e
 
-	# so some firewalls block unsecure websockets but allow secure stuff
-	# so try to connect to both!
-	connection_timeout = 5000
-	
-	socket_pair = protobowl_config?.sockets[socket_pair_index]
 
-	[insecure_url, secure_url] = socket_pair
 	try
 		valid_attempts++
 
@@ -489,6 +499,12 @@ synchronize = (data) ->
 	sync_offsets.push +new Date - data.real_time
 	compute_sync_offset()
 	
+	if 'realm' of data
+		unless connected_url in data.realm
+			if data.realm?.join(';') isnt room.realm?.join(';')
+				addImportant($("<div>").html('<strong>Warning</strong> You are currently connected to a server which is not registered as this room\'s proper realm.').addClass('alert'))
+		
+
 	room[attr] = val for attr, val of data when attr not in blacklist
 
 	if connected()
@@ -519,6 +535,8 @@ synchronize = (data) ->
 			if user.id is me.id
 				for attr, val of user when attr not in user_blacklist
 					me[attr] = val
+
+		console.log data.realm, connected_url
 
 	$('body').toggleClass('offline', !connected())
 

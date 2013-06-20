@@ -69,8 +69,8 @@ userSpan = (id, global) ->
 		icon 'star-empty'
 	else if user?.prefs?.distraction
 		icon 'eye-close'
+		span.attr 'title', 'This user has enabled distraction-free mode.'
 	else if user?.auth
-		# icon 'key'
 		span.addClass 'auth'
 
 

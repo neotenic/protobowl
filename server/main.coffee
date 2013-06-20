@@ -133,9 +133,9 @@ class SocketQuizRoom extends QuizRoom
 			@archived = Date.now()
 			process.nextTick => # do it the next tick, why not?
 				t_start = Date.now()
-				journal_queue[@name] = null
-				remote.archiveRoom? this
-				delete journal_queue[@name]
+				archive_room @
+				# journal_queue[@name] = null
+				# delete journal_queue[@name]
 				track_time t_start, "dynamic refresh_stale(#{@name})"
 		
 
@@ -416,6 +416,24 @@ user_count_log = (message, room_name) ->
 	track_time t_start, "user_count_log"
 
 
+archive_room = (room, callback) ->
+	return unless room?.name
+	journal_queue[room.name] = null
+	delete journal_queue[room.name]
+	
+	if room.realm
+		proper = false
+		for path in remote?.config?.realm
+			if path in room.realm
+				proper = true
+				break
+		return unless proper
+
+	remote.archiveRoom? room, (name) ->
+		journal_queue[name] = null
+		delete journal_queue[name]
+		callback?(name)
+
 load_room = (name, callback) ->
 	if rooms[name] # its really nice and simple if you have it cached
 		return callback rooms[name], false
@@ -430,11 +448,16 @@ load_room = (name, callback) ->
 
 		room = new SocketQuizRoom(name) 
 		rooms[name] = room
-
+		
 		if data and data.users and data.name
 			room.deserialize data
+			if room.archived < Date.now() - 1000 * 60 * 10 or !room.realm
+				room.realm = remote?.config?.realm
+				archive_room room
+
 			callback room, false, Date.now() - t_start
 		else
+			room.realm = remote?.config?.realm
 			callback room, true, Date.now() - t_start
 
 	if remote.loadRoom
@@ -501,6 +524,7 @@ io.sockets.on 'connection', (sock) ->
 		load_room room_name, (room, is_new, load_elapsed) ->
 			clearTimeout slow_load
 
+			
 			room.type = question_type if is_new
 
 			if is_ninja
@@ -579,14 +603,11 @@ process_queue = ->
 		if !rooms[name]
 			journal_queue[name] = null
 			delete journal_queue[name]
-			continue			
+			continue
 		[min_time, min_room] = [time, name] if time < min_time
 	
 	track_time t_start, 'argmin_queue'
 	return unless min_room
-
-	# if !gammasave
-	# 	return if Date.now() - min_time  < 1000 * 60 * 3
 
 	room = rooms[min_room]
 
@@ -596,29 +617,31 @@ process_queue = ->
 		room.archived = Date.now()
 		process.nextTick ->
 			t_start = Date.now()
-			remote.archiveRoom? room
-			journal_queue[min_room] = null
-			delete journal_queue[min_room]
+			archive_room room
+			# journal_queue[min_room] = null
+			# delete journal_queue[min_room]
 			track_time t_start, "static refresh_stale(#{min_room})"
 	
 
 setInterval process_queue, 1000	
 
 perf_hist = (0 for i in [0..100])
+weighted_avg = 0
 
 check_performance = ->
 	t_now = Date.now()
 	delay = 100
+	stickiness = 0.99
+
 	setTimeout ->
 		t_delta = Math.max(0, Date.now() - t_now - delay)
-		
 		perf_hist[Math.min(perf_hist.length - 1, t_delta)]++
-
-		if t_delta > 50
-			io.sockets.in("stalkermode-dash").emit 'slow', t_delta
+		# old_weight = weighted_avg
+		weighted_avg = weighted_avg * stickiness + Math.min(100, t_delta) * (1 - stickiness)
+		# console.log weighted_avg, old_weight, weighted_avg - old_weight
 	, delay
 
-setInterval check_performance, 762
+setInterval check_performance, 250
 
 clearInactive = ->
 	t_start = Date.now()
@@ -626,7 +649,19 @@ clearInactive = ->
 	MAX_SIZE = 15
 
 	rank_user = (u) -> if u.correct > 2 then u.last_action else u.time_spent
-	
+
+	find_lowest = (set, mapper) ->
+		lowest_el = set[0]
+		lowest_rank = mapper set[0]
+		for i in [1...set.length]
+			rank = mapper set[i]
+			if rank <= lowest_rank
+				lowest_rank = rank
+				lowest_el = set[i]
+		return lowest_el
+
+
+
 	reap_room = (name) ->
 		log 'reap_room', name
 		rooms[name] = null
@@ -650,43 +685,48 @@ clearInactive = ->
 		}
 		u.room.delete_user u.id
 
-	for room_name, room of rooms
+	collect_room = (room) ->
 		user_pool = (user for id, user of room.users)
 		if user_pool.length is 0
-			reap_room room_name
-			continue
-
-		offline_pool = (user for user in user_pool when !user.online())
+			return reap_room room.name
 		
+		offline_pool = (user for user in user_pool when !user.online())	
+
 		for user in offline_pool when user.correct < 2 and user.last_action < Date.now() - 1000 * 60 * 5
 			reap_user user
-			continue
-
-		offline_pool.sort (a, b) -> rank_user(a) - rank_user(b)
+			return
 		if offline_pool.length > 0 and user_pool.length > MAX_SIZE
-			reap_user offline_pool[0]
-			continue # no point here but it makes the code more poetic
-
+			reap_user find_lowest(offline_pool, rank_user)
+			return
+	
+	collect_room room for room_name, room of rooms
+		
 	track_time t_start, 'clearInactive'
 
-setInterval clearInactive, 1000 * 10 # every ten seconds
+setInterval clearInactive, 1000 * 5 # every five seconds
 
 
 # think of it like a filesystem swap; slow access external memory that is used to save ram
 swapInactive = ->
 	t_start = Date.now()
 	for name, room of rooms
+		if room.archived < Date.now() - 1000 * 60 * 5
+			archive_room room
+			# remote.archiveRoom? room, (name) ->
+			# 	journal_queue[name] = null
+			# 	delete journal_queue[name]
+			continue
+
 		online = (user for username, user of room.users when user.online())
 		continue if online.length > 0
 		events = (room.serverTime() - user.last_action for username, user of room.users)
 		shortest_lapse = Math.min.apply @, events
-		continue if shortest_lapse < 1000 * 60 * 20 # things are stale after a few minutes
+		continue if shortest_lapse < 1000 * 60 * 5 # things are stale after a few minutes
 		# ripe for swapping
-		remote.archiveRoom? room, (name) ->
+		archive_room room, (name) ->
 			rooms[name] = null
 			delete rooms[name]
-			journal_queue[name] = null
-			delete journal_queue[name]
+			
 
 	track_time t_start, 'swapInactive'
 
@@ -795,7 +835,7 @@ app.post '/stalkermode/the-scene-is-safe', (req, res) ->
 			res.end "Saved #{user_names.length} rooms (#{user_names.join(', ')}) in #{Date.now() - start_time}ms; Server restarted."
 			restart_server()
 	for name in user_names
-		remote.archiveRoom? rooms[name], increment_and_check
+		archive_room rooms[name], increment_and_check
 
 
 app.post '/stalkermode/clear_bans/:room', (req, res) ->
@@ -1021,7 +1061,9 @@ app.get '/stalkermode/archived', (req, res) ->
 
 app.get '/stalkermode/:other', (req, res) -> res.redirect '/stalkermode'
 
-app.get '/perf-histogram', (req, res) -> res.end util.inspect(perf_hist)
+app.get '/perf-histogram', (req, res) -> 
+	res.header 'content-type', 'text/plain'
+	res.end weighted_avg + '\n' + util.inspect(perf_hist)
 
 app.get '/401', (req, res) -> res.render 'auth.jade', {}
 

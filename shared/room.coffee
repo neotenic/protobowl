@@ -40,7 +40,8 @@ class QuizRoom
 	constructor: (name = "temporary") ->
 		@name = name
 		@type = "qb"
-		
+		@realm = null
+
 		@answer_duration = 5 * 1000
 		@attempt_duration = 8 * 1000
 		@prompt_duration = 10 * 1000
@@ -65,7 +66,7 @@ class QuizRoom
 
 		@freeze()
 		@users = {}
-		# @admins = []
+		
 		@difficulty = ''
 		@category = ''
 		@max_buzz = null
@@ -480,7 +481,7 @@ class QuizRoom
 	guess: (user, data) ->
 		# @touch user
 		if @attempt?.user is user
-			@attempt.text = data.text
+			@attempt.text = data.text.slice(0, 200)
 			# lets just ignore the input session attribute
 			# because that's more of a chat thing since with
 			# buzzes, you always have room locking anyway
@@ -506,7 +507,7 @@ class QuizRoom
 			data[attr] = this[attr]
 
 
-		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic", "acl"]
+		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic", "acl", "realm"]
 		user_blacklist = ["sockets", "room"]
 
 		if level.id # that's no number! that's a user!
@@ -541,7 +542,7 @@ class QuizRoom
 
 		if level >= 4
 			data.topic = @topic if 'topic' of this
-
+			data.realm = @realm
 			data.distribution = @distribution
 			# async stuff
 			@get_parameters @type, @difficulty, (difficulties, categories) =>
