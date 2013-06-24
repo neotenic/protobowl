@@ -512,9 +512,14 @@ io.sockets.on 'connection', (sock) ->
 		if room_name is "private"
 			unless protoauth
 				sock.emit 'log', verb: 'You may not access this private room without first logging in.'
-				sock.disconnected()
+				sock.disconnect()
 				return
 			room_name = "private/"+publicID
+
+		if room_name in remote.get_types()
+			sock.emit 'redirect', "/#{room_name}/lobby"
+			sock.disconnect()
+			return
 
 		# get the room
 		slow_load = setTimeout ->
@@ -524,7 +529,6 @@ io.sockets.on 'connection', (sock) ->
 		load_room room_name, (room, is_new, load_elapsed) ->
 			clearTimeout slow_load
 
-			
 			room.type = question_type if is_new
 
 			if is_ninja

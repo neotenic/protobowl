@@ -111,6 +111,7 @@ equivalence_map = do ->
 		['edward', 'edvard', 'edouard', 'ed']
 		['kim', 'kimball']
 		['vladimir', 'vlad']
+		['samuel', 'samantha', 'sam']
 		['log', 'logarithm']
 		['constant', 'number']
 	]

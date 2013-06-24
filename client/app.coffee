@@ -499,7 +499,7 @@ synchronize = (data) ->
 	sync_offsets.push +new Date - data.real_time
 	compute_sync_offset()
 	
-	if 'realm' of data
+	if 'realm' of data and data.realm
 		unless connected_url in data.realm
 			if data.realm?.join(';') isnt room.realm?.join(';')
 				addImportant($("<div>").html('<strong>Warning</strong> You are currently connected to a server which is not registered as this room\'s proper realm.').addClass('alert'))
@@ -536,7 +536,7 @@ synchronize = (data) ->
 				for attr, val of user when attr not in user_blacklist
 					me[attr] = val
 
-		console.log data.realm, connected_url
+		# console.log data.realm, connected_url
 
 	$('body').toggleClass('offline', !connected())
 
