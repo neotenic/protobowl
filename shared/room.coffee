@@ -238,7 +238,11 @@ class QuizRoom
 				syllables = require('./syllable').syllables
 
 			# in case syllables gives anything really weird (which has happened before)
-			@timing = ((+syllables(word) || 0) + 1 for word in @question.split(" "))
+			@timing = for word in @question.split(" ")
+				syl = +syllables(word) || 0
+				pds = word.split('.').length - 1
+				coms = word.split(',').length - 1
+				1 + syl + pds * 4 + coms * 2
 
 			@set_speed @rate #do the math with speeds
 			
