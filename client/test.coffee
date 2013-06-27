@@ -74,6 +74,7 @@ testing = [
 	["Pierre {Abélard} or Peter {Abelard} or Petrus {Abaelardus}, I guess", "! dog"]
 	["{Falklands} war (accept {Malvinas} war, do not accept {Battle} of {Falklands}, which was in WWI)", "! war of"]
 	["{World War I}", "$ WWI"]
+	["Sigmund {Freud}", "$ freud", "$                  freud", "$  \t  \t freud", "$          freud"]
 ]
 
 for [line, guesses...] in testing
@@ -82,7 +83,7 @@ for [line, guesses...] in testing
 	for guess in guesses
 		command = guess.trim()[0]
 		if command in ['$', '!', '?']
-			guess = guess.trim().slice(1).trim()
+			guess = guess.trim().slice(1)
 
 		result = check_answer tokens, guess
 		mapping = {'accept': '✔', 'reject': '✗', 'prompt': '?'}
