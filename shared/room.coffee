@@ -241,7 +241,10 @@ class QuizRoom
 			@timing = for word in @question.split(" ")
 				syl = +syllables(word) || 0
 				if word.split('.').length > 1
-					syl += 4
+					if word.lenth > 2
+						syl += 4
+					else
+						syl += 2
 				if word.split(',').length > 1
 					syl += 2
 				1 + syl
