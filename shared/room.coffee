@@ -242,6 +242,11 @@ class QuizRoom
 				syl = +syllables(word) || 0
 				pds = word.split('.').length - 1
 				coms = word.split(',').length - 1
+				if word.length <= 2 and pds is 1
+					pds = 0
+				if word.length <= 3 and pds is 1
+					pds = 0
+					coms++
 				1 + syl + pds * 4 + coms * 2
 
 			@set_speed @rate #do the math with speeds
