@@ -497,7 +497,8 @@ verbAnnotation = ({user, verb, time, notify}) ->
 
 	left = $(".bundle.active .verb-#{user}-left-the")
 	if verb.split(' ')[0] is 'joined' and left.length > 0
-		left.slideUp()
+		left.slideUp 'normal', ->
+			$(this).remove()
 		verbAnnotation {user, verb: 'reloaded the page', time}
 		return
 

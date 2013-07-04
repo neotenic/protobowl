@@ -82,46 +82,62 @@ jQuery.fn.capQueue = ->
 	q.splice(1, q.length) if q
 	return $(this)
 
-jQuery.fn.fireworks = (times = 5) ->
-	for i in [0...times]
-		duration = Math.random() * 2000
-		@.delay(duration).queue =>
-			{top, left} = @position()
-			left += jQuery(window).width() * Math.random()
-			top += jQuery(window).height() * Math.random()
-			color = '#'+Math.random().toString(16).slice(2,8)
-			@dequeue()
-			for j in [0...50]
-				ang = Math.random() * 6.294
-				speed = Math.min(100, 150 * Math.random())
-				
-				vx = speed * Math.cos(ang)
-				vy = speed * Math.sin(ang)
+jQuery.fn.firework = (color) ->
+	{top, left} = @position()
+	left += jQuery(window).width() * Math.random()
+	top += jQuery(window).height() * Math.random()
+	
+	@dequeue()
+	for j in [0...50]
+		ang = Math.random() * 6.294
+		speed = Math.min(100, 150 * Math.random())
+		
+		vx = speed * Math.cos(ang)
+		vy = speed * Math.sin(ang)
 
-				seconds = 2 * Math.random()
-				size = 5
-				end_size = Math.random() * size
-				jQuery('<div>')
-				.css({
-					"position": 'fixed',
-					"background-color": color,
-					'width': size,
-					'height': size,
-					'border-radius': size,
-					'top': top,
-					'left': left
-				})
-				.appendTo('body')
-				.animate {
-					left: "+=#{vx * seconds}",
-					top: "+=#{vy * seconds}",
-					width: end_size,
-					height: end_size
-				}, {
-					duration: seconds * 1000,
-					complete: ->
-						$(this).remove()
-				}
+		seconds = 2 * Math.random()
+		size = 5
+		end_size = Math.random() * size
+		speck = jQuery('<div>')
+		.css({
+			"position": 'fixed',
+			"background-color": color,
+			'width': size,
+			'height': size,
+			'border-radius': size,
+			'top': top,
+			'left': left
+		})
+
+		if color is '#fff'
+			speck.css('box-shadow', '0px 0px 5px #000')
+		speck
+		.appendTo('body')
+		.animate {
+			left: "+=#{vx * seconds}",
+			top: "+=#{vy * seconds}",
+			width: end_size,
+			height: end_size
+		}, {
+			duration: seconds * 1000,
+			complete: ->
+				$(this).remove()
+		}
+
+jQuery.fn.fireworks = (times = 5, colormaker) ->
+	counter = 0
+	for i in [0...times]
+		if i is 0
+			duration = 500
+		else
+			duration = Math.random() * 2000
+		@.delay(duration).queue =>
+			if colormaker
+				color = colormaker(counter)
+			else
+				color = '#'+Math.random().toString(16).slice(2,8)
+			@.firework(color)
+			counter++
 
 # an expando is a thing which expands to fill space, minus some fixed width thing in front
 # used for lots of ui components in protobowl
@@ -251,6 +267,13 @@ check_holiday = ->
 	# arguable protobowl birthday
 	else if now.getMonth() is 6 and now.getDate() is 20
 		$('a.brand .motto').text "the first line of protobowl code was written July 20, 2012"
+	# independence day
+	else if now.getMonth() is 6 and now.getDate() is 4
+		$('body').addClass 'murrica'
+		$('a.brand .motto').text("Happy #{now.getFullYear() - 1776}th Birthday, America!").click (e) ->
+			$('body').fireworks 3, (i) -> ['#9d0101', '#fff', '#447ba9'][i]
+			e.preventDefault()
+
 	# april fools
 	else if now.getMonth() is 3 and now.getDate() is 1
 		$('a.brand').html('<u><b>Quizbowl DB</b></u> <em style="font-size:small">Welcome to Quizbowl DB, the best way to get better at quizbowl!</em>')

@@ -75,6 +75,7 @@ testing = [
 	["{Falklands} war (accept {Malvinas} war, do not accept {Battle} of {Falklands}, which was in WWI)", "! war of"]
 	["{World War I}", "$ WWI"]
 	["Sigmund {Freud}", "$ freud", "$                  freud", "$  \t  \t freud", "$          freud"]
+	["{moving/immigrating} to {Israel}", "moving to israel"]
 ]
 
 for [line, guesses...] in testing
