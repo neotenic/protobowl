@@ -5,6 +5,28 @@ html(lang="en")
 		//- was because room.jade was already taken.
 		title ROOM MANAGER
 		link(rel="stylesheet", href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css")
+		mixin time(timestamp)
+			- var secs = (new Date - timestamp) / 1000
+			if secs > 60 * 60 * 24
+				| #{Math.floor(secs / 60 / 60 / 24)} days 
+			if secs > 60 * 60
+				| #{Math.floor(secs / 60 / 60) % 24} hours 
+			if secs > 60
+				| #{Math.floor(secs / 60) % 60} minutes 
+			| #{Math.floor(secs % 60)} seconds
+			| ago
+			if secs > 60 * 60
+				- var dt = new Date()
+				- dt.setTime(timestamp)
+				| &nbsp;@#{dt.toString().split(' ')[4]}
+		
+		mixin duration(millisecs)
+			- var secs = millisecs / 1000
+			if secs > 60 * 60
+				| #{Math.floor(secs / 60 / 60)} hours 
+			if secs > 60
+				| #{Math.floor(secs / 60) % 60} minutes 
+			| #{Math.floor(secs % 60)} seconds
 	body
 		div.container
 			h1 STALKERMODE ROOM CONTROL
@@ -42,6 +64,37 @@ html(lang="en")
 					small John Connor, Terminator 3
 
 			else
+				p
+					| Created: 
+					mixin time(room.created)
+				p
+					| Time Active: 
+					mixin duration(room.time_spent)
+				p
+					| Percent Active: #{(100 * room.time_spent / (Date.now() - Math.max(room.created, 1373041223000))).toFixed(3)}%
+				
+				div.progress
+					div.bar(style="width: #{(100 * room.time_spent / (Date.now() - Math.max(room.created, 1373041223000))).toFixed(3)}%")
+				
+				p
+					| Questions Rendered: #{room.seen}
+
+				if room.offsetTime() > room.end_time
+					p
+						span.label.label-warning Question Inactive
+				else
+					div.progress
+						div.bar(style="width: #{100 * (room.offsetTime() - room.begin_time) / (room.end_time - room.begin_time)}%")
+
+				p
+					| Last Active: 
+					mixin time(room.last_action)
+
+				p
+					| Last Archived: 
+					mixin time(room.archived)
+
+
 				pre= text
 
 				//- p

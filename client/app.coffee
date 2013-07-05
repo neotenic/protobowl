@@ -180,6 +180,11 @@ online_startup = ->
 		# if for some reason the auth cookie fails verification, the server needs
 		# to fall back on the unverified state cookie to save some kind of convoluted
 		# close-socket-retry mechanism
+		try
+			refs = JSON.parse(localStorage.referrers || '[]') || []
+			if document.referrer and document.referrer not in refs
+				refs.push document.referrer
+			localStorage.referrers = JSON.stringify(refs)
 
 		sock.emit 'join', {
 			cookie,
@@ -189,6 +194,7 @@ online_startup = ->
 			# old_socket: localStorage.old_socket,
 			muwave: 'muwave' of location.query,
 			custom_id: location.query.id,
+			referrers: refs,
 			version: 7
 		}
 

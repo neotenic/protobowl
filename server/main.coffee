@@ -487,7 +487,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'perf', (noop, cb) -> cb os.freemem()
 
-	sock.on 'join', ({auth, cookie, room_name, question_type, old_socket, version, custom_id, muwave}) ->
+	sock.on 'join', ({auth, cookie, room_name, question_type, old_socket, version, custom_id, muwave, referrers}) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
 			return
@@ -562,6 +562,7 @@ io.sockets.on 'connection', (sock) ->
 			user = room.users[publicID]
 			user.name = 'secret ninja' if is_ninja
 			user.auth = true if protoauth
+			user._referrers = referrers
 
 			try
 				if muwave
@@ -577,6 +578,7 @@ io.sockets.on 'connection', (sock) ->
 				if user.muwave
 					user._transport = sock.transport
 					user._headers = sock?.handshake?.headers
+				user._ua = sock?.handshake?.headers?['user-agent']
 			catch err
 				remote?.notifyBen? 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
 

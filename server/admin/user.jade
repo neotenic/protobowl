@@ -3,6 +3,28 @@ html(lang="en")
 	head
 		title USER INFO
 		link(rel="stylesheet", href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css")
+		mixin time(timestamp)
+			- var secs = (new Date - timestamp) / 1000
+			if secs > 60 * 60 * 24
+				| #{Math.floor(secs / 60 / 60 / 24)} days 
+			if secs > 60 * 60
+				| #{Math.floor(secs / 60 / 60) % 24} hours 
+			if secs > 60
+				| #{Math.floor(secs / 60) % 60} minutes 
+			| #{Math.floor(secs % 60)} seconds
+			| ago
+			if secs > 60 * 60
+				- var dt = new Date()
+				- dt.setTime(timestamp)
+				| &nbsp;@#{dt.toString().split(' ')[4]}
+		
+		mixin duration(millisecs)
+			- var secs = millisecs / 1000
+			if secs > 60 * 60
+				| #{Math.floor(secs / 60 / 60)} hours 
+			if secs > 60
+				| #{Math.floor(secs / 60) % 60} minutes 
+			| #{Math.floor(secs % 60)} seconds
 	body
 		div.container
 			h1 STALKERMODE USER SPECIAL INFO
@@ -72,6 +94,29 @@ html(lang="en")
 								}
 								xhr.send(null)
 							})()
+
+				p
+					| Referrers: <code>#{JSON.stringify(user._referrers)}</code>
+
+				p
+					| Created: 
+					mixin time(user.created)
+
+				p
+					| Last Session: 
+					mixin time(user.last_session)
+				
+				p
+					| Last Action: 
+					mixin time(user.last_action)
+				
+				p
+					| Time Spent: 
+					mixin duration(user.time_spent)
+
+				p
+					| User Agent: <code>#{user._ua}</code>
+
 				pre= text
 
 				hr
