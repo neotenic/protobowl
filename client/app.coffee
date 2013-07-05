@@ -416,7 +416,9 @@ listen 'echo', (data, fn) -> fn 'alive'
 listen 'application_update', -> cache_update?()
 listen 'force_application_update', -> cache_update?() # there is no longer a functional difference between force and non force
 listen 'impending_doom', -> impending_doom()
-listen 'redirect', (url) -> window.location = url
+listen 'redirect', (url) -> 
+	room._redirected = true
+	window.location = url
 listen 'alert', (text) -> window.alert text
 listen 'chat', (data) -> chatAnnotation data
 listen 'log', (data) -> verbAnnotation data
@@ -612,10 +614,13 @@ compute_sync_offset = ->
 
 
 $(window).unload ->
-	tmp = room.serialize()
-	tmp.me_id = me.id
-	tmp.archive_time = Date.now()
-	localStorage['room-' + room.name] = JSON.stringify(tmp)
+	if room._redirected
+		delete localStorage['room-' + room.name]
+	else
+		tmp = room.serialize()
+		tmp.me_id = me.id
+		tmp.archive_time = Date.now()
+		localStorage['room-' + room.name] = JSON.stringify(tmp)
 
 page_birthday = Date.now()
 

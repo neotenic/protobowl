@@ -655,7 +655,7 @@ setInterval check_performance, 250
 clearInactive = ->
 	t_start = Date.now()
 	# the maximum size a room can be
-	MAX_SIZE = 15
+	MAX_SIZE = 20
 
 	rank_user = (u) -> if u.correct > 2 then u.last_action else u.time_spent
 
