@@ -127,7 +127,7 @@ stemmer_cleanup = (text) ->
 	if PorterStemmer?
 		stemmer = PorterStemmer
 	else
-		stemmer = require('./porter').stemmer
+		stemmer = require('./lib/porter').stemmer
 
 	return stemmer(text).replace(/ph/ig, 'f')
 
@@ -137,12 +137,12 @@ fuzzy_search = (needle, haystack) ->
 	if removeDiacritics?
 		remove_diacritics = removeDiacritics 
 	else
-		remove_diacritics = require('./removeDiacritics').removeDiacritics
+		remove_diacritics = require('./lib/removeDiacritics').removeDiacritics
 
 	if levenshtein?
 		damlev = levenshtein
 	else
-		damlev = require('./levenshtein').levenshtein 
+		damlev = require('./lib/levenshtein').levenshtein 
 
 	haystack = remove_diacritics(haystack)
 		.replace(/\.\s?/g, ' ')

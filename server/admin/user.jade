@@ -56,12 +56,22 @@ html(lang="en")
 				h4= id
 				br
 
-				p
-					| IP Addresses: <code> #{JSON.stringify(ips)} </code>
-
-				p
-					| Authorization Code: <code> #{user._password()} </code>
-
+				each ip in (user._ips || ips)
+					p
+						| IP Address: <code>#{ip}</code> 
+					p
+						| Reverse Lookup: 	
+						script
+							(function(){
+								var id = 'l' + Math.random().toString(36).slice(4);
+								document.write('<code id="'+id+'">...</code>')
+								var xhr = new XMLHttpRequest();
+								xhr.open('get', '/stalkermode/ip/#{ip}', true)
+								xhr.onload = function(){
+									document.getElementById(id).innerHTML = xhr.responseText
+								}
+								xhr.send(null)
+							})()
 				pre= text
 
 				hr

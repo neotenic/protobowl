@@ -82,6 +82,7 @@ class QuizPlayer
 			if elapsed < 1000 * 60 * 10
 				@time_spent += elapsed
 		@last_action = current_time
+		@room.touch()
 		@room.check_timeout()
 
 	active: -> @online() and (@room.serverTime() - @last_action) < 1000 * 60 * 10 and !@idle
@@ -823,7 +824,7 @@ class QuizPlayer
 		
 		if name[0] != '_'
 			@prefs[name] = value
-			@sync()
+			@sync(true)
 
 
 	set_team: (name) ->

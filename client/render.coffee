@@ -1125,8 +1125,6 @@ create_bundle = (info) ->
 	if info.tags
 		field tag for tag in info.tags
 
-
-
 	breadcrumb.find('li').last().append $('<span>').addClass('divider hidden-phone hidden-offline edit-button').text('/')
 
 	breadcrumb.append $('<li>').addClass('clickable hidden-phone hidden-offline edit-button').text('Edit').click (e) ->
@@ -1138,6 +1136,7 @@ create_bundle = (info) ->
 	answer = $('<li>').addClass('pull-right answer')
 	pad_answer = $('<li>').addClass('pull-right answer')
 	padding_text = rewrite_word(info.answer)
+
 	# text = info.answer.replace /[a-z]+/gi, (e) ->
 	# 	next = word_archive[e.length - 1]
 	# 	word_archive[e.length - 1] = e if Math.random() > 0.5
@@ -1149,7 +1148,6 @@ create_bundle = (info) ->
 		answer.html(info.answer.replace(/\{/g, '<span class="bold">').replace(/\}/g, '</span>'))
 		pad_answer.html(padding_text.replace(/\{/g, '<span class="bold">').replace(/\}/g, '</span>'))
 
-	
 	pad_answer.data('actual_answer', answer)
 	
 	breadcrumb.append pad_answer
@@ -1308,7 +1306,10 @@ updateInlineSymbols = ->
 			# element.append(inner_span)
 			# element.append(word + " ")
 			element.data('text', word + " ")
-			element.append(rewrite_word(word) + " ")
+			if room.semi
+				element.append(word + " ")
+			else
+				element.append(rewrite_word(word) + " ")
 
 
 		if i in spots

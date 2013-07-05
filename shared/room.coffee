@@ -50,6 +50,8 @@ class QuizRoom
 		@sync_offset = 0 # always zero for master installations
 		@start_offset = 0 # to compensate for latency, etc.
 		
+		@last_action = 0
+		@time_spent = 0
 		@seen = 0
 		@end_time = 0
 		@begin_time = 0
@@ -97,6 +99,12 @@ class QuizRoom
 		@mute = @acl.baseline
 		@escalate = @acl.unlocked
 
+	touch: ->
+		current_time = @serverTime() 
+		elapsed = current_time - @last_action
+		if elapsed < 1000 * 60 * 10
+			@time_spent += elapsed
+		@last_action = current_time
 
 	log: (message) -> @emit 'log', { verb: message }
 
@@ -235,7 +243,7 @@ class QuizRoom
 			if SyllableCounter?
 				syllables = SyllableCounter
 			else
-				syllables = require('./syllable').syllables
+				syllables = require('./lib/syllable').syllables
 
 			# in case syllables gives anything really weird (which has happened before)
 			@timing = for word in @question.split(" ")

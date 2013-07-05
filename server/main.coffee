@@ -250,7 +250,7 @@ class SocketQuizPlayer extends QuizPlayer
 				@room._ip_ban[ip] = { strikes: 0, banished: 0 } if !@room._ip_ban[ip]
 				@room._ip_ban[ip].strikes++
 
-		order = ['b', 'hm', 'cgl', 'mlp']
+		order = ['b', 'mlp']
 
 		destination = order[(order.indexOf(@room.name) + 1)]
 
@@ -528,8 +528,11 @@ io.sockets.on 'connection', (sock) ->
 
 		load_room room_name, (room, is_new, load_elapsed) ->
 			clearTimeout slow_load
-
-			room.type = question_type if is_new
+			if is_new
+				room.type = question_type
+				if room.type is 'jeopardy'
+					room.interrupts = false
+					room.semi = true
 
 			if is_ninja
 				publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
@@ -806,9 +809,13 @@ app.get '/stalkermode/user/:room/:user', (req, res) ->
 	u = rooms?[req.params.room]?.users?[req.params.user]
 	u2 = {}
 	u2[k] = v for k, v of u when k not in ['room'] and typeof v isnt 'function'
-		
+	
 	res.render 'user.jade', { room: req.params.room, id: req.params.user, user: u, text: util.inspect(u2), ips: u?.ip() }
 
+app.get '/stalkermode/ip/:address', (req, res) ->
+	dns = require 'dns'
+	dns.reverse req.params.address, (err, domains) ->
+		res.end JSON.stringify(err || domains)
 
 app.get '/stalkermode/room/:room', (req, res) ->
 	u = rooms?[req.params.room.replace(/~/g, '/')]

@@ -43,8 +43,9 @@ setActionMode = (mode) ->
 
 $('.chatbtn').click ->
 	if me.prefs.distraction
-		createAlert('Distraction-Free Mode is Enabled', 'Chat messages and other messages which are not necessarily important have been disabled. Disable this mode from the settings widget in order to send or receive chat messages.')
-			.addClass('alert-error')
+		return if $('.distraction-notice').length
+		createAlert('Distraction Free Mode is Enabled', 'Chat messages and other messages which are not necessarily important have been disabled. Disable this mode from the settings widget in order to send or receive chat messages.')
+			.addClass('alert-error distraction-notice')
 			.insertAfter('.buttonbar')
 		return
 	$('.chat_input').val('')

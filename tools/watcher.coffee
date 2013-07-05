@@ -411,7 +411,7 @@ buildApplication = (force_update = false, target_override = false) ->
 		if opt.source_maps
 			main = libraries.concat(pre_include, ["./#{file}.coffee"], post_include)
 			
-			# console.log 'dependencies', main
+			console.log 'dependencies', main
 			nodes = []
 			for dep in main
 				# console.time("compile")
