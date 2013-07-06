@@ -896,7 +896,7 @@ class QuizPlayer
 	serialize: ->
 		data = {}
 		blacklist = ['sockets', 'room']
-		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[0] != '_'
+		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[1] != '_'
 			data[attr] = this[attr]
 		return data
 

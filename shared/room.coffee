@@ -587,7 +587,7 @@ class QuizRoom
 	serialize: ->
 		data = {}
 		blacklist = ['users', 'attempt', 'generating_question', 'acl']
-		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[0] != '_'
+		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[1] != '_'
 			data[attr] = this[attr]
 		data.users = (user.serialize() for id, user of @users)
 		return data
