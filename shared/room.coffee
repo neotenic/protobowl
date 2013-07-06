@@ -102,7 +102,7 @@ class QuizRoom
 	touch: ->
 		current_time = @serverTime() 
 		elapsed = current_time - @last_action
-		if elapsed < 1000 * 60 * 10
+		if elapsed < 1000 * 60 * 3
 			@time_spent += elapsed
 		@last_action = current_time
 
