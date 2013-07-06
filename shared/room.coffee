@@ -524,7 +524,7 @@ class QuizRoom
 			data[attr] = this[attr]
 
 
-		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic", "acl", "realm"]
+		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic", "acl", "realm", "created"]
 		user_blacklist = ["sockets", "room"]
 
 		if level.id # that's no number! that's a user!
@@ -561,6 +561,7 @@ class QuizRoom
 			data.topic = @topic if 'topic' of this
 			data.realm = @realm
 			data.distribution = @distribution
+			data.created = @created
 			# async stuff
 			@get_parameters @type, @difficulty, (difficulties, categories) =>
 				data.difficulties = difficulties
