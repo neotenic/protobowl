@@ -139,11 +139,15 @@ socket_pair_index = 0
 connected_url = null
 
 online_startup = ->
+	# console.log 'online startup'
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
 	connection_timeout = 5000
 	
 	socket_pair = protobowl_config?.sockets[socket_pair_index]
+	
+	secure_socket = null
+	insecure_socket = null
 
 	[insecure_url, secure_url] = socket_pair
 
@@ -151,6 +155,7 @@ online_startup = ->
 		insecure_url = location.query.sock
 
 	reconnect = ->
+		# console.log 'reconnect'
 		cookie = location.query.id || jQuery.cookie('protocookie')
 		authcookie = null
 		
@@ -205,8 +210,9 @@ online_startup = ->
 
 
 	select_socket = (socket) ->
+		# console.log 'SOCK SELECTOR'
 		if sock and sock isnt socket
-			console.log 'disconnecting from select'
+			# console.log 'disconnecting from select'
 			sock.disconnect()
 
 		if sock
@@ -225,6 +231,7 @@ online_startup = ->
 				verbAnnotation {verb: "established a connection to the server"}
 	
 		sock.on 'disconnect', ->
+			# console.log 'DISCOWAT', sock?.hide_disconnect
 			unless sock?.hide_disconnect
 				disconnect_notice()
 
@@ -236,15 +243,18 @@ online_startup = ->
 	
 	check_connection = (socket) ->
 		$("#load_error").remove()
+		# console.log 'checking connection', socket
 		if sock
 			if sock is socket
 				reconnect()
 			else
 				setTimeout ->
 					if sock.socket.connected is true
+						# console.log 'disconnecting'
 						socket.disconnect()
 						socket.removeAllListeners()
 					else
+						# console.log 'selecting socket'
 						select_socket socket
 				, 2718
 		else
@@ -287,20 +297,20 @@ online_startup = ->
 	catch err
 		connection_error()
 
-	if location.protocol is 'http:' and secure_url
-		try
-			valid_attempts++
-			secure_socket = io.connect secure_url, {
-				"port": 443,
-				"connect timeout": connection_timeout,
-				"force new connection": true,
-				"secure": true
-			}
-			secure_socket.on 'connect', -> check_connection(secure_socket)
-			secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
-			secure_socket.on 'error', connection_error
-		catch err
-			connection_error()
+	# if location.protocol is 'http:' and secure_url
+	# 	try
+	# 		valid_attempts++
+	# 		secure_socket = io.connect secure_url, {
+	# 			"port": 443,
+	# 			"connect timeout": connection_timeout,
+	# 			"force new connection": true,
+	# 			"secure": true
+	# 		}
+	# 		secure_socket.on 'connect', -> check_connection(secure_socket)
+	# 		secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
+	# 		secure_socket.on 'error', connection_error
+	# 	catch err
+	# 		connection_error()
 
 
 

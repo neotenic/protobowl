@@ -692,24 +692,22 @@ createUserStatSheet = (user, full) ->
 
 	mini = (title, data) -> " <span class='mini-stat' title='#{title}'> / #{data}</span>"
 
+	sum_comp = (obj) ->
+		sum = 0
+		sum += (obj[key] || 0) for key of room.scoring
+		return sum
+
 	row	"Score", $('<span>').addClass('badge').text(get_score(user))
-	row	"Correct", user.correct + mini("Current Streak", user.streak) + mini("Streak Record", user.streak_record)
+	row	"Correct", sum_comp(user.corrects) + mini("Current Streak", user.streak) + mini("Streak Record", user.streak_record)
 
-	# row "Streak",  "#{user.streak} <span style='color:gray' title='Streak record'>/ #{user.streak_record}</span>"
-	# if full
-	# 	row "Record", user.streak_record
-	if room.interrupts
-		# row "Interrupts", "#{user.interrupts} <span class='mini-stat' title='Neg Streak'>/ #{user.negstreak} / #{user.negstreak_record}</span>"
-
-		row	"Interrupts", user.interrupts + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
+	if room?.scoring?.interrupt
+		row	"Interrupts", ((user.wrongs.interrupt || 0) + (user.wrongs.early || 0)) + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
 
 		fullrow "Early", user.early + mini("Powermarked Seen", user.earlyseen)
-	# if full or !room.interrupts
-	# 	row "Incorrect", user.guesses - user.correct  
-	# row "Guesses", user.guesses 
-	# row "Seen", "#{user.seen} <span class='mini-stat' title='Guesses'>/ #{user.guesses}</span>"
-	# row	"Guesses", user.guesses + mini("Seen", user.seen)
-	row	"Seen", user.seen + mini("Guesses", user.guesses)
+	else
+		row	"Incorrect", sum_comp(user.wrongs) + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
+
+	row	"Seen", user.seen + mini("Guesses", sum_comp(user.corrects) + sum_comp(user.wrongs))
 
 	row "Team", user.team if user.team
 	
@@ -737,14 +735,19 @@ createTeamStatSheet = (team, full) ->
 			.append($("<span>").addClass("left").text(name))
 			.append($("<span>").addClass("right").append(val))
 	
+	sum_comp = (obj) ->
+		sum = 0
+		sum += (obj[key] || 0) for key of room.scoring
+		return sum
+
 	row	"Score", $('<span>').addClass('badge').text(get_score(team))
 	row	"Correct", Sum(user.correct for user in team.members)
-	
+
 	if room.interrupts
-		row "Interrupts", Sum(user.interrupts for user in team.members)
-		row "Early", Sum(user.early for user in team.members) if full
+		row "Interrupts", Sum((user.wrongs.interrupt || 0) + (user.wrongs.early || 0) for user in team.members)
+		row "Early", Sum((user.corrects.early || 0) for user in team.members) if full
 	# row "Incorrect", team.guesses - team.correct  if full
-	row "Guesses", Sum(user.guesses for user in team.members)
+	row "Guesses", Sum(sum_comp(user.corrects) + sum_comp(user.wrongs) for user in team.members)
 	# row "Seen", team.seen
 	
 	row "Members", team.members.length

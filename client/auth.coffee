@@ -46,8 +46,10 @@ $(document).ready ->
 				assertion = null
 				if auth
 					verbAnnotation {verb: "logging out of the current authenticated session"}
+					switch_socket()
+					
 				auth_cookie(null)
-				switch_socket()
+				
 
 			# onready: ->
 			# 	console.log 'now ready'
@@ -69,6 +71,7 @@ logged_in = (data) ->
 
 switch_socket = ->
 	return unless sock
+	console.log 'merpity werpity'
 	sock.hide_disconnect = true
 	sock.socket.disconnect()
 	room.users = {}

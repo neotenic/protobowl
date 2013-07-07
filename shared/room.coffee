@@ -55,9 +55,12 @@ class QuizRoom
 		@seen = 0
 		@end_time = 0
 		@begin_time = 0
+		
 		@question = ''
+		@value = null
 		@answer = ''
 		@info = {}
+
 		@qid = null
 		@timing = []
 		@cumulative = []
@@ -75,12 +78,18 @@ class QuizRoom
 		@attempt = null
 		@no_skip = false
 		@show_bonus = false
-		@interrupts = true
+		# @interrupts = true
 		@semi = false
 		@no_pause = false
 		@dystopia = 0
 		
 		@created = @serverTime()
+
+		@scoring = {
+			normal: [10, 0],
+			early: [20, -5],
+			interrupt: [10, -5]
+		}
 
 		@acl = {
 			# pariah:    50,
@@ -214,6 +223,7 @@ class QuizRoom
 			@generated_time = @serverTime() # like begin_time but doesnt change when speed is altered
 			
 			@attempt = null
+
 			@clear_timeout()
 			
 			@next_id = question.next || null # might be null
@@ -227,6 +237,9 @@ class QuizRoom
 				tags: question.tags,
 				round: question.round
 			}
+			
+			@value = question.value || null
+			
 			@question = question.question
 				.replace(/FTP/g, 'For 10 points')
 				.replace(/^\[.*?\]/, '')
@@ -349,7 +362,6 @@ class QuizRoom
 
 	end_buzz: (session) -> #killit, killitwithfire
 		return unless @attempt?.session is session
-
 		user = @users[@attempt?.user]
 
 		# maybe the user just died...?
@@ -394,6 +406,16 @@ class QuizRoom
 
 		if @attempt.done
 			@unfreeze()
+			
+			value = @value
+			if value is null
+				value = 'normal'
+				value = 'interrupt' if @attempt.interrupt
+				value = 'early' if @attempt.early
+
+			unless value of @scoring
+				@log "Warning: entry `#{value}` does not exist in the scoring matrix and will not be counted. Please contact info@protobowl.com to resolve this issue."
+
 			if @attempt.correct
 				# woo increment mah streak
 				user.streak++
@@ -404,8 +426,13 @@ class QuizRoom
 				# end mah negstreak
 				user.negstreak = 0
 				# gimme mah points
-				user.correct++
-				user.early++ if @attempt.early 
+				if ((typeof user.corrects[value]) != 'number') or isNaN(user.corrects[value])
+					user.corrects[value] = 0 
+
+				user.corrects[value]++
+
+				# user.correct++
+				# user.early++ if @attempt.early 
 				
 				@finish()
 			else # incorrect
@@ -413,9 +440,15 @@ class QuizRoom
 				user.negstreak++
 				user.negstreak_record = Math.max(user.negstreak, user.negstreak_record)
 
-				if @attempt.interrupt
-					user.interrupts++
+				# if @attempt.interrupt
+				# 	user.interrupts++
 				
+
+				if typeof user.wrongs[value] != 'number' or isNaN(user.wrongs[value])
+					user.wrongs[value] = 0 
+				user.wrongs[value]++
+				
+
 				buzzed = 0
 				pool = 0
 				teams = {}
@@ -454,7 +487,7 @@ class QuizRoom
 			fn 'THE BUZZES ARE TOO DAMN HIGH' if fn
 			@emit 'log', {user: user, verb: 'is in a team which has already buzzed'}
 
-		else if !@interrupts and @time() <= @end_time - @answer_duration
+		else if !@scoring?.interrupt and @time() <= @end_time - @answer_duration
 			@emit 'log', {user: user, verb: 'attempted an illegal interrupt'}
 			fn 'THE GAME' if fn
 
@@ -477,7 +510,7 @@ class QuizRoom
 			}
 
 			@users[user].times_buzzed++
-			@users[user].guesses++
+			# @users[user].guesses++
 			
 			@freeze()
 			@sync(2) #partial sync
@@ -520,11 +553,12 @@ class QuizRoom
 
 		whitelist = ["time_offset", "time_freeze", "attempt"]
 		# there is a very minimal sync level for the basic stuff
-		for attr in whitelist
-			data[attr] = this[attr]
+		data[attr] = this[attr] for attr in whitelist
 
+		blacklist = ["cumulative", "users", "sync_offset", "generating_question"]
+		level3 = ["question", "answer", "timing", "info", "generated_time"]
+		level4 = ["realm", "distribution", "created", "topic", "acl", "scoring"]
 
-		blacklist = ["question", "answer", "generated_time", "timing", "info", "cumulative", "users", "distribution", "sync_offset", "generating_question", "topic", "acl", "realm", "created"]
 		user_blacklist = ["sockets", "room"]
 
 		if level.id # that's no number! that's a user!
@@ -537,7 +571,7 @@ class QuizRoom
 
 		if level >= 1
 			# all the additional attributes that aren't done in level 0
-			for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr[0] != "_"
+			for attr of this when typeof this[attr] != 'function' and attr not in blacklist and attr not in level3 and attr not in level4 and attr[0] != "_"
 				data[attr] = this[attr]
 
 		if level >= 2
@@ -551,17 +585,11 @@ class QuizRoom
 				user
 
 		if level >= 3
-			data.question = @question
-			data.answer = @answer
-			data.timing = @timing
-			data.info = @info
-			data.generated_time = @generated_time
+			data[attr] = this[attr] for attr in level3
 
 		if level >= 4
-			data.topic = @topic if 'topic' of this
-			data.realm = @realm
-			data.distribution = @distribution
-			data.created = @created
+			data[attr] = this[attr] for attr in level4
+
 			# async stuff
 			@get_parameters @type, @difficulty, (difficulties, categories) =>
 				data.difficulties = difficulties

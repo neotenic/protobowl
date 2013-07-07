@@ -9,14 +9,17 @@ class QuizPlayer
 		@room = room
 
 		# statistics
-		@guesses = 0
-		@interrupts = 0
-		@early = 0
+		@corrects = {}
+		@wrongs = {}
+
+		# @correct = 0
+		# @guesses = 0
+		# @interrupts = 0
+		# @early = 0
+
 		@earlyseen = 0
 		@seen = 0
 
-		@correct = 0
-		
 		@streak = 0
 		@streak_record = 0
 		
@@ -85,6 +88,7 @@ class QuizPlayer
 		@room.touch()
 		@room.check_timeout()
 
+
 	active: -> @online() and (@room.serverTime() - @last_action) < 1000 * 60 * 10 and !@idle
 
 	online: -> true
@@ -119,17 +123,29 @@ class QuizPlayer
 		@level() >= level
 
 	score: ->
-		CORRECT = 10
-		EARLY = 15
-		INTERRUPT = -5
-		if @room.interrupts
-			return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
-		else
-			return @correct * CORRECT
+		# CORRECT = 10
+		# EARLY = 15
+		# INTERRUPT = -5
+		# if @room.interrupts
+		# 	return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
+		# else
+		# 	return @correct * CORRECT
+
+
+		sum = 0
+		for key, [plus, neg] of @room.scoring
+			sum += (@corrects[key] || 0) * plus + (@wrongs[key] || 0) * neg
+		return sum
+		
+
 
 	reset_score: ->
 		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
-		@negstreak_record = @negstreak = @streak_record = @streak = @earlyseen = @seen = @interrupts = @guesses = @correct = @early = 0
+		@negstreak_record = @negstreak = @streak_record = @streak = @earlyseen = @seen = 0
+		
+		@wrongs = {}
+		@corrects = {}
+
 		@history = []
 		@sync(true)
 
@@ -458,7 +474,7 @@ class QuizPlayer
 
 	echo: (data, callback) -> 
 		if data.avg and data.std and data.n
-			@_latency = [data.avg, data.std, data.n]
+			@__latency = [data.avg, data.std, data.n]
 		callback @room.serverTime()
 
 	buzz: (data, fn) -> 
@@ -574,6 +590,12 @@ class QuizPlayer
 		@verb 'skipped to the end of a question'
 		@room.finish()
 		@room.sync()
+
+	preempt: ->
+		@touch()
+		# TODO: preemptive pausing, for when you're expecting to buzz immediately afterwards
+		# this is more of a message to be communicated to all the other peers while waiting
+		# for the authoritative peer (server) to process everything
 
 	pause: ->
 		@touch()
@@ -745,17 +767,12 @@ class QuizPlayer
 		@room.attempt_duration = duration
 		@room.sync(1)
 
-	set_interrupts: (state) ->
+	set_scoring: (matrix) ->
 		@touch()
 		return unless @authorized 'ninja'
-		if state
-			@verb 'enabled interrupts'
-		else
-			@verb 'disabled interrupts'
-		@room.interrupts = !!state
-		@room.sync(1)
-
-
+		@verb 'changed scoring matrix'
+		@room.scoring = matrix
+		@room.sync(4)
 
 	set_semi: (state) ->
 		@touch()
@@ -895,14 +912,29 @@ class QuizPlayer
 
 	serialize: ->
 		data = {}
-		blacklist = ['sockets', 'room']
+		blacklist = ['sockets', 'room', 'times_buzzed']
 		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[1] != '_'
 			data[attr] = this[attr]
 		return data
 
 	deserialize: (obj) ->
-		blacklist = ['tribunal', 'elect']
-		this[attr] = val for attr, val of obj when attr[0] != '_' and attr not in blacklist
+		blacklist = ['tribunal', 'elect', 'times_buzzed']
+		this[attr] = val for attr, val of obj when attr[1] != '_' and attr not in blacklist
+
+		# upgrade scoring algorithm
+		if @correct || @interrupts || @early || @guesses
+			@verb 'was upgraded to the new scoring system'
+			@corrects['normal'] = @correct
+			@wrongs['normal'] = @guesses - @correct
+			delete @correct
+			@corrects['early'] = @early
+			@wrongs['early'] = 0
+			delete @early
+			@corrects['interrupt'] = 0
+			@wrongs['interrupt'] = @interrupts
+			delete @interrupts
+			delete @guesses
+			@sync(true)
 
 	update: -> 1
 

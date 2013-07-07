@@ -287,7 +287,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					# console.log updated_score, old_score
 					return if magic_number is 0 # 0 is hardly an accomplishment
 					if magic_number > 0
-						if old_score < magic_number and updated_score >= magic_number
+						if old_score < magic_number and updated_score >= magic_number and room.type isnt 'jeopardy'
 							$('body').fireworks(magic_number / magic_multiple * 10)
 							createAlert('Congratulations', "You have over #{magic_number} points! Here's some fireworks.")
 								.addClass('alert-success')

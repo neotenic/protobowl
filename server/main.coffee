@@ -1,6 +1,7 @@
 try 
 	remote = require './remote'
 catch err
+	console.log err
 	remote = require './local'
 
 remote.initialize_remote()
@@ -90,6 +91,7 @@ track_time = (start_time, label) ->
 		log 'track_time', duration + 'ms ' + label
 
 log = (action, obj) ->
+	return if remote?.config?.no_config
 	req = http.request log_config, ->
 		# console.log "saved log"
 	req.on 'error', (e) ->
@@ -388,7 +390,7 @@ status_metrics = ->
 				online_count++ 
 				active_count++ if user.active()
 				muwave_count++ if user.muwave
-				latencies.push(user._latency[0]) if user._latency
+				latencies.push(user.__latency[0]) if user.__latency
 	metrics = { 
 		online: online_count, 
 		active: active_count, 
@@ -530,9 +532,13 @@ io.sockets.on 'connection', (sock) ->
 			clearTimeout slow_load
 			if is_new
 				room.type = question_type
-				if room.type is 'jeopardy'
-					room.interrupts = false
-					room.semi = true
+
+			if room.type is 'jeopardy'
+				room.scoring = { normal: [100, -100] }
+				for i in [0..2000] by 100
+					room.scoring[i] = [i, -i]
+				room.semi = true
+
 
 			if is_ninja
 				publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
@@ -911,7 +917,7 @@ app.post '/stalkermode/disco/:room/:user', (req, res) ->
 app.get '/stalkermode', (req, res) ->
 	latencies = []
 	for name, room of rooms
-		latencies.push(user._latency[0]) for id, user of room.users when user._latency and user.online()
+		latencies.push(user.__latency[0]) for id, user of room.users when user.__latency and user.online()
 	os_info = {
 		hostname: os.hostname(),
 		type: os.type(),
