@@ -493,7 +493,7 @@ io.sockets.on 'connection', (sock) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
 			return
-		if !version or version < 7 or !room_name
+		if !version or version < 8 or !room_name
 			sock.emit 'log', verb: 'YOU ARE RUNNING AN OUTDATED AND INCOMPATIBLE VERSION OF PROTOBOWL.'
 			sock.emit 'force_application_update', Date.now()
 			sock.emit 'application_update', Date.now()

@@ -200,7 +200,7 @@ online_startup = ->
 			muwave: 'muwave' of location.query,
 			custom_id: location.query.id,
 			referrers: refs,
-			version: 7
+			version: 8
 		}
 
 		$('.disconnect-notice, .doom-notice').slideUp()
@@ -297,20 +297,20 @@ online_startup = ->
 	catch err
 		connection_error()
 
-	# if location.protocol is 'http:' and secure_url
-	# 	try
-	# 		valid_attempts++
-	# 		secure_socket = io.connect secure_url, {
-	# 			"port": 443,
-	# 			"connect timeout": connection_timeout,
-	# 			"force new connection": true,
-	# 			"secure": true
-	# 		}
-	# 		secure_socket.on 'connect', -> check_connection(secure_socket)
-	# 		secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
-	# 		secure_socket.on 'error', connection_error
-	# 	catch err
-	# 		connection_error()
+	if location.protocol is 'http:' and secure_url
+		try
+			valid_attempts++
+			secure_socket = io.connect secure_url, {
+				"port": 443,
+				"connect timeout": connection_timeout,
+				"force new connection": true,
+				"secure": true
+			}
+			secure_socket.on 'connect', -> check_connection(secure_socket)
+			secure_socket.on 'connect_failed', -> check_exhaust(secure_socket)
+			secure_socket.on 'error', connection_error
+		catch err
+			connection_error()
 
 
 

@@ -571,7 +571,6 @@ renderUsers = ->
 
 	thresh = TOP_NUM + CONTEXT * 2
 
-
 	for i in [0...TOP_NUM] when i < entities.length
 		create_row entities[i]
 		render_count++
@@ -703,7 +702,7 @@ createUserStatSheet = (user, full) ->
 	if room?.scoring?.interrupt
 		row	"Interrupts", ((user.wrongs.interrupt || 0) + (user.wrongs.early || 0)) + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
 
-		fullrow "Early", user.early + mini("Powermarked Seen", user.earlyseen)
+		fullrow "Early", user.corrects.early + mini("Powermarked Seen", user.earlyseen)
 	else
 		row	"Incorrect", sum_comp(user.wrongs) + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
 

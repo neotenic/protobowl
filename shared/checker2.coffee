@@ -89,8 +89,10 @@ equivalence_map = do ->
 		['fifteenth', 'fifteen', '15', 'xv', '15th'],
 		['sixteenth', 'sixteen', '16', 'xvi', '16th'],
 		['seventeenth', 'seventeen', '17', 'xvii', '17th'],
-		['twenty', 'xx', '20', '20th'],
-		['thirty', 'xxx', '30', '30th'],
+		['eighteenth', 'eighteen', 'eightteen', '18', 'xviii', '18th'],
+		['nineteenth', 'ninteenth', 'ninteen', 'nineteen', '19', 'ixx', '19th'],
+		['twentieth', 'twenty', 'xx', '20', '20th'],
+		['thirtieth', 'thirty', 'xxx', '30', '30th'],
 		['hundred', 'c', '100', '100th'],
 		['dr', 'doctor', 'drive'],
 		['mr', 'mister']

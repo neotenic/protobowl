@@ -15,12 +15,14 @@ html(lang="en")
 	body
 		div.container
 			mixin score(user)
-				| #{user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5}
-
+				| #{JSON.stringify(user.corrects)} #{JSON.stringify(user.wrongs)}
+				
 			mixin time(timestamp)
 				- var secs = (new Date - timestamp) / 1000
+				if secs > 60 * 60 * 24
+					| #{Math.floor(secs / 60 / 60 / 24)} days 
 				if secs > 60 * 60
-					| #{Math.floor(secs / 60 / 60)} hours 
+					| #{Math.floor(secs / 60 / 60) % 24} hours 
 				if secs > 60
 					| #{Math.floor(secs / 60) % 60} minutes 
 				| #{Math.floor(secs % 60)} seconds
@@ -55,11 +57,15 @@ html(lang="en")
 					| online for 
 					mixin duration(user.time_spent)
 					ul
-						li score: 
-							mixin score(user)
-							- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001)), f_score = 2 * (precision * recall) / (precision + recall + 0.001);
+						li 
+							//- | score: 
+							//- mixin score(user)
 							- var latency = '?'; if(user.__latency){ latency = user.__latency[0].toFixed(1) + 'ms ±' + user.__latency[1].toFixed(1) + ' (' + user.__latency[2] + ')' }
-							|  correct: #{user.correct} guesses: #{user.guesses} seen: #{user.seen} interrupts: #{user.interrupts} early: #{user.early} precision: #{precision.toFixed(2)} recall: #{recall.toFixed(2)} f1: #{f_score.toFixed(2)} latency: #{latency}
+							- var correct = Object.keys(user.room.scoring).map(function(e){return user.corrects[e] || 0}).reduce(function(a,b){return a + b});
+							- var wrong = Object.keys(user.room.scoring).map(function(e){return user.wrongs[e] || 0}).reduce(function(a,b){return a + b});
+							| correct: #{correct} 
+							| wrong: #{wrong} 
+							| guesses: #{correct+wrong} seen: #{user.seen} latency: #{latency}
 						if user.users || user.rooms
 							li
 								| users: #{user.users} rooms: #{user.rooms}

@@ -76,6 +76,7 @@ testing = [
 	["{World War I}", "$ WWI"]
 	["Sigmund {Freud}", "$ freud", "$                  freud", "$  \t  \t freud", "$          freud"]
 	["{moving/immigrating} to {Israel}", "moving to israel"]
+	["{19th} Amendment", "$ 19", "$ nineteenth"]
 ]
 
 for [line, guesses...] in testing
