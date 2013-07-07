@@ -480,7 +480,15 @@ recent_rooms = ->
 		for i in [0...rooms.length]
 			name = rooms[i]
 			if i < 3
-				$('.recent-rooms').append $('<li>').append($('<a>').text(name.replace(/-/g, ' ')).attr('href', '/' + name))
+				link = $('<a>').attr('href', '/' + name)
+				name = name.replace(/-/g, ' ')
+				if name.split('/').length > 1
+					link.append $("<span>").addClass('roomtype').text(name.split('/')[0] + '/')
+					link.append name.split('/').slice(1).join('/')
+				else
+					link.text(name)
+
+				$('.recent-rooms').append $('<li>').append(link)
 			else
 				delete localStorage['room-' + name]
 

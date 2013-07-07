@@ -7,6 +7,7 @@
 #= include ./lib/time.coffee
 #= include ./lib/jquery.mobile.custom.js
 #= include ./lib/bootbox.js
+#= include ./lib/titlecase.js
 #= include ./plugins.coffee
 
 #= include ./auth.coffee
@@ -365,7 +366,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 		# functions starting with get_ are treated as local-exec, but I dont feel like
 		# propagating a breaking change 
 
-		blacklist = ['envelop_action', 'level', 'score', 'online', 'active', 'authorized', 'emit']
+		blacklist = ['envelop_action', 'level', 'score', 'metrics', 'online', 'active', 'authorized', 'emit']
 		@envelop_action name for name, method of this when typeof method is 'function' and name not in blacklist
 
 
@@ -414,8 +415,19 @@ class QuizRoomSlave extends QuizRoom
 room = new QuizRoomSlave(location.pathname.replace(/^\/*/g, '').toLowerCase() || 'temporary')
 room.type = (if room.name.split('/').length is 2 then room.name.split('/')[0] else 'qb')
 me = new QuizPlayerSlave(room, 'temporary')
-
-document.title = "#{room.name} - Protobowl"
+do ->
+	document.title = "#{room.name} - Protobowl"
+	type_mapping = {
+		qb: 'Quizbowl',
+		jeopardy: 'Jeopardy!'
+	}
+	
+	if room.type isnt 'qb'
+		$('<span>')
+			.addClass('label label-info')
+			.text(type_mapping[room.type] || room.type.toTitleCase())
+			.insertAfter('.logo')
+			.after(' ')
 
 # look at all these one liner events!
 listen = (name, fn) -> me.__listeners[name] = fn

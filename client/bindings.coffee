@@ -140,7 +140,7 @@ $('.buzzbtn').click ->
 			setActionMode ''
 			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Rejected', new Date - submit_time] if window._gaq
 
-$('.score-reset').click -> 
+$('.reset-score .btn').click -> 
 	# i could have structured this is a more concise but weirder way
 	# but for some reason i decided against that, and I know not why
 	if me.score() > 50

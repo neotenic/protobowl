@@ -14,8 +14,6 @@ html(lang="en")
 
 	body
 		div.container
-			mixin score(user)
-				| #{JSON.stringify(user.corrects)} #{JSON.stringify(user.wrongs)}
 				
 			mixin time(timestamp)
 				- var secs = (new Date - timestamp) / 1000
@@ -63,6 +61,7 @@ html(lang="en")
 							- var latency = '?'; if(user.__latency){ latency = user.__latency[0].toFixed(1) + 'ms ±' + user.__latency[1].toFixed(1) + ' (' + user.__latency[2] + ')' }
 							- var correct = Object.keys(user.room.scoring).map(function(e){return user.corrects[e] || 0}).reduce(function(a,b){return a + b});
 							- var wrong = Object.keys(user.room.scoring).map(function(e){return user.wrongs[e] || 0}).reduce(function(a,b){return a + b});
+							| score: #{user.score()} 
 							| correct: #{correct} 
 							| wrong: #{wrong} 
 							| guesses: #{correct+wrong} seen: #{user.seen} latency: #{latency}
@@ -147,7 +146,7 @@ html(lang="en")
 						if user.active()
 							- active_users++
 							- active = true
-					- points += (user.early * 15 + (user.correct - user.early) * 10 + user.interrupts * -5)
+					- points += user.score()
 					- time_spent += user.time_spent
 				if active
 					- active_rooms++

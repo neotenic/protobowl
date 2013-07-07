@@ -287,7 +287,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					# console.log updated_score, old_score
 					return if magic_number is 0 # 0 is hardly an accomplishment
 					if magic_number > 0
-						if old_score < magic_number and updated_score >= magic_number and room.type isnt 'jeopardy'
+						if old_score < magic_number and updated_score >= magic_number  and room.scoring?.normal?[0] < 20
 							$('body').fireworks(magic_number / magic_multiple * 10)
 							createAlert('Congratulations', "You have over #{magic_number} points! Here's some fireworks.")
 								.addClass('alert-success')
@@ -301,7 +301,8 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			
 			if user is me.id and me.id of room.users
 				old_score = me.score()
-				if old_score < -50 # just a little way of saying "you suck"
+				 # just a little way of saying "you suck" 
+				if old_score < -50 and room.scoring?.normal?[0] < 20
 					createAlert('you suck', 'like seriously you really really suck. you are a turd.')
 						.addClass('alert-info')
 						.insertAfter(ruling.parents('.bundle').find('.annotations'))

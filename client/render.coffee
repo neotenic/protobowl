@@ -116,7 +116,7 @@ renderUpdate = ->
 
 		$('.microwave').toggle !(me.muwave)
 
-		if me.guesses > 0
+		if me.metrics().guesses > 0
 			$('.reset-score').slideDown()
 		else
 			$('.reset-score').slideUp()
@@ -691,22 +691,19 @@ createUserStatSheet = (user, full) ->
 
 	mini = (title, data) -> " <span class='mini-stat' title='#{title}'> / #{data}</span>"
 
-	sum_comp = (obj) ->
-		sum = 0
-		sum += (obj[key] || 0) for key of room.scoring
-		return sum
+	m = user.metrics()
 
 	row	"Score", $('<span>').addClass('badge').text(get_score(user))
-	row	"Correct", sum_comp(user.corrects) + mini("Current Streak", user.streak) + mini("Streak Record", user.streak_record)
+	row	"Correct", m.correct + mini("Current Streak", user.streak) + mini("Streak Record", user.streak_record)
 
 	if room?.scoring?.interrupt
-		row	"Interrupts", ((user.wrongs.interrupt || 0) + (user.wrongs.early || 0)) + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
+		row	"Interrupts", m.interrupts + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
 
-		fullrow "Early", user.corrects.early + mini("Powermarked Seen", user.earlyseen)
+		fullrow "Early", m.early + mini("Powermarked Seen", user.earlyseen)
 	else
-		row	"Incorrect", sum_comp(user.wrongs) + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
+		row	"Incorrect", m.wrong + mini("Current Streak", user.negstreak) + mini("Streak Record", user.negstreak_record)
 
-	row	"Seen", user.seen + mini("Guesses", sum_comp(user.corrects) + sum_comp(user.wrongs))
+	row	"Seen", user.seen + mini("Guesses", m.guesses)
 
 	row "Team", user.team if user.team
 	
@@ -733,11 +730,6 @@ createTeamStatSheet = (team, full) ->
 			.appendTo(table)
 			.append($("<span>").addClass("left").text(name))
 			.append($("<span>").addClass("right").append(val))
-	
-	sum_comp = (obj) ->
-		sum = 0
-		sum += (obj[key] || 0) for key of room.scoring
-		return sum
 
 	row	"Score", $('<span>').addClass('badge').text(get_score(team))
 	row	"Correct", Sum(user.correct for user in team.members)
@@ -746,7 +738,7 @@ createTeamStatSheet = (team, full) ->
 		row "Interrupts", Sum((user.wrongs.interrupt || 0) + (user.wrongs.early || 0) for user in team.members)
 		row "Early", Sum((user.corrects.early || 0) for user in team.members) if full
 	# row "Incorrect", team.guesses - team.correct  if full
-	row "Guesses", Sum(sum_comp(user.corrects) + sum_comp(user.wrongs) for user in team.members)
+	row "Guesses", Sum(user.metrics().guesses for user in team.members)
 	# row "Seen", team.seen
 	
 	row "Members", team.members.length
@@ -756,20 +748,12 @@ createTeamStatSheet = (team, full) ->
 	return table
 
 createBundle = ->
-	create_bundle {
-		year: room.info.year, 
-		difficulty: room.info.difficulty, 
-		category: room.info.category, 
-		tournament: room.info.tournament,
-		tags: room.info.tags,
-		# bookmarked: is_bookmarked?(room.qid),
-		round: room.info.round,
-		num: room.info.num,
+	create_bundle jQuery.extend(jQuery.extend(true, {}, room.info), {
 		qid: room.qid,
 		question: room.question,
 		generated_time: room.generated_time,
 		answer: room.answer
-	}
+	})
 
 
 
@@ -1114,7 +1098,9 @@ create_bundle = (info) ->
 
 	# field info.year + ' ' + info.difficulty + ' ' + info.category
 	
-	if info.tournament and info.year
+	if info.tournament and info.date
+		field info.date
+	else if info.tournament and info.year
 		field info.year + ' ' + info.tournament
 	else if info.year
 		field info.year
@@ -1123,6 +1109,9 @@ create_bundle = (info) ->
 	
 	field info.difficulty
 	field info.category
+
+	if info.group
+		field(info.group).css('font-weight', 'bold')
 
 	if info.tags
 		field tag for tag in info.tags

@@ -136,11 +136,29 @@ class QuizPlayer
 		for key, [plus, neg] of @room.scoring
 			sum += (@corrects[key] || 0) * plus + (@wrongs[key] || 0) * neg
 		return sum
-		
+	
+	metrics: ->
+		scoring = @room.scoring
+		col_sum = (col) ->
+			sum = 0
+			sum += (col[key] || 0) for key of scoring
+			return sum
+		m = {
+			score: @score()
+			correct: col_sum(@corrects)
+			wrong: col_sum(@wrongs)
+		}
+		m.guesses = m.correct + m.wrong
+		if @room?.scoring?.interrupt
+			m.interrupts = (@wrongs.interrupt || 0) + (@wrongs.early || 0)
+			m.early = (@corrects.early || 0)
+
+		return m
 
 
 	reset_score: ->
-		@verb "was reset from #{@score()} points (#{@correct} correct, #{@early} early, #{@guesses} guesses)"
+		m = @metrics()
+		@verb "was reset from #{@score()} points (#{m.correct} correct, #{m.wrong} wrong, #{m.guesses} guesses)"
 		@negstreak_record = @negstreak = @streak_record = @streak = @earlyseen = @seen = 0
 		
 		@wrongs = {}

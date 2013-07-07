@@ -234,6 +234,8 @@ class QuizRoom
 				tournament: question.tournament, 
 				num: question.num, 
 				year: question.year, 
+				date: question.date,
+				group: question.group,
 				tags: question.tags,
 				round: question.round
 			}
