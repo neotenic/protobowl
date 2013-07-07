@@ -1,4 +1,7 @@
 tokenize_line = (answer) ->
+	if answer.split(' ').length is 1 and answer.indexOf('{') is -1 and answer.indexOf('}') is -1
+		answer = '{' + answer + '}'
+
 	tokens = answer
 		.replace(/([\{\}\[\]\;\-\:\,\&\(\)\/])/g, " $1 ") # wrap all the special delimiting symbols		
 		.replace(/'|"/g, '') # the apostrophes and quotes are useless
@@ -6,7 +9,10 @@ tokenize_line = (answer) ->
 		.replace(/\ +/g, ' ') # condense multiple spaces
 		.trim() # removing leading and trailing spaces
 		.split(' ') # split things up
+	
 	bold = false
+
+
 	processed = []
 	for token in tokens # loop to annotate each token with boldness state
 		# console.log token
@@ -161,8 +167,6 @@ fuzzy_search = (needle, haystack) ->
 	plainstack = haystack.toLowerCase().replace(/[^a-z]/g, '')
 	plainneedle = needle.replace(/[^a-z]/g, '')
 	
-	return true if plainneedle.length >= 3 and plainstack.indexOf(plainneedle) != -1
-
 	stem = stemmer_cleanup(needle)
 	
 	ERROR_RATIO = 0.25 # magic number i pulled out of my ass
@@ -197,9 +201,11 @@ fuzzy_search = (needle, haystack) ->
 
 		if needle.length > 6 and word.indexOf(needle.slice(0, 4)) is 0
 			# this is for incomplete statements and the ilk
+
 			return true
 
 		if needle.length is 1 and word.indexOf(needle) is 0
+			
 			# this is for combining words
 			return true
 	
@@ -208,14 +214,18 @@ fuzzy_search = (needle, haystack) ->
 	if needle of equivalence_map
 		for word in equivalence_map[needle]
 			if " #{haystack.toLowerCase()} ".indexOf(" #{word} ") isnt -1
-				return true
+				return 'EQUIV' + word
 
-
+			
 	if 2 <= composite_acronym.length <= 4
 		# console.log composite_acronym
 		if composite_acronym.toLowerCase().indexOf(needle[0]) isnt -1
 			return 'ACRONYM'
 
+
+	return 'PARTIAL' if plainneedle.length >= 3 and plainstack.indexOf(plainneedle) != -1
+
+	
 	return false
 
 
@@ -263,18 +273,26 @@ check_answer = (tokens, text, question = '') ->
 		# evaluate errything
 		acronym_matches = 0
 		text_matches = 0
+		partial_matches = 0
 		processed = for [bold, token] in front
 			match = fuzzy_search(token, text)
-			if match is 'ACRONYM'
+			if match is 'PARTIAL'
+				partial_matches++
+			else if match is 'ACRONYM'
 				acronym_matches++
 			else if match
 				text_matches++
+			
+			if match.toString().slice(0, 5) is 'EQUIV'
+				cat_tokens.push match.slice(5)
 			[bold, token, match]
 		
 		# console.log processed
 
 		for [bold, token, match] in processed
 			if acronym_matches + text_matches < 2 and match is 'ACRONYM'
+				match = false
+			if partial_matches < 2 and match is 'PARTIAL'
 				match = false
 			trivial = token.toLowerCase() in stopwords
 			bold_match.push token if match and bold

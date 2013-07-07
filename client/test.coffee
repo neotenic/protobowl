@@ -77,6 +77,8 @@ testing = [
 	["Sigmund {Freud}", "$ freud", "$                  freud", "$  \t  \t freud", "$          freud"]
 	["{moving/immigrating} to {Israel}", "moving to israel"]
 	["{19th} Amendment", "$ 19", "$ nineteenth"]
+	["War", "$ war"]
+	["S phase [accept {synthesis} phase]", "! anaphase"]
 ]
 
 for [line, guesses...] in testing
