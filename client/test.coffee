@@ -55,7 +55,7 @@ testing = [
 	["Republic of {Honduras}", "$ Honduras"]
 	["{Emily} Jane {Brontë} [prompt on {Brontë}]", "$ Emily Bronte", "? Bronte"]
 	["{Light-Emitting Diode} (prompt on {diode})", "$ LED"],
-	["{Les Miserables} [accept The {Miserable Ones}, accept {Jean Valjean}]", "$ Valjean"]
+	["{Les Miserables} [accept The {Miserable Ones}, accept {Jean Valjean}]", "? Valjean", "$ Jean Valjean"]
 	["Beethoven's Symphony No. {9} in D minor [or {Choral} symphony; or {Beethoven's opus} 125]", "$ Beethoven's Ninth"]
 	["Styx", "$ river styx"]
 	["derivative", "$ derivative"]

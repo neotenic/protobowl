@@ -283,8 +283,6 @@ check_answer = (tokens, text, question = '') ->
 			else if match
 				text_matches++
 			
-			if match.toString().slice(0, 5) is 'EQUIV'
-				cat_tokens.push match.slice(5)
 			[bold, token, match]
 		
 		# console.log processed
@@ -301,7 +299,11 @@ check_answer = (tokens, text, question = '') ->
 			bold_miss.push token if !match and bold
 			bolded.push token if bold
 			unbold.push token if !bold and !trivial
-			cat_tokens.push token if match
+
+			if match.toString().slice(0, 5) is 'EQUIV'
+				cat_tokens.push match.slice(5)
+			else
+				cat_tokens.push token if match
 		
 		matchiness = bold_match.length + unbold_match.length #+ (0.002 / (index + 20))
 
@@ -371,10 +373,12 @@ check_answer = (tokens, text, question = '') ->
 
 	# do not accept answers which are shorter than their clues
 	match_frac = (cat_tokens.join(' ').length + question_match.join(' ').length) / text.length
-	
+	match_diff = (cat_tokens.join(' ').length + question_match.join(' ').length) - text.length
+	# console.log match_frac, match_diff, cat_tokens, question_match, text.length
+
 	# console.log cat_tokens, question_match
 
-	if match_frac < 0.6
+	if match_frac < 0.6 or (match_diff < -7 and match_frac < 0.7)
 		return 'reject'
 	if judgement is 0
 		return 'reject'
