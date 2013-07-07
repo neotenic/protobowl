@@ -283,7 +283,7 @@ renderTimer = ->
 		$('.pausebtn').disable (ms < 0 or room.no_pause)
 
 		unless room.time_freeze
-			if !room.interrupts and time < room.end_time - room.answer_duration
+			if !room.scoring?.interrupt and time < room.end_time - room.answer_duration
 				$('.buzzbtn').disable true
 			else
 				$('.buzzbtn').disable (ms < 0 or elapsed < 100)
@@ -485,7 +485,14 @@ renderUsers = ->
 			team_count++
 
 			attrs.members = (room.users[member] for member in members)
-			attrs.interrupts = Sum(u.interrupts for u in attrs.members)
+			# attrs.interrupts = Sum(u.metrics().interrupts for u in attrs.members)
+			attrs.metrics = ->
+				all = {}
+				for u in attrs.members
+					for m, v in u.metrics()
+						all[m] = 0 unless all[m]
+						all[m] += v
+				return all
 			
 			attrs.name = team
 			attrs.id = 'team-' + escape(team).toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -553,7 +560,7 @@ renderUsers = ->
 
 		name = $('<td>').appendTo row
 
-		$('<td>').addClass('negs').text(user.interrupts).appendTo row
+		$('<td>').addClass('negs').text(user.metrics().interrupts).appendTo row
 
 		if !user.members #user.members.length is 1 and !users[user.members[0]].team # that's not a team! that's a person!
 			name.append($('<span>').append(userSpan(user.id))) #.css('font-weight', 'bold'))
@@ -732,11 +739,12 @@ createTeamStatSheet = (team, full) ->
 			.append($("<span>").addClass("right").append(val))
 
 	row	"Score", $('<span>').addClass('badge').text(get_score(team))
-	row	"Correct", Sum(user.correct for user in team.members)
+
+	row	"Correct", Sum(user.metrics().correct for user in team.members)
 
 	if room.interrupts
-		row "Interrupts", Sum((user.wrongs.interrupt || 0) + (user.wrongs.early || 0) for user in team.members)
-		row "Early", Sum((user.corrects.early || 0) for user in team.members) if full
+		row "Interrupts", Sum(user.metrics().interrupts for user in team.members)
+		row "Early", Sum(user.metrics().early for user in team.members) if full
 	# row "Incorrect", team.guesses - team.correct  if full
 	row "Guesses", Sum(user.metrics().guesses for user in team.members)
 	# row "Seen", team.seen
