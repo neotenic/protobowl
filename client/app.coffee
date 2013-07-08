@@ -418,11 +418,12 @@ me = new QuizPlayerSlave(room, 'temporary')
 do ->
 	document.title = "#{room.name} - Protobowl"
 	type_mapping = {
-		qb: 'Quizbowl',
+		qb: 'Quizbowl'
 		jeopardy: 'Jeopardy!'
+		scibowl: 'Science Bowl'
 	}
 	
-	if room.type isnt 'qb'
+	if room.name.split('/').length > 1
 		$('<span>')
 			.addClass('label label-info')
 			.text(type_mapping[room.type] || room.type.toTitleCase())

@@ -12,11 +12,6 @@ class QuizPlayer
 		@corrects = {}
 		@wrongs = {}
 
-		# @correct = 0
-		# @guesses = 0
-		# @interrupts = 0
-		# @early = 0
-
 		@earlyseen = 0
 		@seen = 0
 
@@ -123,15 +118,6 @@ class QuizPlayer
 		@level() >= level
 
 	score: ->
-		# CORRECT = 10
-		# EARLY = 15
-		# INTERRUPT = -5
-		# if @room.interrupts
-		# 	return @early * EARLY + (@correct - @early) * CORRECT + @interrupts * INTERRUPT
-		# else
-		# 	return @correct * CORRECT
-
-
 		sum = 0
 		for key, [plus, neg] of @room.scoring
 			sum += (@corrects[key] || 0) * plus + (@wrongs[key] || 0) * neg

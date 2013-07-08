@@ -432,19 +432,11 @@ class QuizRoom
 					user.corrects[value] = 0 
 
 				user.corrects[value]++
-
-				# user.correct++
-				# user.early++ if @attempt.early 
-				
 				@finish()
 			else # incorrect
 				user.streak = 0
 				user.negstreak++
 				user.negstreak_record = Math.max(user.negstreak, user.negstreak_record)
-
-				# if @attempt.interrupt
-				# 	user.interrupts++
-				
 
 				if typeof user.wrongs[value] != 'number' or isNaN(user.wrongs[value])
 					user.wrongs[value] = 0 
