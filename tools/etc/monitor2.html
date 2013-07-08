@@ -1,0 +1,38 @@
+<script>
+// var sock = io.connect("http://protolag.nodejitsu.com/")
+var epoch = 0;
+
+epoch = Date.now()
+setInterval(visual, 500);
+var inc = 0;
+function visual(){
+	inc++;
+	var xhr = new XMLHttpRequest();
+	var el = document.createElement('div');
+	el.className = 'magicbar'
+	xhr.open('get', 'http://protolag.nodejitsu.com/?'+Math.random(), true)
+	xhr.send();
+	var start = Date.now();
+	function rendermagic(){
+		el.style.width = ((Date.now() - start)/10) + 'px';
+	}
+	rendermagic()
+	var increment = setInterval(rendermagic, 100)
+	xhr.onload = function(){
+		clearInterval(increment);
+		rendermagic();
+		// callback(JSON.parse(xhr.responseText))
+	}
+	document.body.insertBefore(el, document.body.firstChild)
+}
+</script>
+<style>
+.magicbar {
+	background-color: #c0ffee;
+	height: 15px;
+	border: 1px solid gray;
+	margin: 10px;
+	-webkit-transition:width 0.1s;
+}
+</style>
+HTTP

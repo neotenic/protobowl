@@ -1,0 +1,21 @@
+<script src="http://protolag.nodejitsu.com/socket.io/socket.io.js"></script>
+<script>
+var sock = io.connect("http://protolag.nodejitsu.com/")
+var epoch = 0;
+sock.on('connect', function(){
+	epoch = Date.now()
+	setInterval(measure, 500);
+})
+function measure(){
+	var start = Date.now();
+	sock.emit('perf', 'blah', function(e){
+		// console.log(e, Date.now() - start, start - e, Date.now() - e);
+		var now = Date.now();
+		console.log(e - epoch, now - epoch, start - epoch, now - start, start - e, now - e);
+		// Date.now() - start //time elapsed for response
+		// start - e
+	})
+}
+
+</script>
+SOCKET

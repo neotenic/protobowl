@@ -1,0 +1,33 @@
+<script>
+var lastArr = null;
+var inc = 0;
+function loadStatus(){
+	var xhr = new XMLHttpRequest();
+	inc++;
+	xhr.open('get', 'http://protobowl.nodejitsu.com/perf-histogram', true);
+	xhr.send(null);
+	var bink = inc;
+	var start = Date.now();
+	xhr.onload = function(){
+		var lines = xhr.responseText.split('\n');
+		var avg = parseFloat(lines[0]);
+		var rest = JSON.parse(lines.slice(1).join('\n'));
+		if(lastArr){
+			var diffArr = [], indexCount = [], sum = 0;
+			for(var i = 0; i < rest.length; i++){
+				diffArr[i] = rest[i] - lastArr[i]
+				if(diffArr[i] != 0){
+					indexCount.push(i)
+					sum+= diffArr[i]
+				}
+			}
+			console.log(bink, Date.now() - start, avg, indexCount, sum)
+		}
+		lastArr = rest;
+		// console.log(parseFloat(avg), rest);
+	}	
+}
+
+setInterval(loadStatus, 1000);
+
+</script>
