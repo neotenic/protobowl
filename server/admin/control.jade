@@ -116,7 +116,13 @@ html(lang="en")
 					| 
 					| BEES!!! BEES FOR EVERYBODY!!!
 
-		
+				br
+
+				form(action="/stalkermode/set_realm/#{name.replace(/\//g, '~')}", method="post")
+					button.btn(type="submit") Reset Realm
+					| 
+					| Take ownership of this room.
+
 				br
 
 				form(action="/stalkermode/anarchy/#{name.replace(/\//g, '~')}", method="post")
