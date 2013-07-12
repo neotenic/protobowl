@@ -28,7 +28,7 @@ error_bonus = {
 	'round': '1'	
 }
 
-default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
+# default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
 
 # Tyger! Tyger! burning bright 
@@ -67,7 +67,7 @@ class QuizRoom
 
 		@rate = 1000 * 60 / 5 / 200
 		@__timeout = {}
-		@distribution = default_distribution
+		@distribution = null
 
 		@freeze()
 		@users = {}
@@ -107,6 +107,7 @@ class QuizRoom
 
 		@mute = @acl.baseline
 		@escalate = @acl.unlocked
+
 
 	touch: ->
 		current_time = @serverTime() 
@@ -182,8 +183,55 @@ class QuizRoom
 	emit: (name, data) -> console.log 'room.emit(name, data) not implemented'
 
 	reset_distribution: -> 
-		
-		@distribution = default_distribution
+		big_dist = {}
+
+		test_distribution = (factor) ->
+			smaller = {}
+			error = 0
+			count = 0
+			total = 0
+			for cat, num of big_dist
+				smaller[cat] = Math.round(num / factor)
+				count += smaller[cat]
+				total += num
+				error += Math.abs(smaller[cat] * factor - num)
+			
+
+			return [smaller, error / total + count / 20]
+
+		simplify_distribution = =>
+			min = Infinity
+			# calculate the smallest number of questions in a category
+			# exclude the 1-element ones because they're probably bugs
+			min = num for cat, num of big_dist when num < min and num > 1 
+
+			# iteratively refine the factor
+			guess = min
+			[s_base, e_base, c_base] = test_distribution(guess)
+			return s_base
+
+			# [s1, e1, c1] = test_distribution(min - 1)
+			# [s2, e2, c2] = test_distribution(min + 1)
+			# guess = min
+			# [s_base, e_base, c_base] = test_distribution(guess)
+			# console.log e_base, e1, e2
+			# if e_base < e1 and e_base < e2
+			# 	console.log 'got smallest'
+			# 	return s_base
+
+
+		@get_parameters @type, @difficulty, (difficulties, categories) =>
+			next_cat = =>
+				cat = categories.shift()
+				if cat
+					@count_questions @type, @difficulty, cat, (count) =>
+						big_dist[cat] = count
+						next_cat()
+				else
+					@distribution = simplify_distribution()
+
+			next_cat()
+		# @distribution = default_distribution
 
 	time: -> if @time_freeze then @time_freeze else @offsetTime()
 
@@ -217,6 +265,7 @@ class QuizRoom
 
 	new_question: ->
 		@generating_question = @serverTime()
+		
 		@get_question (question) =>
 			if !question or !question.question or !question.answer
 				question = error_question
@@ -557,7 +606,7 @@ class QuizRoom
 
 		blacklist = ["cumulative", "users", "sync_offset", "generating_question"]
 		level3 = ["question", "answer", "timing", "info", "generated_time"]
-		level4 = ["realm", "distribution", "created", "topic", "acl", "scoring"]
+		level4 = ["realm", "created", "topic", "acl", "scoring"]
 
 		user_blacklist = ["sockets", "room"]
 
@@ -590,10 +639,21 @@ class QuizRoom
 		if level >= 4
 			data[attr] = this[attr] for attr in level4
 
+			# in case no distribution has been generated
+			@reset_distribution() unless @distribution
+
 			# async stuff
 			@get_parameters @type, @difficulty, (difficulties, categories) =>
 				data.difficulties = difficulties
 				data.categories = categories
+
+				if @distribution
+					for cat in categories
+						@distribution[cat] = @distribution[cat] || 0
+					for key of @distribution when key not in categories
+						delete @distribution[key]
+					data.distribution = @distribution
+
 				@emit 'sync', data
 
 			@journal()

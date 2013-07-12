@@ -528,7 +528,7 @@ io.sockets.on 'connection', (sock) ->
 			sock.emit 'log', verb: 'The database state server is taking unusually long to look up a room. This can happen when the statekeeper database is inaccessible. Please contact the Protobowl administrators or developers to resolve this issue. '
 		, 1000 * 3
 		
-		named_type = room.name.split('/')[0]
+		named_type = room_name.split('/')[0]
 
 		load_room room_name, (room, is_new, load_elapsed) ->
 			clearTimeout slow_load

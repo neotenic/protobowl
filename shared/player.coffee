@@ -672,7 +672,7 @@ class QuizPlayer
 		return unless @authorized()
 		# @verb 'is doing something with difficulty'
 		@room.difficulty = data
-		@room.sync(1)
+		@room.sync(4)
 		@room.get_size (size) =>
 			@verb "set difficulty to #{data || 'everything'} (#{size} questions)"
 			if size is 0 and @room.category
@@ -684,7 +684,10 @@ class QuizPlayer
 		# @verb 'changed the category to something which needs to be changed'
 		@room.category = data
 		@room.reset_distribution() unless data # reset to the default question distribution 
-		@room.sync(1)
+		if data is 'custom'
+			@room.sync(4)
+		else
+			@room.sync(1)
 		@room.get_size (size) =>
 			if data is 'custom'
 				@verb "enabled a custom category distribution (#{size} questions)"
