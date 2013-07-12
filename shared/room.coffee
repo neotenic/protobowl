@@ -181,7 +181,9 @@ class QuizRoom
 	# note to self, do not change this into an @log, because thats recursive
 	emit: (name, data) -> console.log 'room.emit(name, data) not implemented'
 
-	reset_distribution: -> @distribution = default_distribution
+	reset_distribution: -> 
+		
+		@distribution = default_distribution
 
 	time: -> if @time_freeze then @time_freeze else @offsetTime()
 
@@ -399,6 +401,10 @@ class QuizRoom
 
 				@timeout @attempt.duration, => #@serverTime, @attempt.realTime + @billMahrer, =>
 					@end_buzz session
+
+				# increment the number of prompts the user has been given
+				user.prompts++
+
 			@sync()
 		else
 			@attempt.done = true

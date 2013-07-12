@@ -11,6 +11,7 @@ class QuizPlayer
 		# statistics
 		@corrects = {}
 		@wrongs = {}
+		@prompts = 0
 
 		@earlyseen = 0
 		@seen = 0
@@ -124,6 +125,8 @@ class QuizPlayer
 		return sum
 	
 	metrics: ->
+		epsilon = 0.001
+
 		scoring = @room.scoring
 		col_sum = (col) ->
 			sum = 0
@@ -135,6 +138,11 @@ class QuizPlayer
 			wrong: col_sum(@wrongs)
 		}
 		m.guesses = m.correct + m.wrong
+
+		m.precision = m.correct / (m.guesses + epsilon)
+		m.recall = m.correct / (user.seen + epsilon)
+		m.f1 = (2 * (m.precision * m.recall) / (m.precision + m.recall + epsilon))
+
 		if @room?.scoring?.interrupt
 			m.interrupts = (@wrongs.interrupt || 0) + (@wrongs.early || 0)
 			m.early = (@corrects.early || 0)
@@ -667,6 +675,8 @@ class QuizPlayer
 		@room.sync(1)
 		@room.get_size (size) =>
 			@verb "set difficulty to #{data || 'everything'} (#{size} questions)"
+			if size is 0 and @room.category
+				@set_category ''
 
 	set_category: (data) ->
 		@touch()
@@ -809,6 +819,7 @@ class QuizPlayer
 		return @notify "error `#{state}` is not number" unless typeof state is 'number'
 		@room.escalate = state
 		@room.sync(2)
+		@verb "changed minimum escalation permission level to `#{state}`"
 		# technically it's only a class 1 action, but requires a re-render of the 
 		# leaderboard.
 
@@ -832,6 +843,7 @@ class QuizPlayer
 		return unless @authorized 'ninja'
 		@room.dystopia = level
 		@room.sync(4)
+		@verb "set dystopia mode to #{level}"
 
 	##############################################################
 	# Here are the user settings, no auth required
@@ -839,7 +851,6 @@ class QuizPlayer
 
 	pref: (name, value) ->
 		@touch()
-		
 		return unless typeof name is 'string'
 		return if name in ['toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor']
 		
