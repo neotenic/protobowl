@@ -134,13 +134,14 @@ class QuizPlayer
 			return sum
 		m = {
 			score: @score()
+			seen: @seen
 			correct: col_sum(@corrects)
 			wrong: col_sum(@wrongs)
 		}
 		m.guesses = m.correct + m.wrong
 
 		m.precision = m.correct / (m.guesses + epsilon)
-		m.recall = m.correct / (user.seen + epsilon)
+		m.recall = m.correct / (m.seen + epsilon)
 		m.f1 = (2 * (m.precision * m.recall) / (m.precision + m.recall + epsilon))
 
 		if @room?.scoring?.interrupt

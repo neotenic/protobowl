@@ -53,21 +53,21 @@ html(lang="en")
 				tbody
 					each room, room_name in rooms
 						each user, id in room.users
-							- var precision = (user.correct/(user.guesses + 0.001)), recall = (user.correct / (user.seen + 0.001))
 							tr
+								- var m = user.metrics()
 								td
 									a(href="/stalkermode/room/#{room_name}")= room_name
 								td
 									a(href="/stalkermode/user/#{room_name}/#{user.id}")= user.name
 								td= user.score()
-								td= user.guesses
-								td= user.correct
-								td= user.interrupts
-								td= user.early
-								td= user.seen
-								td= precision.toFixed(3)
-								td= recall.toFixed(3)
-								td= (2 * (precision * recall) / (precision + recall + 0.001)).toFixed(3)
+								td= m.guesses
+								td= m.correct
+								td= m.interrupts
+								td= m.early
+								td= m.seen
+								td= m.precision.toFixed(3)
+								td= m.recall.toFixed(3)
+								td= m.f1.toFixed(3)
 								td(sorttable_customkey="#{user.time_spent}", title="#{user.time_spent}")
 									mixin duration(user.time_spent)
 								td(sorttable_customkey="#{user.last_action}")
