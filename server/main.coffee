@@ -888,6 +888,9 @@ app.post '/stalkermode/disco_room/:room', (req, res) ->
 				io.sockets.socket(sock).disconnect()
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
+app.post '/stalkermode/set_realm/:room', (req, res) ->
+	rooms?[req.params.room.replace(/~/g, '/')]?.realm = remote?.config?.realm.slice(0)
+	res.redirect "/stalkermode/room/#{req.params.room}"
 
 app.post '/stalkermode/emit/:room/:user', (req, res) ->
 	u = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
