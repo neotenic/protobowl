@@ -9,5 +9,6 @@ protobowl.css
 protobowl.dev.css
 app.dev.js
 offline.appcache
+_compiled.js
 build/*
 deploy/*
