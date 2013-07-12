@@ -350,7 +350,7 @@ chatAnnotation = ({session, text, user, done, time}) ->
 	user_list = []
 	url_regex = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/ig
 	html = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-	.replace(/(^|\s+)(\/[a-z0-9\-]+)(\s+|$)/g, (all, pre, room, post) ->
+	.replace(/(^|\s+)(\/[a-z0-9\-]+\/?[a-z0-9\-]*)(\s+|$)/g, (all, pre, room, post) ->
 		# console.log all, pre, room, post
 		return pre + "<a href='#{room}'>#{room}</a>" + post
 	).replace(url_regex, (url) ->
