@@ -578,21 +578,23 @@ renderUsers = ->
 
 	thresh = TOP_NUM + CONTEXT * 2
 
+	# display top 3
 	for i in [0...TOP_NUM] when i < entities.length
 		create_row entities[i]
 		render_count++
-
+	# if more than three, add ellipsis bar
 	if entities.length > TOP_NUM
 		ellipsis = $('<tr>').addClass('ellipsis refreshed').appendTo list
 
-
+	# if i exist on the leaderboard, and i'm 
 	if me_entity and me_entity.position >= TOP_NUM + CONTEXT * 2 and !me.prefs.leaderboard
 		# thresh = TOP_NUM
 		bottom_size = Math.min(entities.length, me_entity.position + CONTEXT) - (me_entity.position - CONTEXT)
 
-		for i in [TOP_NUM...TOP_NUM + (CONTEXT * 2 - bottom_size)] when i < entities.length
-			create_row entities[i]
-			render_count++
+		# i have no idea what this code does
+		# for i in [TOP_NUM...TOP_NUM + (CONTEXT * 2 - bottom_size)] when i < entities.length
+		# 	create_row entities[i]
+		# 	render_count++
 
 		# row = $('<tr>').addClass('ellipsis').appendTo list
 		# ellipsis = $('<td colspan=4>').appendTo(row)
