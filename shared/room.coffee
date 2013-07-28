@@ -265,7 +265,7 @@ class QuizRoom
 
 	new_question: ->
 		@generating_question = @serverTime()
-		
+
 		@get_question (question) =>
 			if !question or !question.question or !question.answer
 				question = error_question
@@ -646,6 +646,12 @@ class QuizRoom
 			@get_parameters @type, @difficulty, (difficulties, categories) =>
 				data.difficulties = difficulties
 				data.categories = categories
+				
+				if @difficulty and @difficulty not in difficulties
+					@difficulty = ''
+				if @category and @category isnt 'custom'
+					if @category not in categories
+						@category = ''
 
 				if @distribution
 					for cat in categories

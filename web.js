@@ -14,6 +14,6 @@ require('./tools/watcher');
 // require('./build/server/main')
 // require('./build/server/static')
 
-var cp = require('child_process');
-cp.fork(__dirname + '/build/server/main.js')
-cp.fork(__dirname + '/build/server/static.js')
+// var cp = require('child_process');
+// cp.fork(__dirname + '/build/server/main.js')
+// cp.fork(__dirname + '/build/server/static.js')

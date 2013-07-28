@@ -64,7 +64,8 @@ io.configure 'development', ->
 
 codename = namer.generateName()
 
-console.log "hello from protobowl v4, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
+console.log "hello from protobowl v5, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
+console.log "remote configuration: ", remote?.config
 
 uptime_begin = +new Date
 message_count = 0
@@ -103,7 +104,7 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history', 'trash']
+public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history', 'trash', 'art', 'philosophy']
 
 
 class SocketQuizRoom extends QuizRoom
@@ -132,14 +133,8 @@ class SocketQuizRoom extends QuizRoom
 
 		STALE_TIME = 1000 * 60 * 2 # a few minutes
 		if !@archived or Date.now() - @archived > STALE_TIME or force
-			@archived = Date.now()
-			process.nextTick => # do it the next tick, why not?
-				t_start = Date.now()
-				archive_room @
-				# journal_queue[@name] = null
-				# delete journal_queue[@name]
-				track_time t_start, "dynamic refresh_stale(#{@name})"
-		
+			archive_room @
+			
 
 	end_buzz: (session) ->
 		if @attempt?.user
@@ -429,12 +424,20 @@ archive_room = (room, callback) ->
 			if path in room.realm
 				proper = true
 				break
-		return unless proper
+				
+		unless proper
+			if remote.loadRoom
+				remote.loadRoom room.name, (tmp) ->
+					if tmp.archived < Date.now() - 1000 * 60 * 10
+						room.realm = remote?.config?.realm
+						archive_room room
+			return
 
-	remote.archiveRoom? room, (name) ->
-		journal_queue[name] = null
-		delete journal_queue[name]
-		callback?(name)
+	process.nextTick => # do it the next tick, why not?
+		remote.archiveRoom? room, (name) ->
+			journal_queue[name] = null
+			delete journal_queue[name]
+			callback?(name)
 
 load_room = (name, callback) ->
 	if rooms[name] # its really nice and simple if you have it cached
@@ -634,14 +637,8 @@ process_queue = ->
 	STALE_TIME = 1000 * 3
 	
 	if !room?.archived or Date.now() - room?.archived > STALE_TIME
-		room.archived = Date.now()
-		process.nextTick ->
-			t_start = Date.now()
-			archive_room room
-			# journal_queue[min_room] = null
-			# delete journal_queue[min_room]
-			track_time t_start, "static refresh_stale(#{min_room})"
-	
+		archive_room room
+		
 
 setInterval process_queue, 1000	
 
@@ -732,9 +729,6 @@ swapInactive = ->
 	for name, room of rooms
 		if room.archived < Date.now() - 1000 * 60 * 5
 			archive_room room
-			# remote.archiveRoom? room, (name) ->
-			# 	journal_queue[name] = null
-			# 	delete journal_queue[name]
 			continue
 
 		online = (user for username, user of room.users when user.online())
