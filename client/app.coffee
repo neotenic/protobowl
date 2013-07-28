@@ -157,7 +157,11 @@ online_startup = ->
 
 	reconnect = ->
 		# console.log 'reconnect'
-		cookie = location.query.id || jQuery.cookie('protocookie')
+		lsp = null
+		try
+			lsp = localStorage.protocookie
+
+		cookie = location.query.id || jQuery.cookie('protocookie') || lsp
 		authcookie = null
 		
 		if protobowl_config?.auth
@@ -176,6 +180,9 @@ online_startup = ->
 			cookie = 'PB4CL' + (Math.random().toString(36).slice(2, 6) for i in [0..8]).join('')
 			# save it, because yeah, why not
 			jQuery.cookie('protocookie', cookie)
+			try
+				localStorage.protocookie = cookie
+				# store it on localstorage in case cookie is emptied
 
 		# you might ask why auth and cookie are both sent and more deeply
 		# why there are two separate state cookies, well the answer is that 

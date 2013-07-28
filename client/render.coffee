@@ -16,12 +16,12 @@ render_categories = ->
 		$('<button>').addClass('btn btn-small increase disabled')
 			.append($('<i>').addClass('icon-plus'))
 			.appendTo(picker)
-		$('<span>').addClass('percentage pull-right').css('color', 'gray').appendTo item
+		$('<a>').attr('href', '#').addClass('percentage pull-right').appendTo item
 		
 
 		value = $(item).data('value')
 		percentage = room.distribution[value] / s
-		$(item).find('.percentage').html("#{Math.round(100 * percentage)}% &nbsp;")
+		$(item).find('.percentage').html("#{Math.round(100 * percentage)}% &nbsp;").attr('title', room.distribution[value] + ' shares')
 		$(item).find('.increase').removeClass('disabled')
 		if percentage > 0 and s > 1
 			$(item).find('.decrease').removeClass('disabled')
@@ -32,22 +32,62 @@ render_categories = ->
 			$(item).find('.name').css('font-weight', 'bold')
 
 
-$('.dist-picker .increase').live 'click', (e) ->
+# TODO: support holding down on a button and having it auto-repeat like with a a keyboard key
+
+increment_category = (category) ->
 	return unless room.distribution
 	item = $(this).parents('.category-item')
 	obj = clone_shallow(room.distribution)
-	obj[$(item).data('value')]++
+	obj[category]++
 	me.set_distribution obj
 
-$('.dist-picker .decrease').live 'click', (e) ->
+decrement_category = (category) ->
 	return unless room.distribution
-	item = $(this).parents('.category-item')
+
 	s = 0
 	s += val for cat, val of room.distribution
 	obj = clone_shallow(room.distribution)
-	if obj[$(item).data('value')] > 0 and s > 1
-		obj[$(item).data('value')]--
+	if obj[category] > 0 and s > 1
+		obj[category]--
 		me.set_distribution obj
+
+$('.category-item .percentage').live 'click', (e) ->
+	return unless room.distribution
+	e.preventDefault()
+
+	# TODO: better algorithm for this
+	item = $(this).parents('.category-item')
+	category = $(item).data('value')
+	
+	s = 0
+	s += val for cat, val of room.distribution
+	# calculate the total number of things
+
+	blah = window.prompt "Enter new percentage value for #{category}", Math.round(100 * room.distribution[category] / s)
+	pct = parseInt(blah, 10) / 100
+	if !isNaN(pct) and 0 <= pct <= 1
+		# s - room.distribution[category]
+		obj = clone_shallow(room.distribution)
+		
+		obj[category] = Math.round(s * pct)
+		if pct > 0
+			# if changing percentage to zero, dont bother redistributing
+			shares = s - obj[category]
+			for cat, val of obj when cat isnt category
+				obj[cat] = Math.round(val / s * shares)
+
+		me.set_distribution obj
+	else
+		alert('invalid value' + blah)
+		
+
+$('.dist-picker .increase').live 'mousedown', (e) ->
+	item = $(this).parents('.category-item')
+	increment_category($(item).data('value'))
+
+$('.dist-picker .decrease').live 'mousedown', (e) ->
+	item = $(this).parents('.category-item')
+	decrement_category($(item).data('value'))
 
 
 renderParameters = ->
