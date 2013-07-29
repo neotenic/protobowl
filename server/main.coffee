@@ -111,7 +111,12 @@ class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
 
-	check_answer: (attempt, answer, question) -> checkAnswer(attempt, answer, question) 
+	check_answer: (attempt, answer, question) -> 
+		opt = {}
+		if @dystopia
+			opt.no_acronym = true
+			opt.no_partial = true
+		checkAnswer(attempt, answer, question, opt) 
 
 	get_question: (callback) ->
 		cb = (question) =>
@@ -160,7 +165,7 @@ class SocketQuizRoom extends QuizRoom
 		@sync(2)
 
 	deserialize: (data) ->
-		blacklist = ['users', 'attempt', 'generating_question', 'acl']
+		blacklist = ['users', 'attempt', 'generating_question', 'acl', "_id"]
 		for attr, val of data when attr not in blacklist
 			@[attr] = val
 		for user in data.users

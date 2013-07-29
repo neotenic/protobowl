@@ -229,7 +229,7 @@ fuzzy_search = (needle, haystack) ->
 	return false
 
 
-check_answer = (tokens, text, question = '') ->
+check_answer = (tokens, text, question = '', config = {}) ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
 	text = text
 		.replace(/l(ol)+/g, 'lol')
@@ -277,9 +277,15 @@ check_answer = (tokens, text, question = '') ->
 		processed = for [bold, token] in front
 			match = fuzzy_search(token, text)
 			if match is 'PARTIAL'
-				partial_matches++
+				if config.no_partial
+					match = false
+				else
+					partial_matches++
 			else if match is 'ACRONYM'
-				acronym_matches++
+				if config.no_acronym
+					match = false
+				else
+					acronym_matches++
 			else if match
 				text_matches++
 			
@@ -389,10 +395,10 @@ check_answer = (tokens, text, question = '') ->
 	
 
 
-safeCheckAnswer = (compare, answer, question) ->
+safeCheckAnswer = (compare, answer, question, config = {}) ->
 	try
 		tokens = tokenize_line(answer)
-		result = check_answer(tokens, compare, question)
+		result = check_answer(tokens, compare, question, config)
 		if result is 'accept'
 			return true
 		else if result is 'prompt'
