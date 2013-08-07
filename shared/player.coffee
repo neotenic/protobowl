@@ -869,7 +869,10 @@ class QuizPlayer
 			@verb "switched to team #{name}"
 		else if name isnt @name
 			@verb "is playing as an individual"
-		@team = name
+		if name
+			@team = name.slice(0, 100)
+		else
+			@team = name
 		@sync(true)
 
 
