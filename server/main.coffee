@@ -104,7 +104,7 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history', 'trash', 'art', 'philosophy']
+public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history', 'trash', 'art', 'philosophy', 'college']
 
 
 class SocketQuizRoom extends QuizRoom
