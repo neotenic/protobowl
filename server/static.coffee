@@ -22,8 +22,9 @@ app.set("view options", {layout: false})
 app.set("views", "")
 app.use express.static('debug')
 
-app.get '/', (req, res) -> res.redirect '/lobby'
-
+app.get '/', (req, res) -> 
+	# res.redirect '/lobby'
+	res.render '../deploy/nfsn/index.html'
 app.get '/:name', (req, res) -> 
 	res.render 'debug/app.html'
 

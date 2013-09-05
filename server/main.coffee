@@ -1065,6 +1065,13 @@ app.get '/check-public', (req, res) ->
 			for uid, udat of rooms[check_name].users
 				output[check_name]++ if udat.active()
 				output[check_name]+=0.001 if udat.online()
+
+	output['*'] = 0
+	for name, room of rooms
+		for uid, udat of room?.users
+			output['*']++ if udat.active()
+			output['*']+=0.001 if udat.online()
+			
 	if req.query.cb
 		res.end req.query.cb + '(' + JSON.stringify(output) + ')'
 	else
