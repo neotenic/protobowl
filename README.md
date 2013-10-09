@@ -46,15 +46,15 @@ The primary interface is meant to be the keyboard. In fact, early design sketche
 
 The first button is `space`, which make sense because it's the biggest button and also probably the most important. Space generally means "buzz", however there's another very small thing it does: when you open up and see that big green button saying "start the game", you can also press space to trigger that (no ambiguity since the buzz button is disabled in such circumstances).
 
-Next, or skipping, as it was referred to in earlier iterations is also a fairly commonplace operation. It can be accessed with not one, but three keys, `S`, `N` and `J`. `S` and `N` are probably pretty obvious, referring to "Skip" and "Next". J is just convenient because it's on the home row (well, so is `S`, technically) and usually refers to "down" for people who use Vi (which notably doesn't include me, but Gmail, Google Reader and Google Wave, three applications that I did, at some point in time use also follow that pattern). 
+Next, or skipping, as it was referred to in earlier iterations, is also a fairly commonplace operation. It can be accessed with not one, but three keys, `S`, `N` and `J`. `S` and `N` are probably pretty obvious, referring to "Skip" and "Next". J is just convenient because it's on the home row (well, so is `S`, technically) and usually refers to "down" for people who use Vi or Vim, although it is commonplace for websites to respect `j` meaning up, and `k` meaning down. (See: Facebook, all Google products, etc.)
 
-Pause and Resume can be accessed with `P` and `R`, and are both equivalent. So you can technically pause with `R`, and resume with `P`, though that would be metaphorically confusing. 
+You can pause and resume with `P` and `R`. Both are equivalent, so you can technically pause with `R`, and resume with `P`, though that would be metaphorically confusing. 
 
-Since it's designed to be "social", if you don't mind me tossing around more loaded buzzwords, chat was one of the first features added (also one of the easiest, but that doesn't help me rewrite history). Chat is accessed through the `/` key, that is, the forward slash. For those who don't like letters which aren't in the alphabet, it's also accessible through the letter `C`.
+Since it's designed to be "social", if you don't mind me tossing around more loaded buzzwords, chat was one of the first features added (also one of the easiest, but that doesn't help me rewrite history). Chat is accessed through the `/` key, that is, the forward slash or by pressing enter while not buzzed. For those who don't like letters which aren't in the alphabet, it's also accessible through the letter `C`.
 
 ### Buttons
 
-Yeah, buttons, they exist. But they're only meant to be used on mobile.
+Yeah, buttons, they exist. But they're only meant to be used on mobile. Seriously, use your keyboard.
 
 ### Other things you can click on
 
@@ -65,7 +65,7 @@ There are a number of non-button things which can be clicked on as well.
 
 The "breadcrumb", as Bootstrap calls it, is the little row which precedes every question which includes the category, difficulty and tournament to which the question belongs. The one on the top isn't clickable, but all the other ones are. Clicking on those expands the question readout which gets collapsed below them.
 
-Within the breadcrumb is a slightly grayed out word "Report", which can be clicked on to bring up a (as of yet non functional) modal dialog to submit a question for manual review in case there was something wrong with the question. For instance, maybe the question was formatted wrong or truncated, or you're exceedingly pedantic and think that there is a typo which hinders your ability to participate, or something. 
+Within the breadcrumb is a slightly grayed out word "Report", which can be clicked on to bring up a (currently non-functional) modal dialog to submit a question for manual review in case there was something wrong with the question. For instance, maybe the question was formatted wrong or truncated, or you're exceedingly pedantic and think that there is a typo which hinders your ability to participate, or something.
 
 Also, on the far right is a blue star which can be clicked on to "bookmark" a question. Right now, bookmarking does little other than filling in that blue star and preventing the question from getting deleted (questions that drop far enough down get deleted unless they're bookmarked). However, in the future, it may be imaginable that the bookmarked questions would be added to some kind of interface which could be managed by the server.
 
