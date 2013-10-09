@@ -4,7 +4,7 @@
 
 ## Version 3
 
-The current version of Protobowl which lies before you is the "third" version. By that, I mean these version numbers don't mean much more than significant changes to the core of protobowl. Version 3 constituted more or less an entire rewrite to the codebase with specific attention paid to offline-first and abstracting away the socket layer. The result is something which is, at least architecturally, pretty cool. A rather large amount of code is shared between client and server, such that the transition between online and offlien and back is super seamless.
+The current version of Protobowl which lies before you is the "third" version. By that, I mean these version numbers don't mean much more than significant changes to the core of protobowl. Version 3 constituted more or less an entire rewrite to the codebase with specific attention paid to offline-first and abstracting away the socket layer. The result is something which is, at least architecturally, pretty cool. A rather large amount of code is shared between client and server, such that the transition between online and offline and back is super seamless.
 
 # README & Anachronisms
 
@@ -123,7 +123,7 @@ On May 25th of this year, I was introduced to the website quizbowldb.com which h
 
 The first thing which needed to be done was getting some set of labeled questions for the database. I looked around and found a few sources but most of them weren't really large or labeled. I had finished the online AI class a few months ago, and felt like applying it in a fairly obvious scenario, so over the course of the next few hours I built a simple naive bayesian classifier to give categories to questions. 
 
-But, in order to do that, I had to first have some manually labeled corpus. I certainly wasn't up for the tedium, so I decided to pull some from the quizbowldb.com site to seed the algorithm. At that point in time, for some reason, I was using some preview release of Windows 8 and rather regrettably couldn't use wget. But I coped by writing a short python script (rather than the more reasonable solution of rebooting into another operating system) which would incrementaly clone the site's database. 
+But, in order to do that, I had to first have some manually labeled corpus. I certainly wasn't up for the tedium, so I decided to pull some from the quizbowldb.com site to seed the algorithm. At that point in time, for some reason, I was using some preview release of Windows 8 and rather regrettably couldn't use wget. But I coped by writing a short python script (rather than the more reasonable solution of rebooting into another operating system) which would incrementally clone the site's database. 
 
 Because of rate limiting or something to that effect, the script only pulled about 10 questions every 40 seconds, and given that there were 30,000 questions in the database, the process wasn't terribly fast. I eventually booted back into linux and rewrote the script so that it was resumable (for the event that the script might be interrupted for some reason on its scheduled week-long run). 
 
@@ -143,9 +143,9 @@ I wasn't the only person in my school's quiz bowl team who was interested in pur
 
 Early in July (or possibly late in June), Ben wanted to build that quiz bowl application when I was still working on a few other projects as well as an internship. I gave him the big JSON file of questions and he toiled away for the next few days, experimenting first with Ruby on Rails and then later settling with Node.JS (and the accompanying popular stacks). 
 
-Within a few days, he had put out a pretty impresive application using Mongoose, Jade, Twitter Bootstrap, Express, and Node running on Heroku at the (now defunct) its-ac-attack URL. Soon afterwards search was fairly functional and I started to take an interest in the project again (having almost finished another project, though at time of writing, I have yet to begin writing the blog post for that project).
+Within a few days, he had put out a pretty impressive application using Mongoose, Jade, Twitter Bootstrap, Express, and Node running on Heroku at the (now defunct) its-ac-attack URL. Soon afterwards search was fairly functional and I started to take an interest in the project again (having almost finished another project, though at time of writing, I have yet to begin writing the blog post for that project).
 
-I felt like exploiting this opportunity to get acquainted somewhat with popular NodeJS frameworks and tools. I haven't done much with Node for over two years, and the landscape has changed considerably in the intervening years. It's a fast growing and developing community. However, I never really found interest in building the entire app. Managing users and doing search has has always struck me as somewhat boring, in part because it's hardly untreaded territory.
+I felt like exploiting this opportunity to get acquainted somewhat with popular NodeJS frameworks and tools. I haven't done much with Node for over two years, and the landscape has changed considerably in the intervening years. It's a fast growing and developing community. However, I never really found interest in building the entire app. Managing users and doing search has always struck me as somewhat boring, in part because it's hardly untreaded territory.
 
 I wanted to skip straight into the low latency websocket-driven synchronized multiplayer. Ben was still acclimating to the multimodal (if I'm using these buzzwords right) paradigm of writing code meant to be executed on both the client and the server, so I decided to prototype a multiplayer environment.
 
