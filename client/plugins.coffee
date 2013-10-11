@@ -242,6 +242,7 @@ found_ip = (address) ->
 	if matches "129.65.x.x", "207.62.x.x", "198.188.x.x"
 		$('a.brand strong').text('Poly')
 
+
 	# else if matches "18.x.x.x"
 	# 	$('a.brand .motto').text "hi mit"
 

@@ -28,6 +28,7 @@ error_bonus = {
 	'round': '1'	
 }
 
+
 # default_distribution = {"Fine Arts":2,"Literature":4,"History":3,"Science":3,"Trash":1,"Geography":1,"Mythology":1,"Philosophy":1,"Religion":1,"Social Science":1}
 
 
