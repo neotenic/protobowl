@@ -497,7 +497,7 @@ io.sockets.on 'connection', (sock) ->
 
 	sock.on 'perf', (noop, cb) -> cb os.freemem()
 
-	sock.on 'join', ({auth, cookie, room_name, question_type, old_socket, version, custom_id, muwave, referrers}) ->
+	sock.on 'join', ({auth, cookie, room_name, question_type, old_socket, version, custom_id, muwave, referrers, agent, agent_version}) ->
 		if user
 			sock.emit 'debug', "For some reason it appears you are a zombie. Please contact info@protobowl.com because this is worthy of investigation."
 			return
@@ -582,7 +582,9 @@ io.sockets.on 'connection', (sock) ->
 			user.name = 'secret ninja' if is_ninja
 			user.auth = true if protoauth
 			user._referrers = referrers
-
+			user.agent = agent
+			user.agent_version = agent_version
+			
 			try
 				if muwave
 					user.muwave = 100

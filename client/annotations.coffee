@@ -547,6 +547,13 @@ notifyLike = ->
 		addAnnotation $('<p>').append(message).append(likebtn.show())
 	, 1000
 
+
+notifyMobile = ->
+	message = $("<span>").html('<b>Try Protobowl for Mobile!</b> Download the free Protobowl app for <a href="https://itunes.apple.com/us/app/protobowl/id716914125">iOS (iPod Touch, iPhone or iPad)</a> or <a href="https://play.google.com/store/apps/details?id=com.minibit.protobowl">Android</a>.')
+	setTimeout ->
+		addAnnotation $('<p>').append(message)
+	, 1000
+
 # Ummmm ahh such as like, like the one where I'm like mmm and it says, 
 # "I saw watchoo did there!" 
 # And like and and then like you peoples were all like, 

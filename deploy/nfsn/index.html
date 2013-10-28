@@ -11,6 +11,17 @@ hr {
 	margin: 10px 0;
   	border-top: 1px solid #DADADA;
 }
+
+.mobilething {
+  opacity: 0.4;
+  -webkit-transition: 0.3s linear opacity ;
+}
+
+.mobilething:hover {
+  opacity: 1;
+}
+
+
 </style>
 
 <title>Protobowl Home</title>
@@ -20,6 +31,8 @@ hr {
 <body>
 
 <div class="modal">
+
+
   <div class="modal-header">
     
     <h3 style="font-weight: normal">Welcome to <b>Protobowl</b>&nbsp;<span style="display: none;vertical-align: middle" id="everything"></span></h3>
@@ -39,9 +52,13 @@ hr {
     <p>
     There are also <b>different question sets</b> like <a href="/jeopardy/lobby">Jeopardy!</a> or <a href="/scibowl/lobby">Science Bowl</a>. If you have suggestions or comments, <b>please email us</b> at <a href="mailto:info@protobowl.com">info@protobowl.com</a>.
     </p>
+
+
   </div>
+
   <form class="modal-footer" id="submitform">
-  	<div class="input-append input-prepend">
+
+    <div class="input-append input-prepend">
     	<div class="btn" id="refresher"><i class="icon-refresh"></i></div>
     	<input type="text" placeholder="lobby" id="roomname" autofocus="autofocus" style="width: 350px" name="room">
     	<button class="btn btn-primary" type="submit"><b>Go</b> to Room
@@ -49,9 +66,24 @@ hr {
     	</button>
     </div>
   </form>
+
 </div>
 
+
 <div class="modal-backdrop"></div>
+
+<div style="position: absolute; left: 20px; bottom: 20px; z-index: 99999999999" class="mobilething">
+    <a href="https://play.google.com/store/apps/details?id=com.minibit.protobowl">
+  <img alt="Android app on Google Play"
+       src="https://developer.android.com/images/brand/en_app_rgb_wo_45.png" />
+</a>
+
+<a href="https://itunes.apple.com/us/app/protobowl/id716914125">
+  <img alt="iOS app on App Store"
+       src="http://neotenic.github.io/img/ios.png" />
+</a>
+</div>
+
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
 <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>

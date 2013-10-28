@@ -100,6 +100,9 @@ setTimeout ->
 	notifyLike() if navigator.onLine
 , 1000 * 60 * 10
 
+setTimeout ->
+	notifyMobile() if navigator.onLine
+, 1000 * 60 * 5
 
 impending_doom = ->
 	line = $('<div>').addClass 'alert alert-info'
@@ -207,6 +210,8 @@ online_startup = ->
 			# old_socket: localStorage.old_socket,
 			muwave: 'muwave' of location.query,
 			custom_id: location.query.id,
+			agent: "M4/Web",
+			agent_version: "#{protobowl_app_build}"
 			referrers: refs,
 			version: 8
 		}

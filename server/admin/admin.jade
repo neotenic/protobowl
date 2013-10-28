@@ -42,6 +42,11 @@ html(lang="en")
 				li #{user.team || ''} 
 					if user.muwave
 						span.badge.badge-info MICROWAVE
+					if user.agent
+						if user.agent != "M4/Web"
+							span.badge.badge-info= user.agent
+						else
+							span.badge.badge-info 4
 					if user.room && user.moderator
 						span.badge MOD
 					if Date.now() < user.banned
