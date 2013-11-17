@@ -51,7 +51,11 @@ html(lang="en")
 						span.badge MOD
 					if Date.now() < user.banned
 						span.badge.badge-important BANNED
-					b  #{user.name} 
+					if user.auth
+						b(style="color:purple")  #{user.name} 
+					else
+						b  #{user.name} 
+
 					if !('users' in user)
 						a(href="/stalkermode/user/#{user.room.name.replace(/\//g, '~')}/#{user.id}") &rarr; 
 					| (last seen 

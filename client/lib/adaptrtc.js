@@ -133,3 +133,135 @@ if (navigator.mozGetUserMedia) {
 } else {
   console.log("Browser does not appear to be WebRTC-capable");
 }
+
+// function maybePreferAudioSendCodec(sdp) {
+//   if (audio_send_codec == '') {
+//     console.log('No preference on audio send codec.');
+//     return sdp;
+//   }
+//   console.log('Prefer audio send codec: ' + audio_send_codec);
+//   return preferAudioCodec(sdp, audio_send_codec);
+// }
+
+// function maybePreferAudioReceiveCodec(sdp) {
+//   if (audio_receive_codec == '') {
+//     console.log('No preference on audio receive codec.');
+//     return sdp;
+//   }
+//   console.log('Prefer audio receive codec: ' + audio_receive_codec);
+//   return preferAudioCodec(sdp, audio_receive_codec);
+// }
+
+// // Set |codec| as the default audio codec if it's present.
+// // The format of |codec| is 'NAME/RATE', e.g. 'opus/48000'.
+// function preferAudioCodec(sdp, codec) {
+//   var fields = codec.split('/');
+//   if (fields.length != 2) {
+//     console.log('Invalid codec setting: ' + codec);
+//     return sdp;
+//   }
+//   var name = fields[0];
+//   var rate = fields[1];
+//   var sdpLines = sdp.split('\r\n');
+
+//   // Search for m line.
+//   for (var i = 0; i < sdpLines.length; i++) {
+//       if (sdpLines[i].search('m=audio') !== -1) {
+//         var mLineIndex = i;
+//         break;
+//       }
+//   }
+//   if (mLineIndex === null)
+//     return sdp;
+
+//   // If the codec is available, set it as the default in m line.
+//   for (var i = 0; i < sdpLines.length; i++) {
+//     if (sdpLines[i].search(name + '/' + rate) !== -1) {
+//       var regexp = new RegExp(':(\\d+) ' + name + '\\/' + rate, 'i');
+//       var payload = extractSdp(sdpLines[i], regexp);
+//       if (payload)
+//         sdpLines[mLineIndex] = setDefaultCodec(sdpLines[mLineIndex],
+//                                                payload);
+//       break;
+//     }
+//   }
+
+//   // Remove CN in m line and sdp.
+//   sdpLines = removeCN(sdpLines, mLineIndex);
+
+//   sdp = sdpLines.join('\r\n');
+//   return sdp;
+// }
+
+// // Set Opus in stereo if stereo is enabled.
+// function addStereo(sdp) {
+//   var sdpLines = sdp.split('\r\n');
+
+//   // Find opus payload.
+//   for (var i = 0; i < sdpLines.length; i++) {
+//     if (sdpLines[i].search('opus/48000') !== -1) {
+//       var opusPayload = extractSdp(sdpLines[i], /:(\d+) opus\/48000/i);
+//       break;
+//     }
+//   }
+
+//   // Find the payload in fmtp line.
+//   for (var i = 0; i < sdpLines.length; i++) {
+//     if (sdpLines[i].search('a=fmtp') !== -1) {
+//       var payload = extractSdp(sdpLines[i], /a=fmtp:(\d+)/ );
+//       if (payload === opusPayload) {
+//         var fmtpLineIndex = i;
+//         break;
+//       }
+//     }
+//   }
+//   // No fmtp line found.
+//   if (fmtpLineIndex === null)
+//     return sdp;
+
+//   // Append stereo=1 to fmtp line.
+//   sdpLines[fmtpLineIndex] = sdpLines[fmtpLineIndex].concat(' stereo=1');
+
+//   sdp = sdpLines.join('\r\n');
+//   return sdp;
+// }
+
+// function extractSdp(sdpLine, pattern) {
+//   var result = sdpLine.match(pattern);
+//   return (result && result.length == 2)? result[1]: null;
+// }
+
+// // Set the selected codec to the first in m line.
+// function setDefaultCodec(mLine, payload) {
+//   var elements = mLine.split(' ');
+//   var newLine = new Array();
+//   var index = 0;
+//   for (var i = 0; i < elements.length; i++) {
+//     if (index === 3) // Format of media starts from the fourth.
+//       newLine[index++] = payload; // Put target payload to the first.
+//     if (elements[i] !== payload)
+//       newLine[index++] = elements[i];
+//   }
+//   return newLine.join(' ');
+// }
+
+// // Strip CN from sdp before CN constraints is ready.
+// function removeCN(sdpLines, mLineIndex) {
+//   var mLineElements = sdpLines[mLineIndex].split(' ');
+//   // Scan from end for the convenience of removing an item.
+//   for (var i = sdpLines.length-1; i >= 0; i--) {
+//     var payload = extractSdp(sdpLines[i], /a=rtpmap:(\d+) CN\/\d+/i);
+//     if (payload) {
+//       var cnPos = mLineElements.indexOf(payload);
+//       if (cnPos !== -1) {
+//         // Remove CN payload from m line.
+//         mLineElements.splice(cnPos, 1);
+//       }
+//       // Remove CN line in sdp
+//       sdpLines.splice(i, 1);
+//     }
+//   }
+
+//   sdpLines[mLineIndex] = mLineElements.join(' ');
+//   return sdpLines;
+// }

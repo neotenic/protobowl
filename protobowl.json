@@ -11,7 +11,7 @@
 		"development": false,
 		"auth": true, 
 		"cache_breaker": true,
-		"webrtc": false,
+		"webrtc": true,
 
 		"static": "//neotenic.github.io/",
 		"sockets": [["http://protobowl.nodejitsu.com:80/", "https://protobowl.nodejitsu.com:443/"], ["http://cab.antimatter15.com:443/"], ["http://dino.xvm.mit.edu:5566/"]],

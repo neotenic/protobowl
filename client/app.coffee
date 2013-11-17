@@ -476,6 +476,8 @@ listen 'bold', (data) -> boldAnnotation data
 listen 'reprimand', (data) -> reprimandAnnotation data
 listen 'debug', (data) -> logAnnotation data
 listen 'sync', (data) -> synchronize data
+listen 'rtc', ({message, source}) -> onRTCSignal(source, message)
+
 listen 'throttle', (data) ->
 	createAlert('Throttled', "The server is ignoring you for a while because you've been doing too many things too quickly. ")
 		.addClass('alert-error')

@@ -474,6 +474,7 @@ class QuizPlayer
 
 	disconnected: ->
 		@touch()
+
 		if @sockets.length is 0
 			seconds = (@room.serverTime() - @last_session) / 1000
 			if seconds > 90
@@ -646,6 +647,9 @@ class QuizPlayer
 		# ensure first that all the sockets are closed
 		if @score() <= 20
 			@room.delete_user @id
+
+	rtc_signal: (message) ->
+		@room.users[message.target]?.emit 'rtc', { message: message, source: @id }
 
 	##############################################################
 	# Here are the things which are global settings
