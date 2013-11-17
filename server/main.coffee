@@ -1088,18 +1088,18 @@ app.get '/check-public', (req, res) ->
 				output[check_name]++ if udat.active()
 				output[check_name]+=0.001 if udat.online()
 
-	check_room(manual_check) for manual_check in (req.query?.rooms || '').split(',')
+	check_room(manual_check) for manual_check in (req.query?.rooms || '').split(',') if manual_check
 
-	check_room(check_name) for check_name in public_room_list
+	check_room(check_name) for check_name in public_room_list if check_name
 		
-	check_room(name + '/lobby') for name in remote.get_types()
+	check_room(name + '/lobby') for name in remote.get_types() when name isnt 'qb'
 
 	output['*'] = 0
 	for name, room of rooms
 		for uid, udat of room?.users
 			output['*']++ if udat.active()
 			output['*']+=0.001 if udat.online()
-	
+
 	res.header 'content-type', 'text/javascript'
 	
 	if req.query.cb
