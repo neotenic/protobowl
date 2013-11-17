@@ -56,6 +56,9 @@ html(lang="en")
 					else
 						b  #{user.name} 
 
+					if user.prefs && user.prefs.webrtc
+						span.badge.badge-success RTC
+						| 
 					if !('users' in user)
 						a(href="/stalkermode/user/#{user.room.name.replace(/\//g, '~')}/#{user.id}") &rarr; 
 					| (last seen 
