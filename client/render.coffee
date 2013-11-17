@@ -712,7 +712,11 @@ check_alone = ->
 				if count > 0 and can isnt room.name
 					suggested_candidates.push can
 			if suggested_candidates.length > 0
-				links = (can.link("/" + can) + " (#{data[can]}) " for can in suggested_candidates)
+				links = (
+					for can in suggested_candidates
+						cantext = can.replace(/\/lobby$/g, '')
+						cantext.link("/" + can) + " (#{data[can]}) " 
+				)
 				$('.foreveralone .roomlist').html links.join(' or ')
 				$('.foreveralone').slideDown()
 			else
