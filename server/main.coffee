@@ -147,6 +147,8 @@ class SocketQuizRoom extends QuizRoom
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
 		super(session)
 
+
+
 	merge_user: (id, new_id) ->
 		return false if !@users[id]
 		if @users[new_id]
@@ -285,6 +287,12 @@ class SocketQuizPlayer extends QuizPlayer
 
 	_password: -> remote?.passcode(this)
 
+	transfer_account: (cookie) ->
+		email = remote.parse_cookie(cookie)?.email
+		if email
+			@room.merge_user @id, sha1(email)
+
+
 	link: (assertion) ->
 		console.log 'verifying assertion', assertion
 		req = https.request host: "verifier.login.persona.org", path: "/verify", method: "POST", (res) =>
@@ -295,7 +303,7 @@ class SocketQuizPlayer extends QuizPlayer
 					response = JSON.parse(body)
 					# console.log response
 					response.cookie = remote.secure_cookie {email: response.email, time: Date.now()}
-
+					response.exists = (sha1(response.email) of @room.users)
 					@emit 'verify', response
 					# @room.merge_user @id, sha1(response.email)
 					# if response?.status is 'okay'
@@ -515,6 +523,13 @@ io.sockets.on 'connection', (sock) ->
 		else if protoauth
 			publicID = sha1(protoauth.email)
 		else
+			# this means a slight security vulnerability for users whose emails end with the room name
+			# so if there was a room (e.g. protobowl.com/com) a user logged in with blah@gmail.com may
+			# be hijacked by a user who knows the email by submitting the cookie blah@gmail for 
+			# unauthenticated stuff- this is a design flaw which can't really be solved without breaking
+			# backwards compatibility with existing users- so you should avoid rooms which are a subset
+			# of your email address.
+
 			publicID = sha1(cookie + room_name + '')
 			if auth
 				sock.emit 'log', verb: 'Warning: Authorization token was rejected by server'

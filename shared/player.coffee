@@ -638,6 +638,8 @@ class QuizPlayer
 			@room.unfreeze()
 		@room.sync()
 
+	transfer_account: (cookie) -> @room.log 'QuizPlayer.transfer_account(cookie) not implemented'
+
 
 	accelerate_cleanup: ->
 		# warning! weird things happen sometimes because this doesn't

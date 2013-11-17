@@ -56,18 +56,47 @@ $(document).ready ->
 		}
 
 logged_in = (data) ->
-	assertion = null	
+	assertion = null
+	
+	complete_login = ->
+		verbAnnotation {verb: "logging in and beginning a new authenticated session"}
+		auth_cookie? data.cookie
+		switch_socket()
+
+
 	if data?.status isnt 'okay'
 		verbAnnotation verb: "server rejected login request: #{data?.reason}"
 		navigator?.id?.logout()
 		# console.log data
 		
-	else
-		unless auth
-			me.accelerate_cleanup()
-		verbAnnotation {verb: "logging in and beginning a new authenticated session"}
-		auth_cookie? data.cookie
-		switch_socket()
+	else if data.cookie
+		if data?.exists or auth or me.score() < 100
+			unless auth
+				me.accelerate_cleanup()
+
+			complete_login()
+		else
+			bootbox.dialog "<h4>Would you like to transfer your current score to your authenticated account?</h4> <p>This will allow you to play as the same user on multiple computers and allow your score to persist beyond cookie clears. While your score may still be deleted after a period of inactivity in popular rooms, you will be last in line for eviction.<p> <em>Note that if you log out of your current session, you will not be able to play as the current user without logging back in.</em>", [
+				{
+					label: "Don't Transfer"
+					class: 'btn'
+					callback: ->
+						me.accelerate_cleanup()
+						complete_login()
+						return true
+				}
+				{
+					label: "Transfer to "+data.email,
+					class: "btn-primary"
+					callback: ->
+						me.transfer_account(data.cookie)
+						complete_login()
+						return true
+				}
+
+			]
+
+		
 
 switch_socket = ->
 	return unless sock
