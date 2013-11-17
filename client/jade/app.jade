@@ -17,7 +17,7 @@ html(lang="en")
 		style
 			.navbar, .sidebar, .actionbar, #team_modal, .modal-footer, .modal-header { display: none; }
 		
-		if cache_breaker
+		if cache_breaker && !offline
 			link(rel='stylesheet', href='#{static}protobowl.css?#{Date.now()}')
 		else
 			link(rel='stylesheet', href='#{static}protobowl.css')
@@ -468,8 +468,10 @@ html(lang="en")
 
 
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js")
+
 		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
-		if cache_breaker
+		
+		if cache_breaker && !offline
 			script(src="#{static}app.js?#{Date.now()}")
 		else
 			script(src="#{static}app.js")
