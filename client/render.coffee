@@ -711,6 +711,9 @@ check_alone = ->
 			for can, count of data
 				if count > 0 and can isnt room.name
 					suggested_candidates.push can
+
+			suggested_candidates.sort (a, b) -> data[b] - data[a]
+
 			if suggested_candidates.length > 0
 				links = (
 					for can in suggested_candidates
