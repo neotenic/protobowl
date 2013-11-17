@@ -294,7 +294,6 @@ class SocketQuizPlayer extends QuizPlayer
 
 
 	link: (assertion) ->
-		console.log 'verifying assertion', assertion
 		req = https.request host: "verifier.login.persona.org", path: "/verify", method: "POST", (res) =>
 			body = ''
 			res.on 'data', (chunk) -> body += chunk
@@ -310,7 +309,7 @@ class SocketQuizPlayer extends QuizPlayer
 		
 		audience_whitelist = ["http://protobowl.com/", "http://pb.nfshost.com/"]
 		
-		if app.settings.env is 'development' or !remote.deploy
+		if app.settings.env is 'development'
 			audience_whitelist.push "http://localhost:5555/"
 
 		if assertion.audience and assertion.audience in audience_whitelist
@@ -318,6 +317,9 @@ class SocketQuizPlayer extends QuizPlayer
 			assertion = assertion.assertion
 		else
 			audience = "http://protobowl.com/"
+
+		console.log 'verifying assertion', assertion, audience
+
 
 		data = querystring.stringify assertion: assertion, audience: audience
 		req.setHeader 'Content-Type', 'application/x-www-form-urlencoded'
@@ -606,8 +608,16 @@ io.sockets.on 'connection', (sock) ->
 						user.lock = (Math.random() > 0.5)
 
 			user = room.users[publicID]
+
 			user.name = 'secret ninja' if is_ninja
-			user.auth = true if protoauth
+			if user.auth is true and !protoauth
+				sock.emit "log", "a user which is not logged in can not access a logged-in only account"
+				sock.disconnect()
+
+			if protoauth
+				user.auth = true 
+				user._email = protoauth.email
+
 			user._referrers = referrers
 			user.agent = agent
 			user.agent_version = agent_version
@@ -1082,23 +1092,26 @@ app.get '/check-public', (req, res) ->
 	output = {}
 
 	check_room = (check_name) ->
+		return unless check_name.trim()
+
 		output[check_name] = 0
 		if rooms[check_name]?.users
 			for uid, udat of rooms[check_name].users
 				output[check_name]++ if udat.active()
-				output[check_name]+=0.001 if udat.online()
+				output[check_name] += 0.001 if udat.online()
 
-	check_room(manual_check) for manual_check in (req.query?.rooms || '').split(',') if manual_check
+	check_room(manual_check) for manual_check in (req.query?.rooms || '').split(',')
 
-	check_room(check_name) for check_name in public_room_list if check_name
+	check_room(room_name) for room_name in public_room_list
 		
 	check_room(name + '/lobby') for name in remote.get_types() when name isnt 'qb'
 
 	output['*'] = 0
+
 	for name, room of rooms
 		for uid, udat of room?.users
 			output['*']++ if udat.active()
-			output['*']+=0.001 if udat.online()
+			output['*'] += 0.001 if udat.online()
 
 	res.header 'content-type', 'text/javascript'
 	

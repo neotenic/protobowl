@@ -103,7 +103,7 @@ logged_in = (data) ->
 
 switch_socket = ->
 	return unless sock
-	console.log 'merpity werpity'
+	# console.log 'merpity werpity'
 	sock.hide_disconnect = true
 	sock.socket.disconnect()
 	room.users = {}
