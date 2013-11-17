@@ -340,6 +340,10 @@ html(lang="en")
 										label.checkbox
 											input.livechat(type="checkbox", checked)
 											| Show chat messages while typing
+									if webrtc
+										label.checkbox
+											input.webrtc(type="checkbox")
+											| Enable audio chat with others
 
 									label.checkbox
 										input.sounds(type="checkbox")

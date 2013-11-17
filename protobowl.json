@@ -9,9 +9,10 @@
 		"js_minify": true,
 
 		"development": false,
-		"auth": false, 
+		"auth": true, 
 		"cache_breaker": true,
-		
+		"webrtc": false,
+
 		"static": "//neotenic.github.io/",
 		"sockets": [["http://protobowl.nodejitsu.com:80/", "https://protobowl.nodejitsu.com:443/"], ["http://cab.antimatter15.com:443/"], ["http://dino.xvm.mit.edu:5566/"]],
 		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
@@ -28,6 +29,7 @@
 		"development": true,
 		"auth": true, 
 		"cache_breaker": false,
+		"webrtc": true,
 		
 		"static": "/",
 		"sockets": [["http://localhost:5566/"], ["http://192.168.1.100:5566/"]],

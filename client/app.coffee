@@ -14,6 +14,7 @@
 #= include ../shared/player.coffee
 #= include ../shared/room.coffee
 
+#= include ./webrtc.coffee
 #= include ./annotations.coffee
 #= include ./render.coffee
 #= include ./bindings.coffee

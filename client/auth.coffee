@@ -40,7 +40,10 @@ $(document).ready ->
 			onlogin: (ass) -> # this is a rather unfortunate variable name
 				assertion = ass
 				if connected() and has_connected
-					me.link assertion
+					me.link {
+						assertion: assertion,
+						audience: location.protocol + '//' + location.host + '/'
+					}
 
 			onlogout: ->
 				assertion = null

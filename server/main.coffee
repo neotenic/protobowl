@@ -308,7 +308,17 @@ class SocketQuizPlayer extends QuizPlayer
 					# @room.merge_user @id, sha1(response.email)
 					# if response?.status is 'okay'
 		
-		audience = "http://localhost:5555"
+		audience_whitelist = ["http://protobowl.com/", "http://pb.nfshost.com/"]
+		
+		if app.settings.env is 'development' or !remote.deploy
+			audience_whitelist.push "http://localhost:5555/"
+
+		if assertion.audience and assertion.audience in audience_whitelist
+			audience = assertion.audience
+			assertion = assertion.assertion
+		else
+			audience = "http://protobowl.com/"
+
 		data = querystring.stringify assertion: assertion, audience: audience
 		req.setHeader 'Content-Type', 'application/x-www-form-urlencoded'
 		req.setHeader 'Content-Length', data.length
