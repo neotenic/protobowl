@@ -63,14 +63,17 @@ userSpan = (id, global) ->
 			icon 'magic'
 		else
 			icon 'bullhorn'
-	else if user?.banned and user.banned > room.serverTime()
+	if user?.banned and user.banned > room.serverTime()
 		icon 'ban-circle'
-	else if user?.authorized('moderator')
+	if user?.authorized('moderator')
 		icon 'star-empty'
-	else if user?.prefs?.distraction
+	if user?.prefs?.webrtc
+		icon 'microphone'
+	if user?.prefs?.distraction
 		icon 'eye-close'
 		span.attr 'title', 'This user has enabled distraction-free mode.'
-	else if user?.auth
+	
+	if user?.auth
 		span.addClass 'auth'
 
 

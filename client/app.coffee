@@ -14,7 +14,9 @@
 #= include ../shared/player.coffee
 #= include ../shared/room.coffee
 
+#= include ./lib/adaptrtc.js
 #= include ./webrtc.coffee
+
 #= include ./annotations.coffee
 #= include ./render.coffee
 #= include ./bindings.coffee
@@ -354,7 +356,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 
 	envelop_action: (name) ->
 		# master_action = this[name]
-		this[name] = (data, callback) ->
+		return (data, callback) ->
 			if connected()
 				sock.emit(name, data, callback)
 			else if fallback_connection? and fallback_connection()
@@ -369,6 +371,13 @@ class QuizPlayerSlave extends QuizPlayerClient
 				# master_action.call(this, data, callback)
 				room.users[me.id]?[name]?(data, callback)
 
+	pref: (name, value) ->
+		@prefs[name] = value
+		if @id is me.id
+			me.prefs[name] = value
+
+		@remote_pref(name, value)
+
 	constructor: (room, id) ->
 		super(room, id)
 		@__listeners = {}
@@ -379,8 +388,13 @@ class QuizPlayerSlave extends QuizPlayerClient
 		# functions starting with get_ are treated as local-exec, but I dont feel like
 		# propagating a breaking change 
 
-		blacklist = ['envelop_action', 'level', 'score', 'metrics', 'online', 'active', 'authorized', 'emit']
-		@envelop_action name for name, method of this when typeof method is 'function' and name not in blacklist
+		blacklist = ['envelop_action', 'level', 'score', 'metrics', 'online', 'active', 'authorized', 'emit', 'pref']
+		
+		for name, method of this when typeof method is 'function'
+			if name not in blacklist
+				this[name] = @envelop_action name
+			else
+				this['remote_' + name] = @envelop_action name
 
 
 
