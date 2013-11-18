@@ -554,12 +554,12 @@ buildApplication = (force_update = false, target_override = false) ->
 
 	copyCache = (hash) ->
 		files = []
-		blacklist = ["robots.txt", "offline.appcache", ".DS_Store"]
+		blacklist = ["robots.txt", "offline.appcache"]
 		for f in wrench.readdirSyncRecursive "build/#{target}"
 			try
 				if fs.statSync("build/#{target}/#{f}").isFile() 
-					if !/html$/.test(f) and f not in blacklist
-						# console.log(opt.static + f)
+					if !/html|DS_Store$/.test(f) and f not in blacklist
+						# console.log('--->', opt.static + f, ':', f)
 						files.push opt.static + f
 					# else
 					# 	fs.unlink "build/#{target}/#{f}", -> 1
