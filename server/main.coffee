@@ -335,8 +335,8 @@ class SocketQuizPlayer extends QuizPlayer
 		if @sockets.length is 0
 			@last_session = @room.serverTime()
 			@verb 'joined the room'
-			
-			@pref 'webrtc', false
+			@prefs.webrtc = false
+			# @pref 'webrtc', false
 
 		@sockets.push sock.id unless sock.id in @sockets
 		blacklist = ['add_socket', 'emit', 'disconnect']
@@ -344,7 +344,8 @@ class SocketQuizPlayer extends QuizPlayer
 		sock.on 'disconnect', =>
 			@sockets = (s for s in @sockets when (s isnt sock.id and io.sockets.socket(s)))
 			if @sockets.length is 0
-				@pref 'webrtc', false
+				# @pref 'webrtc', false
+				@prefs.webrtc = false
 				@disconnected()
 				@room.journal()
 				user_count_log 'disconnected ' + @id + '-' + @name, @room.name
