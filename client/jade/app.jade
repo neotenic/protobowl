@@ -135,18 +135,18 @@ html(lang="en")
 						div.span9
 							div.form-horizontal
 								div.actionbar
-									button.btn.chatbtn(title="Shortcut: / key", rel='tooltip', disabled)
+									button.btn.chatbtn(title="Shortcut: / key", rel='tooltip', disabled, tabindex=-1)
 										i.icon-comment
 										| Chat
 									| 
-									button.btn.btn-info.skipbtn(title="Shortcut: s key", rel='tooltip', disabled)
+									button.btn.btn-info.skipbtn(title="Shortcut: s key", rel='tooltip', disabled, tabindex=-1)
 										| Skip
 									| 
-									button.btn.btn-info.nextbtn(title="Shortcut: n key", rel='tooltip', disabled, style="display:none")
+									button.btn.btn-info.nextbtn(title="Shortcut: n key", rel='tooltip', disabled, style="display:none", tabindex=-1)
 										| Next
 									| 
 
-									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip', disabled) 
+									button.btn.btn-warning.pausebtn(title="Shortcut: p key", rel='tooltip', disabled, tabindex=-1) 
 										span.pause
 											i.icon-pause.visible-phone(style="margin-right:0")
 											span.hidden-phone Pause
@@ -156,7 +156,7 @@ html(lang="en")
 									
 								
 									
-									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip', disabled)
+									button.btn.pull-right.btn-danger.buzzbtn(title="Shortcut: space key", rel='tooltip', disabled, tabindex=-1)
 										i.icon-bell.icon-white
 										| Buzz
 

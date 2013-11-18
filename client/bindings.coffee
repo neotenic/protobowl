@@ -41,7 +41,9 @@ setActionMode = (mode) ->
 
 	$(window).resize() #reset expandos
 
+
 $('.chatbtn').click ->
+	$('.actionbar button').blur()
 	if me.prefs.distraction
 		return if $('.distraction-notice').length
 		createAlert('Distraction Free Mode is Enabled', 'Chat messages and other messages which are not necessarily important have been disabled. Disable this mode from the settings widget in order to send or receive chat messages.')
@@ -98,10 +100,12 @@ rate_limit_check = ->
 
 
 skip = ->
+	$('.actionbar button').blur()
 	return if rate_limit_check()
 	me.skip()
 
 next = ->
+	$('.actionbar button').blur()
 	# reduce dat server load
 	if room.time() >= room.end_time and !room.attempt
 		me.next()
@@ -111,6 +115,7 @@ $('.skipbtn').click skip
 $('.nextbtn').click next
 
 $('.buzzbtn').click ->
+	$('.actionbar button').blur()
 	return if $('.buzzbtn').prop('disabled')
 	return if rate_limit_check()
 	setActionMode 'guess'
@@ -152,6 +157,7 @@ $('.reset-score .btn').click ->
 $('.lose-command').click -> me.cincinnatus()
 
 $('.pausebtn').click ->
+	$('.actionbar button').blur()
 	return if rate_limit_check()
 	if !!room.time_freeze
 		me.unpause()
