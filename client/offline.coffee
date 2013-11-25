@@ -15,7 +15,7 @@
 
 
 Questions = new IDBStore {
-	dbVersion: 19,
+	dbVersion: 22,
 	storeName: 'questions',
 	keyPath: 'qid',
 	autoIncrement: false,
@@ -33,6 +33,7 @@ Questions = new IDBStore {
 		{ name: 'modified', keyPath: 'modified', unique: false },
 		{ name: 'add_time', keyPath: 'add_time', unique: false },
 		{ name: 'search_order', keyPath: ['bookmarked', 'modified']},
+		{ name: 'bookmark_order', keyPath: ['bookmarked', 'inc_random']},
 		{ name: 'type_difficulty_category_inc', keyPath: ['type', 'difficulty', 'category', 'inc_random']},
 		{ name: 'type_difficulty_category', keyPath: ['type', 'difficulty', 'category']},
 		{ name: 'type_difficulty', keyPath: ['type', 'difficulty'] }
@@ -473,7 +474,7 @@ recent_rooms = ->
 			if key.slice(0, 5) == "room-"
 				rooms.push JSON.parse(localStorage[key])
 	rooms = rooms.sort (b, a) -> a.archive_time - b.archive_time
-	blacklist = ['lobby', 'msquizbowl', 'hsquizbowl', 'temporary', 'offline.html', 'test.html', 'stalkermode']
+	blacklist = ['lobby', 'msquizbowl', 'hsquizbowl', 'temporary', 'offline.html', 'test.html', 'stalkermode', 'bookmarks']
 	rooms = (room.name for room in rooms when room.name not in blacklist and !/^private/.test(room.name))
 	if rooms.length > 0
 		$('.recent-rooms').append $("<li>").addClass('divider')
@@ -777,6 +778,25 @@ get_question = (type, difficulty, category, cb) ->
 	# 	, 10
 	# 	return
 
+	if location.pathname is '/bookmarks'
+		Questions.iterate (item, cursor, tranny) ->
+			# console.log 'got item woo', item.inc_random
+			item.seen++
+			item.inc_random += Math.random() + 1
+			Questions.put item
+			tranny.abort()
+			cb item, get_difficulties(type), get_categories(type)
+		, {
+			index: 'bookmark_order',
+			order: 'ASC',
+			keyRange: Questions.makeKeyRange {
+				lower: [1, 0]
+			}
+			onEnd: ->
+				cb null, get_difficulties(type), get_categories(type)
+			onError: (err) ->
+		}
+		return
 
 
 	# TODO: be smarter about the sampling, permute difficulty and categories to find respective likelihoods
@@ -791,7 +811,7 @@ get_question = (type, difficulty, category, cb) ->
 		
 		# console.log 'qyering for', difficulty, category, type
 		Questions.iterate (item, cursor, tranny) ->
-			# console.log 'got item woo', item
+			
 			# return unless item
 			item.seen++
 			item.inc_random += Math.random() + 1

@@ -295,6 +295,7 @@ online_startup = ->
 			else
 				console.log 'errythings failed capn'
 				offline_startup()
+
 				
 			# console.log 'connection error', num_failures, valid_attempts, e
 
@@ -800,7 +801,7 @@ do -> # isolate variables from globals
 
 
 
-if (('onLine' of navigator) and navigator.onLine is false) or !io? or protobowl_config?.offline
+if (('onLine' of navigator) and navigator.onLine is false) or !io? or protobowl_config?.offline or location.pathname in ['/bookmarks'] 
 	offline_startup()
 else
 	online_startup()

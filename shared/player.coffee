@@ -547,6 +547,7 @@ class QuizPlayer
 			@command name, args
 			return
 
+
  		# server enforced limit is 10x the client enforced limit
  		# is this a formulation of postel's rule?
  		# I don't know and I don't really care.
