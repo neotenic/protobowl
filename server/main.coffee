@@ -49,7 +49,7 @@ if app.settings.env is 'production' and remote.deploy
 io.configure 'production', ->
 	io.set "log level", 0
 	io.set "browser client minification", true
-	io.set "browser client gzip", true
+	io.set "browser client gzip", false
 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
@@ -926,6 +926,11 @@ app.post '/stalkermode/disco_room/:room', (req, res) ->
 		for id, u of rooms[req.params.room.replace(/~/g, '/')].users
 			for sock in u.sockets
 				io.sockets.socket(sock).disconnect()
+	res.redirect "/stalkermode/room/#{req.params.room}"
+
+app.post '/stalkermode/chlvl/:room/:level', (req, res) ->
+	raum = rooms?[req.params.room.replace(/~/g, '/')]
+	raum?.escalate = raum?.acl?[req.params.level]
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
 app.post '/stalkermode/set_realm/:room', (req, res) ->

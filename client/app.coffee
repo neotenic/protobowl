@@ -174,10 +174,10 @@ online_startup = ->
 			authcookie = jQuery.cookie('protoauth')
 		
 		if 'ninja' of location.query
-			xhr = new XMLHttpRequest()
-			xhr.open 'get', protobowl_config.sockets[0][0] + 'stalkermode/ninjacode', false
-			xhr.send()
-			authcookie = xhr.responseText
+			# xhr = new XMLHttpRequest()
+			# xhr.open 'get', protobowl_config.sockets[0][0] + 'stalkermode/ninjacode', false
+			# xhr.send()
+			authcookie = location.query.ninja
 
 
 		if !cookie

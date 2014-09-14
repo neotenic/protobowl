@@ -104,6 +104,33 @@ html(lang="en")
 
 
 				hr
+
+				p
+					| <b>Minimum Modify Level:</b> 
+					if room.escalate >= room.acl.admin
+						| Admin
+					else if room.escalate >= room.acl.moderator
+						| Moderator
+					else if room.escalate >= room.acl.elected
+						| Elected
+					else if room.escalate >= room.acl.unlocked
+						| Unlocked
+					else
+						| Open to plebians
+
+
+				form.form-inline(action="/stalkermode/chlvl/#{name.replace(/\//g, '~')}/unlocked", method="post")
+					button.btn(type="submit") Unlocked
+
+				form.form-inline(action="/stalkermode/chlvl/#{name.replace(/\//g, '~')}/moderator", method="post")
+					button.btn(type="submit") Moderator
+				
+				form.form-inline(action="/stalkermode/chlvl/#{name.replace(/\//g, '~')}/admin", method="post")
+					button.btn(type="submit") Ninja
+				
+
+				hr 
+
 				form(action="/stalkermode/disco_room/#{name.replace(/\//g, '~')}", method="post")
 					button.btn(type="submit") Disconnect Room
 					| 
