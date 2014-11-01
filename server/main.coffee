@@ -952,12 +952,21 @@ app.post '/stalkermode/unban/:room/:user', (req, res) ->
 
 
 app.post '/stalkermode/negify/:room/:user/:num', (req, res) ->
-	rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?.interrupts += (parseInt(req.params.num) || 1)
+	user = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
+	if user
+		user.wrongs = {} unless user?.wrongs
+		user.wrongs.normal = 0 unless user.wrongs.normal
+		user.wrongs.normal += (parseInt(req.params.num) || 1)
 	rooms?[req.params.room.replace(/~/g, '/')]?.sync(1)
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 app.post '/stalkermode/cheatify/:room/:user/:num', (req, res) ->
-	rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?.correct += (parseInt(req.params.num) || 1)
+	console.log req.params.user, req.params.room, req.params.num, rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
+	user = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
+	if user
+		user.corrects = {} unless user?.corrects
+		user.corrects.normal = 0 unless user.corrects.normal
+		user.corrects.normal += (parseInt(req.params.num) || 1)
 	rooms?[req.params.room.replace(/~/g, '/')]?.sync(1)
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
