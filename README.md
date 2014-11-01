@@ -159,31 +159,33 @@ And just like that, in the blink of a sentence, it's been another month.
 
 Folder Structure:
 
-qb/
-	2013/
-		ACF Nationals/
-			Round 1
-			Round 2
-			Round 3
-			Round 4
+	qb/
+		2013/
+			ACF Nationals/
+				Round 1
+				Round 2
+				Round 3
+				Round 4
 
 			
+Here's what the JSON is like from Mongo
 
-{ "__v" : 0, "_id" : { "$oid" : "506e3e938b3d831d6a000001" }, "answer" : "The {Bronze Horseman}: A Petersburg Tale [accept The Copper Horseman or Mednyy vsadnik: Peterburgskaya povest’]", "category" : "Literature", "difficulty" : "Open", "fixed" : 1, "inc_random" : 53.99425264270977, "num" : 1, "question" : "", "round" : "2011-ACFNationals-BrownFinal.doc", "seen" : 36, "tournament" : "ACF Nationals", "type" : "qb", "year" : 2011 }
+	{ "__v" : 0, "_id" : { "$oid" : "506e3e938b3d831d6a000001" }, "answer" : "The {Bronze Horseman}: A Petersburg Tale [accept The Copper Horseman or Mednyy vsadnik: Peterburgskaya povest’]", "category" : "Literature", "difficulty" : "Open", "fixed" : 1, "inc_random" : 53.99425264270977, "num" : 1, "question" : "", "round" : "2011-ACFNationals-BrownFinal.doc", "seen" : 36, "tournament" : "ACF Nationals", "type" : "qb", "year" : 2011 }
+
+The question thingy
+
+	###
+	tournament: ACF Nationals
+	year: 2011
+	###
 
 
-###
-tournament: ACF Nationals
-year: 2011
-###
+	---
+	difficulty: Open
+	num: 1
+	category: Literature
+	round: 2011-ACFNationals-BrownFinal.doc
+	answer: The {Bronze Horseman}: A Petersburg Tale [accept The Copper Horseman or Mednyy vsadnik: Peterburgskaya povest’]
 
-
----
-difficulty: Open
-num: 1
-category: Literature
-round: 2011-ACFNationals-BrownFinal.doc
-answer: The {Bronze Horseman}: A Petersburg Tale [accept The Copper Horseman or Mednyy vsadnik: Peterburgskaya povest’]
-
-In a footnote to this work, the author claims that Mickiewicz’s depiction of the same event as this work, while beautiful, was inaccurate. This poem opens with a man standing on the shore imagining a time when “all flags will visit us/ and we will celebrate in freedom,” after thinking that Nature intends for him to carve a window. This work contains a famous passage expressing the poet’s love for a city possessed of an “Admiralty needle,” and this poem’s protagonist is alleged to have the name he does because the poet is comfortable with it, a reference to that poet’s earlier work. The protagonist of this work sits on a marble sentry lion looking at his lover’s house instead of the title character behind him. After the death of his lover Parasha in a flood, this poem’s protagonist goes mad and wanders the streets before confronting the title figure. For ten points, identify this poem in which Yevgeniy imagines the title equestrian statue of Peter the Great chasing him through the streets of St. Petersburg, a poem by Alexander Pushkin.
----
+	In a footnote to this work, the author claims that Mickiewicz’s depiction of the same event as this work, while beautiful, was inaccurate. This poem opens with a man standing on the shore imagining a time when “all flags will visit us/ and we will celebrate in freedom,” after thinking that Nature intends for him to carve a window. This work contains a famous passage expressing the poet’s love for a city possessed of an “Admiralty needle,” and this poem’s protagonist is alleged to have the name he does because the poet is comfortable with it, a reference to that poet’s earlier work. The protagonist of this work sits on a marble sentry lion looking at his lover’s house instead of the title character behind him. After the death of his lover Parasha in a flood, this poem’s protagonist goes mad and wanders the streets before confronting the title figure. For ten points, identify this poem in which Yevgeniy imagines the title equestrian statue of Peter the Great chasing him through the streets of St. Petersburg, a poem by Alexander Pushkin.
+	---
