@@ -340,7 +340,7 @@ class QuizRoom
 					user.earlyseen++ if has_early
 
 				user.history.push user.score()
-				user.history = user.history.slice(-30)
+				user.history = user.history.slice(-60)
 			
 			@journal()
 			@sync(3)

@@ -274,7 +274,13 @@ check_holiday = ->
 		$('a.brand .motto').text("Happy #{now.getFullYear() - 1776}th Birthday, America!").click (e) ->
 			$('body').fireworks 3, (i) -> ['#9d0101', '#fff', '#447ba9'][i]
 			e.preventDefault()
-
+	# thanksgiving is fourth thursday of november
+	else if now.getMonth() is 10 and now.getDay() is 4 and now.getDate() > 7 * 3
+		$('a.brand strong').text('Turkey')
+		$('.expand-timer').text('Oven Timer')
+		$('.chatbtn')[0].childNodes[1].nodeValue = 'Gobble'
+		$('.buzzbtn')[0].childNodes[1].nodeValue = 'Squawk'
+		$('.leaderboard thead th').eq(1).text('Pilgrims')
 	# april fools
 	else if now.getMonth() is 3 and now.getDate() is 1
 		$('a.brand').html('<u><b>Quizbowl DB</b></u> <em style="font-size:small">Welcome to Quizbowl DB, the best way to get better at quizbowl!</em>')

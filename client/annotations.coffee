@@ -291,7 +291,7 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 					return if magic_number is 0 # 0 is hardly an accomplishment
 					if magic_number > 0
 						if old_score < magic_number and updated_score >= magic_number  and room.scoring?.normal?[0] < 20
-							$('body').fireworks(magic_number / magic_multiple * 10)
+							$('body').fireworks(Math.min(60, magic_number / magic_multiple * 10))
 							createAlert('Congratulations', "You have over #{magic_number} points! Here's some fireworks.")
 								.addClass('alert-success')
 								.insertAfter(ruling.parents('.bundle').find('.annotations'))

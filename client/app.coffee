@@ -55,7 +55,7 @@ initialize_offline = (cb = ->) ->
 	initialize_offline.initialized = true
 	url = (protobowl_config?.static || '/') + 'offline.js'
 	
-	if protobowl_config?.cache_breaker
+	if protobowl_config?.cache_breaker and !protobowl_config?.offline
 		url += "?#{(new Date(protobowl_html_build)) - 0}"
 
 	$.ajax {
@@ -149,7 +149,7 @@ online_startup = ->
 	# console.log 'online startup'
 	# so some firewalls block unsecure websockets but allow secure stuff
 	# so try to connect to both!
-	connection_timeout = 5000
+	connection_timeout = 5100
 	
 	socket_pair = protobowl_config?.sockets[socket_pair_index]
 	

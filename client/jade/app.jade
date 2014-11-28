@@ -332,7 +332,7 @@ html(lang="en")
 
 									label.checkbox
 										input.movingwindow(type="checkbox")
-										| Points earned in last 20 questions
+										| Points earned in last 50 questions
 									
 									label.checkbox
 										input.adhd(type="checkbox")
@@ -475,8 +475,9 @@ html(lang="en")
 
 
 		script(src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js")
-
-		// if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22lib/jquery.min.js%22%3E%3C/script%3E"));
+		
+		script
+			if(typeof jQuery == 'undefined') document.write(unescape("%3Cscript%20src%3D%22/jquery.js%22%3E%3C/script%3E"));
 		
 		if cache_breaker && !offline
 			script(src="#{static}app.js?#{Date.now()}")
