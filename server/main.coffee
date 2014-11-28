@@ -37,6 +37,7 @@ ninjacode = Math.random().toString(36).slice(3)
 
 log_config = { host: 'localhost', port: 18228 }
 
+
 # server.on 'request', (req, res) ->
 # 	res.writeHead 301, {
 # 		'Location': 'http://localhost:5555/'

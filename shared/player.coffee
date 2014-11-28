@@ -502,13 +502,22 @@ class QuizPlayer
 		@gestapo data?.text
 
 
-
 	command: (name, args) ->
 		if name is 'auth'
-			if args[0]?.trim().toLowerCase() is @_password?()
+			if args[0]?.trim()
+				@notify "
+					Protobowl no longer uses escalation codes to authenticate
+					moderators. The authentication system has been folded
+					into the main system for logging into protobowl. Email
+					info@protobowl.com with your old auth codes, rooms that 
+					you can moderate, username and state the email address
+					you use to login to protobowl. After that has been set up,
+					you only need to type @$> auth without a password to escalate.
+				"
+			else if @auth
 				@_apotheify()
 			else
-				@notify "has an invalid password"
+				@notify "You must be logged in to attempt moderator login."
 		else if name in ['ragequit', 'qq', 'corgi', 'super', 'quit', 'dog', 'cute']
 			@emit 'redirect', 'http://i.imgur.com/4Dx75Bq.jpg'
 		else if name in ['deauth', 'unauth']
@@ -895,7 +904,7 @@ class QuizPlayer
 
 	set_name: (name) ->
 		@touch()
-		
+		return if @moderator
 		@gestapo(name)
 
 		if (name + '').trim().length > 0
@@ -923,7 +932,7 @@ class QuizPlayer
 	# underscore means it's not a publically accessibl emethod
 	_apotheify: ->
 		unless @moderator
-			@verb 'is now an administrator of this room'
+			@verb 'is now a moderator of this room'
 			@admin_name = @name
 			# @room.admins.push(@id)
 			@moderator = true
@@ -932,7 +941,7 @@ class QuizPlayer
 
 	cincinnatus: ->
 		if @moderator
-			@verb 'is no longer an administrator of this room'
+			@verb 'is no longer a moderator of this room'
 			# @room.admins = (id for id in @room.admins when id isnt @id)
 			@moderator = false
 			@admin_name = ''

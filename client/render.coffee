@@ -163,8 +163,10 @@ renderUpdate = ->
 
 		if me.authorized('moderator') and !me.authorized('admin')
 			$('.relinquish-command').slideDown()
+			$('#username').disable(true)
 		else
 			$('.relinquish-command').slideUp()
+			$('#username').disable(false)
 
 		count = (1 for u of room.users).length
 		if count > 1
@@ -1079,6 +1081,7 @@ create_report_form = (info) ->
 				info.fixed_category = cat_list.val()
 			info.describe = describe
 			
+			info.type = room.type
 			info.comment = ragequit.val()
 
 			me.report_question info
