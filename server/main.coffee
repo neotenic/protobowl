@@ -286,7 +286,7 @@ class SocketQuizPlayer extends QuizPlayer
 			ips.push addr if sock and addr
 		return ips
 
-	_password: -> remote?.passcode(this)
+	_check_moderator: (cb) -> remote?.check_moderator(this, cb)
 
 	transfer_account: (cookie) ->
 		email = remote.parse_cookie(cookie)?.email
@@ -838,12 +838,6 @@ app.post '/stalkermode/algore', (req, res) ->
 	remote.populate_cache (layers) ->
 		res.end("counted all cats #{JSON.stringify(layers, null, '  ')}")
 
-app.post '/stalkermode/dapowah', (req, res) ->
-	remote.loadAuthfile()
-	res.end("loaded authorization file")
-
-app.get '/stalkermode/authcodes', (req, res) ->
-	res.end(JSON.stringify(remote.get_passcodes(), null, '  '))
 
 app.get '/stalkermode/users', (req, res) -> res.render 'users.jade', { rooms: rooms }
 
@@ -1078,7 +1072,7 @@ app.get '/stalkermode/remaining', (req, res) ->
 # 		res.end JSON.stringify doc
 
 app.get '/stalkermode/to_boldly_go', (req, res) ->
-	remote.Question.findOne { fixed: -1 }, (err, doc) ->
+	remote.Question.findOne { fixed: -1, type: "qb" }, (err, doc) ->
 		if !doc
 			# remote.Question.findOne { fixed: null }, (err, doc) ->
 			# 	res.end JSON.stringify doc

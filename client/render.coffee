@@ -163,10 +163,10 @@ renderUpdate = ->
 
 		if me.authorized('moderator') and !me.authorized('admin')
 			$('.relinquish-command').slideDown()
-			$('#username').disable(true)
+			$('.set-name').slideUp()
 		else
 			$('.relinquish-command').slideUp()
-			$('#username').disable(false)
+			$('.set-name').slideDown()
 
 		count = (1 for u of room.users).length
 		if count > 1

@@ -515,12 +515,20 @@ class QuizPlayer
 					you only need to type @$> auth without a password to escalate.
 				"
 			else if @auth
-				@_apotheify()
+				if !@_check_moderator
+					@notify "privilege escalation not implemented"
+				else
+					@_check_moderator (result) =>
+						if @room?.name?.toLowerCase() in (result?.jurisdiction || [])
+							@set_name result.name
+							@_apotheify()
+						else
+							@notify "is not authorized for this room"
 			else
 				@notify "You must be logged in to attempt moderator login."
 		else if name in ['ragequit', 'qq', 'corgi', 'super', 'quit', 'dog', 'cute']
 			@emit 'redirect', 'http://i.imgur.com/4Dx75Bq.jpg'
-		else if name in ['deauth', 'unauth']
+		else if name in ['deauth', 'unauth', 'resign', 'leave', 'quit', 'nixon']
 			@cincinnatus()
 		else if name in ['rename', 'name']
 			@set_name args[0]?.trim()
@@ -950,13 +958,13 @@ class QuizPlayer
 
 	serialize: ->
 		data = {}
-		blacklist = ['sockets', 'room', 'times_buzzed']
+		blacklist = ['sockets', 'room', 'times_buzzed', 'moderator']
 		for attr of this when attr not in blacklist and typeof this[attr] not in ['function'] and attr[1] != '_'
 			data[attr] = this[attr]
 		return data
 
 	deserialize: (obj) ->
-		blacklist = ['tribunal', 'elect', 'times_buzzed']
+		blacklist = ['tribunal', 'elect', 'times_buzzed', 'moderator']
 		this[attr] = val for attr, val of obj when attr[1] != '_' and attr not in blacklist
 
 		# upgrade scoring algorithm
