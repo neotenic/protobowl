@@ -2,6 +2,24 @@
 
 [Try out Protobowl on a public room!](http://protobowl.com/hsquizbowl)
 
+
+## Nifty Protobowl Trivia
+
+I guess it's a trivia site and I'm never actually going to legitimately finish this README, as it's substantially over 3,000 words and I haven't even finished the introduction to the prequel. I might as well distill the whole thing down to what actually matters— the little bits of trivia that really don't matter but might be amusing to some people with particularly derranged senses of amusement.
+
+* The official about page says that Protobowl is a portmanteau of "Prototype Quizbowl Application", but this is in fact a lie. It is in fact and has always been an acronym for Promoting Racism Online To Obstruct Better Organized World Leadership. It was always designed to be nothing less than a ["literal cancer of the quizbowl community"](http://www.qbwiki.com/wiki/index.php?title=Protobowl&oldid=22538).
+
+* Protobowl's live-as-you-type real time chat was inspired by Google Wave, which Kevin is quite embarassed to have spent the first half of high school playing with, almost as embarrassed as he feels right now writing about himself in third person.
+
+* Protobowl was going to have a social component (called Socialbowl) so that users could log in and view their scores and detailed performance stats with graphs depicting buzz rates per category. Ben stopped working on it before it launched, so it was never added.
+
+* Protobowl runs primarily on Nodejitsu, but falls back to a Bitcable VPS, and then to an MIT XVM if all hell breaks loose. In late 2012, Ben and I had a bet over whether or not he would get into the Science Honor Society, and whoever lost would have to pay for the operational costs of Protobowl for the rest of time. He got accepted and lost the bet.
+
+* For a long time (and probably still today, albeit hopefully less so), Protobowl suffered from a mysterious lag problem that we could never quite figure out. In the process of debugging it, we instituted a bunch of voodoo superstitious policies under semi-credible conjectures. For the possibility that it might be due to increasing memory pressure due to a small memory leak, Protobowl restarts every day at 4am EST every day. The time was chosen because it represents the time of day with the fewest online users.
+
+* Protobowl has a built-in chat bot which is the remanant of a chat bot I had built in middle school for Omegle. It can be triggered by going into any empty room and saying (in chat) "I'm lonely". It's mostly reflective of the hornier, angstier and shallower side of online chat rooms, so it's unlikely to pass a turing test (even if it decides to answer "asl" with "18 f uk". 
+
+
 ## Version 3
 
 The current version of Protobowl which lies before you is the "third" version. By that, I mean these version numbers don't mean much more than significant changes to the core of protobowl. Version 3 constituted more or less an entire rewrite to the codebase with specific attention paid to offline-first and abstracting away the socket layer. The result is something which is, at least architecturally, pretty cool. A rather large amount of code is shared between client and server, such that the transition between online and offline and back is super seamless.

@@ -234,7 +234,7 @@ class SocketQuizPlayer extends QuizPlayer
 				doc.save()
 	
 	modlog: (event, details) ->
-		console.log 'mod log', event, details
+		# console.log 'mod log', event, details
 		entry = new remote.ModLog {
 			event
 			details
@@ -552,6 +552,7 @@ io.sockets.on 'connection', (sock) ->
 			sock.disconnect()
 			return
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
+		room_name = unescape(room_name).replace(/^Room \-/i,"").trim().replace(/\s+/g, '-').replace(/\-+/g, '-').trim()
 
 		protoauth = remote.parse_cookie(auth)
 		if auth is ninjacode
@@ -641,6 +642,7 @@ io.sockets.on 'connection', (sock) ->
 				user._email = protoauth.email
 
 			user._referrers = referrers
+
 			user.agent = agent
 			user.agent_version = agent_version
 			
@@ -661,6 +663,9 @@ io.sockets.on 'connection', (sock) ->
 				user._ua = sock?.handshake?.headers?['user-agent']
 			catch err
 				remote?.notifyBen? 'Internal SocketIO error', "Internal Error: \n#{err}\n#{room_name}/#{publicID}\n#{sock?.handshake?.headers}"
+
+			if !user.agent and typeof user._ua == 'string' and user._ua.indexOf('Dalvik') != -1
+				user.agent = 'Minibit Android'
 
 			sock.join room_name
 			user.add_socket sock

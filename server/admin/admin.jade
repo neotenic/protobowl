@@ -46,7 +46,7 @@ html(lang="en")
 						if user.agent != "M4/Web"
 							span.badge.badge-info= user.agent
 						else
-							span.badge.badge-info 4
+							span.badge.badge-info Web
 					if user.room && user.moderator
 						span.badge MOD
 					if Date.now() < user.banned
