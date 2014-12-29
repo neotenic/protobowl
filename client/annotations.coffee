@@ -557,6 +557,12 @@ notifyMobile = ->
 		addAnnotation $('<p>').append(message)
 	, 1000
 
+notifyEdit = ->
+	message = $("<span>").html('<b>Help improve Protobowl!</b> If you see a question which is miscategorized, please suggest a fix with the "Edit" link in the header of any completed question.')
+	setTimeout ->
+		addAnnotation $('<p>').append(message)
+	, 1000
+
 # Ummmm ahh such as like, like the one where I'm like mmm and it says, 
 # "I saw watchoo did there!" 
 # And like and and then like you peoples were all like, 

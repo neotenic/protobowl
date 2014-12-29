@@ -107,6 +107,11 @@ setTimeout ->
 	notifyMobile() if navigator.onLine
 , 1000 * 60 * 5
 
+setTimeout ->
+	# the probability is 1.0 on christmas eve 2014, and halves every week after
+	notifyEdit() if navigator.onLine and Math.random() < Math.pow(0.5, (Date.now() - 1419481700175) / (1000 * 60 * 60 * 24 * 7))
+, 1000 * 60 * 20
+
 impending_doom = ->
 	line = $('<div>').addClass 'alert alert-info'
 	line.append $('<div>').append("A  ", $('<span class="label label-info">').text("server restart"), " will happen momentarily. This may result in a message indicating that you have been disconnected from the server. However, don't panic as a new connection will automatically be established shortly afterwards. ")

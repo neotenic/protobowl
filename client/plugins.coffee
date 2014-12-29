@@ -251,6 +251,7 @@ check_holiday = ->
 	# lets see what day it is
 	if now.getDate() in [24, 25] and now.getMonth() is 11
 		$('body').addClass 'christmas'
+		$('a.brand .motto').text "doing one thing and doing it during the holidays"
 	
 	# superbowl is first sunday of february
 	else if now.getMonth() is 1 and now.getDay() is 0 and now.getDate() <= 7
@@ -292,7 +293,6 @@ check_holiday = ->
 		tomorrow.setMinutes(0)
 		tomorrow.setSeconds(0)
 		setTimeout check_holiday, Math.max(100, tomorrow - Date.now())
-
 
 
 

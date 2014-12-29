@@ -70,6 +70,8 @@ console.log "remote configuration: ", remote?.config
 
 uptime_begin = +new Date
 message_count = 0
+max_active = 0
+max_online = 0
 
 # simple helper function that hashes things
 sha1 = (text) ->
@@ -176,6 +178,7 @@ class SocketQuizRoom extends QuizRoom
 			@users[user.id] = u
 			u.deserialize(user)
 
+
 class SocketQuizPlayer extends QuizPlayer
 	constructor: (room, id) ->
 		super(room, id)
@@ -229,7 +232,18 @@ class SocketQuizPlayer extends QuizPlayer
 			if !err and doc and doc.fixed isnt 1
 				doc.fixed = -1
 				doc.save()
-		
+	
+	modlog: (event, details) ->
+		console.log 'mod log', event, details
+		entry = new remote.ModLog {
+			event
+			details
+			room: @room.name
+			uid: @id
+			name: @name
+			date: new Date
+		}
+		entry.save()
 
 	check_public: (_, fn) ->
 		output = {}
@@ -416,6 +430,8 @@ status_metrics = ->
 				active_count++ if user.active()
 				muwave_count++ if user.muwave
 				latencies.push(user.__latency[0]) if user.__latency
+	max_online = Math.max(max_online, online_count)
+	max_active = Math.max(max_active, active_count)
 	metrics = { 
 		online: online_count, 
 		active: active_count, 
@@ -494,6 +510,9 @@ load_room = (name, callback) ->
 		else
 			room.realm = remote?.config?.realm
 			callback room, true, Date.now() - t_start
+
+		if room.name in public_room_list
+			room.escalate = room.acl.moderator
 
 	if remote.loadRoom
 		remote.loadRoom name, handle_response
@@ -712,7 +731,7 @@ clearInactive = ->
 	# the maximum size a room can be
 	MAX_SIZE = 20
 
-	rank_user = (u) -> if u.correct > 2 then u.last_action else u.time_spent
+	rank_user = (u) -> if u.score() > 20 then u.last_action else u.time_spent
 
 	find_lowest = (set, mapper) ->
 		lowest_el = set[0]
@@ -723,8 +742,6 @@ clearInactive = ->
 				lowest_rank = rank
 				lowest_el = set[i]
 		return lowest_el
-
-
 
 	reap_room = (name) ->
 		log 'reap_room', name
@@ -738,9 +755,9 @@ clearInactive = ->
 		log 'reap_user', {
 			seen: u.seen, 
 			guesses: u.guesses, 
-			early: u.early, 
-			interrupts: u.interrupts, 
-			correct: u.correct, 
+			early: u.corrects?.interrupt, 
+			interrupts: u.wrongs?.interrupt, 
+			correct: u.corrects?.normal, 
 			time_spent: u.time_spent,
 			last_action: u.last_action,
 			room: u.room.name,
@@ -756,7 +773,7 @@ clearInactive = ->
 		
 		offline_pool = (user for user in user_pool when !user.online())	
 
-		for user in offline_pool when user.correct < 2 and user.last_action < Date.now() - 1000 * 60 * 5
+		for user in offline_pool when user.score() < 20 and user.last_action < Date.now() - 1000 * 60 * 5
 			reap_user user
 			return
 		if offline_pool.length > 0 and user_pool.length > MAX_SIZE
@@ -987,6 +1004,8 @@ app.get '/stalkermode', (req, res) ->
 		freemem: os.freemem()
 	}
 	res.render 'admin.jade', {
+		max_online,
+		max_active,
 		env: app.settings.env,
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,

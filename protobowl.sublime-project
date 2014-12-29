@@ -2,12 +2,33 @@
 	"folders":
 	[
 		{
-			"path": ".",
-			"folder_exclude_patterns": ["build", "node_modules"],
-			"file_exclude_patterns": ["protobowl.css", "protobowl.dev.css", "offline.js", "app.dev.js", "app.js"]
+			"file_exclude_patterns":
+			[
+				"protobowl.css",
+				"protobowl.dev.css",
+				"offline.js",
+				"app.dev.js",
+				"app.js"
+			],
+			"folder_exclude_patterns":
+			[
+				"build",
+				"node_modules"
+			],
+			"follow_symlinks": true,
+			"path": "."
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/kevin/Dropbox (Personal)/Projects/protobowl-helpers/packets"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/kevin/Dropbox (Personal)/Projects/express-persona"
 		}
 	],
-	"settings": {
+	"settings":
+	{
 		"build_on_save": false
 	}
 }

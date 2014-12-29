@@ -71,6 +71,8 @@ class QuizPlayer
 	emit: (name, data) ->
 		@room.log 'QuizPlayer.emit(name, data) not implemented'
 
+	modlog: (event, details) -> null
+
 	# keep track of how long someone's been online
 	# this function is called on user initiated actions
 	touch: (no_add_time) ->
@@ -300,6 +302,7 @@ class QuizPlayer
 	trigger_tribunal: (user) ->
 		@touch()
 		return unless user and @room?.users[user]
+		return unless @authorized('elected')
 
 		if user is @id
 			@notify 'is somewhat of a masochist'
@@ -314,6 +317,7 @@ class QuizPlayer
 			return
 		@verb 'created a ban tribunal for !@' + user
 		
+		# @modlog 'tribunal', "created ban tribunal for @#{user}"
 		@room.users[user]?.create_tribunal @id
 
 	ban_user: (user) ->
@@ -321,6 +325,8 @@ class QuizPlayer
 			if !@room.users[user]?.banned or @room.serverTime() > @room.users[user]?.banned
 				# only wear the badge of accomplishment if you've done something new
 				@verb 'banned !@' + user + ' from /' + @room.name
+
+			@modlog 'ban', "banned @#{user}"
 			@room.users[user]?.ban(1000 * 60 * 5)
 
 	# exercise your right and duty
@@ -439,6 +445,8 @@ class QuizPlayer
 			else
 				@verb 'voted with a hanging chad'
 			if votes.length > (witnesses.length - 1) / 2 + against.length
+				@modlog 'tribunal', "user was banned by vote @#{user}"
+
 				@room.users[user].verb 'got voted off the island', true
 				clearTimeout @room.users[user].__tribunal_timeout
 				@room.users[user].tribunal = null
@@ -451,6 +459,7 @@ class QuizPlayer
 				if @room.users[@room.users[user]?.tribunal?.initiator]
 					@room.users[@room.users[user].tribunal.initiator].tribunal_embargo = @room.serverTime() + 1000 * 60 * 8
 
+				@modlog 'tribunal', "user was freed @#{user}"
 				@room.users[user].verb 'was freed because of a hung jury', true
 				@room.users[user].tribunal = null
 				clearTimeout @room.users[user].__tribunal_timeout
@@ -463,6 +472,8 @@ class QuizPlayer
 		return @notify(action) if @id.toString()[0] is '_'
 
 		@rate_limit() unless no_rate_limit
+
+		@modlog 'verb', action if @room.escalate >= @room.acl.moderator and @authorized()
 		@room.emit 'log', { user: @id, verb: action, time: @room.serverTime() }
 
 	notify: (action) ->
@@ -520,8 +531,7 @@ class QuizPlayer
 				else
 					@_check_moderator (result) =>
 						if @room?.name?.toLowerCase() in (result?.jurisdiction || [])
-							@set_name result.name
-							@_apotheify()
+							@_apotheify(result.name)
 						else
 							@notify "is not authorized for this room"
 			else
@@ -594,6 +604,9 @@ class QuizPlayer
 			# tell errybody!
 			@rate_limit()
 			@room.emit 'chat', packet
+
+			if @authorized('moderator') and text isnt '(typing)'
+				@modlog 'chat', text
 		else
 			# progressive chat updates (i.e. letter by letter)
 			# are saved for websocket based connections
@@ -736,8 +749,10 @@ class QuizPlayer
 	set_skip: (data) ->
 		@touch()
 		return unless @authorized()
+
 		@room.no_skip = !data
 		@room.sync(1)
+		
 		if @room.no_skip
 			@verb 'disabled question skipping'
 		else
@@ -938,10 +953,15 @@ class QuizPlayer
 	check_public: -> @verb "QuizPlayer::check_public() not implemented"
 
 	# underscore means it's not a publically accessibl emethod
-	_apotheify: ->
+	_apotheify: (admin_name) ->
 		unless @moderator
+			@mortal_nomen = @name
+			@set_name admin_name
+			@admin_begin = Date.now()
+
+			@modlog 'mod', "now a moderator (nee #{@mortal_nomen})"
 			@verb 'is now a moderator of this room'
-			@admin_name = @name
+			
 			# @room.admins.push(@id)
 			@moderator = true
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
@@ -949,10 +969,13 @@ class QuizPlayer
 
 	cincinnatus: ->
 		if @moderator
+			@modlog 'mod', "no longer a moderator (served for #{((Date.now() - @admin_begin) / 1000 / 60).toFixed(1)} minutes"
 			@verb 'is no longer a moderator of this room'
 			# @room.admins = (id for id in @room.admins when id isnt @id)
 			@moderator = false
 			@admin_name = ''
+			@admin_begin = 0
+			@set_name @mortal_nomen if @mortal_nomen
 			@room.sync(2) # technically level-1 not necessary, but level-0 doesnt prompt user rerender
 			
 

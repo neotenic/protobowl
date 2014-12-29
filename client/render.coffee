@@ -720,7 +720,7 @@ check_alone = ->
 				links = (
 					for can in suggested_candidates
 						cantext = can.replace(/\/lobby$/g, '')
-						cantext.link("/" + can) + " (#{data[can]}) " 
+						cantext.link("/" + can) + "&nbsp;(#{data[can]}) " 
 				)
 				$('.foreveralone .roomlist').html links.join(' or ')
 				$('.foreveralone').slideDown()

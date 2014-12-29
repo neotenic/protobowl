@@ -165,6 +165,8 @@ html(lang="en")
 				if room_online
 					- online_rooms++
 			p 
+				| Max Online: #{max_online}
+				| Max Active: #{max_active}
 				| Users Online: #{online}, 
 				| Active Users: #{active_users}, 
 				| Total Users: #{total_users}, 
