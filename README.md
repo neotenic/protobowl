@@ -19,6 +19,10 @@ I guess it's a trivia site and I'm never actually going to legitimately finish t
 
 * Protobowl has a built-in chat bot which is the remanant of a chat bot I had built in middle school for Omegle. It can be triggered by going into any empty room and saying (in chat) "I'm lonely". It's mostly reflective of the hornier, angstier and shallower side of online chat rooms, so it's unlikely to pass a turing test (even if it decides to answer "asl" with "18 f uk". 
 
+* Protobowl was made using Twitter Bootstrap, which for quite a while was the blandest theme you could find on the internet because everyone who couldn't design thought it looked beautiful. But now Bootstrap has itself become enamored with flat design, and Protobowl looks clean and original again with its soft gradients and gentle rounded corners. 
+
+* Protobowl stores active rooms in-memory as simple Javascript objects. Inactive rooms are saved in a MongoDB database so that they can be unfrozen when requested. Questions are stored in an entirely separate MongoDB database. 
+
 
 ## Version 3
 
