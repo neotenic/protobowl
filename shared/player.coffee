@@ -324,10 +324,10 @@ class QuizPlayer
 		if @authorized('moderator')
 			if !@room.users[user]?.banned or @room.serverTime() > @room.users[user]?.banned
 				# only wear the badge of accomplishment if you've done something new
-				@verb 'banned !@' + user + ' from /' + @room.name
+				@verb('banned !@' + user + ' from /' + @room.name, true)
 
-			@modlog 'ban', "banned @#{user}"
-			@room.users[user]?.ban(1000 * 60 * 5)
+			@modlog 'ban', "banned @#{user} (#{!room.users[user]?.name}) from /#{room.name}"
+			@room.users[user]?.ban(1000 * 60 * 15)
 
 	# exercise your right and duty
 
@@ -352,23 +352,17 @@ class QuizPlayer
 
 			if votes.length > (witnesses.length) / 2 + against.length
 				# @room.users[user].verb 'gots the blanc haus', true
-				
 				term_length = 1000 * 60
-
 				# there is a new species in new york; it can be aggressive if threatened
 				witnesses = (id for id, u of @room.users when id[0] isnt "_" and u.active())
-
 				@room.users[user].elect = { impeach: [], witnesses, term: @room.serverTime() + term_length }
-
 				# let's go to the mall!
 				@room.users[user].inaugurate()
 
 			undecided = (witnesses.length - against.length - votes.length)
 			if votes.length + undecided <= (witnesses.length) / 2 + against.length
 				@room.users[user].verb 'was not elected', true
-				
-				@room.users[user].elect_embargo = @room.serverTime() + 1000 * 60 * 12
-
+				@room.users[user].elect_embargo = @room.serverTime() + 1000 * 60 * 10
 				@room.users[user].impeach()
 
 			@room.users[user].sync(true)
@@ -473,7 +467,7 @@ class QuizPlayer
 
 		@rate_limit() unless no_rate_limit
 
-		@modlog 'verb', action if @room.escalate >= @room.acl.moderator and @authorized()
+		@modlog 'verb', action if @room.escalate >= @room.acl.moderator and @authorized() and !no_rate_limit
 		@room.emit 'log', { user: @id, verb: action, time: @room.serverTime() }
 
 	notify: (action) ->
@@ -969,7 +963,7 @@ class QuizPlayer
 
 	cincinnatus: ->
 		if @moderator
-			@modlog 'mod', "no longer a moderator (served for #{((Date.now() - @admin_begin) / 1000 / 60).toFixed(1)} minutes"
+			@modlog 'mod', "no longer a moderator (served for #{((Date.now() - @admin_begin) / 1000 / 60).toFixed(1)} minutes)"
 			@verb 'is no longer a moderator of this room'
 			# @room.admins = (id for id in @room.admins when id isnt @id)
 			@moderator = false
