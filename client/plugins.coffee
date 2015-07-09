@@ -262,10 +262,10 @@ check_holiday = ->
 		$('a.brand .motto').text "growing one thing and growing it well"
 
 	else if now.getMonth() is 7 and now.getDate() is 28
-		$('a.brand .motto').text "on August 28, 2012, protobowl was first <a href='http://hsquizbowl.org/forums/viewtopic.php?f=123&t=13478'>announced</a>"
+		$('a.brand .motto').html "on August 28, 2012, protobowl was first <a href='http://hsquizbowl.org/forums/viewtopic.php?f=123&t=13478'>announced</a>"
 	# another arguable protobowl birthday
 	else if now.getMonth() is 5 and now.getDate() is 30
-		$('a.brand .motto').text "protobowl's precursor, <a href='https://github.com/polarcuke/its-ac-attack'>its-ac-attack</a> was started June 30, 2012"
+		$('a.brand .motto').html "protobowl's precursor, <a href='https://github.com/polarcuke/its-ac-attack'>its-ac-attack</a> was started June 30, 2012"
 	# arguable protobowl birthday
 	else if now.getMonth() is 6 and now.getDate() is 20
 		$('a.brand .motto').text "the first line of protobowl code was written July 20, 2012"

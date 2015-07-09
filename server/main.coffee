@@ -99,7 +99,7 @@ log = (action, obj) ->
 	req = http.request log_config, ->
 		# console.log "saved log"
 	req.on 'error', (e) ->
-		console.log "backup log", action, JSON.stringify(obj), JSON.stringify(e)
+		# console.log "backup log", action, JSON.stringify(obj), JSON.stringify(e)
 	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
 	req.end()
 
@@ -131,6 +131,9 @@ class SocketQuizRoom extends QuizRoom
 			category = (if @category is 'custom' then @distribution else @category)
 			remote.get_question @type, @difficulty, category, cb
 
+		try
+			remote?.log_seen this
+
 	get_parameters: (type, difficulty, callback) -> remote.get_parameters(type, difficulty, callback)
 
 	count_questions: (type, difficulty, category, cb) -> remote.count_questions(type, difficulty, category, cb) 
@@ -148,6 +151,10 @@ class SocketQuizRoom extends QuizRoom
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
+			try
+				remote?.log_buzz?(this, ruling)
+			
+
 		super(session)
 
 
@@ -394,6 +401,16 @@ class SocketQuizPlayer extends QuizPlayer
 		@_ips = [] unless @_ips
 		for ip in @ip()
 			@_ips.push ip unless ip in @_ips
+
+			ipcount = 0
+			for name, room of rooms
+				for uid, user of room.users
+					if user.online()
+						ipcount++ if ip in user?._ips
+
+			if ipcount > 3
+				@ban()
+				sock.disconnect()
 
 			if @room._ip_ban and @room._ip_ban[ip]
 				if @room._ip_ban[ip].strikes >= 3
