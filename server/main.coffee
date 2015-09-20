@@ -65,7 +65,7 @@ io.configure 'development', ->
 
 codename = namer.generateName()
 
-console.log "hello from protobowl v5, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
+console.log "hello from protobowl v5.1, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
 console.log "remote configuration: ", remote?.config
 
 uptime_begin = +new Date
@@ -107,7 +107,21 @@ log = (action, obj) ->
 
 log 'server_restart', {}
 
-public_room_list = ['lobby', 'hsquizbowl', 'msquizbowl', 'science', 'literature', 'history', 'trash', 'art', 'philosophy', 'college']
+
+public_room_parameters = {
+	lobby: ['HS', ''],
+	hsquizbowl: ['HS', ''],
+	msquizbowl: ['MS', ''],
+	science: ['HS', 'Science'],
+	literature: ['HS', 'Literature'],
+	history: ['HS', 'History'],
+	trash: ['HS', 'Trash'],
+	art: ['HS', 'Fine Arts'],
+	philosophy: ['HS', 'Philosophy'],
+	college: ['College', '']
+}
+
+public_room_list = Object.keys(public_room_parameters)
 
 
 class SocketQuizRoom extends QuizRoom
@@ -503,9 +517,14 @@ archive_room = (room, callback) ->
 			callback?(name)
 
 load_room = (name, callback) ->
-	if rooms[name] # its really nice and simple if you have it cached
-		return callback rooms[name], false
 	t_start = Date.now()
+
+	postflight = (room, is_new) ->
+		callback room, is_new, Date.now() - t_start 
+
+	if rooms[name] # its really nice and simple if you have it cached
+		return postflight rooms[name], false
+	
 	
 	timeout = setTimeout ->
 		handle_response null
@@ -523,13 +542,10 @@ load_room = (name, callback) ->
 				room.realm = remote?.config?.realm
 				archive_room room
 
-			callback room, false, Date.now() - t_start
+			postflight room, false
 		else
 			room.realm = remote?.config?.realm
-			callback room, true, Date.now() - t_start
-
-		if room.name in public_room_list
-			room.escalate = room.acl.moderator
+			postflight room, true
 
 	if remote.loadRoom
 		remote.loadRoom name, handle_response
@@ -620,6 +636,10 @@ io.sockets.on 'connection', (sock) ->
 				for i in [0..2000] by 100
 					room.scoring[i] = [i, -i]
 				room.semi = true
+
+			if room.name in public_room_list
+				[room.difficulty, room.category] = public_room_parameters[room.name]
+				room.escalate = room.acl.moderator
 
 
 			if is_ninja
