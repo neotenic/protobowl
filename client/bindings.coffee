@@ -661,7 +661,7 @@ $(".leaderboard tbody tr").live 'click', (e) ->
 		$(this).popover {
 			placement: if mobileLayout() then "top" else "left"
 			trigger: "manual",
-			# title: document.createTextNode(user.name),
+			title: $('<div>').text(user.name).html(), # escape to fix xss
 			content: ->
 				createStatSheet(user, true)
 		}
