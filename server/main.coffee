@@ -640,7 +640,9 @@ io.sockets.on 'connection', (sock) ->
 			if room.name in public_room_list
 				[room.difficulty, room.category] = public_room_parameters[room.name]
 				room.escalate = room.acl.moderator
-
+				room.max_buzz = 1
+				room.no_pause = true
+				room.no_skip = true
 
 			if is_ninja
 				publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 

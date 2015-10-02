@@ -409,7 +409,7 @@ $('body').keydown (e) ->
 		$('.bundle:not(.active):first .readout').slideToggle()
 	else if e.keyCode in [80, 82] # P, R
 		$('.pausebtn').click()
-	else if e.keyCode in [47, 111, 191, 67, 65, 13] # / (forward slash), C, A, Enter
+	else if e.keyCode in [47, 111, 191, 13] # / (forward slash), C, A, Enter
 		e.preventDefault()
 		$('.chatbtn').click()
 	else if e.keyCode in [87, 222] # W
