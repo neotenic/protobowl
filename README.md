@@ -1,6 +1,6 @@
 # ProtoBowl
 
-[Try out Protobowl on a public room!](http://protobowl.com/hsquizbowl)
+[Try out Protobowl on a public room!](http://protobowl.com/college)
 
 
 ## Nifty Protobowl Trivia
