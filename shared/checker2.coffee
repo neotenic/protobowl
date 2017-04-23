@@ -234,7 +234,10 @@ check_answer = (tokens, text, question = '', config = {}) ->
 	text = text
 		.replace(/l(ol)+/g, 'lol')
 		.replace(/\s+/g, ' ')
-		.trim()
+		.replace(/'|"/g, '') # the apostrophes and quotes are useless
+		.replace(/\./g, ' ') # remove periods because they're kind of useless
+		.replace(/\ +/g, ' ') # condense multiple spaces
+		.trim() # removing leading and trailing spaces
 
 	stopwords = "a and any as at election battle war by can de do for from have her him his in is it l la le my o of on or she so that the this to was y lol derp merp haha".split(' ')
 
