@@ -256,6 +256,9 @@ check_holiday = ->
 	# superbowl is first sunday of february
 	else if now.getMonth() is 1 and now.getDay() is 0 and now.getDate() <= 7
 		$('a.brand strong').text('Super')
+	# lilly chin: spiciest memeloard
+	else if now.getMonth() is 1 and now.getDate() is 24 and now.getFullYear() == 2017
+		$('a.brand strong').text('Spiciest Meme')
 	# earth day, man
 	else if now.getMonth() is 3 and now.getDate() is 22
 		$('body').addClass('earthday')

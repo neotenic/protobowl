@@ -124,6 +124,13 @@ public_room_parameters = {
 public_room_list = Object.keys(public_room_parameters)
 
 
+qanta_log = (action, obj) ->
+	fs.appendFile('qanta-buzz.log', JSON.stringify({
+		action: action
+		date: (new Date).toString(),
+		object: obj
+	})+'\n', (err, res) -> null)
+
 class SocketQuizRoom extends QuizRoom
 	emit: (name, data) ->
 		io.sockets.in(@name).emit name, data
@@ -165,6 +172,23 @@ class SocketQuizRoom extends QuizRoom
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
 			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
+			qanta_log 'buzz', {
+				room: @name,
+				user: {
+					id: @attempt.user,
+					name: @users[@attempt.user]?.name
+				},
+				playback_rate: @rate,
+				question_info: @info,
+				question_text: @question,
+				guess: @attempt.text,
+				answer: @answer,
+				ruling: ruling,
+				qid: @qid,
+				answer_duration: @answer_duration,
+				time_elapsed: @time() - @begin_time, 
+				time_remaining: @end_time - @begin_time
+			}
 			try
 				remote?.log_buzz?(this, ruling)
 			
@@ -422,12 +446,14 @@ class SocketQuizPlayer extends QuizPlayer
 					if user.online()
 						ipcount++ if ip in user?._ips
 
-			if ipcount > 3
-				@ban()
-				sock.disconnect()
+			# turns out this is a bad idea because certain firewalls and countries only use one ip
+			# i should have definitely considered this
+			# if ipcount > 3
+			# 	@ban()
+			# 	sock.disconnect()
 
 			if @room._ip_ban and @room._ip_ban[ip]
-				if @room._ip_ban[ip].strikes >= 3
+				if @room._ip_ban[ip].strikes >= 5
 					@ip_ban()
 
 				if @room.serverTime() < @room._ip_ban[ip].banished
@@ -586,6 +612,10 @@ io.sockets.on 'connection', (sock) ->
 			return
 		# io.sockets.socket(old_socket)?.disconnect() if old_socket
 		room_name = unescape(room_name).replace(/^Room \-/i,"").trim().replace(/\s+/g, '-').replace(/\-+/g, '-').trim()
+
+		if room_name == ''
+			sock.disconnect()
+			return
 
 		protoauth = remote.parse_cookie(auth)
 		if auth is ninjacode

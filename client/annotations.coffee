@@ -1,3 +1,5 @@
+PUBLIC_ROOMS = ['lobby', 'msquizbowl', 'hsquizbowl', 'college', 'science', 'literature', 'history', 'art', 'philosophy', 'trash', 'jeopardy/lobby', 'scibowl/lobby']
+
 createAlert = (title, message, delay = 5000) ->
 	div = $("<div>").addClass("alert").hide()
 	div.append $("<button>", {
@@ -54,7 +56,10 @@ userSpan = (id, global) ->
 	if id.slice(0, 2) == "__"
 		span.text(id.slice(2).replace(/_/g, ' '))
 	else
-		span.text(user?.name || "[name missing]")
+		name = user?.name || "[name missing]"
+		if room.name in PUBLIC_ROOMS and filter_profanity?
+			name = filter_profanity(name)
+		span.text(name)
 	
 	icon = (name) -> span.prepend "<i class='icon-#{name} user-prefix'></i>"
 
@@ -405,8 +410,9 @@ chatAnnotation = ({session, text, user, done, time}) ->
 			
 			dirty = check_profanity? text
 			
-			if dirty and room.name is 'lobby'
-				html = html.replace(/nigger/gi, '******')
+
+			if room.name in PUBLIC_ROOMS and filter_profanity?
+				html = filter_profanity(html)
 
 			line.find('.comment').html html
 			
