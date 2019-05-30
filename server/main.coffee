@@ -176,7 +176,8 @@ class SocketQuizRoom extends QuizRoom
 				room: @name,
 				user: {
 					id: @attempt.user,
-					name: @users[@attempt.user]?.name
+					name: @users[@attempt.user]?.name,
+					# ip: @users[@attempt.user]?.ip()
 				},
 				playback_rate: @rate,
 				question_info: @info,
@@ -1111,12 +1112,17 @@ app.post '/stalkermode/reports/change_question/:id', (req, res) ->
 	mongoose = require 'mongoose'
 	blacklist = ['inc_random', 'seen']
 	remote.Question.findById mongoose.Types.ObjectId(req.params.id), (err, doc) ->
+		if !doc
+			return res.end('done with stuff')
+
 		criterion = {
 			difficulty: req.body.difficulty || doc.difficulty, 
 			category: req.body.category || doc.category, 
 			type: req.body.type || doc.type
 		}
 		remote.Question.collection.findOne criterion, null, { sort: { inc_random: 1 } }, (err, existing) ->
+			if !existing
+				return res.end('cant find existing')
 			for key, val of req.body when key not in blacklist
 				doc[key] = val
 			doc.inc_random = existing.inc_random - 0.1 # show it now

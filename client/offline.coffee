@@ -40,7 +40,7 @@ Questions = new IDBStore {
 	],
 	onStoreReady: ->
 		Questions.ready = true
-		# console.log 'store is ready for bidnezz'
+		console.log 'store is ready for bidnezz'
 		dispose_retrieval_queue()
 		
 		import_legacy_bookmarks()
@@ -77,7 +77,7 @@ check_import_external = ->
 	, { keyRange: Questions.makeKeyRange({upper: 0}), index: 'seen' }
 
 import_external = ->
-	unless localStorage.sample_urls
+	unless localStorage.sample_urls2
 		expanded = []
 		for sample in protobowl_config.samples
 			shorthand_regex = /\{(\d+)\-(\d+)\}/
@@ -88,12 +88,12 @@ import_external = ->
 			else
 				expanded.push sample
 
-		localStorage.sample_urls = JSON.stringify(expanded[i] for i in fisher_yates(expanded.length))
+		localStorage.sample_urls2 = JSON.stringify(expanded[i] for i in fisher_yates(expanded.length))
 	
 	# each question packet has 1000
-	samples = JSON.parse(localStorage.sample_urls)
+	samples = JSON.parse(localStorage.sample_urls2)
 	url = samples.shift()
-	localStorage.sample_urls = JSON.stringify(samples)
+	localStorage.sample_urls2 = JSON.stringify(samples)
 	if url
 		load_sample url
 

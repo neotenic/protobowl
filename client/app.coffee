@@ -94,10 +94,10 @@ offline_startup = ->
 
 		initialize_fallback() if initialize_fallback?
 
-setTimeout ->
-	if room.active_count() <= 1 and Math.random() < 0.001
-		chatAnnotation({text: 'Feeling lonely? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
-, 30 * 1000
+# setTimeout ->
+# 	if room.active_count() <= 1 and Math.random() < 0.001
+# 		chatAnnotation({text: 'Feeling lonely? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
+# , 30 * 1000
 
 setTimeout ->
 	notifyLike() if navigator.onLine

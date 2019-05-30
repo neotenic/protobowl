@@ -48,7 +48,7 @@ leet_decode.db = {
 
 
 filter_profanity = (text) ->
-	profane_re =  new RegExp('\b(' + dirty_regex + ')\b', 'ig')
+	profane_re =  new RegExp('\\b(' + dirty_regex + ')\\b', 'ig')
 	return text.replace(profane_re, (all) -> all.split('').map((e) -> '*').join(''))
 
 # here's the magic function

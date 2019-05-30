@@ -249,7 +249,7 @@ chat = (text, done) ->
 	if room.name in ['lobby', 'b']
 		text = text.slice(0, 140)
 		
-	if text.length < 15 and /lonely/i.test(text) and /re |m /i.test(text) and !/you/i.test(text) and !protobot_engaged
+	if text.length < 15 and /protobot/i.test(text) and !/you/i.test(text) and !protobot_engaged
 		protobot_engaged = true
 		protobot_last = $('.chat_input').data('input_session')
 		protobot_write "I'm lonely too. Plz talk to meeeee"

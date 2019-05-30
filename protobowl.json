@@ -9,13 +9,19 @@
 		"js_minify": true,
 
 		"development": false,
-		"auth": true, 
+		"auth": false, 
 		"cache_breaker": true,
 		"webrtc": true,
 
 		"static": "//neotenic.github.io/",
-		"sockets": [["http://ocean.protobowl.com:443/"], ["http://protobowl.nodejitsu.com:80/", "https://protobowl.nodejitsu.com:443/"], ["http://cab.antimatter15.com:443/"], ["http://dino.xvm.mit.edu:5566/"]],
-		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
+		"sockets": [
+			["http://ocean.protobowl.com:443/"], 
+			["http://ocean.protobowl.com:5566/"], 
+			["http://protobowl.nodejitsu.com:80/", "https://protobowl.nodejitsu.com:443/"], 
+			["http://cab.antimatter15.com:443/"], 
+			["http://dino.xvm.mit.edu:5566/"]
+		],
+		"samples": ["https://neotenic.github.io/protobowl-offline/qb-{0-30}.js"]
 	},
 	"debug2": {
 		"less_compress": true,
@@ -27,13 +33,13 @@
 		"js_minify": true,
 
 		"development": false,
-		"auth": true, 
+		"auth": false, 
 		"cache_breaker": true,
 		"webrtc": true,
 
 		"static": "/",
 		"sockets": [["http://ocean.protobowl.com:443/"], ["http://protobowl.nodejitsu.com:80/", "https://protobowl.nodejitsu.com:443/"], ["http://cab.antimatter15.com:443/"], ["http://dino.xvm.mit.edu:5566/"]],
-		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
+		"samples": ["https://neotenic.github.io/protobowl-offline/qb-{0-30}.js"]
 	},
 	"debug": {
 		"less_compress": false,
@@ -45,13 +51,13 @@
 		"js_minify": false,
 
 		"development": true,
-		"auth": true, 
+		"auth": false, 
 		"cache_breaker": false,
 		"webrtc": true,
 		
 		"static": "/",
 		"sockets": [["http://localhost:5566/"], ["http://192.168.1.100:5566/"]],
-		"samples": ["//protobowl.googlecode.com/git/qb-{0-30}.js"]
+		"samples": ["https://neotenic.github.io/protobowl-offline/qb-{0-30}.js"]
 	},
 	"target": "debug"
 }
