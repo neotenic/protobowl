@@ -13,9 +13,9 @@
 		"cache_breaker": true,
 		"webrtc": true,
 
-		"static": "//neotenic.github.io/",
+		"static": "/",
 		"sockets": [
-			["http://ocean.protobowl.com:443/"], 
+			["http://ocean.protobowl.com:80/", "https://ocean.protobowl.com:443/"], 
 			["http://ocean.protobowl.com:5566/"], 
 			["http://protobowl.nodejitsu.com:80/", "https://protobowl.nodejitsu.com:443/"], 
 			["http://cab.antimatter15.com:443/"], 

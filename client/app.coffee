@@ -304,22 +304,7 @@ online_startup = ->
 				
 			# console.log 'connection error', num_failures, valid_attempts, e
 
-
-	try
-		valid_attempts++
-
-		insecure_socket = io.connect insecure_url || location.hostname, {
-			"connect timeout": connection_timeout,
-			"force new connection": true
-		}
-		insecure_socket.on 'connect', -> check_connection(insecure_socket)
-		insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
-		insecure_socket.on 'error', connection_error
-		
-	catch err
-		connection_error()
-
-	if location.protocol is 'http:' and secure_url
+	if secure_url
 		try
 			valid_attempts++
 			secure_socket = io.connect secure_url, {
@@ -334,7 +319,20 @@ online_startup = ->
 		catch err
 			connection_error()
 
+	else
+		try
+			valid_attempts++
 
+			insecure_socket = io.connect insecure_url || location.hostname, {
+				"connect timeout": connection_timeout,
+				"force new connection": true
+			}
+			insecure_socket.on 'connect', -> check_connection(insecure_socket)
+			insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
+			insecure_socket.on 'error', connection_error
+			
+		catch err
+			connection_error()
 
 
 connected = -> sock? and sock.socket.connected

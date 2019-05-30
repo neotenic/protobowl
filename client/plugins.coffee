@@ -196,6 +196,21 @@ do ->
 			$('body').fireworks(25)
 		, time_delta
 
+	# independence day
+	new_year = new Date()
+	new_year.setHours(0)
+	new_year.setMonth(6)
+	new_year.setDate(4)
+	new_year.setMinutes(0)
+	new_year.setSeconds(0)
+	time_delta = new_year - Date.now()
+	
+	if time_delta < 2147483647
+		setTimeout ->
+			$('body').fireworks(25)
+		, time_delta
+
+
 	# 4:20pm 4/20
 	dt = new Date()
 	dt.setHours(12 + 4)
@@ -256,6 +271,7 @@ check_holiday = ->
 	# superbowl is first sunday of february
 	else if now.getMonth() is 1 and now.getDay() is 0 and now.getDate() <= 7
 		$('a.brand strong').text('Super')
+
 	# lilly chin: spiciest memeloard
 	else if now.getMonth() is 1 and now.getDate() is 24 and now.getFullYear() == 2017
 		$('a.brand strong').text('Spiciest Meme')
@@ -264,11 +280,27 @@ check_holiday = ->
 		$('body').addClass('earthday')
 		$('a.brand .motto').text "growing one thing and growing it well"
 
+	# mean girls
+	else if now.getMonth() is 9 and now.getDate() is 3
+		$('a.brand .motto').text "“On October 3rd, he asked me what day it was. It's October 3rd.”"
+
+	# national bowling day
+	# else if now.getMonth() is 9 and now.getDate() is 3
+	# 	$('a.brand .logo').html('<b>National Proto</b>bowling Day ')
+	# 	$('a.brand .motto').text "National Bowling Day is observed annually on the second Saturday in August."
+
+	# towel day
+	else if now.getMonth() is 4 and now.getDate() is 25
+		$('a.brand strong').text('Towel')
+		$('a.brand .motto').text "A towel is about the most massively useful thing an interstellar hitchhiker can have."
+
 	else if now.getMonth() is 7 and now.getDate() is 28
 		$('a.brand .motto').html "on August 28, 2012, protobowl was first <a href='http://hsquizbowl.org/forums/viewtopic.php?f=123&t=13478'>announced</a>"
+
 	# another arguable protobowl birthday
 	else if now.getMonth() is 5 and now.getDate() is 30
 		$('a.brand .motto').html "protobowl's precursor, <a href='https://github.com/polarcuke/its-ac-attack'>its-ac-attack</a> was started June 30, 2012"
+
 	# arguable protobowl birthday
 	else if now.getMonth() is 6 and now.getDate() is 20
 		$('a.brand .motto').text "the first line of protobowl code was written July 20, 2012"
@@ -278,6 +310,10 @@ check_holiday = ->
 		$('a.brand .motto').text("Happy #{now.getFullYear() - 1776}th Birthday, America!").click (e) ->
 			$('body').fireworks 3, (i) -> ['#9d0101', '#fff', '#447ba9'][i]
 			e.preventDefault()
+	#international talk like a pirate day
+	else if now.getMonth() is 8 and now.getDate() is 19
+		$('a.brand strong').text('Protaaarrr')
+		$('a.brand .motto').text "Ahoy, me hearties!"
 	# thanksgiving is fourth thursday of november
 	else if now.getMonth() is 10 and now.getDay() is 4 and now.getDate() > 7 * 3
 		$('a.brand strong').text('Turkey')
