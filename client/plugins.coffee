@@ -205,7 +205,7 @@ do ->
 	new_year.setSeconds(0)
 	time_delta = new_year - Date.now()
 	
-	if time_delta < 2147483647
+	if time_delta < 2147483647 and time_delta > 0
 		setTimeout ->
 			$('body').fireworks(25)
 		, time_delta
