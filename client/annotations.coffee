@@ -87,7 +87,7 @@ userSpan = (id, global) ->
 		span.append $('<span style="color: rgb(150, 150, 150)">').text(user._suffix)
 		
 
-	hash = 'userhash-'+encodeURIComponent(span.attr('class') + span.html()).replace(/[^a-z0-9]/g, '')
+	hash = 'userhash-'+stripInvalidUnicode(span.attr('class') + span.html()).replace(/[^a-z0-9]/g, '')
 	
 	span.addClass("username user-#{id}")
 
@@ -98,6 +98,13 @@ userSpan = (id, global) ->
 	return span
 
 
+stripInvalidUnicode = (str) ->
+	return str.split('').map((char) -> 
+		try
+			encodeURIComponent(char)
+		catch e
+			''
+		).join('')
 
 render_admin_panel = (el) ->
 	if !el

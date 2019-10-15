@@ -246,7 +246,7 @@ online_startup = ->
 			connected_url = secure_url
 		else
 			connected_url = insecure_url
-			if sock.socket.options.secure
+			if sock.io.opts.secure
 				verbAnnotation {verb: "established a connection to the server (secure)"}
 			else
 				verbAnnotation {verb: "established a connection to the server"}
@@ -270,7 +270,7 @@ online_startup = ->
 				reconnect()
 			else
 				setTimeout ->
-					if sock.socket.connected is true
+					if sock.connected is true
 						# console.log 'disconnecting'
 						socket.disconnect()
 						socket.removeAllListeners()
@@ -330,12 +330,13 @@ online_startup = ->
 			insecure_socket.on 'connect', -> check_connection(insecure_socket)
 			insecure_socket.on 'connect_failed', -> check_exhaust(insecure_socket)
 			insecure_socket.on 'error', connection_error
+			console.log(insecure_socket)
 			
 		catch err
 			connection_error()
 
 
-connected = -> sock? and sock.socket.connected
+connected = -> sock? and sock.connected
 
 class QuizPlayerClient extends QuizPlayer
 	online: -> @online_state

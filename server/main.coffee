@@ -32,7 +32,12 @@ app.set 'trust proxy', true
 app.use '/stalkermode', express.static('admin')
 
 # server = http.Server()
-io = require('socket.io').listen(server)
+io = require('socket.io')(server, {
+	'log level': 0,
+	"browser client minification": true,	
+	# 'transports': ['websocket', 'htmlfile', 'xhr-polling']
+})
+
 ninjacode = Math.random().toString(36).slice(3)
 
 log_config = { host: 'localhost', port: 18228 }
@@ -47,19 +52,19 @@ log_config = { host: 'localhost', port: 18228 }
 if app.settings.env is 'production' and remote.deploy
 	log_config = remote.deploy.log
 
-io.configure 'production', ->
-	io.set "log level", 0
-	io.set "browser client minification", true
-	io.set "browser client gzip", false
-	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
+# io.configure 'production', ->
+# 	io.set "log level", 0
+# 	io.set "browser client minification", true
+# 	io.set "browser client gzip", false
+# 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
-io.configure 'development', ->
-	io.set "log level", 2
-	io.set "browser client minification", false
-	io.set "browser client gzip", false
-	io.set 'flash policy port', 0
-	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
+# io.configure 'development', ->
+# 	io.set "log level", 2
+# 	io.set "browser client minification", false
+# 	io.set "browser client gzip", false
+# 	io.set 'flash policy port', 0
+# 	io.set 'transports', ['websocket', 'htmlfile', 'xhr-polling']
 	
 
 
@@ -326,7 +331,7 @@ class SocketQuizPlayer extends QuizPlayer
 		@emit 'redirect', '/' + destination
 		
 		for sock in @sockets
-			io.sockets.socket(sock)?.disconnect()
+			io.sockets.to(sock)?.disconnect()
 
 	ip_ban: (duration = 1000 * 60 * 25) ->
 		@room._ip_ban = {} if !@room._ip_ban
@@ -339,7 +344,7 @@ class SocketQuizPlayer extends QuizPlayer
 	ip: ->
 		ips = []
 		for sock_id in @sockets
-			sock = io.sockets.socket(sock_id)
+			sock = io.to(sock_id)
 			real_ip = sock.handshake?.address?.address
 			forward_ip = sock.handshake?.headers?["x-forwarded-for"]
 			addr = (forward_ip || real_ip)
@@ -403,7 +408,7 @@ class SocketQuizPlayer extends QuizPlayer
 		blacklist = ['add_socket', 'emit', 'disconnect']
 		
 		sock.on 'disconnect', =>
-			@sockets = (s for s in @sockets when (s isnt sock.id and io.sockets.socket(s)))
+			@sockets = (s for s in @sockets when (s isnt sock.id and io.to(s)))
 			if @sockets.length is 0
 				# @pref 'webrtc', false
 				@prefs.webrtc = false
@@ -470,11 +475,11 @@ class SocketQuizPlayer extends QuizPlayer
 
 	disconnect_all: ->
 		for sock in @sockets
-			io.sockets.socket(sock).disconnect()
+			io.sockets.connected?[sock].disconnect(true)
 
 	emit: (name, data) ->
 		for sock in @sockets
-			io.sockets.socket(sock).emit(name, data)
+			io.sockets.to(sock).emit(name, data)
 
 status_metrics = ->
 	active_count = 0
@@ -611,7 +616,7 @@ io.sockets.on 'connection', (sock) ->
 			sock.emit 'application_update', Date.now()
 			sock.disconnect()
 			return
-		# io.sockets.socket(old_socket)?.disconnect() if old_socket
+		# io.to(old_socket)?.disconnect() if old_socket
 		room_name = unescape(room_name).replace(/^Room \-/i,"").trim().replace(/\s+/g, '-').replace(/\-+/g, '-').trim()
 
 		if room_name == ''
@@ -1003,7 +1008,7 @@ app.post '/stalkermode/delete_room/:room', (req, res) ->
 	if rooms?[req.params.room.replace(/~/g, '/')]?.users
 		for id, u of rooms[req.params.room.replace(/~/g, '/')].users
 			for sock in u.sockets
-				io.sockets.socket(sock).disconnect()
+				io.sockets.connected?[sock].disconnect(true)
 	rooms[req.params.room.replace(/~/g, '/')] = new SocketQuizRoom(req.params.room.replace(/~/g, '/'))
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
@@ -1012,7 +1017,7 @@ app.post '/stalkermode/disco_room/:room', (req, res) ->
 	if rooms?[req.params.room.replace(/~/g, '/')]?.users
 		for id, u of rooms[req.params.room.replace(/~/g, '/')].users
 			for sock in u.sockets
-				io.sockets.socket(sock).disconnect()
+				io.sockets.connected?[sock].disconnect(true)
 	res.redirect "/stalkermode/room/#{req.params.room}"
 
 app.post '/stalkermode/chlvl/:room/:level', (req, res) ->
@@ -1060,7 +1065,11 @@ app.post '/stalkermode/cheatify/:room/:user/:num', (req, res) ->
 
 app.post '/stalkermode/disco/:room/:user', (req, res) ->
 	u = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
-	io.sockets.socket(sock).disconnect() for sock in u.sockets
+	# console.log(io.sockets)
+	# for sock in u.sockets:
+	# 	console.log(io.sockets.to(sock))
+
+	io.sockets.connected?[sock].disconnect(true) for sock in u.sockets
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
 app.get '/stalkermode', (req, res) ->

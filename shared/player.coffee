@@ -922,9 +922,10 @@ class QuizPlayer
 	set_name: (name) ->
 		@touch()
 		return if @moderator
+		name = name + ''
 		@gestapo(name)
 
-		if (name + '').trim().length > 0
+		if name.trim().length > 0
 			name_limit = 140
 			
 			if @room.dystopia
