@@ -1267,5 +1267,6 @@ app.post '/401', (req, res) -> remote.authenticate(req, res)
 app.get '*', (req, res) ->
 	options = url.parse(req.url)
 	options.host = 'protobowl.com'
+	options.protocol = 'http'
 	res.writeHead 301, {Location: url.format(options)}
 	res.end()
