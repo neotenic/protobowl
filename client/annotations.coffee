@@ -68,7 +68,7 @@ userSpan = (id, global) ->
 			icon 'magic'
 		else
 			icon 'bullhorn'
-	if user?.banned and user.banned > room.serverTime()
+	if user?.banned and user.banned > room.serverTime() and user.id != me.id
 		icon 'ban-circle'
 	if user?.authorized('moderator')
 		icon 'star-empty'

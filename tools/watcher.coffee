@@ -454,10 +454,15 @@ buildApplication = (force_update = false, target_override = false) ->
 			# console.time('concat')
 			combined = new SourceMap.SourceNode(null, null, null, nodes)
 			
+			# combined.prepend ";(function(){"
+			# combined.add "})();"
+			
 			combined.prepend "protobowl_#{file}_build = '#{compile_date}';\n\n"
 
 			combined.prepend "//@ sourceMappingURL=#{file}.map\n\n"
 
+
+			
 
 			outname = "#{file}.js"
 			out = combined.toStringWithSourceMap { 

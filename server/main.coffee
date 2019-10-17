@@ -320,18 +320,20 @@ class SocketQuizPlayer extends QuizPlayer
 				@room._ip_ban[ip] = { strikes: 0, banished: 0 } if !@room._ip_ban[ip]
 				@room._ip_ban[ip].strikes++
 
-		order = ['b', 'mlp']
+		# order = ['b', 'mlp']
 
-		destination = order[(order.indexOf(@room.name) + 1)]
+		# destination = order[(order.indexOf(@room.name) + 1)]
 
-		if !destination # nothing, there is nothing
-			@banned = 0
-			return  false
+		# if !destination # nothing, there is nothing
+		# 	@banned = 0
+		# 	return  false
 
-		@emit 'redirect', '/' + destination
+		# @emit 'redirect', '/' + destination
+		@emit 'shadowban', '/'
+		@room.sync(4)
 		
-		for sock in @sockets
-			io.sockets.to(sock)?.disconnect()
+		# for sock in @sockets
+		# 	io.sockets.connected[sock]?.disconnect(true)
 
 	ip_ban: (duration = 1000 * 60 * 25) ->
 		@room._ip_ban = {} if !@room._ip_ban
@@ -344,8 +346,8 @@ class SocketQuizPlayer extends QuizPlayer
 	ip: ->
 		ips = []
 		for sock_id in @sockets
-			sock = io.to(sock_id)
-			real_ip = sock.handshake?.address?.address
+			sock = io.sockets.connected[sock_id]
+			real_ip = sock.handshake?.address
 			forward_ip = sock.handshake?.headers?["x-forwarded-for"]
 			addr = (forward_ip || real_ip)
 			ips.push addr if sock and addr
@@ -408,7 +410,7 @@ class SocketQuizPlayer extends QuizPlayer
 		blacklist = ['add_socket', 'emit', 'disconnect']
 		
 		sock.on 'disconnect', =>
-			@sockets = (s for s in @sockets when (s isnt sock.id and io.to(s)))
+			@sockets = (s for s in @sockets when (s isnt sock.id and io.sockets.connected[s]))
 			if @sockets.length is 0
 				# @pref 'webrtc', false
 				@prefs.webrtc = false
@@ -438,8 +440,10 @@ class SocketQuizPlayer extends QuizPlayer
 					track_time t_start, "QuizPlayer::#{attr} for #{@room.name}/#{@id}"
 
 		if @banned and @room.serverTime() < @banned
+			# console.log('i am ashadsf')
+			# @emit 'shadowban', '/'
 			@ban()
-			sock.disconnect()
+			# sock.disconnect()
 
 		@room.journal()
 		@_ips = [] unless @_ips
@@ -614,13 +618,13 @@ io.sockets.on 'connection', (sock) ->
 			sock.emit 'log', verb: 'YOU ARE RUNNING AN OUTDATED AND INCOMPATIBLE VERSION OF PROTOBOWL.'
 			sock.emit 'force_application_update', Date.now()
 			sock.emit 'application_update', Date.now()
-			sock.disconnect()
+			sock.disconnect(true)
 			return
 		# io.to(old_socket)?.disconnect() if old_socket
 		room_name = unescape(room_name).replace(/^Room \-/i,"").trim().replace(/\s+/g, '-').replace(/\-+/g, '-').trim()
 
 		if room_name == ''
-			sock.disconnect()
+			sock.disconnect(true)
 			return
 
 		protoauth = remote.parse_cookie(auth)
@@ -643,13 +647,13 @@ io.sockets.on 'connection', (sock) ->
 		if room_name is "private"
 			unless protoauth
 				sock.emit 'log', verb: 'You may not access this private room without first logging in.'
-				sock.disconnect()
+				sock.disconnect(true)
 				return
 			room_name = "private/"+publicID
 
 		if room_name in remote.get_types()
 			sock.emit 'redirect', "/#{room_name}/lobby"
-			sock.disconnect()
+			sock.disconnect(true)
 			return
 
 		# get the room
@@ -745,8 +749,10 @@ io.sockets.on 'connection', (sock) ->
 			sock.join room_name
 			user.add_socket sock
 
-			real_ip = sock.handshake?.address?.address
+
+			real_ip = sock.handshake?.address
 			forward_ip = sock.handshake?.headers?["x-forwarded-for"]
+
 
 			sock.emit 'joined', { auth: protoauth, id: user.id, name: user.name, existing: existing_user, muwave: user.muwave, ip: (forward_ip || real_ip) }
 			room.sync(4) # tell errybody that there's a new person at the partaay

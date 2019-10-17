@@ -233,6 +233,15 @@ html(lang="en")
 
 				hr
 
+				form(action="/stalkermode/emit/#{room.replace(/\//g, '~')}/#{id}", method="post")
+					input(name="action", type="hidden", value="shadowban")
+					button.btn(type="submit") Shadowban
+					| 
+					| I WALK THIS LONELY ROAD ON THE BOULEVARD OF BROKEN DREAMS
+
+
+				hr
+
 				form.well(action="/stalkermode/emit/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					label(for="action") Event Name
 					input#action(name="action", type="text", value="redirect", style="width: 100px")

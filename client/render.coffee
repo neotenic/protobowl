@@ -697,6 +697,7 @@ last_solitude_check = 0
 
 check_alone = ->
 	return unless connected()
+	return if shadowbanned
 	return if me.muwave
 	
 	active_count = 0

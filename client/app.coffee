@@ -120,6 +120,9 @@ impending_doom = ->
 disconnect_notice = ->
 	initialize_fallback() if initialize_fallback?
 
+	if shadowbanned
+		return
+
 	$('#reload, #disconnect, #reconnect').hide()
 	$('#reconnect').show()
 	room.attempt = null if room.attempt?.user isnt me.id # get rid of any buzzes
@@ -336,7 +339,9 @@ online_startup = ->
 			connection_error()
 
 
-connected = -> sock? and sock.connected
+shadowbanned = false
+
+connected = -> shadowbanned or sock? and sock.connected
 
 class QuizPlayerClient extends QuizPlayer
 	online: -> @online_state
@@ -362,7 +367,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 	envelop_action: (name) ->
 		# master_action = this[name]
 		return (data, callback) ->
-			if connected()
+			if connected() and not shadowbanned
 				sock.emit(name, data, callback)
 			else if fallback_connection? and fallback_connection()
 				fallback_emit name, data, callback
@@ -471,6 +476,9 @@ listen 'echo', (data, fn) -> fn 'alive'
 listen 'application_update', -> cache_update?()
 listen 'force_application_update', -> cache_update?() # there is no longer a functional difference between force and non force
 listen 'impending_doom', -> impending_doom()
+listen 'shadowban', (url) -> 
+	shadowbanned = true
+	
 listen 'redirect', (url) -> 
 	room._redirected = true
 	window.location = url
