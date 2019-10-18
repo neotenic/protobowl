@@ -316,7 +316,7 @@ class QuizPlayer
 		# 	return 'can not reprimand for another few minutes'
 
 		seconds = (@room.serverTime() - @last_session) / 1000
-		if seconds < 6 #60 * 10
+		if seconds < 60 * 10
 			return 'has not been online for long enough to reprimand users'
 
 		if @score() <= 20
@@ -344,7 +344,7 @@ class QuizPlayer
 
 		seconds = (@room.serverTime() - @last_session) / 1000
 
-		if seconds < 6#0 * 10
+		if seconds < 60 * 10
 			return 'has not been online for long enough to start a tribunal'
 
 		unless 1000 * 60 * 5 > Date.now() - (@room.users[user]?.__reprimanded || 0) > 1000 * 10
@@ -572,16 +572,25 @@ class QuizPlayer
 
 	command: (name, args) ->
 		if name is 'auth'
-			if args[0]?.trim()
-				@notify "
-					Protobowl no longer uses escalation codes to authenticate
-					moderators. The authentication system has been folded
-					into the main system for logging into protobowl. Email
-					info@protobowl.com with your old auth codes, rooms that 
-					you can moderate, username and state the email address
-					you use to login to protobowl. After that has been set up,
-					you only need to type @$> auth without a password to escalate.
-				"
+			if !@_check_moderator_pw
+				@notify "privilege escalation not implemented"
+			else
+				@_check_moderator_pw args[0]?.trim(), (result) =>
+					if @room?.name?.toLowerCase() in (result?.jurisdiction || [])
+						@_apotheify(result.name)
+					else
+						@notify "is not authorized for this room"
+
+			# if args[0]?.trim()
+			# 	@notify "
+			# 		Protobowl no longer uses escalation codes to authenticate
+			# 		moderators. The authentication system has been folded
+			# 		into the main system for logging into protobowl. Email
+			# 		info@protobowl.com with your old auth codes, rooms that 
+			# 		you can moderate, username and state the email address
+			# 		you use to login to protobowl. After that has been set up,
+			# 		you only need to type @$> auth without a password to escalate.
+			# 	"
 			# else if @auth
 			# 	if !@_check_moderator
 			# 		@notify "privilege escalation not implemented"
@@ -591,16 +600,16 @@ class QuizPlayer
 			# 				@_apotheify(result.name)
 			# 			else
 			# 				@notify "is not authorized for this room"
-			else
-				if !@_check_moderator
-					@notify "privilege escalation not implemented"
-				else
-					@_check_moderator (result) =>
-						if @room?.name?.toLowerCase() in (result?.jurisdiction || [])
-							@_apotheify(result.name)
-						else
-							@notify "is not authorized for this room"
-				# @notify "You must be logged in to attempt moderator login."
+			# else
+			# 	if !@_check_moderator
+			# 		@notify "privilege escalation not implemented"
+			# 	else
+			# 		@_check_moderator (result) =>
+			# 			if @room?.name?.toLowerCase() in (result?.jurisdiction || [])
+			# 				@_apotheify(result.name)
+			# 			else
+			# 				@notify "is not authorized for this room"
+			# @notify "You must be logged in to attempt moderator login."
 		else if name in ['ragequit', 'qq', 'corgi', 'super', 'quit', 'dog', 'cute']
 			@emit 'redirect', 'http://i.imgur.com/4Dx75Bq.jpg'
 		else if name in ['deauth', 'unauth', 'resign', 'leave', 'quit', 'nixon']

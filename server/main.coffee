@@ -353,7 +353,7 @@ class SocketQuizPlayer extends QuizPlayer
 			ips.push addr if sock and addr
 		return ips
 
-	_check_moderator: (cb) -> remote?.check_moderator(this, cb)
+	_check_moderator_pw: (pw, cb) -> remote?.check_moderator_pw(this, pw, cb)
 
 	transfer_account: (cookie) ->
 		email = remote.parse_cookie(cookie)?.email
