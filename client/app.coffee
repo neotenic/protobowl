@@ -398,7 +398,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 		# functions starting with get_ are treated as local-exec, but I dont feel like
 		# propagating a breaking change 
 
-		blacklist = ['envelop_action', 'level', 'score', 'metrics', 'online', 'active', 'authorized', 'emit', 'pref']
+		blacklist = ['envelop_action', 'level', 'score', 'metrics', 'online', 'active', 'authorized', 'emit', 'pref', 'check_tribunal', 'check_reprimand']
 		
 		for name, method of this when typeof method is 'function'
 			if name not in blacklist

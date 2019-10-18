@@ -683,6 +683,7 @@ io.sockets.on 'connection', (sock) ->
 				room.max_buzz = 1
 				room.no_pause = true
 				room.no_skip = true
+				room.is_public = true
 
 			if is_ninja
 				publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 

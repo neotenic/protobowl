@@ -142,21 +142,23 @@ render_admin_panel = (el) ->
 		.addClass('pull-right banhammer')
 		.append($('<i>').addClass('icon-legal'))
 
-	else if me.reprimand_embargo < room.serverTime() or me.authorized('elected')
+	else if me.check_reprimand(id) is null
 		button_type = "reprimand"
 		
-	if 1000 * 60 * 10 > Date.now() - room.users[id].__reprimanded > 1000 * 10 and me.tribunal_embargo < room.serverTime() and !room.admin_online()
+	if me.check_tribunal(id) is null
 		button_type = "tribunal"
 
-	unless full or me.authorized('moderator')
-		if room.users[id].banned > room.serverTime()
-			el.append $('<span>')
-			.addClass('pull-right banhammer')
-			.css('color', '#c83025')
-			.append($('<i>').addClass('icon-ban-circle'))
-			button_type = ''
 
-		else if button_type is ''
+	unless full or me.authorized('moderator')
+		# if room.users[id].banned > room.serverTime()
+		# 	el.append $('<span>')
+		# 	.addClass('pull-right banhammer')
+		# 	.css('color', '#c83025')
+		# 	.append($('<i>').addClass('icon-ban-circle'))
+		# 	button_type = ''
+		# else 
+
+		if button_type is ''
 			el.append $('<span>')
 			.addClass('pull-right banhammer')
 			.append($('<i>').addClass('icon-legal'))
@@ -510,7 +512,7 @@ verbAnnotation = ({user, verb, time, notify}) ->
 	# if /paused the/.test(verb)
 	if /paused the/.test(verb) or /skipped/.test(verb) or /category/.test(verb) or /difficulty/.test(verb) or /ban tribunal/.test(verb) or me.id[0] == '_'
 		# banButton user, line
-		line.prepend admin_panel(user)
+		line.prepend admin_panel(user, 'spamming')
 
 	left = $(".bundle.active .verb-#{user}-left-the")
 	if verb.split(' ')[0] is 'joined' and left.length > 0
@@ -598,12 +600,16 @@ boxxyAnnotation = ({id, tribunal}) ->
 	initiator = '' if initiator and initiator[0] is '_' # diplomatic immunity?
 
 	if id is me.id # who would vote for their own banning?
-		if initiator
-			line.append userSpan(initiator)
-			line.append ' has complained about your behavior and created a ban tribunal. '
-		else
-			line.text('Protobowl has detected abnormally high activity from your computer.\n')
-		line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room)."
+		# if initiator
+		# 	line.append userSpan(initiator)
+		# 	line.append ' has complained about your behavior and created a ban tribunal. '
+		# else
+		# 	line.text('Protobowl has detected abnormally high activity from your computer.\n')
+		# line.append " <strong> Currently #{votes.length} of #{witnesses.length-1} users have voted</strong> (#{votes_needed} more votes are needed to ban you from this room)."
+
+		# we make tribunals anonymous and secret
+		return
+
 	else
 		line.append $("<strong>").append('Is ').append(userSpan(id)).append(' trolling? ')
 		if initiator

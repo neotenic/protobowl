@@ -206,6 +206,11 @@ class QuizPlayer
 
 
 	reprimand: ({user, reason}) ->
+		reason = @check_reprimand(user) 
+		if reason
+			@notify reason
+			return
+
 		if @reprimand_embargo > @room.serverTime()
 			@notify "can not reprimand anyone for #{Math.ceil((@reprimand_embargo - @room.serverTime())/1000)} seconds"
 			return
@@ -223,6 +228,9 @@ class QuizPlayer
 			time: @room.serverTime(),
 			reason: reason
 		}
+		@room.users[user]?.__reprimanded = Date.now()
+
+		@notify "issued a reprimand to !@" + user
 
 
 	gestapo: (string) ->
@@ -299,23 +307,72 @@ class QuizPlayer
 			
 			@sync(true)
 
+	check_reprimand: (user) ->
+		if @authorized('elected')
+			return null
+
+		# the embargo thing doesn't count
+		# if (me.reprimand_embargo || 0) > room.serverTime()
+		# 	return 'can not reprimand for another few minutes'
+
+		seconds = (@room.serverTime() - @last_session) / 1000
+		if seconds < 6 #60 * 10
+			return 'has not been online for long enough to reprimand users'
+
+		if @score() <= 20
+			return 'score is too low to reprimand others'
+
+		return null
+
+	check_tribunal: (user) ->
+		# returns string with reason why tribunal can not be made
+		# returns null if tribunal can be done
+		if @authorized('elected')
+			return null
+
+		if @room.admin_online()
+			return 'can not create tribunal when admin is online'
+
+		if @score() <= 20
+			return 'score is too low to launch tribunal'
+			
+		# unless @room?.is_public
+		# 	return 'can not create tribunal in non-public room'
+
+		unless @room.active_count() > 2
+			return 'too few active players to run tribunal'
+
+		seconds = (@room.serverTime() - @last_session) / 1000
+
+		if seconds < 6#0 * 10
+			return 'has not been online for long enough to start a tribunal'
+
+		unless 1000 * 60 * 5 > Date.now() - (@room.users[user]?.__reprimanded || 0) > 1000 * 10
+			return 'can not start tribunal before !@' + user + ' has been formally reprimanded'
+		
+		if user is @id
+			return 'is somewhat of a masochist'
+
+		if @tribunal_embargo and @tribunal_embargo > @room.serverTime()
+			return 'can not trigger a ban tribunal for another ' + Math.ceil((@tribunal_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
+
+		if @room.users[user].authorized('moderator')
+			return 'cannot fell a god with a mortal sword'
+
+		return null
+
+
+
 	trigger_tribunal: (user) ->
 		@touch()
 		return unless user and @room?.users[user]
-		return unless @authorized('elected')
 
-		if user is @id
-			@notify 'is somewhat of a masochist'
+		reason = @check_tribunal(user)
+		if reason
+			@notify reason
 			return
 
-		if @tribunal_embargo and @tribunal_embargo > @room.serverTime()
-			@notify 'can not trigger a ban tribunal for another ' + Math.ceil((@tribunal_embargo - @room.serverTime()) / (1000 * 60)) + ' minutes'
-			return 
-
-		if @room.users[user].authorized('moderator')
-			@notify 'cannot fell a god with a mortal sword'
-			return
-		@verb 'created a ban tribunal for !@' + user
+		@secret_verb user, 'created a ban tribunal for !@' + user
 		
 		# @modlog 'tribunal', "created ban tribunal for @#{user}"
 		@room.users[user]?.create_tribunal @id
@@ -432,16 +489,16 @@ class QuizPlayer
 			return if @id in votes or @id in against
 			if position is 'ban'
 				votes.push @id
-				@verb 'voted to ban !@' + user
+				@secret_verb user, 'voted to ban !@' + user
 			else if position is 'free'
 				against.push @id
-				@verb 'voted to free !@' + user
+				@secret_verb user, 'voted to free !@' + user
 			else
-				@verb 'voted with a hanging chad'
+				@secret_verb user, 'voted with a hanging chad'
 			if votes.length > (witnesses.length - 1) / 2 + against.length
 				@modlog 'tribunal', "user was banned by vote @#{user}"
 
-				@room.users[user].verb 'got voted off the island', true
+				@room.users[user].secret_verb user, 'got voted off the island'
 				clearTimeout @room.users[user].__tribunal_timeout
 				@room.users[user].tribunal = null
 				# @room.users[user].verb "was banned from #{@room.name}", true
@@ -460,6 +517,12 @@ class QuizPlayer
 
 			@room.users[user].sync(true)
 
+
+	secret_verb: (exclude, action) ->
+		packet = { user: @id, verb: action, time: @room.serverTime() }
+		for id, user of @room.users 
+			if id != exclude
+				user.emit 'log', packet
 
 	verb: (action, no_rate_limit) -> 
 		# what happens to a ninja, stays to a ninja
@@ -519,7 +582,16 @@ class QuizPlayer
 					you use to login to protobowl. After that has been set up,
 					you only need to type @$> auth without a password to escalate.
 				"
-			else if @auth
+			# else if @auth
+			# 	if !@_check_moderator
+			# 		@notify "privilege escalation not implemented"
+			# 	else
+			# 		@_check_moderator (result) =>
+			# 			if @room?.name?.toLowerCase() in (result?.jurisdiction || [])
+			# 				@_apotheify(result.name)
+			# 			else
+			# 				@notify "is not authorized for this room"
+			else
 				if !@_check_moderator
 					@notify "privilege escalation not implemented"
 				else
@@ -528,8 +600,7 @@ class QuizPlayer
 							@_apotheify(result.name)
 						else
 							@notify "is not authorized for this room"
-			else
-				@notify "You must be logged in to attempt moderator login."
+				# @notify "You must be logged in to attempt moderator login."
 		else if name in ['ragequit', 'qq', 'corgi', 'super', 'quit', 'dog', 'cute']
 			@emit 'redirect', 'http://i.imgur.com/4Dx75Bq.jpg'
 		else if name in ['deauth', 'unauth', 'resign', 'leave', 'quit', 'nixon']
