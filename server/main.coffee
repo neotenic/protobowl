@@ -791,7 +791,18 @@ process_queue = ->
 	
 	if !room?.archived or Date.now() - room?.archived > STALE_TIME
 		archive_room room
-		
+
+
+total_seconds_active = 0
+
+count_usage = ->
+	for name, room of rooms
+		for username, user of room.users
+			if user.active()
+				total_seconds_active++
+	
+
+setInterval count_usage, 1000
 
 setInterval process_queue, 1000	
 
@@ -1102,6 +1113,7 @@ app.get '/stalkermode', (req, res) ->
 		start: uptime_begin,
 		avg_latency: Med(latencies),
 		std_latency: IQR(latencies),
+		total_seconds_active: total_seconds_active,
 		cookie: req.protocookie,
 		queue: Object.keys(journal_queue).length,
 		os: os_info,

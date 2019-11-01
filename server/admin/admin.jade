@@ -183,6 +183,10 @@ html(lang="en")
 			p Server started 
 				mixin time(start)
 
+			p Time spent 
+				mixin duration(total_seconds_active * 1000)
+
+			p Human time / Server time: #{(total_seconds_active / ((Date.now() - start) / 1000)).toFixed(2)}
 
 			hr
 

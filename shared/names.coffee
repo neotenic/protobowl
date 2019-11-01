@@ -10,6 +10,10 @@ generateName = ->
 	if now.getMonth() is 10 and now.getDay() is 4 and now.getDate() > 7 * 3
 		return pick(adjective) + " " + pick('turkey,pilgrim,squanto,stuffing,gravy,cranberry,corn,yam,potato,squash,pie,bird,turducken,conquest,noms,food,holiday,friday')
 
+	# halloween
+	if now.getMonth() is 9 and now.getDate() is 31
+		return pick(adjective) + " " + pick('ghost,ghoul,phantom,pumpkin,pagan,jack-o-lantern,apparition,wraith,spirit,shadow,specter,scarecrow,witch,vampire,ghost,skeleton')
+		
 	if now.getMonth() is 0 and now.getDate() is 2 and Math.random() < 0.05
 		return 'wolo guillermo'
 

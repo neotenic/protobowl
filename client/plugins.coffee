@@ -275,6 +275,14 @@ check_holiday = ->
 	# lilly chin: spiciest memeloard
 	else if now.getMonth() is 1 and now.getDate() is 24 and now.getFullYear() == 2017
 		$('a.brand strong').text('Spiciest Meme')
+
+	# sqrt(10) day
+	else if now.getMonth() is 2 and now.getDate() is 16
+		$('a.brand .motto').text "Happy √10 day!"
+
+	else if now.getMonth() is 2 and now.getDate() is 15
+		$('a.brand strong').text('Dead Caesar')
+
 	# earth day, man
 	else if now.getMonth() is 3 and now.getDate() is 22
 		$('body').addClass('earthday')
@@ -325,6 +333,18 @@ check_holiday = ->
 	else if now.getMonth() is 3 and now.getDate() is 1
 		$('a.brand').html('<u><b>Quizbowl DB</b></u> <em style="font-size:small">Welcome to Quizbowl DB, the best way to get better at quizbowl!</em>')
 		$('body').addClass('aprilfools')
+
+	# halloween
+	else if now.getMonth() is 9 and now.getDate() is 31
+		$('body').addClass 'halloween'
+		$('a.brand strong').text('Spooky')
+		$('a.brand .motto').text "Happy Halloween!"
+
+		setTimeout ->
+			$('a.brand .motto').text "Happy Halloween! Boo!"
+			$('.buzzbtn')[0].childNodes[1].nodeValue = 'Boo!'
+		, 3000 + Math.random() * 7000
+
 	else
 		tomorrow = new Date
 		tomorrow.setDate(now.getDate() + 1)
