@@ -383,7 +383,7 @@ class QuizPlayer
 				# only wear the badge of accomplishment if you've done something new
 				@verb('banned !@' + user + ' from /' + @room.name, true)
 
-			@modlog 'ban', "banned @#{user} (#{!room.users[user]?.name}) from /#{room.name}"
+			@modlog 'ban', "banned @#{user} (#{!@room.users[user]?.name}) from /#{@room.name}"
 			@room.users[user]?.ban(1000 * 60 * 15)
 
 	# exercise your right and duty
