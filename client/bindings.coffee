@@ -526,6 +526,13 @@ $('.adhd').change ->
 
 $('.request-access').click -> me.nominate()
 
+$('.dorkmode').change -> 
+	if $('.dorkmode')[0].checked
+		me.pref 'noir', true
+	else
+		me.pref 'noir', false
+
+
 $('.movingwindow').change -> 
 	if $('.movingwindow')[0].checked
 		me.pref 'movingwindow', 20

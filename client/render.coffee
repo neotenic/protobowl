@@ -126,6 +126,7 @@ renderUpdate = ->
 	$('.allowpause').prop 'checked', !room.no_pause
 	$('.adhd').prop 'checked', !!me.prefs.distraction
 	$('body').toggleClass 'distraction', !!me.prefs.distraction
+	$('body').toggleClass 'noir', !!me.prefs.noir
 
 
 	if $('.settings').is(':hidden')
@@ -151,6 +152,8 @@ renderUpdate = ->
 
 		$('.livechat').prop 'checked', !!me.prefs.typing
 		$('.sounds').prop 'checked', !!me.prefs.sounds
+		$('.movingwindow').prop 'checked', !!me.prefs.movingwindow
+		$('.dorkmode').prop 'checked', !!me.prefs.noir
 		$('.lock').prop 'checked', !!me.lock
 		$('.teams').val me.team
 
