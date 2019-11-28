@@ -526,8 +526,13 @@ $('.adhd').change ->
 
 $('.request-access').click -> me.nominate()
 
+wasSith = false
+
 $('.dorkmode').change -> 
 	if $('.dorkmode')[0].checked
+		unless wasSith
+			me.verb 'went over to the dark side'
+		wasSith = true
 		me.pref 'noir', true
 	else
 		me.pref 'noir', false

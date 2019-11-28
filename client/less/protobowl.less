@@ -108,12 +108,38 @@ body.noir {
 		border-color: #2b2b2b;
 	}
 
+	a.brand::after {
+		content: 'doing one thing and doing it in the dark';
+		font-size: small;
+		font-style: italic;
+		opacity: 0.5;
+	}
 	a.brand .motto {
-		&::after {
-			content: 'doing one thing and doing it in the dark';
-			font-size: small;
+		display: none;
+	}
+
+	.popover {
+		background-color: #262821;
+		&.left .arrow:after {
+			border-left-color: #262821;
 		}
-		font-size: 0px !important;
+		.popover-title {
+			background-color: #262821;
+			border-bottom: 1px solid #555555;
+		}
+	}
+	.modal {
+		background-color: #262821;
+		.modal-header {
+			border-bottom: 1px solid #3e3e3e;
+			background: #1e1f1b;
+		}
+		.modal-footer {
+			background: #1e1f1b;
+
+			border-top: 1px solid #3e3e3e;
+			box-shadow: none;
+		}
 	}
 
 	* {

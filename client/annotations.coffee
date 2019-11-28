@@ -74,6 +74,8 @@ userSpan = (id, global) ->
 		icon 'star-empty'
 	if user?.prefs?.webrtc
 		icon 'microphone'
+	# if user?.prefs?.noir
+	# 	icon 'road'
 	if user?.prefs?.distraction
 		icon 'eye-close'
 		span.attr 'title', 'This user has enabled distraction-free mode.'
