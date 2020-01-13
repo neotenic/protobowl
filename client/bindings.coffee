@@ -681,7 +681,7 @@ $(".leaderboard tbody tr").live 'click', (e) ->
 	$('.leaderboard tbody tr').popover 'destroy'
 	unless enabled
 		$(this).popover {
-			placement: if mobileLayout() then "top" else "left"
+			placement: if mobileLayout() then "bottom" else "left"
 			trigger: "manual",
 			title: $('<div>').text(user.name).html(), # escape to fix xss
 			content: ->
