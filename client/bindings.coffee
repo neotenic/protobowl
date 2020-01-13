@@ -39,6 +39,8 @@ setActionMode = (mode) ->
 	$('.guess_form').toggle mode is 'guess'
 	$('.prompt_form').toggle mode is 'prompt'
 
+	$('.mobile-actionbar' ).toggleClass 'enabled', mode is ''
+
 	$(window).resize() #reset expandos
 
 
@@ -377,7 +379,7 @@ $('body').keydown (e) ->
 		return $('.guess_input').focus()
 	
 	if e.keyCode is 50 and e.shiftKey
-		$('.chatbtn').click()
+		$('.chatbtn').first().click()
 		$('.chat_input').focus()
 
 	if e.keyCode is 190 and (e.shiftKey or e.ctrlKey or e.metaKey or e.altKey)
@@ -391,9 +393,9 @@ $('body').keydown (e) ->
 	if e.keyCode is 32
 		e.preventDefault()
 		if $('.start-page').length is 1
-			$('.nextbtn').click()
+			$('.nextbtn').first().click()
 		else
-			$('.buzzbtn').click()
+			$('.buzzbtn').first().click()
 	else if e.keyCode in [83] # S
 		if key_can_skip
 			key_can_skip = false
@@ -411,7 +413,7 @@ $('body').keydown (e) ->
 		$('.pausebtn').click()
 	else if e.keyCode in [47, 111, 191, 13] # / (forward slash), C, A, Enter
 		e.preventDefault()
-		$('.chatbtn').click()
+		$('.chatbtn').first().click()
 	else if e.keyCode in [87, 222] # W
 		# whisper
 		e.preventDefault()
@@ -687,18 +689,14 @@ else
 	$('.show-keyboard').show()
 	$('.show-touch').hide()
 
-$('.show-sidebar').click (e) ->
-	$('.sidebar').toggleClass('shown')
-	if $('.sidebar').hasClass('shown')
-		$('.show-sidebar i').removeClass('icon-circle-arrow-right')
-		$('.show-sidebar i').addClass('icon-circle-arrow-left')
-	else
-		$('.show-sidebar i').removeClass('icon-circle-arrow-left')
-		$('.show-sidebar i').addClass('icon-circle-arrow-right')
-	e.preventDefault()
+$('.navbar').click (e) ->
+	if $('.show-sidebar').is(':visible')
+		$('.mobile-actionbar').toggleClass 'hidden', !$('.sidebar').is(':visible')
+		$('.sidebar').slideToggle(-> $('.sidebar').toggleClass('shown', $('.sidebar').is(':visible')).css('display', ''))
+		e.preventDefault()
 
-$('body').live 'swiperight', ->
-	$('.sidebar').addClass('shown')
+# $('body').live 'swiperight', ->
+# 	$('.sidebar').addClass('shown')
 
-$('body').live 'swipeleft', ->
-	$('.sidebar').removeClass('shown')
+# $('body').live 'swipeleft', ->
+# 	$('.sidebar').removeClass('shown')

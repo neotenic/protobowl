@@ -325,6 +325,7 @@ check_holiday = ->
 	# thanksgiving is fourth thursday of november
 	else if now.getMonth() is 10 and now.getDay() is 4 and now.getDate() > 7 * 3
 		$('a.brand strong').text('Turkey')
+		$('a.brand .motto').text "doing one thing and doing it on thanksgiving"
 		$('.expand-timer').text('Oven Timer')
 		$('.chatbtn')[0].childNodes[1].nodeValue = 'Gobble'
 		$('.buzzbtn')[0].childNodes[1].nodeValue = 'Squawk'

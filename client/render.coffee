@@ -298,14 +298,14 @@ renderTimer = ->
 
 	if time >= room.end_time
 		# $('.progress').addClass 'progress-info'
-		if $(".nextbtn").is(":hidden")
-			$('.nextbtn').show() 
-			$('.skipbtn').hide() 
+		# if $(".actionbar .nextbtn").is(":hidden")
+		$('.nextbtn').show() 
+		$('.skipbtn').hide() 
 	else
 		# $('.progress').removeClass 'progress-info'
-		if !$(".nextbtn").is(":hidden")
-			$('.nextbtn').hide()
-			$('.skipbtn').show()
+		# if !$(".actionbar .nextbtn").is(":hidden")
+		$('.nextbtn').hide()
+		$('.skipbtn').show()
 
 	$('.timer').toggleClass 'buzz', !!room.attempt
 
@@ -356,11 +356,24 @@ renderTimer = ->
 		if room.attempt or room.time_freeze
 			$('.progress .primary-bar').width progress * 100 + '%'
 			$('.progress .aux-bar').width '0%'
+			
+			$('.mobile-timer').addClass('time-freeze')
+			$('.mobile-timer').css('transform', 'translate3d(' + Math.round(-100 * (1 - progress)) + '%,0,0)')
 		else
 			fraction = (1 - (room.answer_duration / (room.end_time - room.begin_time))) * 100
 			$('.progress .primary-bar').width Math.min(progress * 100, fraction) + '%'
 			$('.progress .aux-bar').width Math.min(100 - fraction, Math.max(0, progress * 100 - fraction)) + '%'
 
+
+			$('.mobile-timer').removeClass('time-freeze')
+			if 100 * progress > fraction
+				frac = Math.min(1, Math.max(0, (progress - fraction / 100 ) / (1 - fraction / 100)))
+				$('.mobile-timer').css('transform', 'translate3d(' + Math.round(-100 * (1 - frac)) + '%,0,0)')
+			else
+				$('.mobile-timer').css('transform', 'translate3d(-100%, 0, 0)')
+		
+
+		
 
 		ms = Math.max(0, ms) # force time into positive range, comment this out to show negones
 		sign = ""

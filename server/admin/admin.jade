@@ -56,6 +56,10 @@ html(lang="en")
 					else
 						b  #{user.name} 
 
+					if user.prefs && user.prefs.noir
+						span.badge.badge-default DARK
+						| 
+
 					if user.prefs && user.prefs.webrtc
 						span.badge.badge-success RTC
 						| 
