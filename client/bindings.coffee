@@ -325,7 +325,8 @@ $('.chat_input,.prompt_input,.guess_input').focusout (e) ->
 	if mobileLayout()
 		form = $(this.form)
 		setTimeout ->
-			form.submit()
+			if actionMode != ''
+				form.submit()
 		, 10
 
 $('.chat_form').submit (e) ->
