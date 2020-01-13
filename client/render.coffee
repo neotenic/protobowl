@@ -837,7 +837,7 @@ changeQuestion = ->
 	return unless room.question and room.generated_time
 	cutoff = 15
 	#smaller cutoff for phones which dont place things in parallel
-	cutoff = 1 if mobileLayout()
+	cutoff = 3 if mobileLayout()
 	$('.bundle .ruling').tooltip('destroy')
 
 	#remove the old crap when it's really old (and turdy)

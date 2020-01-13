@@ -1,225 +1,277 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-<head>
-	<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
-<style>
-body {
-	background-image: url(/img/protobowl.jpg);
-	background-size: 100% auto;
-}
-hr {
-	margin: 10px 0;
-  	border-top: 1px solid #DADADA;
-}
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link
+      href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css"
+      rel="stylesheet"
+    />
 
-.mobilething {
-  opacity: 0.4;
-  -webkit-transition: 0.3s linear opacity ;
-}
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="/img/touch-icon.png" />
+    <meta
+      name="keywords"
+      content="protobowl,quizbowl,application,reader,academic,multiplayer,practice"
+    />
+    <meta name="description" content="A real time multiplayer quizbowl application" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="apple-mobile-web-app-title" content="Protobowl" />
 
-.mobilething:hover {
-  opacity: 1;
-}
+    <style>
+      body {
+        background-image: url(http://neotenic.github.io/img/protobowl.jpg);
+        background-size: 100% auto;
+      }
+      hr {
+        margin: 10px 0;
+        border-top: 1px solid #dadada;
+      }
 
+      .mobilething {
+        opacity: 0.4;
+        -webkit-transition: 0.3s linear opacity;
+      }
 
-</style>
+      .mobilething:hover {
+        opacity: 1;
+      }
+      #roomname {
+        width: 350px;
+      }
+      @media (max-width: 767px) {
+        #roomname {
+          width: auto;
+        }
+      }
+    </style>
 
-<title>Protobowl Home</title>
+    <title>Protobowl Home</title>
+  </head>
 
-</head>
-
-<body>
-
-<div class="modal">
-
-
-  <div class="modal-header">
-    
-    <h3 style="font-weight: normal">Welcome to <b>Protobowl</b>&nbsp;<span style="display: none;vertical-align: middle" id="everything"></span></h3>
-  </div>
-  <div class="modal-body">
-    <blockquote>
-      <div>
-      <b>Protobowl</b> is a real-time <b>multiplayer quizbowl</b> application. A multi-player session can include dozens of people with <b>instantaneous buzzing and chat</b>. It can be used in single-player mode <b>online or offline</b> and includes over <b>90,000 questions</b>.
-       <!-- <a href="/learnmore" style="font-size: small"> &rarr;</a> -->
+  <body>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 style="font-weight: normal">
+          Welcome to <b>Protobowl</b>&nbsp;<span
+            style="display: none;vertical-align: middle"
+            id="everything"
+          ></span>
+        </h3>
       </div>
-    </blockquote>
-    <p>Enter the <b>name of a room</b> to go to or simply hit the go button to <b>create a new empty room</b>. You can then invite friends to join you by sharing the URL. 
-    </p>
-    <p>
-    If you're feeling particularly brave right now, you can venture into a <b>public room</b> such as <a href="/lobby">lobby</a>, <a href="/hsquizbowl">hsquizbowl</a>, <a href="/msquizbowl">msquizbowl</a>, <a href="/college">college</a>, <a href="/science">science</a>, <a href="/literature">literature</a>, <a href="/history">history</a>, <a href="/art">art</a>, <a href="/philosophy">philosophy</a>, or <a href="/trash">trash</a>. 
-    </p>
-    <p>
-    There are also <b>different question sets</b> like <a href="/jeopardy/lobby">Jeopardy!</a> or <a href="/scibowl/lobby">Science Bowl</a>. If you have suggestions or comments, <b>please email us</b> at <a href="mailto:info@protobowl.com">info@protobowl.com</a>.
-    </p>
+      <div class="modal-body">
+        <blockquote>
+          <div>
+            <b>Protobowl</b> is a real-time <b>multiplayer quizbowl</b> application. A multi-player
+            session can include dozens of people with <b>instantaneous buzzing and chat</b>. It can
+            be used in single-player mode <b>online or offline</b> and includes over
+            <b>90,000 questions</b>.
+            <!-- <a href="/learnmore" style="font-size: small"> &rarr;</a> -->
+          </div>
+        </blockquote>
+        <p>
+          Enter the <b>name of a room</b> to go to or simply hit the go button to
+          <b>create a new empty room</b>. You can then invite friends to join you by sharing the
+          URL.
+        </p>
+        <p>
+          If you're feeling particularly brave right now, you can venture into a
+          <b>public room</b> such as <a href="/lobby">lobby</a>,
+          <a href="/hsquizbowl">hsquizbowl</a>, <a href="/msquizbowl">msquizbowl</a>,
+          <a href="/college">college</a>, <a href="/science">science</a>,
+          <a href="/literature">literature</a>, <a href="/history">history</a>,
+          <a href="/art">art</a>, <a href="/philosophy">philosophy</a>, or
+          <a href="/trash">trash</a>.
+        </p>
+        <p>
+          There are also <b>different question sets</b> like
+          <a href="/jeopardy/lobby">Jeopardy!</a> or <a href="/scibowl/lobby">Science Bowl</a>. If
+          you have suggestions or comments, <b>please email us</b> at
+          <a href="mailto:info@protobowl.com">info@protobowl.com</a>.
+        </p>
+      </div>
 
-
-  </div>
-
-  <form class="modal-footer" id="submitform">
-
-    <div class="input-append input-prepend">
-    	<div class="btn" id="refresher"><i class="icon-refresh"></i></div>
-    	<input type="text" placeholder="lobby" id="roomname" autofocus="autofocus" style="width: 350px" name="room">
-    	<button class="btn btn-primary" type="submit"><b>Go</b> to Room
-    	<i class="icon-arrow-right icon-white"></i>
-    	</button>
+      <form class="modal-footer" id="submitform">
+        <div class="input-append input-prepend">
+          <div class="btn" id="refresher"><i class="icon-refresh"></i></div>
+          <input type="text" placeholder="lobby" id="roomname" autofocus="autofocus" name="room" />
+          <button class="btn btn-primary" type="submit">
+            <b>Go</b> to Room
+            <i class="icon-arrow-right icon-white"></i>
+          </button>
+        </div>
+      </form>
     </div>
-  </form>
 
-</div>
+    <div class="modal-backdrop"></div>
 
+    <div
+      style="position: absolute; left: 20px; bottom: 20px; z-index: 99999999999"
+      class="mobilething"
+    >
+      <!--
+      <a href="https://play.google.com/store/apps/details?id=com.minibit.protobowl">
+        <img
+          alt="Android app on Google Play"
+          src="https://developer.android.com/images/brand/en_app_rgb_wo_45.png"
+        />
+      </a>
 
-<div class="modal-backdrop"></div>
+      <a href="https://itunes.apple.com/us/app/protobowl/id716914125">
+        <img alt="iOS app on App Store" src="http://neotenic.github.io/img/ios.png" />
+      </a>-->
+    </div>
 
-<div style="position: absolute; left: 20px; bottom: 20px; z-index: 99999999999" class="mobilething">
-    <a href="https://play.google.com/store/apps/details?id=com.minibit.protobowl">
-  <img alt="Android app on Google Play"
-       src="https://developer.android.com/images/brand/en_app_rgb_wo_45.png" />
-</a>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+    <script>
+      var generatePage
 
-<a href="https://itunes.apple.com/us/app/protobowl/id716914125">
-  <img alt="iOS app on App Store"
-       src="/img/ios.png" />
-</a>
-</div>
-
-
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
-<script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
-<script>
-var generatePage;
-
-generatePage = function() {
-  var noun, people, pick, verb;
-  pick = function(list) {
-    var n;
-    n = list.split(',');
-    return n[Math.floor(n.length * Math.random())];
-  };
-  people = 'actor,actress,alien,astronaut,astronaut,astronomer,batman,ben,cats,celebrity,cherenkov,chicken,colbert,copernicus,dali,dirac,doctor,einstein,entomologist,erdos,etymologist,fermi,feynman,huxley,irving,kepler,kirk,kitten,lemon,mayhaps,mold,oppenheimer,panda,picard,pinkman,plague,police,robot,sagan,sailor,scatologist,schrodinger,scientist,shakespeare,sherlock,stallman,superhero,traitor,whale,zuckerberg';
-  verb = 'afflicting,around,arousing,arresting,backstroking,bamboozling,baptizing,barfing,cloning,dating,defrauding,destroying,discarding,drinking,eating,eloping,enveloping,evoking,faking,feeding,feeling,feigning,flaunting,gagging,gawking,gazing,hiding,hitting,hopping,idling,imitating,imploding,in,infuriating,ingesting,injuring,jumping,jabbing,kicking,licking,limping,mooning,moping,mopping,near,observing,on,painting,petting,pronouncing,protecting,protesting,quarreling,quadruplicating,quintuplicating,rappelling,scrambling,searching,sleeping,stalking,stroking,studying,tasting,throwing,touching,vomiting,voting,waddling,writing,yacking,zipping,zooming';
-  noun = 'airplane,allergies,asylum,beard,book,brick,canteen,chicken,cloud,computer,couch,cow,drugs,earth,earwax,egg,electorate,elevator,endorphins,facade,feather,friend,helicopter,house,jupiter,lamp,mars,meat,mercury,moon,mountain,neptune,pants,paper,paris,pebble,planet,plant,pluto,pony,printer,rhinoceros,rock,saturn,scandal,school,skeleton,snow,staple,sunscreen,toilet,trampoline,tree,turd,uranus,venus,water,wikipedia';
-  return pick(people) + "-" + pick(verb) + "-" + pick(noun);
-};
-
-$("#refresher").click(function(){
-	$("#roomname").attr('placeholder', generatePage()).val('').focus();	
-	return false;
-})
-$("#roomname").attr('placeholder', generatePage())
-
-
-if(location.search == '?new'){
-  location.href = '/' + generatePage();
-}
-
-function gotoroom(){
-	var name = $("#roomname").val().trim();
-	if(!name){
-		name = $("#roomname").attr('placeholder')
-	}
-	name = name.replace(/\s+/g, '-')
-	location.pathname = "/" + name;
-}
-
-// $("#gotoroom").click(gotoroom)
-
-$("#submitform").submit(function(){
-	gotoroom();
-	return false;
-})
-
-function user_count(data){
-  var links = document.getElementsByTagName('a')
-  if(data['*']){
-    var everything = document.getElementById('everything');
-    if(data['*'] > 0){
-      
-      everything.style.display = ''
-      if(data['*'] > 1){
-        everything.className = 'label label-success'
-        everything.innerHTML = Math.floor(data['*']) + ' active'  
-      }else{
-        everything.className = 'label label-warning'
-        everything.innerHTML = Math.round((data['*'] % 1) / 0.001) + ' online'  
-      
+      generatePage = function() {
+        var noun, people, pick, verb
+        pick = function(list) {
+          var n
+          n = list.split(',')
+          return n[Math.floor(n.length * Math.random())]
+        }
+        people =
+          'actor,actress,alien,astronaut,astronaut,astronomer,batman,ben,cats,celebrity,cherenkov,chicken,colbert,copernicus,dali,dirac,doctor,einstein,entomologist,erdos,etymologist,fermi,feynman,huxley,irving,kepler,kirk,kitten,lemon,mayhaps,mold,oppenheimer,panda,picard,pinkman,plague,police,robot,sagan,sailor,scatologist,schrodinger,scientist,shakespeare,sherlock,stallman,superhero,traitor,whale,zuckerberg'
+        verb =
+          'afflicting,around,arousing,arresting,backstroking,bamboozling,baptizing,barfing,cloning,dating,defrauding,destroying,discarding,drinking,eating,eloping,enveloping,evoking,faking,feeding,feeling,feigning,flaunting,gagging,gawking,gazing,hiding,hitting,hopping,idling,imitating,imploding,in,infuriating,ingesting,injuring,jumping,jabbing,kicking,licking,limping,mooning,moping,mopping,near,observing,on,painting,petting,pronouncing,protecting,protesting,quarreling,quadruplicating,quintuplicating,rappelling,scrambling,searching,sleeping,stalking,stroking,studying,tasting,throwing,touching,vomiting,voting,waddling,writing,yacking,zipping,zooming'
+        noun =
+          'airplane,allergies,asylum,beard,book,brick,canteen,chicken,cloud,computer,couch,cow,drugs,earth,earwax,egg,electorate,elevator,endorphins,facade,feather,friend,helicopter,house,jupiter,lamp,mars,meat,mercury,moon,mountain,neptune,pants,paper,paris,pebble,planet,plant,pluto,pony,printer,rhinoceros,rock,saturn,scandal,school,skeleton,snow,staple,sunscreen,toilet,trampoline,tree,turd,uranus,venus,water,wikipedia'
+        return pick(people) + '-' + pick(verb) + '-' + pick(noun)
       }
-    }else{
 
-    }
-    
-  }
-  for(var i = 0; i < document.links.length; i++){
-    var room = document.links[i].pathname.replace('/', '');
-    if(data[room]){
-      var active_count = Math.floor(data[room]);
-      var online_count = Math.round((data[room] % 1) / 0.001);
+      $('#refresher').click(function() {
+        $('#roomname')
+          .attr('placeholder', generatePage())
+          .val('')
+          .focus()
+        return false
+      })
+      $('#roomname').attr('placeholder', generatePage())
 
-      var count = document.createElement('span');
-      if(active_count > 0){
-        count.className = 'label label-success';
-        count.innerHTML = active_count + ' active';
-      }else{
-        count.className = 'label label-warning';
-        count.innerHTML = online_count + ' online';
+      if (location.search == '?new') {
+        location.href = '/' + generatePage()
       }
-      if(document.links[i].getElementsByTagName('span').length > 0){
-        document.links[i].replaceChild(count, document.links[i].getElementsByTagName('span')[0])
-      }else{
-        document.links[i].appendChild(document.createTextNode('\u00a0'))
-        document.links[i].appendChild(count)
-  
+
+      function gotoroom() {
+        var name = $('#roomname')
+          .val()
+          .trim()
+        if (!name) {
+          name = $('#roomname').attr('placeholder')
+        }
+        name = name.replace(/\s+/g, '-')
+        location.pathname = '/' + name
       }
-      
-    }
-  }
-}
 
-function init_refs(){
-var refs, _ref,
-  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-try {
-  refs = JSON.parse(localStorage.referrers || '[]') || [];
-  if (document.referrer && (_ref = document.referrer, __indexOf.call(refs, _ref) < 0)) {
-    refs.push(document.referrer);
-  }
-  localStorage.referrers = JSON.stringify(refs);
-} catch (_error) {}
+      // $("#gotoroom").click(gotoroom)
 
-}
+      $('#submitform').submit(function() {
+        gotoroom()
+        return false
+      })
 
-init_refs();
-</script>
+      function user_count(data) {
+        var links = document.getElementsByTagName('a')
+        if (data['*']) {
+          var everything = document.getElementById('everything')
+          if (data['*'] > 0) {
+            everything.style.display = ''
+            if (data['*'] > 1) {
+              everything.className = 'label label-success'
+              everything.innerHTML = Math.floor(data['*']) + ' active'
+            } else {
+              everything.className = 'label label-warning'
+              everything.innerHTML = Math.round((data['*'] % 1) / 0.001) + ' online'
+            }
+          } else {
+          }
+        }
+        for (var i = 0; i < document.links.length; i++) {
+          var room = document.links[i].pathname.replace('/', '')
+          if (data[room]) {
+            var active_count = Math.floor(data[room])
+            var online_count = Math.round((data[room] % 1) / 0.001)
 
-<script type="text/javascript">
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-34434821-1']);
-_gaq.push(['_trackPageview']);
+            var count = document.createElement('span')
+            if (active_count > 0) {
+              count.className = 'label label-success'
+              count.innerHTML = active_count + ' active'
+            } else {
+              count.className = 'label label-warning'
+              count.innerHTML = online_count + ' online'
+            }
+            if (document.links[i].getElementsByTagName('span').length > 0) {
+              document.links[i].replaceChild(
+                count,
+                document.links[i].getElementsByTagName('span')[0]
+              )
+            } else {
+              document.links[i].appendChild(document.createTextNode('\u00a0'))
+              document.links[i].appendChild(count)
+            }
+          }
+        }
+      }
 
-(function() {
-var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
-</script>
+      function init_refs() {
+        var refs,
+          _ref,
+          __indexOf =
+            [].indexOf ||
+            function(item) {
+              for (var i = 0, l = this.length; i < l; i++) {
+                if (i in this && this[i] === item) return i
+              }
+              return -1
+            }
+        try {
+          refs = JSON.parse(localStorage.referrers || '[]') || []
+          if (document.referrer && ((_ref = document.referrer), __indexOf.call(refs, _ref) < 0)) {
+            refs.push(document.referrer)
+          }
+          localStorage.referrers = JSON.stringify(refs)
+        } catch (_error) {}
+      }
 
-<script>
-function check_public(){
-var s = document.createElement('script');
-if(location.hostname == "localhost"){
-s.src = "http://localhost:5566/check-public?cb=user_count"
-}else{
-s.src = "https://ocean.protobowl.com/check-public?cb=user_count"
+      init_refs()
+    </script>
 
-}
-s.async = true;
-document.getElementsByTagName('head')[0].appendChild(s);
-}
+    <script type="text/javascript">
+      var _gaq = _gaq || []
+      _gaq.push(['_setAccount', 'UA-34434821-1'])
+      _gaq.push(['_trackPageview'])
+      ;(function() {
+        var ga = document.createElement('script')
+        ga.type = 'text/javascript'
+        ga.async = true
+        ga.src =
+          ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') +
+          '.google-analytics.com/ga.js'
+        var s = document.getElementsByTagName('script')[0]
+        s.parentNode.insertBefore(ga, s)
+      })()
+    </script>
 
-check_public();
-setInterval(check_public, 1000 * 60 * 4)
-</script>
+    <script>
+      function check_public() {
+        var s = document.createElement('script')
+        if (location.hostname == 'localhost') {
+          s.src = 'http://localhost:5566/check-public?cb=user_count'
+        } else {
+          s.src = 'https://ocean.protobowl.com/check-public?cb=user_count'
+        }
+        s.async = true
+        document.getElementsByTagName('head')[0].appendChild(s)
+      }
 
-</body>
+      check_public()
+      setInterval(check_public, 1000 * 60 * 4)
+    </script>
+  </body>
 </html>

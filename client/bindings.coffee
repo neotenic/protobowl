@@ -321,6 +321,13 @@ $('.chat_input').keyup (e) ->
 		$('.chat_input').data 'sent_typing', $('.chat_input').data('input_session')
 
 
+$('.chat_input,.prompt_input,.guess_input').focusout (e) ->
+	if mobileLayout()
+		form = $(this.form)
+		setTimeout ->
+			form.submit()
+		, 10
+
 $('.chat_form').submit (e) ->
 	setActionMode ''
 	chat $('.chat_input').val(), true

@@ -13,3 +13,4 @@ _compiled.js
 build/*
 deploy/*
 MANAGING.txt
+.DS_Store
