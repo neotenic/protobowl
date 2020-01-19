@@ -569,7 +569,10 @@ notifyLike = ->
 
 
 notifyMobile = ->
-	message = $("<span>").html('<b>Try Protobowl for Mobile!</b> Download the free Protobowl app for <a href="https://itunes.apple.com/us/app/protobowl/id716914125">iOS (iPod Touch, iPhone or iPad)</a> or <a href="https://play.google.com/store/apps/details?id=com.minibit.protobowl">Android</a>.')
+	if mobileLayout()
+		message = $("<span>").html('<b>Add Protobowl to Home Screen!</b> Click the "Share" button and select "Add to Home Screen" to install Protobowl as an app.')
+	else
+		message = $("<span>").html('<b>Try Protobowl for Mobile!</b> Protobowl now has enhanced support for mobile web browsers. Just navigate to https://protobowl.com/ from your Android or iPhone device.')
 	setTimeout ->
 		addAnnotation $('<p>').append(message)
 	, 1000

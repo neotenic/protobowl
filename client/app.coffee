@@ -227,6 +227,8 @@ online_startup = ->
 			version: 8
 		}
 
+		me.pref 'mobile', mobileLayout()
+
 		$('.disconnect-notice, .doom-notice').slideUp()
 		# allow the user to reload/disconnect/reconnect
 		$('#reload, #disconnect, #reconnect').hide()
@@ -454,6 +456,7 @@ room.type = (if room.name.split('/').length is 2 then room.name.split('/')[0] el
 me = new QuizPlayerSlave(room, 'temporary')
 do ->
 	document.title = "#{room.name} - Protobowl"
+	$('.room-name').text(room.name)
 	type_mapping = {
 		qb: 'Quizbowl'
 		jeopardy: 'Jeopardy!'

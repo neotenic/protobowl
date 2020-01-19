@@ -13,8 +13,12 @@ body {
 	background: #fbfbfb;
 }
 
+.btn {
+	user-select: none;
+}
+
 body.noir {
-	background: #000;
+	background: #0b0b0b;
 	color: #aaa;
 	// font-family: monospace;
 
@@ -47,6 +51,10 @@ body.noir {
 
 	#whale .status {
 		background-color: #000000;
+	}
+
+	.mobile-actionbar {
+		background: black;
 	}
 
 	input,
@@ -918,6 +926,7 @@ body.offline {
 
 .mobile-actionbar,
 .mobile-timer,
+.mobile-brand,
 .mobile-other-rooms {
 	display: none;
 }
@@ -929,9 +938,53 @@ body.offline {
 		padding-right: 10px;
 	}
 
+	.navbar-inner {
+		background: #676767;
+		i {
+			text-shadow: none !important;
+			color: white;
+		}
+	}
+
+	body.noir .navbar-inner {
+		background: #0b0b0b;
+	}
+
+	.mobile-brand {
+		display: block;
+		float: left;
+
+		img {
+			height: 45px;
+		}
+
+		.room-name {
+			padding-left: 10px;
+			vertical-align: middle;
+			color: white;
+		}
+	}
+
+	body.prompting {
+		.mobile-brand {
+			opacity: 0;
+		}
+	}
+	a.bookmark {
+		display: none;
+	}
+
+	.navbar a.brand {
+		display: none;
+	}
+
 	.mobile-other-rooms,
 	.show-sidebar {
 		display: block;
+	}
+
+	.mobile-other-rooms {
+		padding-bottom: 10px;
 	}
 
 	body {
@@ -972,7 +1025,7 @@ body.offline {
 	.mobile-timer {
 		pointer-events: none;
 		display: block;
-		background: #29d;
+		background: #49afcd;
 
 		position: fixed;
 		z-index: 1031;
@@ -989,7 +1042,7 @@ body.offline {
 			right: 0px;
 			width: 100px;
 			height: 100%;
-			box-shadow: 0 0 10px #29d, 0 0 5px #29d;
+			// box-shadow: 0 0 10px #29d, 0 0 5px #29d;
 			opacity: 1;
 
 			-webkit-transform: rotate(3deg) translate(0px, -4px);
@@ -998,9 +1051,9 @@ body.offline {
 		}
 
 		&.time-freeze {
-			background: #f10;
+			background: #d3332a;
 			.peg {
-				box-shadow: 0 0 10px #d22, 0 0 5px #d22;
+				// box-shadow: 0 0 10px #d22, 0 0 5px #d22;
 			}
 		}
 	}
@@ -1020,6 +1073,9 @@ body.offline {
 		z-index: 8;
 		.btn {
 			border-radius: 0;
+			border-bottom: 0;
+			border-right: 0;
+			border-left: 0;
 		}
 		.buzzbtn {
 			flex: 1;
@@ -1031,6 +1087,12 @@ body.offline {
 			.skipbtn {
 				flex: 1;
 			}
+			// .pausebtn {
+			// 	border-top: 1px solid #222;
+			// }
+		}
+		i {
+			padding-right: 5px;
 		}
 	}
 
@@ -1038,13 +1100,13 @@ body.offline {
 		display: none;
 	}
 
-	.expando {
+	.buttonbar .expando {
 		padding: 7px 10px;
 		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
-		height: 30px;
+		height: 31px;
 		z-index: 10;
 	}
 	.timer-widget {
@@ -1074,6 +1136,9 @@ body.offline {
 	}
 	.navbar-top .navbar-inner {
 		border-radius: 0;
+		padding-left: 0;
+		border: 0;
+		padding-right: 5px;
 		.btn-group {
 			display: none;
 		}

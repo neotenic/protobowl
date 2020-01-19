@@ -366,7 +366,8 @@ renderTimer = ->
 
 
 			$('.mobile-timer').removeClass('time-freeze')
-			if 100 * progress > fraction
+			
+			if 100 * progress > fraction and progress < 1
 				frac = Math.min(1, Math.max(0, (progress - fraction / 100 ) / (1 - fraction / 100)))
 				$('.mobile-timer').css('transform', 'translate3d(' + Math.round(-100 * (1 - frac)) + '%,0,0)')
 			else

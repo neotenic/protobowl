@@ -408,6 +408,7 @@ cache_status = (status) ->
 		cache_listeners = []
 
 	if status is 'Updated'
+		me.verb 'upgraded to a new version of Protobowl'
 		render('update').insertAfter('.buttonbar').hide().slideDown()
 
 		if protobowl_config?.development

@@ -52,7 +52,11 @@ html(lang="en")
 								| doing one thing and not necessarily doing it acceptably well quite yet
 							else
 								| doing one thing and doing it acceptably well
-						
+					
+					div.mobile-brand
+						img(src="#{static}img/icon-transparent.png")
+						span.room-name
+
 					div.pull-right
 						a.show-sidebar(href="#")
 							i.icon-list-alt
@@ -279,6 +283,9 @@ html(lang="en")
 						pre#error_log
 
 				div.span3.sidebar
+					div.span3.mobile-other-rooms
+						a(tabindex="-1", href="/") &larr; Return to Start Page
+
 					if development
 						div.span3.thumbnail
 							button.btn.btn-small.pull-right.btn-link.show-updater.release-btn(disabled) 
@@ -443,25 +450,7 @@ html(lang="en")
 							li.hidden-offline Invite other people to this URL for multiplayer
 							li This page works offline
 					
-					div.span3.thumbnail.mobile-other-rooms
-						h5 
-							i.icon-bookmark
-							| Other Rooms
-						ul
-							li
-								a.new-room(tabindex="-1", href="#new") Create New Room
-							li.show-auth
-								a(tabindex="-1", href="/private") Private Room
-							li
-								a(tabindex="-1", href="/bookmarks") Bookmarks
-							li
-								a(tabindex="-1", href="/lobby") lobby
-							li
-								a(tabindex="-1", href="/hsquizbowl") hsquizbowl
-							li
-								a(tabindex="-1", href="/msquizbowl") msquizbowl
-							li
-								a(tabindex="-1", href="/college") college
+					
 							
 
 					div.span3.thumbnail.show-touch(style="display:none")

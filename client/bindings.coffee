@@ -34,15 +34,20 @@ setActionMode = (mode) ->
 		$('.prompt_input, .guess_input, .chat_input').blur()
 	actionMode = mode
 	
-	$('.actionbar' ).toggle mode is ''
+	$('.actionbar').toggle mode is ''
 	$('.chat_form').toggle mode is 'chat'
 	$('.guess_form').toggle mode is 'guess'
 	$('.prompt_form').toggle mode is 'prompt'
 
-	$('.mobile-actionbar' ).toggleClass 'enabled', mode is ''
+	$('.mobile-actionbar').toggleClass 'enabled', mode is ''
+	$('body').toggleClass 'prompting', (mode != '')
 
 	$(window).resize() #reset expandos
 
+
+$(window).resize ->
+	if me and mobileLayout() != me.prefs.mobile
+		me.pref 'mobile', mobileLayout()
 
 $('.chatbtn').click ->
 	$('.actionbar button').blur()
@@ -576,6 +581,7 @@ if !Modernizr.touch and !mobileLayout()
 		placement: -> 
 			if mobileLayout() then "error" else "left"
 	}
+
 
 $('body').click (e) ->
 	$('.bundle .ruling').tooltip('destroy')

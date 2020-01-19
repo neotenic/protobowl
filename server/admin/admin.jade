@@ -4,7 +4,7 @@ html(lang="en")
 		title STALKERMODE
 		link(rel="stylesheet", href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css")
 		
-		style
+		style.
 			.offline {
 				color: #BBB;
 			}
@@ -46,7 +46,10 @@ html(lang="en")
 						if user.agent != "M4/Web"
 							span.badge.badge-info= user.agent
 						else
-							span.badge.badge-info Web
+							if user.prefs && user.prefs.mobile
+								span.badge.badge-success Mobile
+							else
+								span.badge.badge-info Web
 					if user.room && user.moderator
 						span.badge MOD
 					if Date.now() < user.banned
