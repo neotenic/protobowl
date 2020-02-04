@@ -648,11 +648,13 @@ class QuizPlayer
 			@command name, args
 			return
 
-
  		# server enforced limit is 10x the client enforced limit
  		# is this a formulation of postel's rule?
  		# I don't know and I don't really care.
 		text = text.slice(0, 10000)
+
+		if @dystopia
+			text = text.slice(0, 100)
 
 		id = @id # ninjas should be able to choose their names
 		id = '__' + @name.replace(/\s+/g, '_') if id[0] is '_'
@@ -983,7 +985,7 @@ class QuizPlayer
 		else if name isnt @name
 			@verb "is playing as an individual"
 		if name
-			@team = name.slice(0, 100)
+			@team = name.slice(0, 50)
 		else
 			@team = name
 		@sync(true)
@@ -1006,7 +1008,7 @@ class QuizPlayer
 		@gestapo(name)
 
 		if name.trim().length > 0
-			name_limit = 140
+			name_limit = 100
 			
 			if @room.dystopia
 				name_limit = 30

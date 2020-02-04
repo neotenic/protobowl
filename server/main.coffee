@@ -70,7 +70,7 @@ if app.settings.env is 'production' and remote.deploy
 
 codename = namer.generateName()
 
-console.log "hello from protobowl v5.1, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage()
+console.log "hello from protobowl v5.1, my name is #{codename}", __dirname, process.cwd(), process.memoryUsage(), new Date
 console.log "remote configuration: ", remote?.config
 
 uptime_begin = +new Date
@@ -100,15 +100,22 @@ track_time = (start_time, label) ->
 		log 'track_time', duration + 'ms ' + label
 
 log = (action, obj) ->
-	return if remote?.config?.no_config
-	req = http.request log_config, ->
-		# console.log "saved log"
-	req.on 'error', (e) ->
-		# console.log "backup log", action, JSON.stringify(obj), JSON.stringify(e)
-	req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
-	req.end()
+	unless obj.length
+		obj = [obj]
+	fs.appendFile('metadata.log', JSON.stringify([
+		action,
+		(new Date).toISOString().slice(0, -8),
+	].concat(obj))+'\n', (err, res) -> null)
 
-	io.sockets.in("stalkermode-dash").emit action, obj
+	# return if remote?.config?.no_config
+	# req = http.request log_config, ->
+	# 	# console.log "saved log"
+	# req.on 'error', (e) ->
+	# 	# console.log "backup log", action, JSON.stringify(obj), JSON.stringify(e)
+	# req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
+	# req.end()
+
+	# io.sockets.in("stalkermode-dash").emit action, obj
 
 log 'server_restart', {}
 
@@ -149,7 +156,7 @@ class SocketQuizRoom extends QuizRoom
 
 	get_question: (callback) ->
 		cb = (question) =>
-			log 'next', [@name, question?.answer, @qid]
+			# log 'next', [@name, question?.answer, @qid]
 			callback(question)
 		if @next_id and @show_bonus
 			remote.get_by_id @next_id, cb
@@ -176,7 +183,7 @@ class SocketQuizRoom extends QuizRoom
 	end_buzz: (session) ->
 		if @attempt?.user
 			ruling = @check_answer @attempt.text, @answer, @question
-			log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
+			# log 'buzz', [@name, @attempt.user + '-' + @users[@attempt.user]?.name, @attempt.text, @answer, ruling, @qid, @time() - @begin_time, @end_time - @begin_time, @answer_duration]
 			qanta_log 'buzz', {
 				room: @name,
 				user: {
@@ -347,8 +354,8 @@ class SocketQuizPlayer extends QuizPlayer
 		ips = []
 		for sock_id in @sockets
 			sock = io.sockets.connected[sock_id]
-			real_ip = sock.handshake?.address
-			forward_ip = sock.handshake?.headers?["x-forwarded-for"]
+			real_ip = sock?.handshake?.address
+			forward_ip = sock?.handshake?.headers?["x-forwarded-for"]
 			addr = (forward_ip || real_ip)
 			ips.push addr if sock and addr
 		return ips
@@ -517,7 +524,7 @@ user_count_log = (message, room_name) ->
 	metrics = status_metrics()
 	metrics.room = room_name
 	metrics.message = message
-	log 'user_count', metrics
+	# log 'user_count', metrics
 	
 	if Date.now() > last_message + 1000 * 60 * 10 and metrics.avg_latency > 250
 		last_message = Date.now()
