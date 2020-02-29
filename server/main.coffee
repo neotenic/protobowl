@@ -77,6 +77,7 @@ uptime_begin = +new Date
 message_count = 0
 max_active = 0
 max_online = 0
+session_ip_bans = {}
 
 # simple helper function that hashes things
 sha1 = (text) ->
@@ -107,15 +108,7 @@ log = (action, obj) ->
 		(new Date).toISOString().slice(0, -8),
 	].concat(obj))+'\n', (err, res) -> null)
 
-	# return if remote?.config?.no_config
-	# req = http.request log_config, ->
-	# 	# console.log "saved log"
-	# req.on 'error', (e) ->
-	# 	# console.log "backup log", action, JSON.stringify(obj), JSON.stringify(e)
-	# req.write((+new Date) + ' ' + action + ' ' + JSON.stringify(obj) + '\n')
-	# req.end()
-
-	# io.sockets.in("stalkermode-dash").emit action, obj
+	io.sockets.in("stalkermode-dash").emit action, obj
 
 log 'server_restart', {}
 
@@ -468,6 +461,9 @@ class SocketQuizPlayer extends QuizPlayer
 			# if ipcount > 3
 			# 	@ban()
 			# 	sock.disconnect()
+			if session_ip_bans[ip]
+				@ban()
+				break
 
 			if @room._ip_ban and @room._ip_ban[ip]
 				if @room._ip_ban[ip].strikes >= 5
@@ -1067,6 +1063,22 @@ app.post '/stalkermode/unban/:room/:user', (req, res) ->
 	rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?.banned = 0
 	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
 
+app.post '/stalkermode/clear_superban', (req, res) ->
+	session_ip_bans = {}
+	res.redirect "/stalkermode"
+
+app.post '/stalkermode/superban/:room/:user', (req, res) ->
+	ips = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]?.ip() || []
+	for ip in ips
+		session_ip_bans[ip] = 1
+
+	for room_name, room of rooms
+		for user_id, user of room.users
+			if user?.ip()?.some((k) -> ips.includes(k))
+				user?.ban(1000 * 60 * 25)
+
+	res.redirect "/stalkermode/user/#{req.params.room}/#{req.params.user}"
+
 
 app.post '/stalkermode/negify/:room/:user/:num', (req, res) ->
 	user = rooms?[req.params.room.replace(/~/g, '/')]?.users?[req.params.user]
@@ -1116,6 +1128,7 @@ app.get '/stalkermode', (req, res) ->
 		max_online,
 		max_active,
 		env: app.settings.env,
+		session_ip_bans,
 		mem: util.inspect(process.memoryUsage()),
 		start: uptime_begin,
 		avg_latency: Med(latencies),

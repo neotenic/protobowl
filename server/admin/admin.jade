@@ -195,13 +195,20 @@ html(lang="en")
 
 			p Human time / Server time: #{(total_seconds_active / ((Date.now() - start) / 1000)).toFixed(2)}
 
+
+			if Object.keys(session_ip_bans).length > 0
+				h5 SESSION IP BANS (Expires on server restart)
+				pre= JSON.stringify(session_ip_bans, null, '  ')
+
 			hr
+
 
 			ul
 				- var sorted_names = Object.keys(rooms).sort(function(b,a){return weight_room(rooms[a]) - weight_room(rooms[b])})
 				each room_name in sorted_names
 					- var room = rooms[room_name]
 					mixin display_room(room, room_name)
+
 
 
 			hr
@@ -221,11 +228,15 @@ html(lang="en")
 				input#message(type="text", name="message", style="width:500px")
 				| 
 				button.btn(type="submit") Announce
+
 			
 			hr
 
 			form(action="/stalkermode/algore", method="post")
 				button.btn(type="submit") Reinitialize Resource Counts
+
+			form(action="/stalkermode/clear_superban", method="post")
+				button.btn(type="submit") Clear session bans
 
 
 			//- form(action="/stalkermode/update", method="post")

@@ -212,6 +212,14 @@ html(lang="en")
 
 				br
 
+				form(action="/stalkermode/superban/#{room.replace(/\//g, '~')}/#{id}", method="post")
+					button.btn(type="submit") PERMANENT IP Ban
+					| 
+					| BAN THIS IP FROM ALL THINGS EVERYWHERE
+
+				br
+
+
 				form(action="/stalkermode/exec/reset_score/#{room.replace(/\//g, '~')}/#{id}", method="post")
 					button.btn(type="submit") Reset Score
 					| 
