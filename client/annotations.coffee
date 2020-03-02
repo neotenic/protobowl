@@ -268,6 +268,9 @@ guessAnnotation = ({session, text, user, done, correct, interrupt, early, prompt
 			annotation_spot = $('#history .annotations:first')
 		line.css('display', 'none').prependTo annotation_spot
 		line.slideDown()
+	
+	if room.name in PUBLIC_ROOMS and filter_profanity?
+		text = filter_profanity(text)
 	if done
 		if text is ''
 			line.find('.comment').html('<em>(blank)</em>')
@@ -440,6 +443,9 @@ chatAnnotation = ({session, text, user, done, time}) ->
 		else
 			line.removeClass('buffer')
 			# line.find('.comment').text(text)
+
+			if room.name in PUBLIC_ROOMS and filter_profanity?
+				html = filter_profanity(html)
 
 			line.find('.comment').html html
 
