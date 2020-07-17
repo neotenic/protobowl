@@ -9,7 +9,7 @@
 		"snockets": "1.3.8",
 		"websocket": "1.0.8",
 		"wrench": "1.4.4",
-		"uglify-js": "2.3.3"
+		"uglify-js": "2.6.0"
 	},
 	"engines": {
 		"node": ">=0.4"
