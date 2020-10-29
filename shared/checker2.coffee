@@ -232,6 +232,7 @@ fuzzy_search = (needle, haystack) ->
 check_answer = (tokens, text, question = '', config = {}) ->
 	# these are words which are deemed to be trivial and thus not counted as unbold (though may still be counted as bold)
 	text = text
+		.replace(/[^\w\s\-\+]/g, '')
 		.replace(/l(ol)+/g, 'lol')
 		.replace(/\s+/g, ' ')
 		.replace(/'|"/g, '') # the apostrophes and quotes are useless

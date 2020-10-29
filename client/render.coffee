@@ -473,7 +473,7 @@ renderUsers = ->
 	name_map = {}
 
 	for id, user of room.users
-		namehash = user.name.replace(/[^\w]/g, '')
+		namehash = (user.name || '').replace(/[^\w]/g, '')
 		name_map[namehash] = [] unless name_map[namehash]
 		name_map[namehash].push(id)
 

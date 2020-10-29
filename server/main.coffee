@@ -142,9 +142,9 @@ class SocketQuizRoom extends QuizRoom
 
 	check_answer: (attempt, answer, question) -> 
 		opt = {}
-		if @dystopia
-			opt.no_acronym = true
-			opt.no_partial = true
+		# if @dystopia
+		# 	opt.no_acronym = true
+		# 	opt.no_partial = true
 		checkAnswer(attempt, answer, question, opt) 
 
 	get_question: (callback) ->
@@ -687,6 +687,7 @@ io.sockets.on 'connection', (sock) ->
 				room.no_pause = true
 				room.no_skip = true
 				room.is_public = true
+				room.dystopia = 1
 
 			if is_ninja
 				publicID = "__secret_ninja_#{Math.random().toFixed(4).slice(2)}" 
