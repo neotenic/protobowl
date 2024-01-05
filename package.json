@@ -1,14 +1,18 @@
 {
   "name": "protobowl",
-  "version": "0.4.0",
+  "version": "0.6.0-63",
   "dependencies": {
     "express": "3.0.x",
     "jade": "0.31.x",
-    "mongoose": "^4.13.18",
+    "mongoose": "^5.13.17",
     "pg": "^4.3.0",
     "socket.io": "^2.3.0"
   },
   "engines": {
     "node": ">=0.4"
+  },
+  "subdomain": "protobowl",
+  "scripts": {
+    "start": "web.js"
   }
 }

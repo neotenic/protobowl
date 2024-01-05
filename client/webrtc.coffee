@@ -5,7 +5,7 @@ $('.webrtc').change ->
 	if $('.webrtc')[0].checked
 		initUserMedia()
 	else if localStream
-		localStream.stop()
+		# localStream.stop()
 		for user, stream of peerStreams
 			stream.close()
 		localStream = null
@@ -21,7 +21,7 @@ $('.webrtc').change ->
 
 	# turnUrl = 'https://computeengineondemand.appspot.com/turn?username=19498870&key=4080218913'
 
-if (window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.RTCPeerConnection)
+if (window.RTCPeerConnection)
 	$('.webrtc')[0].checked = false
 	$('.checkrtc').slideDown()
 	
@@ -144,7 +144,7 @@ initUserMedia = ->
 		console.log(err)
 		verbAnnotation verb: "error acquiring audio signal from browser"
 	try
-		getUserMedia {
+		navigator.getUserMedia {
 			audio: true,
 			video: false
 		}, onSuccess, onError
