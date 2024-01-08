@@ -147,10 +147,22 @@ $('.buzzbtn').click ->
 			$('.guess_input').removeClass('disabled')
 			if $('.sounds')[0].checked
 				$('.sounds').data('ding_sound').play()
-			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Accepted', new Date - submit_time] if window._gaq
+			if window.gtag
+				gtag('event', 'Response Latency', {
+					'event_category': 'Game',
+					'event_action': 'Buzz Accepted',
+					'event_label': 'Latency',
+					'value': new Date() - submit_time
+				})
 		else
 			setActionMode ''
-			_gaq.push ['_trackEvent', 'Game', 'Response Latency', 'Buzz Rejected', new Date - submit_time] if window._gaq
+			if window.gtag
+				gtag('event', 'Response Latency', {
+					'event_category': 'Game',
+					'event_action': 'Buzz Rejected',
+					'event_label': 'Latency',
+					'value': new Date() - submit_time
+				})
 
 $('.reset-score .btn').click -> 
 	# i could have structured this is a more concise but weirder way
@@ -340,7 +352,13 @@ $('.chat_form').submit (e) ->
 	e.preventDefault()
 	
 	time_delta = new Date - $('.chat_input').data('begin_time')
-	_gaq.push ['_trackEvent', 'Chat', 'Typing Time', 'Posted Message', time_delta] if window._gaq
+	if gtag
+		gtag('event', 'Response Latency', {
+			'event_category': 'Chat',
+			'event_action': 'Posted Message',
+			'event_label': 'Typing Time',
+			'value': time_delta
+		})
 
 $('.guess_input').keyup (e) ->
 	return if e.keyCode is 13
