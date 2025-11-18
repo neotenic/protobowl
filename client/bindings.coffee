@@ -29,11 +29,13 @@ $('.new-room').mouseover (e) ->
 
 
 actionMode = ''
+actionModeSetTime = 0
 setActionMode = (mode) ->
 	if mode != actionMode and actionMode
 		$('.prompt_input, .guess_input, .chat_input').blur()
 	actionMode = mode
-	
+	actionModeSetTime = +new Date
+
 	$('.actionbar').toggle mode is ''
 	$('.chat_form').toggle mode is 'chat'
 	$('.guess_form').toggle mode is 'guess'
@@ -342,7 +344,12 @@ $('.chat_input,.prompt_input,.guess_input').focusout (e) ->
 	if mobileLayout()
 		form = $(this.form)
 		setTimeout ->
-			if actionMode != ''
+			# Add grace period for prompt mode on mobile to allow keyboard to appear
+			# and prevent immediate auto-submit
+			gracePeriod = if actionMode is 'prompt' then 500 else 0
+			timeSinceSet = new Date() - actionModeSetTime
+
+			if actionMode != '' and timeSinceSet > gracePeriod
 				form.submit()
 		, 10
 

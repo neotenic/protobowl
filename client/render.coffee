@@ -196,8 +196,13 @@ renderUpdate = ->
 	else
 		if room.attempt.prompt
 			if actionMode isnt 'prompt'
-				setActionMode 'prompt' 
-				$('.prompt_input').val(room.attempt.text).focus()
+				setActionMode 'prompt'
+				$('.prompt_input').val(room.attempt.text)
+				# Small delay on mobile to ensure virtual keyboard appears
+				if mobileLayout()
+					setTimeout (-> $('.prompt_input').focus()), 100
+				else
+					$('.prompt_input').focus()
 		else
 			setActionMode 'guess' if actionMode isnt 'guess'
 
