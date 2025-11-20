@@ -194,10 +194,18 @@ renderUpdate = ->
 	if !room.attempt or room.attempt.user isnt me.id
 		setActionMode '' if actionMode in ['guess', 'prompt']
 	else
+
 		if room.attempt.prompt
 			if actionMode isnt 'prompt'
 				setActionMode 'prompt' 
 				$('.prompt_input').val(room.attempt.text).focus()
+				setActionMode 'prompt'
+				$('.prompt_input').val(room.attempt.text)
+				# Small delay on mobile to ensure virtual keyboard appears
+				if mobileLayout()
+					setTimeout (-> $('.prompt_input').focus()), 100
+				else
+					$('.prompt_input').focus()
 		else
 			setActionMode 'guess' if actionMode isnt 'guess'
 
@@ -1315,7 +1323,9 @@ calculate_widths = ->
 	container = $("<div>").css('overflow', 'hidden').css('width', 0).css('height', 0).appendTo("body").append(fake_well)
 	span = $("<span>").appendTo(fake_well)
 	
-	for code in [33...126]
+	for code in [65...122]
+		if 91 <= code <= 96
+			continue
 		letter = String.fromCharCode(code)
 		span.text letter
 		width = span.width()

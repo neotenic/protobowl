@@ -77,7 +77,7 @@ class QuizRoom
 		@category = ''
 		@max_buzz = null
 		@attempt = null
-		@no_skip = false
+		@no_skip = true
 		@show_bonus = false
 		# @interrupts = true
 		@semi = false
