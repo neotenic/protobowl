@@ -91,8 +91,6 @@ offline_startup = ->
 		room.sync(5)
 		me.verb 'joined the room'
 
-		initialize_fallback() if initialize_fallback?
-
 # setTimeout ->
 # 	if room.active_count() <= 1 and Math.random() < 0.001
 # 		chatAnnotation({text: 'Feeling lonely? Just say "I\'m Lonely" and talk to me!' , user: '__protobot', done: true})
@@ -117,8 +115,6 @@ impending_doom = ->
 	addImportant $('<div>').addClass('log doom-notice').append(line)
 
 disconnect_notice = ->
-	initialize_fallback() if initialize_fallback?
-
 	if shadowbanned
 		return
 
@@ -356,10 +352,7 @@ class QuizPlayerSlave extends QuizPlayerClient
 	# does to a mountain.
 	
 	emit: (name, data) ->
-		if fallback_connection? and fallback_connection()
-			fallback_broadcast(name, data)
-		else
-			@__listeners[name](data)
+		@__listeners[name](data)
 
 	authorized: (level) ->
 		return true unless connected()
@@ -370,8 +363,6 @@ class QuizPlayerSlave extends QuizPlayerClient
 		return (data, callback) ->
 			if connected() and not shadowbanned
 				sock.emit(name, data, callback)
-			else if fallback_connection? and fallback_connection()
-				fallback_emit name, data, callback
 			else
 				# It matters not how strait the gate,
 				# How charged with punishments the scroll.
@@ -650,7 +641,6 @@ StDev = (list) -> mu = Avg(list); Math.sqrt Avg((item - mu) * (item - mu) for it
 # so i hears that robust statistics are bettrawr, so uh, heres it is
 Med = (list) -> m = list.sort((a, b) -> a - b); m[Math.floor(m.length/2)] || 0
 IQR = (list) -> m = list.sort((a, b) -> a - b); (m[~~(m.length*0.75)]-m[~~(m.length*0.25)]) || 0
-MAD = (list) -> m = list.sort((a, b) -> a - b); Med(Math.abs(item - mu) for item in m)
 
 
 
