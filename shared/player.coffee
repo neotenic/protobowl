@@ -740,7 +740,7 @@ class QuizPlayer
 		else if !@room.attempt
 			duration = Math.round((@room.offsetTime() - @room.time_freeze)/1000)
 			if duration > 2
-				@verb "resumed the game (paused for #{duration} seconds}"
+				@verb "resumed the game (paused for #{duration} seconds)"
 			else
 				@verb "resumed the game"
 			@room.unfreeze()
